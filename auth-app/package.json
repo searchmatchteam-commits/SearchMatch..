@@ -1,0 +1,14 @@
+{
+  "name": "auth-app",
+  "version": "1.0.0",
+  "private": true,
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "express": "5.3.0",
+    "three": "0.160.0"
+  }
+}

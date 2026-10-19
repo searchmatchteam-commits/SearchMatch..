@@ -1,0 +1,133 @@
+/* Página mínima para la pelota 3D */
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  box-sizing: border-box;
+  background: #16181a;
+}
+
+/* La pelota 3D: escenario con foco de estadio, círculo central y sombra */
+.ball-stage {
+  --energia: 0;              /* de 0 a 1, lo actualiza ball.js según qué tan rápido gira */
+  --sombra: 1;               /* tamaño de la sombra: cambia cuando la pelota flota */
+  position: relative;
+  order: -1;                 /* en celular la pelota va arriba del texto */
+  width: 100%;
+  max-width: 300px;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  isolation: isolate;
+}
+
+/* Resplandor verde detrás de la pelota: se enciende más cuando gira rápido */
+.ball-stage::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(57, 255, 20, 0.28) 0%, rgba(57, 255, 20, 0.09) 30%, transparent 60%);
+  opacity: calc(0.7 + var(--energia) * 0.6);
+  transform: scale(calc(0.95 + var(--energia) * 0.12));
+  pointer-events: none;
+}
+
+/* Sombra en el piso: se achica cuando la pelota sube */
+.ball-stage::after {
+  content: "";
+  position: absolute;
+  left: 24%;
+  bottom: 7%;
+  width: 52%;
+  height: 7%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(57, 255, 20, 0.4), rgba(0, 0, 0, 0.6) 45%, transparent 72%);
+  transform: scaleX(var(--sombra));
+  opacity: calc(var(--sombra) * 0.85);
+  filter: blur(3px);
+  pointer-events: none;
+}
+
+
+/* Círculo central de la cancha */
+.ball-anillo {
+  position: absolute;
+  inset: 3%;
+  z-index: -1;
+  border: 1.5px solid rgba(255, 255, 255, 0.07);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Anillo neón punteado que gira */
+.ball-anillo::before {
+  content: "";
+  position: absolute;
+  inset: 6%;
+  border: 1px dashed rgba(57, 255, 20, calc(0.22 + var(--energia) * 0.5));
+  border-radius: 50%;
+  animation: girar 40s linear infinite;
+}
+
+/* Línea media de la cancha, pasando por detrás de la pelota */
+.ball-anillo::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -45%;
+  right: -45%;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07) 25%, rgba(255, 255, 255, 0.07) 75%, transparent);
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+#ball-canvas {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;        /* en celular el dedo gira la pelota en vez de hacer scroll */
+}
+
+#ball-canvas:active {
+  cursor: grabbing;
+}
+
+#ball-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+
+@media (min-width: 600px) {
+  .ball-stage {
+    max-width: 380px;
+  }
+}
+
+@media (min-width: 960px) {
+  .ball-stage {
+    order: 0;
+    flex: 1;
+    max-width: 500px;
+  }
+}
+
+/* Usuarios que prefieren menos movimiento: sin animaciones */
+@media (prefers-reduced-motion: reduce) {
+  .ball-anillo::before {
+    animation: none;
+  }
+}
