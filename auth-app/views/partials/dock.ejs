@@ -2,13 +2,15 @@
   // Barra de navegación inferior (dock flotante). Uso:
   //   include('partials/dock', { activo: 'inicio' })
   // El enlace de "Perfil" depende del rol elegido en /select-role.
+  // Un ítem sin href (Canchas y Equipos: aún no existen) es un botón que muestra un aviso de "próximamente"
+  // (lo maneja public/js/dashboard.js con data-proximamente).
   const perfilHref = usuario.rolInicio === 'equipo' ? '/registro-equipo' : '/perfil';
   const itemsDock = [
     { clave: 'inicio', texto: 'Inicio', href: '/dashboard',
       icono: '<path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6h-6v6H4.5a1 1 0 0 1-1-1z" />' },
-    { clave: 'canchas', texto: 'Canchas', href: '/dashboard#canchas',
+    { clave: 'canchas', texto: 'Canchas', proximamente: 'Muy pronto podrás buscar y reservar canchas.',
       icono: '<rect x="3" y="5" width="18" height="14" rx="2" /><path d="M12 5v14" /><circle cx="12" cy="12" r="2.6" /><path d="M3 9.5h2.5v5H3M21 9.5h-2.5v5H21" />' },
-    { clave: 'equipos', texto: 'Equipos', href: '/dashboard#equipos',
+    { clave: 'equipos', texto: 'Equipos', proximamente: 'Muy pronto podrás buscar equipos y enviar solicitudes.',
       icono: '<circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><circle cx="17" cy="9" r="2.4" /><path d="M16 14.2a4.5 4.5 0 0 1 5 4.8" />' },
     { clave: 'perfil', texto: 'Perfil', href: perfilHref,
       icono: '<rect x="4" y="3" width="16" height="18" rx="3" /><circle cx="12" cy="10" r="3" /><path d="M7.5 17.5a4.5 4.5 0 0 1 9 0" />' },
@@ -18,11 +20,19 @@
   <ul class="dock__lista">
     <% itemsDock.forEach(function (item) { %>
       <li>
-        <a class="dock__item <%= item.clave === activo ? 'dock__item--activo' : '' %>" href="<%= item.href %>"
-           <%- item.clave === activo ? 'aria-current="page"' : '' %>>
-          <svg class="dock__icono" viewBox="0 0 24 24" aria-hidden="true"><%- item.icono %></svg>
-          <span class="dock__texto"><%= item.texto %></span>
-        </a>
+        <% if (item.href) { %>
+          <a class="dock__item <%= item.clave === activo ? 'dock__item--activo' : '' %>" href="<%= item.href %>" title="<%= item.texto %>"
+             <%- item.clave === activo ? 'aria-current="page"' : '' %>>
+            <svg class="dock__icono" viewBox="0 0 24 24" aria-hidden="true"><%- item.icono %></svg>
+            <!-- Solo ícono: el nombre queda para lectores de pantalla -->
+            <span class="solo-lectores"><%= item.texto %></span>
+          </a>
+        <% } else { %>
+          <button type="button" class="dock__item" title="<%= item.texto %>" data-proximamente="<%= item.proximamente %>">
+            <svg class="dock__icono" viewBox="0 0 24 24" aria-hidden="true"><%- item.icono %></svg>
+            <span class="solo-lectores"><%= item.texto %></span>
+          </button>
+        <% } %>
       </li>
     <% }) %>
   </ul>

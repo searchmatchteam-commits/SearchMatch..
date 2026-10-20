@@ -2,10 +2,7 @@
 // Lógica de las páginas del sitio.
 
 const jugadorModel = require('../models/jugadorModel');
-const { POSICIONES, NIVELES, calcularMedia } = require('../config/perfilJugador');
-const { CANCHAS, EQUIPOS } = require('../config/dashboardEjemplo');
-
-const formatoPesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+const { POSICIONES, PIES, calcularMedia } = require('../config/perfilJugador');
 
 // GET / → landing page pública.
 function landing(req, res) {
@@ -29,7 +26,7 @@ async function resumenCarta(usuario) {
   return {
     media: calcularMedia(perfil.stats),
     posicion: POSICIONES[perfil.posicion] ? POSICIONES[perfil.posicion].sigla : '—',
-    nivel: NIVELES[perfil.nivel] || '—',
+    pie: PIES[perfil.pieHabil] ? `Pie ${PIES[perfil.pieHabil].toLowerCase()}` : '—',
   };
 }
 
@@ -41,11 +38,6 @@ async function dashboard(req, res, next) {
       titulo: 'Mi panel',
       pagina: 'dashboard',
       carta: await resumenCarta(req.usuario),
-      canchas: CANCHAS.map((cancha) => ({ ...cancha, precio: formatoPesos.format(cancha.precio) })),
-      equipos: EQUIPOS.map((equipo) => ({
-        ...equipo,
-        iniciales: equipo.nombre.split(/\s+/).map((palabra) => palabra[0]).join('').slice(0, 2).toUpperCase(),
-      })),
     });
   } catch (err) {
     next(err);

@@ -10,7 +10,7 @@ const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 // Celular chileno: 9 + 8 dígitos, con o sin +56 delante.
 const REGEX_CELULAR_CL = /^(?:\+?56)?(9\d{8})$/;
 
-const { POSICIONES, PIES, NIVELES } = require('../config/perfilJugador');
+const { POSICIONES, PIES } = require('../config/perfilJugador');
 
 const LONGITUD_MINIMA_PASSWORD = 8;
 const LONGITUD_MAXIMA_NOMBRE = 100; // jugador.nombre_apodo / jugador.apellido
@@ -203,7 +203,6 @@ function validarPerfilJugador(req, res, next) {
   const peso = enteroEnRango(req.body.peso, PESO_KG);
   const posicion = req.body.posicion || '';
   const pieHabil = req.body.pie_habil || '';
-  const nivel = req.body.nivel || '';
 
   const paso2 = [];
   const paso3 = [];
@@ -222,9 +221,8 @@ function validarPerfilJugador(req, res, next) {
 
   if (!POSICIONES[posicion]) paso3.push('Elige tu posición en la cancha.');
   if (!PIES[pieHabil]) paso3.push('Elige tu pie hábil.');
-  if (!NIVELES[nivel]) paso3.push('Elige tu nivel de experiencia.');
 
-  req.datosFormulario = { nombre, apellido, fechaNacimiento, altura, peso, posicion, pieHabil, nivel };
+  req.datosFormulario = { nombre, apellido, fechaNacimiento, altura, peso, posicion, pieHabil };
   req.erroresPerfil = {
     errores: [...paso2, ...paso3],
     paso: paso2.length > 0 ? 2 : 3,

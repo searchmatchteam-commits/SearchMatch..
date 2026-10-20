@@ -4,11 +4,6 @@
   const pasos = ['Tipo de cuenta', 'Datos personales', 'Perfil deportivo', 'Confirmación'];
   // Altura de la marca en la mini cancha de cada posición (0 = arco rival, 32 = arco propio).
   const alturaPosicion = { arquero: 27, defensa: 21, mediocampista: 15, delantero: 7 };
-  const descripcionNivel = {
-    principiante: 'Juego por diversión, estoy empezando.',
-    intermedio: 'Juego seguido y conozco el juego.',
-    avanzado: 'Juego competitivo o en liga.',
-  };
   const hoy = new Date().toISOString().slice(0, 10);
 %>
 
@@ -156,23 +151,6 @@
           </div>
           <small class="campo__error" id="pie_habil-error"></small>
         </div>
-
-        <div class="grupo-opciones" role="radiogroup" aria-labelledby="nivel-label" aria-describedby="nivel-error" data-grupo="nivel">
-          <span class="grupo-opciones__label" id="nivel-label">Nivel de experiencia</span>
-          <div class="opciones opciones--3">
-            <% Object.entries(catalogos.NIVELES).forEach(function ([clave, nombre], i) { %>
-              <label class="opcion opcion--nivel">
-                <input class="opcion__radio" type="radio" name="nivel" value="<%= clave %>" <%= datos.nivel === clave ? 'checked' : '' %> />
-                <span class="opcion__barras" aria-hidden="true">
-                  <% for (let b = 0; b < 3; b++) { %><span class="<%= b <= i ? 'llena' : '' %>"></span><% } %>
-                </span>
-                <span class="opcion__nombre"><%= nombre %></span>
-                <span class="opcion__detalle"><%= descripcionNivel[clave] %></span>
-              </label>
-            <% }) %>
-          </div>
-          <small class="campo__error" id="nivel-error"></small>
-        </div>
       </fieldset>
 
       <!-- ============ PASO 4: CONFIRMACIÓN ============ -->
@@ -188,7 +166,6 @@
           <div><dt>Peso</dt><dd data-resumen="peso">—</dd></div>
           <div><dt>Posición</dt><dd data-resumen="posicion">—</dd></div>
           <div><dt>Pie hábil</dt><dd data-resumen="pie_habil">—</dd></div>
-          <div><dt>Nivel</dt><dd data-resumen="nivel">—</dd></div>
         </dl>
       </fieldset>
 

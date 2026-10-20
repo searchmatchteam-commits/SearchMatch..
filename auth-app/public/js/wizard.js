@@ -27,7 +27,6 @@ const REGLAS = {
   3: {
     posicion: (v) => (v ? null : 'Elige tu posición en la cancha.'),
     pie_habil: (v) => (v ? null : 'Elige tu pie hábil.'),
-    nivel: (v) => (v ? null : 'Elige tu nivel de experiencia.'),
   },
 };
 
@@ -121,7 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
       peso: valorDe('peso') ? `${valorDe('peso')} kg` : '—',
       posicion: textoDeOpcion('posicion'),
       pie_habil: textoDeOpcion('pie_habil'),
-      nivel: textoDeOpcion('nivel'),
     };
     Object.entries(valores).forEach(([clave, valor]) => {
       formulario.querySelector(`[data-resumen="${clave}"]`).textContent = valor;

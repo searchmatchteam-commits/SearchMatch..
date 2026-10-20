@@ -4,6 +4,7 @@
 //     celular chileno, contraseña de 8+ caracteres y confirmación.
 //  2) Errores bajo cada campo + resumen en la alerta roja bajo el formulario.
 //  3) Estado "cargando": spinner y botón deshabilitado mientras responde el servidor.
+//  4) Botón de ojo para mostrar u ocultar las contraseñas ([data-ver-password]).
 // Es solo una ayuda para el usuario: la validación real la repite el servidor
 // (middlewares/validators.js), así que las reglas deben coincidir con las de allá.
 
@@ -60,7 +61,9 @@ function validarCampo(input, formulario) {
   const regla = REGLAS[input.name];
   if (!regla) return null;
 
-  const valor = input.type === 'password' ? input.value : input.value.trim();
+  // Las contraseñas no se recortan (aunque estén visibles, con type="text").
+  const esPassword = input.name === 'password' || input.name === 'confirmar_password';
+  const valor = esPassword ? input.value : input.value.trim();
   const mensaje = regla(valor, formulario);
 
   const campo = input.closest('.campo');
@@ -86,6 +89,15 @@ function mostrarAlerta(alerta, mensajes) {
   alerta.hidden = mensajes.length === 0;
 }
 
+/** Alterna una contraseña entre visible y oculta, y actualiza el botón del ojo. */
+function alternarPassword(boton) {
+  const input = document.getElementById(boton.getAttribute('aria-controls'));
+  const visible = input.type === 'password';
+  input.type = visible ? 'text' : 'password';
+  boton.setAttribute('aria-pressed', String(visible));
+  boton.setAttribute('aria-label', visible ? 'Ocultar contraseña' : 'Mostrar contraseña');
+}
+
 /** Activa o desactiva el estado "cargando" del botón de envío. */
 function ponerCargando(boton, cargando) {
   const texto = boton.querySelector('.btn__texto');
@@ -98,6 +110,10 @@ function ponerCargando(boton, cargando) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-ver-password]').forEach((boton) => {
+    boton.addEventListener('click', () => alternarPassword(boton));
+  });
+
   document.querySelectorAll('form[data-validar]').forEach((formulario) => {
     const boton = formulario.querySelector('button[type="submit"]');
     const alerta = formulario.parentElement.querySelector('[data-alerta-errores]');

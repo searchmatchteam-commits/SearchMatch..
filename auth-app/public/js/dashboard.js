@@ -1,6 +1,6 @@
 // public/js/dashboard.js
-// Dashboard: los botones "Reservar" y "Enviar solicitud" todavía no tienen
-// backend, así que muestran un aviso flotante con el texto de data-proximamente.
+// Dashboard: "Buscar partido" y los íconos de canchas y equipos del dock
+// todavía no tienen backend, así que muestran un aviso flotante con el texto de data-proximamente.
 
 const DURACION_AVISO_MS = 3200;
 

@@ -1,7 +1,7 @@
 // config/perfilJugador.js
 // Catálogos del perfil deportivo (wizard /perfil-jugador y carta /perfil).
 // Las claves son las que viajan en el formulario; "db" es el nombre en las tablas
-// posicion / nivel (se busca sin importar mayúsculas).
+// posicion (se busca sin importar mayúsculas).
 
 const POSICIONES = {
   arquero: { etiqueta: 'Portero', sigla: 'POR', db: ['Arquero', 'Portero'] },
@@ -13,12 +13,6 @@ const POSICIONES = {
 const PIES = {
   izquierdo: 'Izquierdo',
   derecho: 'Derecho',
-};
-
-const NIVELES = {
-  principiante: 'Principiante',
-  intermedio: 'Intermedio',
-  avanzado: 'Avanzado',
 };
 
 // Estadísticas de la carta, en el orden en que se muestran.
@@ -52,7 +46,6 @@ function calcularMedia(stats) {
 module.exports = {
   POSICIONES,
   PIES,
-  NIVELES,
   ESTADISTICAS,
   sortearEstadisticas,
   calcularMedia,

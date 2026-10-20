@@ -11,7 +11,6 @@ const { calcularEdad, ALTURA_CM, PESO_KG } = require('../middlewares/validators'
 const {
   POSICIONES,
   PIES,
-  NIVELES,
   ESTADISTICAS,
   sortearEstadisticas,
   calcularMedia,
@@ -40,7 +39,7 @@ function renderWizard(res, { status = 200, datos, errores = [], paso = 2, editan
     errores,
     paso,
     editando,
-    catalogos: { POSICIONES, PIES, NIVELES },
+    catalogos: { POSICIONES, PIES },
     rangos: { ALTURA_CM, PESO_KG },
   });
 }
@@ -67,7 +66,6 @@ async function mostrarWizard(req, res, next) {
         peso: perfil.peso ? Math.round(perfil.peso) : '',
         posicion: perfil.posicion,
         pieHabil: perfil.pieHabil,
-        nivel: perfil.nivel,
       },
     });
   } catch (err) {
@@ -132,7 +130,6 @@ async function mostrarPerfil(req, res, next) {
         peso: perfil.peso ? Math.round(perfil.peso) : null,
         posicion,
         pieHabil: PIES[perfil.pieHabil] || '—',
-        nivel: NIVELES[perfil.nivel] || '—',
         media: calcularMedia(perfil.stats),
         estadisticas: ESTADISTICAS.map(({ clave, sigla, nombre }) => ({ sigla, nombre, valor: perfil.stats[clave] })),
       },
