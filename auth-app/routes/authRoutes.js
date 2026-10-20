@@ -16,13 +16,16 @@ router.get('/registro', redirectIfAuthenticated, authController.mostrarRegistro)
 // POST /registro → valida los datos y crea el usuario.
 router.post('/registro', redirectIfAuthenticated, validarRegistro, authController.registrar);
 
+// GET /auth/confirmar → enlace del correo de confirmación: confirma y abre la sesión.
+router.get('/auth/confirmar', authController.confirmarCorreo);
+
 // GET /login → formulario de login.
 router.get('/login', redirectIfAuthenticated, authController.mostrarLogin);
 
 // POST /login → valida los datos y crea la sesión.
 router.post('/login', redirectIfAuthenticated, validarLogin, authController.iniciarSesion);
 
-// POST /logout → cierra la sesión (cualquier usuario autenticado).
+// POST /logout → revoca la sesión en Supabase y borra las cookies.
 router.post('/logout', authController.cerrarSesion);
 
 module.exports = router;

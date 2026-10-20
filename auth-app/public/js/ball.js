@@ -6,10 +6,14 @@
 //  - Mover el mouse: la pelota se inclina hacia el cursor y una luz lo sigue.
 //  - Clic o toque sobre la pelota: "remate" (gira fuerte, chispas, onda expansiva
 //    y velocidad del disparo en km/h). Mientras más rápido gira, más brillan las costuras.
-import * as THREE from '/vendor/three-0.160.0/three.module.js';
+//
+// Three.js se carga desde CDN al final del archivo. Si no carga o no hay WebGL,
+// el escenario recibe la clase "sin-3d" y se muestra el balón de respaldo en CSS.
+const THREE_CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+let THREE;
 
-// Color de la paleta actual (ver :root en styles.css)
-const NEON = new THREE.Color('#39ff14');
+// Color de la paleta actual (--verde en style.css); se crea al cargar Three.js
+let NEON;
 
 /* ---------- Geometría: 12 pentágonos + 20 hexágonos ---------- */
 function buildTruncatedIcosahedron(radius) {
@@ -322,9 +326,14 @@ function initBall(stage, container) {
   pelota.add(new THREE.Mesh(new THREE.SphereGeometry(R * 1.3, 64, 48), haloMat));
 
   // Luces: principal blanca, contraluces neón y una luz que sigue al cursor
-  const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.1);
   keyLight.position.set(3, 4, 5);
   scene.add(keyLight);
+  // Foco de estadio desde arriba: ilumina fuerte la parte superior de la pelota
+  const focoArriba = new THREE.SpotLight(0xf2fff0, 3.4, 0, Math.PI / 7, 0.65, 0);
+  focoArriba.position.set(0, 7.5, 2);
+  focoArriba.target = pelota;
+  scene.add(focoArriba);
   const rim1 = new THREE.DirectionalLight(0x39ff14, 2.4);
   rim1.position.set(-5, 1, -4);
   scene.add(rim1);
@@ -639,7 +648,7 @@ function initBall(stage, container) {
     const flotar = reduceMotion ? 0 : Math.sin(tiempo * 1.1) * 0.07;
     let escala = 1;
     let fondo = 0;
-    if (k < 1.5) {
+    if (k < 1.5 && !reduceMotion) {
       escala = 1 + 0.08 * Math.sin(k * 30) * Math.exp(-k * 6);
       fondo = -0.6 * Math.sin(Math.min(k * 8, Math.PI)) * Math.exp(-k * 3);
     }
@@ -698,4 +707,15 @@ function initBall(stage, container) {
 }
 
 const canvasBall = document.getElementById('ball-canvas');
-if (canvasBall) initBall(canvasBall.closest('.ball-stage'), canvasBall);
+if (canvasBall) {
+  const stage = canvasBall.closest('.ball-stage');
+  try {
+    THREE = await import(THREE_CDN);
+    NEON = new THREE.Color('#39ff14');
+    initBall(stage, canvasBall);
+  } catch (e) {
+    // CDN caído, navegador sin módulos/WebGL o error al armar la escena
+    console.warn('Balón 3D no disponible, se usa el respaldo:', e);
+    stage.classList.add('sin-3d');
+  }
+}

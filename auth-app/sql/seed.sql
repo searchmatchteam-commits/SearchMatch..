@@ -18,11 +18,11 @@
 
 
 -- ============================================================
--- A) TABLA DE LA APP (la usan models/userModel.js de auth-app)
+-- A) TABLA ANTIGUA DE LA APP (ya no se usa)
 -- ============================================================
--- La contraseña NUNCA se guarda en texto plano: se guarda el hash
--- generado con bcrypt. "usuarios" (app) y "usuario" (searchmatch)
--- conviven sin conflicto: son tablas distintas.
+-- La usaba la primera versión de auth-app (login propio con bcrypt).
+-- Desde la integración con Supabase Auth, la app usa "usuario" y
+-- "jugador" (ver sección U al final). Se deja para no romper datos.
 
 CREATE TABLE IF NOT EXISTS usuarios (
     id            SERIAL PRIMARY KEY,
@@ -562,3 +562,28 @@ ON CONFLICT DO NOTHING;
 -- Tras ejecutar, deberías ver ~25 tablas:
 --   SELECT table_name FROM information_schema.tables
 --   WHERE table_schema = 'public' ORDER BY table_name;
+
+
+-- ============================================================
+-- U) INTEGRACIÓN CON SUPABASE AUTH (la usa models/userModel.js)
+-- ============================================================
+-- Las contraseñas ahora las maneja Supabase Auth (tabla auth.users).
+-- "usuario" se vincula a esa cuenta con id_auth (UUID).
+-- Re-ejecutable: IF NOT EXISTS / DROP NOT NULL no fallan si ya se aplicó.
+
+-- Vínculo con la cuenta de Supabase Auth.
+ALTER TABLE usuario
+    ADD COLUMN IF NOT EXISTS id_auth UUID UNIQUE
+    REFERENCES auth.users(id) ON DELETE SET NULL;
+
+-- La contraseña ya no se guarda en nuestras tablas.
+ALTER TABLE usuario ALTER COLUMN contrasena DROP NOT NULL;
+
+-- El registro no pide fecha de nacimiento; se podrá completar en el perfil.
+ALTER TABLE jugador ALTER COLUMN fecha_nacimiento DROP NOT NULL;
+
+-- RLS sin políticas: la API pública de Supabase (anon key) NO puede leer
+-- estas tablas. El servidor entra por DATABASE_URL (rol postgres), que no
+-- está sujeto a RLS, así que la app sigue funcionando.
+ALTER TABLE usuario ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jugador ENABLE ROW LEVEL SECURITY;

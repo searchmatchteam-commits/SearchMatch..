@@ -1,9 +1,22 @@
   </main>
 
   <footer class="pie">
-    <p>&copy; <%= new Date().getFullYear() %> auth-app — Ejemplo MVC con Express, EJS y Supabase</p>
+    <div class="pie__interior">
+      <nav class="pie__links" aria-label="Pie de página">
+        <a href="/">Inicio</a>
+        <span aria-hidden="true">·</span>
+        <a href="/login">Iniciar sesión</a>
+        <span aria-hidden="true">·</span>
+        <a href="/registro">Registrarse</a>
+      </nav>
+      <p class="pie__copy">&copy; <%= new Date().getFullYear() %> SearchMatch · Fútbol amateur en Chile</p>
+    </div>
   </footer>
 
-  <script src="/js/main.js"></script>
+  <script src="/js/main.js" defer></script>
+  <% if (locals.pagina === 'landing') { %>
+    <!-- Balón 3D: Three.js se carga desde CDN dentro de ball.js -->
+    <script type="module" src="/js/ball.js"></script>
+  <% } %>
 </body>
 </html>

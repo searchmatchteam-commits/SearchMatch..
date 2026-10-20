@@ -1,27 +1,28 @@
 <%- include('partials/header') %>
 
-<section class="tarjeta tarjeta--ancho">
-  <h1 class="tarjeta__titulo">Dashboard</h1>
-  <p class="dashboard__bienvenida">
-    Bienvenido, <strong><%= usuario.nombre %></strong>. 🎉
-  </p>
-
-  <div class="dashboard__datos">
-    <p><span class="etiqueta">ID:</span> <%= usuario.id %></p>
-    <p><span class="etiqueta">Nombre:</span> <%= usuario.nombre %></p>
-    <p><span class="etiqueta">Email:</span> <%= usuario.email %></p>
-  </div>
-
-  <div class="dashboard__nota">
-    <p>
-      Esta es una <strong>ruta protegida</strong>: solo es visible porque tu
-      sesión está activa en el servidor (cookie firmada por express-session).
+<section class="auth">
+  <div class="tarjeta auth__tarjeta auth__tarjeta--ancha dashboard">
+    <span class="badge"><span class="badge__punto" aria-hidden="true"></span>Sesión activa</span>
+    <h1 class="auth__titulo">¡Hola, <span class="texto-verde"><%= usuario.nombre %></span>!</h1>
+    <p class="auth__subtitulo">
+      Bienvenido a SearchMatch. Muy pronto aquí verás tus partidos, equipos y reservas.
     </p>
-  </div>
 
-  <form action="/logout" method="POST">
-    <button type="submit" class="btn btn--salir">Cerrar sesión</button>
-  </form>
+    <dl class="dashboard__datos">
+      <div>
+        <dt>Nombre</dt>
+        <dd><%= usuario.nombre %> <%= usuario.apellido %></dd>
+      </div>
+      <div>
+        <dt>Correo</dt>
+        <dd><%= usuario.correo %></dd>
+      </div>
+    </dl>
+
+    <form action="/logout" method="POST">
+      <button type="submit" class="btn btn--contorno btn--grande">Cerrar sesión</button>
+    </form>
+  </div>
 </section>
 
 <%- include('partials/footer') %>

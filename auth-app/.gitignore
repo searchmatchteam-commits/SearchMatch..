@@ -12,6 +12,5 @@ desktop.ini
 # Logs
 *.log
 npm-debug.log*
-
-.env
+.env.example
 .env.example

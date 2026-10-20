@@ -1,11 +1,12 @@
 <%- include('partials/header') %>
 
-<section class="tarjeta tarjeta--centrado">
-  <h1 class="tarjeta__titulo">Error <%= codigo %></h1>
-  <p class="error__mensaje"><%= mensaje %></p>
-  <p class="tarjeta__pie">
-    <a href="/">Volver al inicio</a>
-  </p>
+<section class="auth">
+  <div class="tarjeta auth__tarjeta error">
+    <p class="error__codigo"><%= codigo %></p>
+    <h1 class="auth__titulo">Fuera de juego</h1>
+    <p class="auth__subtitulo"><%= mensaje %></p>
+    <a class="btn btn--verde btn--grande" href="/">Volver al inicio</a>
+  </div>
 </section>
 
 <%- include('partials/footer') %>

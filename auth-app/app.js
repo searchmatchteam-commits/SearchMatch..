@@ -8,15 +8,21 @@ require('dotenv').config();
 
 const path = require('path');
 const express = require('express');
-const session = require('express-session');
+const cookieParser = require('cookie-parser');
 
 const { probarConexion } = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const indexRoutes = require('./routes/indexRoutes');
+const { cargarSesion } = require('./middlewares/authMiddleware');
 const { noEncontrado, manejarErrores } = require('./middlewares/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Detrás de un proxy con HTTPS (Render, Railway...) para que las cookies "secure" funcionen.
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 
 // ---------------------------------------------------------------
 // 1) Motor de vistas: EJS
@@ -28,41 +34,24 @@ app.set('views', path.join(__dirname, 'views'));
 // ---------------------------------------------------------------
 // 2) Middlewares globales
 // ---------------------------------------------------------------
-// Three.js se sirve desde este mismo sitio (ver el import de public/js/ball.js).
-app.use('/vendor/three-0.160.0', express.static(path.join(__dirname, 'node_modules/three/build')));
-
 // Archivos estáticos: CSS, JS e imágenes del navegador (carpeta /public).
-app.use(express.static(path.join(__dirname, 'public')));
+// index: false → "/" lo responde la landing en EJS, no un index.html.
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 // Habilita el parseo de formularios HTML (application/x-www-form-urlencoded).
 app.use(express.urlencoded({ extended: false }));
 
-// Sesiones con express-session:
-//  - secret: firma la cookie para que no se pueda manipular desde el cliente.
-//  - resave/saveUninitialized: no re-guardar sesiones vacías.
-//  - cookie httpOnly: la cookie no es accesible desde JavaScript del navegador.
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'clave_secreta_temporal_sin_produccion',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60, // 1 hora de duración
-    },
-  })
-);
+// Lee las cookies httpOnly donde guardamos los tokens de Supabase.
+app.use(cookieParser());
 
-// Hacemos disponible el usuario de la sesión en TODAS las vistas.
-app.use((req, res, next) => {
-  res.locals.usuario = req.session.usuario || null;
-  next();
-});
+// Verifica la sesión de Supabase y deja el usuario en req.usuario y en
+// res.locals.usuario (disponible en TODAS las vistas).
+app.use(cargarSesion);
 
 // ---------------------------------------------------------------
 // 3) Rutas (solo definen caminos y llaman a controladores)
 // ---------------------------------------------------------------
-app.use('/', indexRoutes);      // raíz y /dashboard
+app.use('/', indexRoutes);      // landing y /dashboard
 app.use('/', authRoutes);       // /login, /registro, /logout
 
 // ---------------------------------------------------------------

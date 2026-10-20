@@ -1,0 +1,259 @@
+<%- include('partials/header') %>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="contenedor hero__grid">
+    <div class="hero__texto">
+      <span class="badge revelar"><span class="badge__punto" aria-hidden="true"></span>Listo para jugar</span>
+
+      <h1 class="hero__titulo revelar">
+        Encuentra tu partido, <span class="texto-verde">arma tu equipo</span>
+      </h1>
+
+      <p class="hero__parrafo revelar">
+        SearchMatch conecta jugadores, equipos y canchas en un solo lugar. Busca cupos
+        cerca de ti, reserva cancha y organiza tus pichangas sin perseguir a nadie por WhatsApp.
+      </p>
+
+      <div class="hero__acciones revelar">
+        <a class="btn btn--verde btn--grande" href="/registro">CREAR CUENTA <span aria-hidden="true">→</span></a>
+        <a class="btn btn--contorno btn--grande" href="/login">Ya tengo cuenta</a>
+      </div>
+    </div>
+
+    <div class="hero__visual">
+      <div class="ball-stage">
+        <div class="ball-cuadricula" aria-hidden="true"></div>
+        <div class="ball-foco" aria-hidden="true"></div>
+        <div class="ball-anillo" aria-hidden="true"></div>
+        <!-- Respaldo sin WebGL: un balón dibujado con CSS -->
+        <div class="ball-fallback" aria-hidden="true"></div>
+        <div id="ball-canvas" role="img" aria-label="Balón de fútbol 3D interactivo"></div>
+      </div>
+      <p class="hero__pista">Arrastra para girar · toca para rematar</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LA PLATAFORMA (grid bento) ============ -->
+<%
+  // Carta de ejemplo: el color del borde depende de la media
+  // (<65 bronce, 65-79 plata, 80+ verde neón).
+  const cartaEjemplo = {
+    media: 84,
+    posicion: 'DEL',
+    stats: [['VEL', 88], ['TIR', 85], ['PAS', 79], ['REG', 86], ['DEF', 41], ['FÍS', 77]],
+  };
+  const nivelCarta = cartaEjemplo.media >= 80 ? 'neon' : cartaEjemplo.media >= 65 ? 'plata' : 'bronce';
+%>
+<section class="seccion seccion--plataforma" id="plataforma">
+  <div class="contenedor contenedor--amplio">
+    <header class="seccion__cabecera revelar">
+      <span class="etiqueta-verde">La plataforma</span>
+      <h2 class="seccion__titulo">Todo lo que necesitas para saltar a la cancha</h2>
+    </header>
+
+    <div class="bento">
+      <!-- 1) Perfil de jugador (tarjeta grande) -->
+      <article class="bento__tarjeta bento__tarjeta--perfil revelar">
+        <header class="bento__cabecera">
+          <span class="bento__icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" /><circle cx="9" cy="11" r="2" /><path d="M6.2 15a3 3 0 0 1 5.6 0M15 10h3M15 14h3" /></svg>
+          </span>
+          <h3 class="bento__titulo">Perfil de jugador</h3>
+        </header>
+        <p class="bento__texto">Crea tu carta de jugador, define tus posiciones y sube de nivel partido a partido.</p>
+
+        <div class="bento__demo bento__demo--carta" aria-hidden="true">
+          <div class="carta-jugador carta-jugador--<%= nivelCarta %>" data-tilt>
+            <div class="carta-jugador__marco">
+              <div class="carta-jugador__cuerpo">
+                <div class="carta-jugador__cabecera">
+                  <div class="carta-jugador__media">
+                    <span class="carta-jugador__numero"><%= cartaEjemplo.media %></span>
+                    <span class="carta-jugador__posicion"><%= cartaEjemplo.posicion %></span>
+                  </div>
+                  <svg class="carta-jugador__marca" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.8" />
+                    <path d="M12 7.2l4.1 3-1.6 4.8h-5L7.9 10.2z" fill="currentColor" />
+                    <path d="M12 7.2V2.3M16.1 10.2l4.6-1.5M14.5 15l2.9 4M9.5 15l-2.9 4M7.9 10.2L3.3 8.7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                  </svg>
+                </div>
+
+                <div class="carta-jugador__avatar">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></svg>
+                </div>
+
+                <p class="carta-jugador__nombre">TU NOMBRE</p>
+
+                <dl class="carta-jugador__stats">
+                  <% cartaEjemplo.stats.forEach(function ([sigla, valor]) { %>
+                    <div><dt><%= sigla %></dt><dd><%= valor %></dd></div>
+                  <% }) %>
+                </dl>
+
+                <span class="carta-jugador__brillo"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 2) Canchas: agenda de un día -->
+      <article class="bento__tarjeta bento__tarjeta--canchas revelar">
+        <header class="bento__cabecera">
+          <span class="bento__icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5M16 2v4M8 2v4M3 10h5" /><circle cx="16" cy="16" r="6" /><path d="M16 14v2.3l1.5 1.2" /></svg>
+          </span>
+          <h3 class="bento__titulo">Canchas</h3>
+        </header>
+        <p class="bento__texto">Encuentra canchas cerca de ti, compara precios y reserva tu horario.</p>
+
+        <div class="bento__demo agenda" aria-hidden="true">
+          <div class="agenda__cabecera">
+            <span>Cancha El Potrero · Hoy</span>
+            <span class="agenda__precio">$25.000<small>/hora</small></span>
+          </div>
+          <ul class="agenda__bloques">
+            <li class="agenda__bloque agenda__bloque--reservado"><time>18:00</time><span>Reservado</span></li>
+            <li class="agenda__bloque agenda__bloque--libre"><time>19:00</time><span>Disponible</span></li>
+            <li class="agenda__bloque agenda__bloque--reservado"><time>20:00</time><span>Reservado</span></li>
+            <li class="agenda__bloque agenda__bloque--libre"><time>21:00</time><span>Disponible</span></li>
+            <li class="agenda__bloque agenda__bloque--libre"><time>22:00</time><span>Disponible</span></li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 3) Torneos: mini bracket -->
+      <article class="bento__tarjeta bento__tarjeta--torneos revelar">
+        <header class="bento__cabecera">
+          <span class="bento__icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.7V17c0 .6-.5 1-1 1.2C7.9 18.8 7 20.2 7 22M14 14.7V17c0 .6.5 1 1 1.2 1.1.6 2 2 2 3.8" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></svg>
+          </span>
+          <h3 class="bento__titulo">Torneos</h3>
+        </header>
+        <p class="bento__texto">Inscribe a tu equipo en torneos y sigue los resultados en tiempo real.</p>
+
+        <div class="bento__demo bracket" aria-hidden="true">
+          <span class="bracket__etiqueta bracket__etiqueta--semis">Semifinales</span>
+          <span class="bracket__etiqueta bracket__etiqueta--final">Final</span>
+          <div class="bracket__partido bracket__partido--semi1">
+            <div class="bracket__equipo bracket__equipo--gana"><span>Los Cracks FC</span><b>3</b></div>
+            <div class="bracket__equipo"><span>Halcones del Sur</span><b>1</b></div>
+          </div>
+          <div class="bracket__partido bracket__partido--semi2">
+            <div class="bracket__equipo"><span>Atlético Barrio</span><b>0</b></div>
+            <div class="bracket__equipo bracket__equipo--gana"><span>Real Pichanga</span><b>2</b></div>
+          </div>
+          <div class="bracket__partido bracket__partido--final">
+            <div class="bracket__equipo bracket__equipo--campeon"><span>Los Cracks FC</span><b>2</b></div>
+            <div class="bracket__equipo"><span>Real Pichanga</span><b>1</b></div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 4) Equipos -->
+      <article class="bento__tarjeta bento__tarjeta--equipos revelar">
+        <header class="bento__cabecera">
+          <span class="bento__icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" /></svg>
+          </span>
+          <h3 class="bento__titulo">Equipos</h3>
+        </header>
+        <p class="bento__texto">Únete a equipos que buscan tu posición o arma el tuyo desde cero.</p>
+
+        <div class="bento__demo equipo" aria-hidden="true">
+          <div class="equipo__fila">
+            <div class="equipo__avatares">
+              <span>MR</span><span>JP</span><span>CA</span><span>DT</span><span class="equipo__mas">+3</span>
+            </div>
+            <span class="equipo__nivel">Nivel Intermedio</span>
+          </div>
+          <p class="equipo__nombre">Halcones del Sur</p>
+          <div class="equipo__busca">
+            <span class="equipo__busca-label">Busca:</span>
+            <span class="chip">Defensa</span>
+            <span class="chip">Arquero</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 5) Desafíos -->
+      <article class="bento__tarjeta bento__tarjeta--desafios revelar">
+        <header class="bento__cabecera">
+          <span class="bento__icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2" /></svg>
+          </span>
+          <h3 class="bento__titulo">Desafíos</h3>
+        </header>
+        <p class="bento__texto">Desafía a otros equipos y organiza partidos.</p>
+
+        <div class="bento__demo aviso" aria-hidden="true">
+          <div class="aviso__cuerpo">
+            <span class="aviso__escudo">LC</span>
+            <div>
+              <p class="aviso__titulo"><strong>Los Cracks FC</strong> desafió a tu equipo</p>
+              <p class="aviso__meta">Sáb 20:00 · Fútbol 7</p>
+            </div>
+          </div>
+          <div class="aviso__acciones">
+            <span class="aviso__boton aviso__boton--aceptar">Aceptar</span>
+            <span class="aviso__boton">Rechazar</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CÓMO FUNCIONA (timeline) ============ -->
+<section class="seccion" id="como-funciona">
+  <div class="contenedor">
+    <header class="seccion__cabecera revelar">
+      <span class="etiqueta-verde">Cómo funciona</span>
+      <h2 class="seccion__titulo">De la app a la cancha en 3 pasos</h2>
+    </header>
+
+    <div class="timeline" data-timeline>
+      <!-- Línea que se rellena de verde según el scroll (la controla main.js) -->
+      <div class="timeline__linea" aria-hidden="true"><span class="timeline__progreso"></span></div>
+
+      <ol class="timeline__pasos">
+        <li class="timeline__paso">
+          <span class="timeline__numero" aria-hidden="true">1</span>
+          <div>
+            <h3 class="timeline__titulo">Crea tu cuenta</h3>
+            <p class="timeline__texto">Regístrate con tu correo y tu número de WhatsApp.</p>
+          </div>
+        </li>
+        <li class="timeline__paso">
+          <span class="timeline__numero" aria-hidden="true">2</span>
+          <div>
+            <h3 class="timeline__titulo">Arma tu carta</h3>
+            <p class="timeline__texto">Elige tus posiciones y completa tu perfil de jugador.</p>
+          </div>
+        </li>
+        <li class="timeline__paso">
+          <span class="timeline__numero" aria-hidden="true">3</span>
+          <div>
+            <h3 class="timeline__titulo">A jugar</h3>
+            <p class="timeline__texto">Únete a un equipo, reserva cancha o entra a un torneo.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA FINAL ============ -->
+<section class="seccion seccion--cta">
+  <div class="contenedor">
+    <div class="cta revelar">
+      <h2 class="cta__titulo">¿Listo para tu próxima pichanga?</h2>
+      <p class="cta__texto">Crear tu cuenta toma menos de un minuto.</p>
+      <a class="btn btn--verde btn--xl btn--glow" href="/registro">REGISTRARSE <span aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

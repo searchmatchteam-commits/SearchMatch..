@@ -24,28 +24,31 @@ function manejarErrores(err, req, res, next) {
     return next(err);
   }
 
-  const statusCode = err.statusCode || 500;
+  const statusCode = err.statusCode || err.status || 500;
 
-  // En consola dejamos el detalle completo para depurar.
+  // En consola dejamos el detalle completo para depurar (los 404 no ensucian el log).
   // Nota: algunos errores de pg (AggregateError) traen .message vacío,
-  // por eso caemos a err.detail / código antes de rendernos.
-  const detalle = err.message || err.detail || err.code || 'sin detalle';
-  console.error('💥 Error capturado por el middleware de errores:');
-  console.error('   Status:', statusCode);
-  console.error('   Mensaje:', detalle);
-  if (process.env.NODE_ENV !== 'production' && err.stack) {
-    console.error(err.stack);
+  // por eso caemos a err.detail / código.
+  if (statusCode !== 404) {
+    const detalle = err.message || err.detail || err.code || 'sin detalle';
+    console.error('💥 Error capturado por el middleware de errores:');
+    console.error('   Status:', statusCode);
+    console.error('   Mensaje:', detalle);
+    if (process.env.NODE_ENV !== 'production' && err.stack) {
+      console.error(err.stack);
+    }
   }
 
-  // Al usuario solo le mostramos la vista de error con un mensaje claro.
+  // Al usuario solo le mostramos un mensaje genérico, nunca el detalle interno.
+  const mensajes = {
+    400: 'La solicitud no es válida.',
+    404: 'La página que buscas no existe.',
+  };
+
   return res.status(statusCode).render('error', {
     titulo: 'Error',
     codigo: statusCode,
-    mensaje:
-      statusCode === 404
-        ? 'La página que buscas no existe.'
-        : 'Ocurrió un error inesperado. Inténtalo de nuevo más tarde.',
-    usuario: req.session.usuario || null,
+    mensaje: mensajes[statusCode] || 'Ocurrió un error inesperado. Inténtalo de nuevo más tarde.',
   });
 }
 
