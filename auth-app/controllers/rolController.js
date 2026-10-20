@@ -50,27 +50,17 @@ async function guardarSeleccion(req, res, next) {
 }
 
 // ---------------------------------------------------------------
-// GET /registro-equipo → siguiente paso del equipo (por construir).
-// El del jugador es el wizard de jugadorController.
+// GET /registro-equipo → aviso "en construcción" (el registro de equipos aún no existe).
+// El siguiente paso del jugador es el wizard de jugadorController.
 // ---------------------------------------------------------------
-const PASOS = {
-  equipo: {
-    titulo: 'Registra tu equipo',
-    texto: 'Aquí vas a registrar tu escuadra e invitar a tus jugadores. Estamos terminando esta sección.',
-  },
-};
-
-function siguientePaso(rol) {
-  return (req, res) => {
-    res.render('siguiente-paso', {
-      titulo: PASOS[rol].titulo,
-      paso: PASOS[rol],
-    });
-  };
+function registroEquipo(req, res) {
+  res.render('equipo-en-construccion', {
+    titulo: 'Equipos: en construcción',
+  });
 }
 
 module.exports = {
   mostrarSeleccion,
   guardarSeleccion,
-  registroEquipo: siguientePaso('equipo'),
+  registroEquipo,
 };

@@ -37,9 +37,13 @@
     <!-- Carta: vista previa de la foto, descargar y compartir -->
     <script src="/js/perfil.js" defer></script>
   <% } %>
-  <% if (locals.pagina === 'landing') { %>
+  <% if (locals.pagina === 'landing' || locals.pagina === 'dashboard') { %>
     <!-- Balón 3D: Three.js se carga desde CDN dentro de ball.js -->
     <script type="module" src="/js/ball.js"></script>
+  <% } %>
+  <% if (locals.pagina === 'dashboard') { %>
+    <!-- Dashboard: avisos de "próximamente" en reservar / enviar solicitud -->
+    <script src="/js/dashboard.js" defer></script>
   <% } %>
 </body>
 </html>
