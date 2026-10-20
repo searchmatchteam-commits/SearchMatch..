@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= titulo %> | auth-app</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <a class="navbar__logo" href="/">🔐 auth-app</a>
+    <nav class="navbar__nav">
+      <% if (usuario) { %>
+        <!-- Usuario con sesión activa -->
+        <span class="navbar__saludo">Hola, <%= usuario.nombre %></span>
+        <a class="btn btn--nav" href="/dashboard">Dashboard</a>
+        <form action="/logout" method="POST" class="navbar__form">
+          <button type="submit" class="btn btn--salir">Cerrar sesión</button>
+        </form>
+      <% } else { %>
+        <!-- Sin sesión -->
+        <a class="btn btn--nav" href="/login">Iniciar sesión</a>
+        <a class="btn btn--primario" href="/registro">Registrarse</a>
+      <% } %>
+    </nav>
+  </header>
+
+  <main class="contenedor">
