@@ -3,7 +3,7 @@
 //  1) Validación en el navegador: campos obligatorios, formato del correo,
 //     celular chileno, contraseña de 8+ caracteres y confirmación.
 //  2) Errores bajo cada campo + resumen en la alerta roja bajo el formulario.
-//  3) Estado "cargando": spinner y botón deshabilitado mientras responde el servidor.
+//  3) Estado "cargando": spinner, botón deshabilitado y luz en la tarjeta mientras responde el servidor.
 //  4) Botón de ojo para mostrar u ocultar las contraseñas ([data-ver-password]).
 // Es solo una ayuda para el usuario: la validación real la repite el servidor
 // (middlewares/validators.js), así que las reglas deben coincidir con las de allá.
@@ -107,6 +107,9 @@ function ponerCargando(boton, cargando) {
   boton.classList.toggle('btn--cargando', cargando);
   boton.setAttribute('aria-busy', String(cargando));
   texto.textContent = cargando ? boton.dataset.textoCargando : boton.dataset.textoOriginal;
+  // Luz que recorre el borde de la tarjeta mientras responde el servidor (auth.css)
+  const tarjeta = boton.closest('.auth__tarjeta');
+  if (tarjeta) tarjeta.classList.toggle('auth__tarjeta--enviando', cargando);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

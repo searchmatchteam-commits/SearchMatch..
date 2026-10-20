@@ -1,0 +1,458 @@
+/* public/css/auth.css
+   Login y registro "cyber-sport" (solo se carga en páginas con pagina: 'auth', después de cyber.css).
+   Fondo, cursor de luz y ripple están en cyber.css; la base de formularios y alertas, en style.css.
+   Secciones: escena · panel de marca · tarjeta · pestañas · campos · botón principal ·
+   envío en curso · alertas · responsive. */
+
+/* ---------- Escena ---------- */
+.pagina-auth .auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-items: center;
+  gap: 64px;
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+}
+
+/* ---------- Panel de marca (solo escritorio) ---------- */
+.auth-marca {
+  display: none;
+}
+
+.auth-marca > * {
+  animation: aparecer 0.7s var(--curva) both;
+}
+
+.auth-marca > :nth-child(2) { animation-delay: 0.08s; }
+.auth-marca > :nth-child(3) { animation-delay: 0.16s; }
+.auth-marca > :nth-child(4) { animation-delay: 0.24s; }
+
+.auth-marca__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 15px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--verde);
+  background: rgba(var(--verde-rgb), 0.06);
+  border: 1px solid rgba(var(--verde-rgb), 0.22);
+}
+
+.auth-marca__chip .badge__punto {
+  background: var(--verde);
+  box-shadow: 0 0 10px var(--verde);
+}
+
+.auth-marca__titulo {
+  font-family: var(--fuente-titulo);
+  font-size: clamp(2.6rem, 4.2vw, 3.9rem);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.auth-marca__titulo em {
+  font-style: normal;
+  color: var(--verde);
+  background: linear-gradient(100deg, #e9fff0 0%, var(--verde) 55%, var(--verde-oscuro) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 26px rgba(var(--verde-rgb), 0.3));
+}
+
+.auth-marca__texto {
+  max-width: 30rem;
+  color: var(--texto-suave);
+  font-size: 1.05rem;
+}
+
+.auth-marca__lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.auth-marca__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 24rem;
+  padding: 12px 16px 12px 12px;
+  border-radius: 16px;
+  background: var(--vidrio);
+  border: 1px solid var(--vidrio-borde);
+}
+
+.auth-marca__item svg {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  padding: 9px;
+  border-radius: 12px;
+  background: rgba(var(--verde-rgb), 0.08);
+  border: 1px solid rgba(var(--verde-rgb), 0.18);
+  fill: none;
+  stroke: var(--verde);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px rgba(var(--verde-rgb), 0.35));
+}
+
+.auth-marca__item span {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: var(--texto-suave);
+}
+
+.auth-marca__item strong {
+  color: var(--texto);
+  font-size: 0.95rem;
+}
+
+/* ---------- Tarjeta de cristal ---------- */
+.pagina-auth .auth__tarjeta {
+  max-width: 460px;
+  padding: 28px 22px 30px;
+  border-radius: 26px;
+  background: linear-gradient(165deg, rgba(20, 28, 20, 0.86), rgba(6, 9, 6, 0.82));
+  border: 1px solid var(--vidrio-borde);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 0 120px rgba(var(--verde-rgb), 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.pagina-auth .auth__tarjeta--ancha {
+  max-width: 580px;
+}
+
+/* Filo neón en el borde superior */
+.auth__filo {
+  position: absolute;
+  top: -1px;
+  left: 14%;
+  right: 14%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--verde), transparent);
+  box-shadow: 0 0 12px 1px rgba(var(--verde-rgb), 0.5);
+  clip-path: inset(-20px 0);   /* la luz de "enviando" no se sale por los lados del filo */
+  pointer-events: none;
+}
+
+.pagina-auth .auth__tarjeta .etiqueta-verde {
+  color: var(--verde);
+  letter-spacing: 0.24em;
+}
+
+.pagina-auth .auth__titulo {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: clamp(1.9rem, 6vw, 2.4rem);
+  letter-spacing: -0.04em;
+}
+
+.pagina-auth .auth__pie a {
+  color: var(--verde);
+}
+
+/* ---------- Pestañas Iniciar sesión / Crear cuenta ---------- */
+.auth-pestanas {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 26px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Indicador de la pestaña activa */
+.auth-pestanas__indicador {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(var(--verde-rgb), 0.18), rgba(var(--verde-rgb), 0.06));
+  border: 1px solid var(--verde-borde);
+  box-shadow: 0 0 18px rgba(var(--verde-rgb), 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.auth-pestanas--registro .auth-pestanas__indicador {
+  transform: translateX(100%);
+}
+
+.auth-pestanas__item {
+  position: relative;
+  z-index: 1;
+  padding: 10px 8px;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--texto-suave);
+  transition: color 0.2s ease;
+}
+
+.auth-pestanas__item:hover {
+  text-decoration: none;
+  color: var(--texto);
+}
+
+.auth-pestanas__item--activa,
+.auth-pestanas__item--activa:hover {
+  color: var(--verde);
+}
+
+/* ---------- Campos ---------- */
+.pagina-auth .auth__tarjeta .campo label {
+  color: #c9d1c9;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Input oscuro con borde sutil; al enfocar brilla por dentro (box-shadow inset) */
+.pagina-auth .auth__tarjeta .campo input {
+  padding-top: 14px;
+  padding-bottom: 14px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  caret-color: var(--verde);
+  transition: border-color 0.25s ease, box-shadow 0.3s ease, background-color 0.25s ease;
+}
+
+.pagina-auth .auth__tarjeta .campo input::placeholder {
+  color: #5d665d;
+}
+
+.pagina-auth .auth__tarjeta .campo input:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.pagina-auth .auth__tarjeta .campo input:focus {
+  border-color: rgba(var(--verde-rgb), 0.6);
+  background: rgba(0, 18, 6, 0.55);
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--verde-rgb), 0.3),
+    inset 0 0 20px rgba(var(--verde-rgb), 0.12),
+    0 0 24px rgba(var(--verde-rgb), 0.12);
+}
+
+.pagina-auth .auth__tarjeta .campo--error input,
+.pagina-auth .auth__tarjeta .campo--error input:hover {
+  border-color: rgba(255, 107, 107, 0.6);
+}
+
+.pagina-auth .auth__tarjeta .campo--error input:focus {
+  background: rgba(30, 4, 4, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(255, 107, 107, 0.3), inset 0 0 20px rgba(255, 107, 107, 0.1);
+}
+
+/* Autocompletado del navegador: sin el fondo amarillo/azul (se congela el color de fondo) */
+.pagina-auth .auth__tarjeta .campo input:-webkit-autofill {
+  -webkit-text-fill-color: var(--texto);
+  transition: border-color 0.25s ease, box-shadow 0.3s ease, background-color 9999s ease 0s;
+}
+
+/* Línea de escaneo bajo el campo enfocado (solo transform) */
+.pagina-auth .campo__control::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--verde), transparent);
+  box-shadow: 0 0 8px rgba(var(--verde-rgb), 0.8);
+  transform: scaleX(0);
+  opacity: 0;
+  transition: transform 0.45s var(--curva), opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.pagina-auth .campo__control:focus-within::after {
+  transform: scaleX(1);
+  opacity: 1;
+}
+
+.pagina-auth .campo--error .campo__control::after {
+  background: linear-gradient(90deg, transparent, var(--error), transparent);
+  box-shadow: 0 0 8px rgba(255, 107, 107, 0.7);
+}
+
+.pagina-auth .campo__control:focus-within .campo__icono {
+  filter: drop-shadow(0 0 5px rgba(var(--verde-rgb), 0.6));
+}
+
+.pagina-auth .campo__ojo[aria-pressed="true"] {
+  filter: drop-shadow(0 0 5px rgba(var(--verde-rgb), 0.6));
+}
+
+/* ---------- Botón principal: glow expansivo y leve escalado ---------- */
+.pagina-auth .auth-btn {
+  position: relative;
+  isolation: isolate;
+  margin-top: 12px;
+  padding: 18px 26px;
+  background: linear-gradient(135deg, #5dff86 0%, var(--verde) 40%, var(--verde-oscuro) 100%);
+  color: var(--sobre-verde);
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  box-shadow: 0 0 0 1px rgba(var(--verde-rgb), 0.6), 0 0 22px rgba(var(--verde-rgb), 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition: transform 0.3s var(--curva), box-shadow 0.3s ease;
+}
+
+/* Halo que se expande al pasar el mouse (solo opacity y scale) */
+.auth-btn__halo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  box-shadow: 0 0 30px 6px rgba(var(--verde-rgb), 0.55), 0 0 90px 26px rgba(var(--verde-rgb), 0.22);
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.35s ease, transform 0.5s var(--curva);
+  pointer-events: none;
+}
+
+/* Destello diagonal que cruza el botón */
+.pagina-auth .auth-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.6) 48%, transparent 62%) no-repeat;
+  background-size: 250% 100%;
+  background-position: 160% 0;
+  pointer-events: none;
+}
+
+.pagina-auth .auth__tarjeta .formulario .auth-btn:hover {
+  background: linear-gradient(135deg, #7dff9f 0%, var(--verde-hover) 40%, var(--verde) 100%);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 0 0 1px rgba(var(--verde-rgb), 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.pagina-auth .auth-btn:hover .auth-btn__halo {
+  opacity: 1;
+  transform: scale(1.06);
+}
+
+.pagina-auth .auth-btn:hover::after {
+  background-position: -60% 0;
+  transition: background-position 0.9s ease;
+}
+
+.pagina-auth .auth-btn .btn__flecha {
+  transition: transform 0.3s var(--curva);
+}
+
+.pagina-auth .auth-btn:hover .btn__flecha {
+  transform: translateX(4px);
+}
+
+.pagina-auth .auth__tarjeta .formulario .auth-btn:active {
+  transform: scale(0.98);
+}
+
+.pagina-auth .auth-btn.btn--cargando .auth-btn__halo {
+  opacity: 0.6;
+  transform: scale(1);
+}
+
+/* ---------- Envío en curso (auth.js agrega .auth__tarjeta--enviando) ---------- */
+/* Mientras responde el servidor, una luz recorre el filo superior de la tarjeta (solo transform) */
+.auth__filo::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 35%;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #e9fff0, transparent);
+  box-shadow: 0 0 14px 2px rgba(var(--verde-rgb), 0.8);
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+.auth__tarjeta--enviando .auth__filo::after {
+  opacity: 1;
+  animation: auth-enviando 1.1s ease-in-out infinite;
+}
+
+@keyframes auth-enviando {
+  to { transform: translateX(286%); }
+}
+
+/* Los campos se atenúan un poco: se nota que la acción está en marcha */
+.auth__tarjeta--enviando .campo {
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+/* ---------- Alertas de cristal ---------- */
+.pagina-auth .alerta {
+  border-radius: 14px;
+}
+
+.pagina-auth .alerta--exito {
+  background: rgba(var(--verde-rgb), 0.07);
+  border-color: rgba(var(--verde-rgb), 0.3);
+  color: #b6ffc8;
+  box-shadow: inset 0 0 18px rgba(var(--verde-rgb), 0.06);
+}
+
+.pagina-auth .alerta--error {
+  box-shadow: inset 0 0 18px rgba(255, 107, 107, 0.06);
+}
+
+/* ---------- Responsive ---------- */
+@media (min-width: 600px) {
+  .pagina-auth .auth__tarjeta {
+    padding: 36px 40px 38px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .pagina-auth .auth {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+    justify-items: stretch;
+    padding: 56px 40px 72px;
+  }
+
+  .pagina-auth .auth--registro {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 580px);
+  }
+
+  .auth-marca {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 22px;
+  }
+
+  .pagina-auth .auth__tarjeta {
+    justify-self: end;
+  }
+}

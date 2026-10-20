@@ -20,30 +20,42 @@
     </div>
   </footer>
 
-  <script src="/js/main.js" defer></script>
+  <script src="/js/main.js?v=<%= versionAssets %>" defer></script>
+  <% if (locals.pagina === 'dashboard' || locals.pagina === 'auth') { %>
+    <!-- Ripple y cursor de luz del sistema "cyber-sport" -->
+    <script src="/js/cyber.js?v=<%= versionAssets %>" defer></script>
+  <% } %>
   <% if (locals.pagina === 'auth') { %>
     <!-- Validación y estado "cargando" de login/registro -->
-    <script src="/js/auth.js" defer></script>
+    <script src="/js/auth.js?v=<%= versionAssets %>" defer></script>
   <% } %>
   <% if (locals.pagina === 'rol') { %>
     <!-- Selección de rol: texto y estado del botón -->
-    <script src="/js/rol.js" defer></script>
+    <script src="/js/rol.js?v=<%= versionAssets %>" defer></script>
   <% } %>
   <% if (locals.pagina === 'wizard') { %>
     <!-- Wizard de perfil: pasos, validación y resumen -->
-    <script src="/js/wizard.js" defer></script>
+    <script src="/js/wizard.js?v=<%= versionAssets %>" defer></script>
   <% } %>
   <% if (locals.pagina === 'perfil') { %>
     <!-- Carta: vista previa de la foto, descargar y compartir -->
-    <script src="/js/perfil.js" defer></script>
+    <script src="/js/perfil.js?v=<%= versionAssets %>" defer></script>
   <% } %>
   <% if (locals.pagina === 'landing' || locals.pagina === 'dashboard') { %>
     <!-- Balón 3D: Three.js se carga desde CDN dentro de ball.js -->
-    <script type="module" src="/js/ball.js"></script>
+    <script type="module" src="/js/ball.js?v=<%= versionAssets %>"></script>
   <% } %>
   <% if (locals.pagina === 'dashboard') { %>
-    <!-- Dashboard: avisos de "próximamente", parallax, cursor de luz, ripple y foil de la carta -->
-    <script src="/js/dashboard.js" defer></script>
+    <!-- Dashboard: avisos de "próximamente", parallax y foil de la carta -->
+    <script src="/js/dashboard.js?v=<%= versionAssets %>" defer></script>
+  <% } %>
+  <% if (!usuario) { %>
+    <!-- Prerender: al pasar el mouse (o tocar) un enlace a login/registro, Chrome y Edge
+         preparan esa página en segundo plano y al hacer clic aparece al instante.
+         Los navegadores que no lo soportan simplemente lo ignoran. -->
+    <script type="speculationrules">
+      { "prerender": [{ "where": { "href_matches": ["/login", "/registro"] }, "eagerness": "moderate" }] }
+    </script>
   <% } %>
 </body>
 </html>

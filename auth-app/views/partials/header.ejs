@@ -9,15 +9,42 @@
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" />
-  <link rel="stylesheet" href="/css/style.css" />
-  <% if (locals.pagina === 'dashboard') { %>
-    <!-- Dashboard "cyber-sport": títulos en Space Grotesk y estilos propios -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" />
-    <link rel="stylesheet" href="/css/dashboard.css" />
+<%
+    // Páginas "cyber-sport": sistema compartido + hoja propia de la página
+    const cyber = locals.pagina === 'dashboard' || locals.pagina === 'auth';
+    // Una sola petición a Google Fonts (cada hoja de fuentes extra bloquea el primer pintado)
+    const fuentes = 'family=Inter:wght@400;500;600;700;800;900' + (cyber ? '&family=Space+Grotesk:wght@500;600;700' : '');
+  %>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?<%= fuentes %>&display=swap" />
+  <!-- ?v= cambia en cada arranque del servidor: el navegador puede guardar los archivos en caché sin quedar desactualizado -->
+  <link rel="stylesheet" href="/css/style.css?v=<%= versionAssets %>" />
+  <% if (cyber) { %>
+    <link rel="stylesheet" href="/css/cyber.css?v=<%= versionAssets %>" />
+    <link rel="stylesheet" href="/css/<%= pagina %>.css?v=<%= versionAssets %>" />
   <% } %>
-  <!-- Marca que hay JS: las animaciones de aparición solo se activan si existe -->
-  <script>document.documentElement.classList.add('js');</script>
+  <% if (locals.pagina === 'landing' || locals.pagina === 'dashboard') { %>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <% } %>
+  <% if (locals.pagina === 'auth') { %>
+    <!-- Mientras el usuario escribe, el navegador baja Three.js en segundo plano:
+         al entrar al dashboard el balón 3D ya está en caché -->
+    <link rel="prefetch" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" crossorigin="anonymous" />
+  <% } %>
+  <!-- Marca que hay JS (las animaciones de aparición solo se activan si existe) y decide el
+       "modo liviano": sin efectos pesados cuando el navegador no tiene aceleración gráfica.
+       ?liviano=1 lo fuerza, ?liviano=0 lo desactiva (queda guardado); "sm-gpu" lo detecta cyber.js. -->
+  <script>
+    (function () {
+      var raiz = document.documentElement;
+      raiz.classList.add('js');
+      try {
+        var forzado = new URLSearchParams(location.search).get('liviano');
+        if (forzado !== null) localStorage.setItem('sm-liviano', forzado === '0' ? 'no' : 'si');
+        var modo = localStorage.getItem('sm-liviano') || (sessionStorage.getItem('sm-gpu') === 'software' ? 'si' : 'no');
+        if (modo === 'si') raiz.classList.add('modo-liviano');
+      } catch (e) { /* sin localStorage: modo normal */ }
+    })();
+  </script>
 </head>
 <body class="<%= locals.pagina ? 'pagina-' + pagina : '' %>">
   <header class="navbar">

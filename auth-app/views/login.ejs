@@ -1,7 +1,19 @@
 <%- include('partials/header') %>
 
-<section class="auth">
+<%- include('partials/fondo-cyber', { variante: 'pizarra' }) %>
+
+<section class="auth auth--login">
+  <%- include('partials/auth-marca', { titulo: 'La cancha te está <em>esperando</em>.' }) %>
+
   <div class="tarjeta auth__tarjeta">
+    <span class="auth__filo" aria-hidden="true"></span>
+    <!-- Cambiar entre login y registro -->
+    <nav class="auth-pestanas auth-pestanas--login" aria-label="Elegir formulario">
+      <span class="auth-pestanas__indicador" aria-hidden="true"></span>
+      <a class="auth-pestanas__item auth-pestanas__item--activa" href="/login" aria-current="page">Iniciar sesión</a>
+      <a class="auth-pestanas__item" href="/registro">Crear cuenta</a>
+    </nav>
+
     <span class="etiqueta-verde">Bienvenido de vuelta</span>
     <h1 class="auth__titulo">Iniciar sesión</h1>
     <p class="auth__subtitulo">Entra para ver tus partidos, equipos y reservas.</p>
@@ -54,7 +66,8 @@
         <small class="campo__error" id="password-error"></small>
       </div>
 
-      <button type="submit" class="btn btn--verde btn--bloque btn--grande" data-texto-cargando="ENTRANDO...">
+      <button type="submit" class="btn btn--verde btn--bloque btn--grande auth-btn" data-ripple="claro" data-texto-cargando="ENTRANDO...">
+        <span class="auth-btn__halo" aria-hidden="true"></span>
         <span class="btn__spinner" aria-hidden="true"></span>
         <span class="btn__texto">ENTRAR</span>
         <span class="btn__flecha" aria-hidden="true">→</span>

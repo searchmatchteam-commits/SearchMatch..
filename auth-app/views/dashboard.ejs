@@ -1,30 +1,6 @@
 <%- include('partials/header') %>
 
-<!-- Fondo fijo: ruido, líneas de cancha táctica y aurora neón (estilos en dashboard.css) -->
-<div class="dash-fondo" aria-hidden="true">
-  <div class="dash-fondo__aurora"></div>
-  <svg class="dash-fondo__cancha" viewBox="0 0 1200 760" preserveAspectRatio="xMidYMid slice">
-    <rect x="40" y="40" width="1120" height="680" rx="6" />
-    <path d="M600 40v680" />
-    <circle cx="600" cy="380" r="96" />
-    <circle cx="600" cy="380" r="4" class="relleno" />
-    <rect x="40" y="200" width="170" height="360" />
-    <rect x="40" y="290" width="62" height="180" />
-    <rect x="990" y="200" width="170" height="360" />
-    <rect x="1098" y="290" width="62" height="180" />
-    <path d="M210 312a96 96 0 0 1 0 136M990 312a96 96 0 0 0 0 136" />
-    <!-- Jugada táctica: pases punteados entre posiciones -->
-    <path class="jugada" d="M300 520 Q420 430 520 470 T760 300 T930 380" />
-    <circle class="ficha" cx="300" cy="520" r="9" />
-    <circle class="ficha" cx="520" cy="470" r="9" />
-    <circle class="ficha" cx="760" cy="300" r="9" />
-    <circle class="ficha ficha--meta" cx="930" cy="380" r="11" />
-  </svg>
-  <div class="dash-fondo__ruido"></div>
-</div>
-
-<!-- Cursor de luz (solo escritorio, lo mueve dashboard.js) -->
-<div class="cursor-luz" aria-hidden="true"><span class="cursor-luz__punto"></span></div>
+<%- include('partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
 <!-- ============ HERO ============ -->
 <section class="dash-hero" data-parallax>
@@ -40,7 +16,7 @@
       <p class="dash-hero__parrafo revelar">¿Listo para tu próxima pichanga? Encuentra cupos cerca de ti, reserva cancha y súmate a un equipo.</p>
 
       <div class="dash-hero__acciones revelar">
-        <button type="button" class="dash-cta" data-ripple data-proximamente="Muy pronto podrás buscar partidos cerca de ti.">
+        <button type="button" class="dash-cta" data-ripple="claro" data-proximamente="Muy pronto podrás buscar partidos cerca de ti.">
           <span class="dash-cta__halo" aria-hidden="true"></span>
           <span class="dash-cta__contenido">
             <svg class="dash-cta__icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2" /></svg>

@@ -1,7 +1,19 @@
 <%- include('partials/header') %>
 
-<section class="auth">
+<%- include('partials/fondo-cyber', { variante: 'pizarra' }) %>
+
+<section class="auth auth--registro">
+  <%- include('partials/auth-marca', { titulo: 'Arma tu equipo. <em>Sube tu media.</em>' }) %>
+
   <div class="tarjeta auth__tarjeta auth__tarjeta--ancha">
+    <span class="auth__filo" aria-hidden="true"></span>
+    <!-- Cambiar entre login y registro -->
+    <nav class="auth-pestanas auth-pestanas--registro" aria-label="Elegir formulario">
+      <span class="auth-pestanas__indicador" aria-hidden="true"></span>
+      <a class="auth-pestanas__item" href="/login">Iniciar sesión</a>
+      <a class="auth-pestanas__item auth-pestanas__item--activa" href="/registro" aria-current="page">Crear cuenta</a>
+    </nav>
+
     <span class="etiqueta-verde">Únete a SearchMatch</span>
     <h1 class="auth__titulo">Crear cuenta</h1>
     <p class="auth__subtitulo">Toma menos de un minuto. Después podrás completar tu perfil de jugador.</p>
@@ -159,7 +171,8 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn--verde btn--bloque btn--grande" data-texto-cargando="CREANDO CUENTA...">
+      <button type="submit" class="btn btn--verde btn--bloque btn--grande auth-btn" data-ripple="claro" data-texto-cargando="CREANDO CUENTA...">
+        <span class="auth-btn__halo" aria-hidden="true"></span>
         <span class="btn__spinner" aria-hidden="true"></span>
         <span class="btn__texto">CREAR CUENTA</span>
         <span class="btn__flecha" aria-hidden="true">→</span>

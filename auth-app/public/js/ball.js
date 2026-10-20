@@ -9,8 +9,14 @@
 //
 // Three.js se carga desde CDN al final del archivo. Si no carga o no hay WebGL,
 // el escenario recibe la clase "sin-3d" y se muestra el balón de respaldo en CSS.
+// En modo liviano (sin aceleración gráfica) se dibuja una versión más ligera de la misma pelota.
 const THREE_CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 let THREE;
+
+// Modo liviano (html.modo-liviano, ver header.ejs y cyber.js): navegador sin aceleración gráfica.
+// La pelota se mantiene, pero con menos resolución, materiales simples y 30 fps.
+const LIVIANO = document.documentElement.classList.contains('modo-liviano');
+const INTERVALO_CUADRO = LIVIANO ? 1000 / 30 - 2 : 1000 / 60 - 2; // ms (−2 de tolerancia para no saltar cuadros)
 
 // Color de la paleta actual (--verde de la página: style.css o dashboard.css); se crea al cargar Three.js
 let NEON;
@@ -250,13 +256,17 @@ function crearOrbita(radio, rotX, rotY, velocidad, fase, glow) {
 function initBall(stage, container) {
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    // En pantallas de alta densidad (o en modo liviano) el antialias casi no se nota y cuesta mucho
+    renderer = new THREE.WebGLRenderer({
+      antialias: !LIVIANO && (window.devicePixelRatio || 1) < 1.5, alpha: true, powerPreference: 'high-performance'
+    });
   } catch (e) {
     // Sin WebGL queda solo el fondo del escenario
     stage.classList.add('sin-3d');
     return;
   }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  // Más de 1.5 no se distingue y cuadruplica el trabajo; en modo liviano, 1 píxel por píxel de pantalla
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, LIVIANO ? 1 : 1.5));
   renderer.setClearColor(0x000000, 0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.15;
@@ -282,20 +292,22 @@ function initBall(stage, container) {
 
   // Núcleo de luz neón: solo se ve a través de las costuras
   const nucleoMat = new THREE.MeshBasicMaterial({ color: NEON.clone(), toneMapped: false });
-  const nucleo = new THREE.Mesh(new THREE.SphereGeometry(R * 0.985, 64, 48), nucleoMat);
+  const nucleo = new THREE.Mesh(new THREE.SphereGeometry(R * 0.985, LIVIANO ? 32 : 64, LIVIANO ? 24 : 48), nucleoMat);
   giro.add(nucleo);
 
-  // Paneles: hexágonos de carbono y pentágonos negros con un leve brillo neón
-  const hexMat = new THREE.MeshPhysicalMaterial({
-    color: 0x283028, metalness: 0.25, roughness: 0.38, clearcoat: 1, clearcoatRoughness: 0.12
-  });
-  const pentMat = new THREE.MeshPhysicalMaterial({
-    color: 0x060806, metalness: 0.4, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.06,
+  // Paneles: hexágonos de carbono y pentágonos negros con un leve brillo neón.
+  // En modo liviano: material estándar (sin la capa de barniz, que duplica el cálculo) y menos triángulos.
+  const Material = LIVIANO ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
+  const barniz = (rugosidad) => (LIVIANO ? {} : { clearcoat: 1, clearcoatRoughness: rugosidad });
+  const hexMat = new Material({ color: 0x283028, metalness: 0.25, roughness: 0.38, ...barniz(0.12) });
+  const pentMat = new Material({
+    color: 0x060806, metalness: 0.4, roughness: 0.3, ...barniz(0.06),
     emissive: NEON, emissiveIntensity: 0.06
   });
+  const detallePanel = LIVIANO ? 3 : 6;
   const { pentagons, hexagons } = buildTruncatedIcosahedron(1);
-  hexagons.forEach((pts) => giro.add(new THREE.Mesh(buildPanelGeometry(pts, R, 0.017, 0.035), hexMat)));
-  pentagons.forEach((pts) => giro.add(new THREE.Mesh(buildPanelGeometry(pts, R, 0.017, 0.035), pentMat)));
+  hexagons.forEach((pts) => giro.add(new THREE.Mesh(buildPanelGeometry(pts, R, 0.017, 0.035, detallePanel), hexMat)));
+  pentagons.forEach((pts) => giro.add(new THREE.Mesh(buildPanelGeometry(pts, R, 0.017, 0.035, detallePanel), pentMat)));
 
   // Halo: brillo neón alrededor del borde de la pelota (efecto Fresnel)
   const haloMat = new THREE.ShaderMaterial({
@@ -323,7 +335,7 @@ function initBall(stage, container) {
     depthWrite: false,
     blending: THREE.AdditiveBlending
   });
-  pelota.add(new THREE.Mesh(new THREE.SphereGeometry(R * 1.3, 64, 48), haloMat));
+  pelota.add(new THREE.Mesh(new THREE.SphereGeometry(R * 1.3, LIVIANO ? 32 : 64, LIVIANO ? 24 : 48), haloMat));
 
   // Luces: principal blanca, contraluces neón y una luz que sigue al cursor
   const keyLight = new THREE.DirectionalLight(0xffffff, 1.1);
@@ -355,7 +367,7 @@ function initBall(stage, container) {
   });
 
   // Polvo de luz flotando alrededor
-  const POLVO = 140;
+  const POLVO = LIVIANO ? 60 : 140;
   const polvoPos = new Float32Array(POLVO * 3);
   for (let i = 0; i < POLVO; i++) {
     const r = R * (1.12 + Math.random() * 0.4);
@@ -606,16 +618,23 @@ function initBall(stage, container) {
   const reloj = new THREE.Clock();
   let enPantalla = true;
   let corriendo = false;
+  let desplazando = false;
+  let ultimoCuadro = 0;
   let sombraAnterior = '';
   let energiaAnterior = '';
 
   function animate() {
     // Se pausa cuando la pelota no se ve (ahorra batería)
-    if (!enPantalla || document.hidden) {
+    if (!enPantalla || document.hidden || desplazando) {
       corriendo = false;
       return;
     }
     requestAnimationFrame(animate);
+
+    // Tope de cuadros: 60 fps (en pantallas de 144 Hz dibujaría más del doble sin necesidad) y 30 en modo liviano
+    const ahora = performance.now();
+    if (ahora - ultimoCuadro < INTERVALO_CUADRO) return;
+    ultimoCuadro = ahora;
 
     const dt = Math.min(reloj.getDelta(), 0.05);
     const f = dt * 60; // factor para que todo vaya igual a 30, 60 o 120 fps
@@ -693,7 +712,7 @@ function initBall(stage, container) {
   }
 
   function arrancar() {
-    if (corriendo || !enPantalla || document.hidden) return;
+    if (corriendo || !enPantalla || document.hidden || desplazando) return;
     corriendo = true;
     reloj.getDelta(); // descartar el tiempo que estuvo pausada
     requestAnimationFrame(animate);
@@ -703,6 +722,19 @@ function initBall(stage, container) {
     arrancar();
   }).observe(container);
   document.addEventListener('visibilitychange', arrancar);
+
+  // Durante el scroll la pelota se queda quieta: dibujar WebGL a 60 fps mientras la página
+  // se desplaza compite con el scroll por la GPU y lo traba. Vuelve a moverse al soltar.
+  let finScroll;
+  window.addEventListener('scroll', () => {
+    desplazando = true;
+    clearTimeout(finScroll);
+    finScroll = setTimeout(() => {
+      desplazando = false;
+      arrancar();
+    }, 150);
+  }, { passive: true });
+
   arrancar();
 }
 
@@ -712,7 +744,14 @@ if (canvasBall) {
   try {
     THREE = await import(THREE_CDN);
     NEON = new THREE.Color(getComputedStyle(stage).getPropertyValue('--verde').trim() || '#39ff14');
+    // Armar la escena (geometría, reflejos, shaders) ocupa el hilo principal un momento:
+    // se espera a que la página ya se haya pintado y esté libre, así la carga no se traba.
+    await new Promise((listo) => {
+      if ('requestIdleCallback' in window) requestIdleCallback(listo, { timeout: 800 });
+      else setTimeout(listo, 200);
+    });
     initBall(stage, canvasBall);
+    stage.classList.add('ball-lista'); // el canvas aparece con un fundido (style.css)
   } catch (e) {
     // CDN caído, navegador sin módulos/WebGL o error al armar la escena
     console.warn('Balón 3D no disponible, se usa el respaldo:', e);

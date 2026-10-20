@@ -36,7 +36,13 @@ app.set('views', path.join(__dirname, 'views'));
 // ---------------------------------------------------------------
 // Archivos estáticos: CSS, JS e imágenes del navegador (carpeta /public).
 // index: false → "/" lo responde la landing en EJS, no un index.html.
-app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+// En producción el navegador guarda los archivos 7 días: las vistas los piden con ?v=versionAssets,
+// que cambia en cada arranque, así un deploy nuevo nunca sirve CSS/JS viejo.
+app.locals.versionAssets = Date.now().toString(36);
+app.use(express.static(path.join(__dirname, 'public'), {
+  index: false,
+  maxAge: process.env.NODE_ENV === 'production' ? '7d' : 0,
+}));
 
 // Habilita el parseo de formularios HTML (application/x-www-form-urlencoded).
 app.use(express.urlencoded({ extended: false }));
