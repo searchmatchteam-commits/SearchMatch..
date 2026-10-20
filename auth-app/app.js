@@ -1,16 +1,3 @@
-<<<<<<< HEAD
-const path = require('path');
-const express = require('express');
-
-const app = express();
-
-// Three.js se sirve desde este mismo sitio (ver el import de public/js/ball.js)
-app.use('/vendor/three-0.160.0', express.static(path.join(__dirname, 'node_modules/three/build')));
-app.use(express.static(path.join(__dirname, 'public')));
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
-=======
 // app.js
 // Punto de entrada de la aplicación.
 // Orden de configuración:
@@ -41,6 +28,9 @@ app.set('views', path.join(__dirname, 'views'));
 // ---------------------------------------------------------------
 // 2) Middlewares globales
 // ---------------------------------------------------------------
+// Three.js se sirve desde este mismo sitio (ver el import de public/js/ball.js).
+app.use('/vendor/three-0.160.0', express.static(path.join(__dirname, 'node_modules/three/build')));
+
 // Archivos estáticos: CSS, JS e imágenes del navegador (carpeta /public).
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -90,4 +80,3 @@ app.listen(PORT, () => {
   // Probamos la conexión a PostgreSQL/Supabase de forma asíncrona.
   probarConexion();
 });
->>>>>>> c112832366ed12990104ce0e708e9a299ba5e591

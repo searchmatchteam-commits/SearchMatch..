@@ -1,19 +1,10 @@
 {
   "name": "auth-app",
   "version": "1.0.0",
-<<<<<<< HEAD
   "private": true,
-  "main": "app.js",
-  "scripts": {
-    "start": "node app.js"
-  },
-  "type": "commonjs",
-  "dependencies": {
-    "express": "5.3.0",
-    "three": "0.160.0"
-=======
   "description": "Aplicación web de autenticación de usuarios (registro, login, logout y rutas protegidas) con Express, EJS, PostgreSQL en Supabase y el patrón MVC.",
   "main": "app.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node app.js",
     "dev": "node --watch app.js"
@@ -29,13 +20,16 @@
   ],
   "author": "",
   "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
-    "bcrypt": "^5.1.1",
+    "bcrypt": "^6.0.0",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
-    "express": "^4.21.2",
+    "express": "^5.1.0",
     "express-session": "^1.18.1",
-    "pg": "^8.13.1"
->>>>>>> c112832366ed12990104ce0e708e9a299ba5e591
+    "pg": "^8.13.1",
+    "three": "0.160.0"
   }
 }
