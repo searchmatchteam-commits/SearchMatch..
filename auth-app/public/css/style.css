@@ -1,0 +1,251 @@
+/* public/css/style.css
+   Estilos de auth-app: navbar, tarjetas de formularios, alertas y dashboard. */
+
+:root {
+  --color-primario: #2563eb;
+  --color-primario-oscuro: #1d4ed8;
+  --color-fondo: #f1f5f9;
+  --color-texto: #0f172a;
+  --color-error: #dc2626;
+  --color-exito: #16a34a;
+  --color-borde: #cbd5e1;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Navbar ---------- */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 1.5rem;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.navbar__logo {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--color-texto);
+  text-decoration: none;
+}
+
+.navbar__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navbar__saludo {
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.navbar__form {
+  display: inline;
+}
+
+/* ---------- Botones ---------- */
+.btn {
+  display: inline-block;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.btn--nav {
+  background: #e2e8f0;
+  color: var(--color-texto);
+}
+
+.btn--nav:hover {
+  background: #cbd5e1;
+}
+
+.btn--primario {
+  background: var(--color-primario);
+  color: #fff;
+}
+
+.btn--primario:hover {
+  background: var(--color-primario-oscuro);
+}
+
+.btn--salir {
+  background: var(--color-error);
+  color: #fff;
+}
+
+.btn--salir:hover {
+  background: #b91c1c;
+}
+
+.btn--bloque {
+  width: 100%;
+  padding: 0.7rem;
+  font-size: 1rem;
+}
+
+/* ---------- Contenedor y tarjetas ---------- */
+.contenedor {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 3rem 1rem;
+}
+
+.tarjeta {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+.tarjeta--ancho {
+  max-width: 560px;
+}
+
+.tarjeta--centrado {
+  text-align: center;
+}
+
+.tarjeta__titulo {
+  font-size: 1.5rem;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.tarjeta__pie {
+  margin-top: 1.25rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.tarjeta__pie a {
+  color: var(--color-primario);
+}
+
+/* ---------- Formularios ---------- */
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.campo label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.campo input {
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  padding: 0.65rem 0.75rem;
+  font-size: 1rem;
+}
+
+.campo input:focus {
+  outline: 2px solid var(--color-primario);
+  border-color: transparent;
+}
+
+.campo__ayuda {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+/* ---------- Alertas de errores / éxitos ---------- */
+.alerta {
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.alerta ul {
+  margin-left: 1.1rem;
+}
+
+.alerta--error {
+  background: #fee2e2;
+  color: var(--color-error);
+  border: 1px solid #fecaca;
+}
+
+.alerta--exito {
+  background: #dcfce7;
+  color: var(--color-exito);
+  border: 1px solid #bbf7d0;
+}
+
+/* ---------- Dashboard ---------- */
+.dashboard__bienvenida {
+  font-size: 1.15rem;
+  margin-bottom: 1.25rem;
+}
+
+.dashboard__datos {
+  background: #f8fafc;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.etiqueta {
+  font-weight: 600;
+  color: #475569;
+}
+
+.dashboard__nota {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+}
+
+/* ---------- Error ---------- */
+.error__mensaje {
+  color: #475569;
+  margin-bottom: 1rem;
+}
+
+/* ---------- Pie de página ---------- */
+.pie {
+  text-align: center;
+  padding: 1.25rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
