@@ -125,6 +125,7 @@ function validarRegistro(req, res, next) {
 
   if (errores.length > 0) {
     return res.status(400).render('registro', {
+      pagina: 'auth',
       titulo: 'Crear cuenta',
       errores,
       datos,
@@ -157,6 +158,7 @@ function validarLogin(req, res, next) {
 
   if (errores.length > 0) {
     return res.status(400).render('login', {
+      pagina: 'auth',
       titulo: 'Iniciar sesión',
       errores,
       datos: req.datosFormulario,

@@ -59,6 +59,7 @@ function traducirErrorSupabase(error) {
 // Re-pinta el registro con un error (conserva todo menos las contraseñas).
 function renderRegistroConError(req, res, status, mensaje) {
   return res.status(status).render('registro', {
+    pagina: 'auth',
     titulo: 'Crear cuenta',
     errores: [mensaje],
     datos: {
@@ -76,6 +77,7 @@ function renderRegistroConError(req, res, status, mensaje) {
 // ---------------------------------------------------------------
 function mostrarRegistro(req, res) {
   res.render('registro', {
+    pagina: 'auth',
     titulo: 'Crear cuenta',
     errores: [],
     datos: {},
@@ -170,6 +172,7 @@ function mostrarLogin(req, res) {
   };
 
   res.render('login', {
+    pagina: 'auth',
     titulo: 'Iniciar sesión',
     errores: [],
     datos: {},
@@ -216,6 +219,7 @@ async function iniciarSesion(req, res, next) {
     if (error) {
       const status = error.code === 'invalid_credentials' ? 401 : 400;
       return res.status(status).render('login', {
+        pagina: 'auth',
         titulo: 'Iniciar sesión',
         errores: [traducirErrorSupabase(error)],
         datos: { correo },

@@ -14,6 +14,10 @@
   </footer>
 
   <script src="/js/main.js" defer></script>
+  <% if (locals.pagina === 'auth') { %>
+    <!-- Validación y estado "cargando" de login/registro -->
+    <script src="/js/auth.js" defer></script>
+  <% } %>
   <% if (locals.pagina === 'landing') { %>
     <!-- Balón 3D: Three.js se carga desde CDN dentro de ball.js -->
     <script type="module" src="/js/ball.js"></script>

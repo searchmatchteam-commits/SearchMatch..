@@ -2,11 +2,10 @@
 // Comportamiento del lado del navegador:
 //  1) Animaciones de aparición al hacer scroll (IntersectionObserver).
 //  2) Formato del teléfono chileno mientras se escribe (+56 9 XXXX XXXX).
-//  3) Aviso visual de campos obligatorios vacíos antes de enviar.
-//  4) Tarjetas bento: glow y borde que siguen al cursor.
-//  5) Carta de jugador: inclinación 3D con reflejo de luz.
-//  6) Timeline "Cómo funciona": línea que se rellena con el scroll.
-// La validación real siempre la hace el servidor (middlewares/validators.js).
+//  3) Tarjetas bento: glow y borde que siguen al cursor.
+//  4) Carta de jugador: inclinación 3D con reflejo de luz.
+//  5) Timeline "Cómo funciona": línea que se rellena con el scroll.
+// La validación de login/registro está en auth.js (y la real, en el servidor).
 
 document.addEventListener('DOMContentLoaded', () => {
   const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -50,31 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* ---------- 3) Campos obligatorios vacíos ---------- */
-  document.querySelectorAll('form.formulario').forEach((formulario) => {
-    formulario.addEventListener('submit', (evento) => {
-      let primerVacio = null;
-
-      formulario.querySelectorAll('input[required]').forEach((campo) => {
-        const vacio = !campo.value.trim();
-        campo.closest('.campo').classList.toggle('campo--error', vacio);
-        if (vacio && !primerVacio) primerVacio = campo;
-      });
-
-      if (primerVacio) {
-        evento.preventDefault();
-        primerVacio.focus();
-      }
-    });
-
-    // Al corregir un campo se quita la marca roja.
-    formulario.addEventListener('input', (evento) => {
-      const campo = evento.target.closest('.campo');
-      if (campo) campo.classList.remove('campo--error');
-    });
-  });
-
-  /* ---------- 4) Bento: glow que sigue al cursor ---------- */
+  /* ---------- 3) Bento: glow que sigue al cursor ---------- */
   document.querySelectorAll('.bento__tarjeta').forEach((tarjeta) => {
     tarjeta.addEventListener('pointermove', (evento) => {
       const rect = tarjeta.getBoundingClientRect();
@@ -83,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* ---------- 5) Carta de jugador: tilt 3D ---------- */
+  /* ---------- 4) Carta de jugador: tilt 3D ---------- */
   // Solo con mouse: en pantallas táctiles o con movimiento reducido la carta queda quieta.
   const conMouse = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   if (conMouse && !sinMovimiento) {
@@ -116,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* ---------- 6) Timeline que se rellena con el scroll ---------- */
+  /* ---------- 5) Timeline que se rellena con el scroll ---------- */
   const timeline = document.querySelector('[data-timeline]');
   if (timeline) {
     const linea = timeline.querySelector('.timeline__linea');

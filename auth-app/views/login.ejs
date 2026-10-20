@@ -11,18 +11,9 @@
       <div class="alerta alerta--exito" role="status"><%= aviso %></div>
     <% } %>
 
-    <!-- Errores de validación o de Supabase, ya traducidos -->
-    <% if (errores && errores.length > 0) { %>
-      <div class="alerta alerta--error" role="alert">
-        <ul>
-          <% errores.forEach(function(error) { %>
-            <li><%= error %></li>
-          <% }) %>
-        </ul>
-      </div>
-    <% } %>
-
-    <form action="/login" method="POST" class="formulario" novalidate>
+    <!-- data-validar: auth.js valida en el navegador y muestra el estado "cargando".
+         La validación real sigue en el servidor (middlewares/validators.js). -->
+    <form action="/login" method="POST" class="formulario" data-validar="login" novalidate>
       <div class="campo">
         <label for="correo">Correo</label>
         <input
@@ -32,8 +23,10 @@
           placeholder="tucorreo@ejemplo.com"
           value="<%= datos.correo || '' %>"
           autocomplete="email"
+          aria-describedby="correo-error"
           required
         />
+        <small class="campo__error" id="correo-error"></small>
       </div>
 
       <div class="campo">
@@ -44,12 +37,27 @@
           name="password"
           placeholder="Tu contraseña"
           autocomplete="current-password"
+          aria-describedby="password-error"
           required
         />
+        <small class="campo__error" id="password-error"></small>
       </div>
 
-      <button type="submit" class="btn btn--verde btn--bloque btn--grande">ENTRAR <span aria-hidden="true">→</span></button>
+      <button type="submit" class="btn btn--verde btn--bloque btn--grande" data-texto-cargando="ENTRANDO...">
+        <span class="btn__spinner" aria-hidden="true"></span>
+        <span class="btn__texto">ENTRAR</span>
+        <span class="btn__flecha" aria-hidden="true">→</span>
+      </button>
     </form>
+
+    <!-- Errores del servidor (credenciales incorrectas, Supabase...) o de auth.js -->
+    <div class="alerta alerta--error" role="alert" data-alerta-errores <%= errores && errores.length > 0 ? '' : 'hidden' %>>
+      <ul>
+        <% (errores || []).forEach(function(error) { %>
+          <li><%= error %></li>
+        <% }) %>
+      </ul>
+    </div>
 
     <p class="auth__pie">¿No tienes cuenta? <a href="/registro">Regístrate aquí</a></p>
   </div>
