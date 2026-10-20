@@ -12,7 +12,7 @@
 const THREE_CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 let THREE;
 
-// Color de la paleta actual (--verde en style.css); se crea al cargar Three.js
+// Color de la paleta actual (--verde de la página: style.css o dashboard.css); se crea al cargar Three.js
 let NEON;
 
 /* ---------- Geometría: 12 pentágonos + 20 hexágonos ---------- */
@@ -185,8 +185,8 @@ function crearEntorno(renderer) {
   }
   foco(0xffffff, 5, 6, 2.5, 0, 6, 1);      // focos del estadio (arriba)
   foco(0xeaffe0, 2.5, 2.5, 3.5, 5, 1.5, 4); // luz principal (derecha, al frente)
-  foco(0x39ff14, 4, 1, 7, -6, 0, -1);      // franja neón a la izquierda
-  foco(0x39ff14, 2.5, 7, 0.8, 0, -5, -2);  // franja neón abajo
+  foco(NEON, 4, 1, 7, -6, 0, -1);      // franja neón a la izquierda
+  foco(NEON, 2.5, 7, 0.8, 0, -5, -2);  // franja neón abajo
 
   const pmrem = new THREE.PMREMGenerator(renderer);
   const textura = pmrem.fromScene(env, 0.035).texture;
@@ -334,10 +334,10 @@ function initBall(stage, container) {
   focoArriba.position.set(0, 7.5, 2);
   focoArriba.target = pelota;
   scene.add(focoArriba);
-  const rim1 = new THREE.DirectionalLight(0x39ff14, 2.4);
+  const rim1 = new THREE.DirectionalLight(NEON, 2.4);
   rim1.position.set(-5, 1, -4);
   scene.add(rim1);
-  const rim2 = new THREE.DirectionalLight(0x39ff14, 1.2);
+  const rim2 = new THREE.DirectionalLight(NEON, 1.2);
   rim2.position.set(4, -3, -3);
   scene.add(rim2);
   const luzCursor = new THREE.PointLight(0xe8ffe0, 0, 9);
@@ -711,7 +711,7 @@ if (canvasBall) {
   const stage = canvasBall.closest('.ball-stage');
   try {
     THREE = await import(THREE_CDN);
-    NEON = new THREE.Color('#39ff14');
+    NEON = new THREE.Color(getComputedStyle(stage).getPropertyValue('--verde').trim() || '#39ff14');
     initBall(stage, canvasBall);
   } catch (e) {
     // CDN caído, navegador sin módulos/WebGL o error al armar la escena

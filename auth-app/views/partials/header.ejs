@@ -11,6 +11,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" />
   <link rel="stylesheet" href="/css/style.css" />
+  <% if (locals.pagina === 'dashboard') { %>
+    <!-- Dashboard "cyber-sport": títulos en Space Grotesk y estilos propios -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" />
+    <link rel="stylesheet" href="/css/dashboard.css" />
+  <% } %>
   <!-- Marca que hay JS: las animaciones de aparición solo se activan si existe -->
   <script>document.documentElement.classList.add('js');</script>
 </head>

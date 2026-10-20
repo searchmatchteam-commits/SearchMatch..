@@ -1,52 +1,189 @@
 <%- include('partials/header') %>
 
-<!-- ============ SALUDO ============ -->
-<section class="panel-hero">
-  <div class="contenedor panel-hero__grid">
-    <div class="panel-hero__texto">
-      <span class="badge"><span class="badge__punto" aria-hidden="true"></span>Sesión activa</span>
+<!-- Fondo fijo: ruido, líneas de cancha táctica y aurora neón (estilos en dashboard.css) -->
+<div class="dash-fondo" aria-hidden="true">
+  <div class="dash-fondo__aurora"></div>
+  <svg class="dash-fondo__cancha" viewBox="0 0 1200 760" preserveAspectRatio="xMidYMid slice">
+    <rect x="40" y="40" width="1120" height="680" rx="6" />
+    <path d="M600 40v680" />
+    <circle cx="600" cy="380" r="96" />
+    <circle cx="600" cy="380" r="4" class="relleno" />
+    <rect x="40" y="200" width="170" height="360" />
+    <rect x="40" y="290" width="62" height="180" />
+    <rect x="990" y="200" width="170" height="360" />
+    <rect x="1098" y="290" width="62" height="180" />
+    <path d="M210 312a96 96 0 0 1 0 136M990 312a96 96 0 0 0 0 136" />
+    <!-- Jugada táctica: pases punteados entre posiciones -->
+    <path class="jugada" d="M300 520 Q420 430 520 470 T760 300 T930 380" />
+    <circle class="ficha" cx="300" cy="520" r="9" />
+    <circle class="ficha" cx="520" cy="470" r="9" />
+    <circle class="ficha" cx="760" cy="300" r="9" />
+    <circle class="ficha ficha--meta" cx="930" cy="380" r="11" />
+  </svg>
+  <div class="dash-fondo__ruido"></div>
+</div>
+
+<!-- Cursor de luz (solo escritorio, lo mueve dashboard.js) -->
+<div class="cursor-luz" aria-hidden="true"><span class="cursor-luz__punto"></span></div>
+
+<!-- ============ HERO ============ -->
+<section class="dash-hero" data-parallax>
+  <div class="contenedor dash-hero__grid">
+    <div class="dash-hero__texto">
+      <span class="dash-chip revelar"><span class="badge__punto" aria-hidden="true"></span>Sesión activa</span>
 
       <!-- El nombre se trunca con "..." si no cabe; el title muestra el nombre completo -->
-      <h1 class="panel-hero__titulo">
-        <span class="panel-hero__saludo">¡Hola,</span>
-        <span class="panel-hero__nombre texto-verde" title="<%= usuario.nombre %>"><%= usuario.nombre %>!</span>
+      <h1 class="dash-hero__titulo revelar">
+        <span class="dash-hero__saludo">Bienvenido de vuelta,</span>
+        <span class="dash-hero__nombre" title="<%= usuario.nombre %>"><%= usuario.nombre %></span>
       </h1>
-      <p class="panel-hero__parrafo">¿Listo para tu próxima pichanga? Encuentra cupos cerca de ti, reserva cancha y súmate a un equipo.</p>
+      <p class="dash-hero__parrafo revelar">¿Listo para tu próxima pichanga? Encuentra cupos cerca de ti, reserva cancha y súmate a un equipo.</p>
 
-      <% if (carta) { %>
-        <a class="panel-hero__carta" href="/perfil" aria-label="Tu carta: media <%= carta.media %>, <%= carta.posicion %>, <%= carta.pie %>">
-          <span class="panel-hero__media"><%= carta.media %></span>
-          <span class="panel-hero__carta-texto">
-            <span class="panel-hero__carta-titulo">Tu carta</span>
-            <span><%= carta.posicion %> · <%= carta.pie %></span>
+      <div class="dash-hero__acciones revelar">
+        <button type="button" class="dash-cta" data-ripple data-proximamente="Muy pronto podrás buscar partidos cerca de ti.">
+          <span class="dash-cta__halo" aria-hidden="true"></span>
+          <span class="dash-cta__contenido">
+            <svg class="dash-cta__icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2" /></svg>
+            Buscar partido
           </span>
-          <span class="panel-hero__carta-flecha" aria-hidden="true">→</span>
-        </a>
-      <% } %>
-
-      <div class="panel-hero__acciones">
-        <button type="button" class="btn btn--verde btn--xl btn--glow panel-hero__cta" data-proximamente="Muy pronto podrás buscar partidos cerca de ti.">
-          <svg class="btn__icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2" /></svg>
-          Buscar partido
         </button>
         <% if (usuario.rolInicio === 'equipo') { %>
-          <a class="btn btn--contorno btn--grande" href="/registro-equipo">Mi equipo</a>
+          <a class="dash-btn-vidrio" data-ripple href="/registro-equipo">Mi equipo</a>
         <% } else if (carta) { %>
-          <a class="btn btn--contorno btn--grande" href="/perfil">Ver mi carta</a>
+          <a class="dash-btn-vidrio" data-ripple href="/perfil">Ver mi carta</a>
         <% } else { %>
-          <a class="btn btn--contorno btn--grande" href="/perfil-jugador">Crear mi carta</a>
+          <a class="dash-btn-vidrio" data-ripple href="/perfil-jugador">Crear mi carta</a>
         <% } %>
       </div>
+
+      <% if (carta) { %>
+        <a class="dash-resumen revelar" href="/perfil" aria-label="Tu carta: media <%= carta.media %>, <%= carta.posicion %>, <%= carta.pie %>">
+          <span class="dash-resumen__media"><%= carta.media %></span>
+          <span class="dash-resumen__texto">
+            <span class="dash-resumen__titulo">Tu carta</span>
+            <span><%= carta.posicion %> · <%= carta.pie %></span>
+          </span>
+          <span class="dash-resumen__flecha" aria-hidden="true">→</span>
+        </a>
+      <% } %>
     </div>
 
-    <!-- Escritorio: a la derecha. Celular: fondo tenue detrás del saludo (ver style.css). -->
-    <div class="panel-hero__visual">
-      <div class="ball-stage">
-        <div class="ball-cuadricula" aria-hidden="true"></div>
-        <div class="ball-anillo" aria-hidden="true"></div>
-        <div class="ball-fallback" aria-hidden="true"></div>
-        <div id="ball-canvas" role="img" aria-label="Balón de fútbol 3D interactivo"></div>
+    <!-- Escritorio: a la derecha con parallax. Celular: fondo tenue detrás del saludo. -->
+    <div class="dash-hero__visual">
+      <div class="dash-capa dash-capa--fondo" data-profundidad="-12" aria-hidden="true">
+        <span class="dash-orbita dash-orbita--1"></span>
+        <span class="dash-orbita dash-orbita--2"></span>
       </div>
+      <div class="dash-capa dash-capa--particulas" data-profundidad="28" aria-hidden="true">
+        <% for (let i = 0; i < 14; i++) { %><span class="dash-particula" style="--i: <%= i %>"></span><% } %>
+      </div>
+      <div class="dash-capa dash-capa--balon" data-profundidad="10">
+        <div class="ball-stage">
+          <div class="ball-cuadricula" aria-hidden="true"></div>
+          <div class="ball-anillo" aria-hidden="true"></div>
+          <div class="ball-fallback" aria-hidden="true"></div>
+          <div id="ball-canvas" role="img" aria-label="Balón de fútbol 3D interactivo"></div>
+          <!-- ball.js muestra aquí la velocidad de cada remate -->
+          <div class="ball-hud" aria-live="polite">
+            <span class="ball-hud-titulo">Remate</span>
+            <span class="ball-hud-cifra"><span class="ball-hud-vel">0</span><small>km/h</small></span>
+            <span class="ball-hud-pie">Récord <span class="ball-hud-record">0</span> km/h</span>
+          </div>
+        </div>
+      </div>
+      <p class="dash-hero__pista">Arrastra para girar · toca para rematar</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PANELES ============ -->
+<section class="dash-paneles">
+  <div class="contenedor dash-paneles__grid">
+
+    <!-- Carta de jugador con foil holográfico -->
+    <article class="dash-panel dash-panel--carta revelar">
+      <header class="dash-panel__cabecera">
+        <h2 class="dash-panel__titulo">Tu carta</h2>
+        <% if (carta) { %><a class="dash-panel__enlace" href="/perfil">Ver completa →</a><% } %>
+      </header>
+
+      <% if (carta) { %>
+        <div class="dash-carta-zona">
+          <!-- dashboard.js inclina la carta y mueve el foil con el cursor (data-holo) -->
+          <div class="dash-carta" data-holo>
+            <div class="dash-carta__cuerpo">
+              <span class="dash-carta__foil" aria-hidden="true"></span>
+              <span class="dash-carta__brillo" aria-hidden="true"></span>
+              <div class="dash-carta__cabecera">
+                <span class="dash-carta__media"><%= carta.media %></span>
+                <span class="dash-carta__posicion"><%= carta.posicion %></span>
+              </div>
+              <p class="dash-carta__nombre" title="<%= carta.nombre || usuario.nombre %>"><%= (carta.nombre || usuario.nombre).toUpperCase() %></p>
+              <p class="dash-carta__pie"><%= carta.pie %></p>
+            </div>
+          </div>
+        </div>
+        <ul class="dash-stats">
+          <% carta.stats.forEach(function (stat) { %>
+            <li class="dash-stat" title="<%= stat.nombre %>">
+              <span class="dash-stat__sigla"><%= stat.sigla %></span>
+              <span class="dash-stat__barra"><span class="dash-stat__relleno" style="--valor: <%= stat.valor %>"></span></span>
+              <span class="dash-stat__valor"><%= stat.valor %></span>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %>
+        <div class="dash-vacio">
+          <p class="dash-vacio__texto">
+            <%= usuario.rolInicio === 'equipo'
+              ? 'Las cartas son para jugadores. Arma tu equipo y recluta a los mejores.'
+              : 'Completa tu perfil y recibe tu carta con media y estadísticas.' %>
+          </p>
+          <a class="dash-btn-vidrio" data-ripple href="<%= usuario.rolInicio === 'equipo' ? '/registro-equipo' : '/perfil-jugador' %>">
+            <%= usuario.rolInicio === 'equipo' ? 'Ir a mi equipo' : 'Crear mi carta' %>
+          </a>
+        </div>
+      <% } %>
+    </article>
+
+    <!-- Próximos partidos: aún sin backend, muestra un skeleton con aviso -->
+    <article class="dash-panel dash-panel--partidos revelar">
+      <header class="dash-panel__cabecera">
+        <h2 class="dash-panel__titulo">Partidos cerca de ti</h2>
+        <span class="dash-etiqueta">Próximamente</span>
+      </header>
+      <ul class="dash-skeletons" aria-hidden="true">
+        <% for (let i = 0; i < 3; i++) { %>
+          <li class="dash-skeleton">
+            <span class="skeleton skeleton--circulo"></span>
+            <span class="dash-skeleton__lineas">
+              <span class="skeleton skeleton--linea"></span>
+              <span class="skeleton skeleton--linea skeleton--corta"></span>
+            </span>
+            <span class="skeleton skeleton--pildora"></span>
+          </li>
+        <% } %>
+      </ul>
+      <p class="dash-panel__nota">Estamos preparando la búsqueda de partidos por comuna y horario.</p>
+    </article>
+
+    <!-- Accesos rápidos -->
+    <div class="dash-accesos">
+      <button type="button" class="dash-acceso revelar" data-ripple data-proximamente="Muy pronto podrás buscar y reservar canchas.">
+        <svg class="dash-acceso__icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M12 5v14" /><circle cx="12" cy="12" r="2.6" /><path d="M3 9.5h2.5v5H3M21 9.5h-2.5v5H21" /></svg>
+        <span class="dash-acceso__titulo">Canchas</span>
+        <span class="dash-acceso__texto">Reserva por hora</span>
+      </button>
+      <button type="button" class="dash-acceso revelar" data-ripple data-proximamente="Muy pronto podrás buscar equipos y enviar solicitudes.">
+        <svg class="dash-acceso__icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><circle cx="17" cy="9" r="2.4" /><path d="M16 14.2a4.5 4.5 0 0 1 5 4.8" /></svg>
+        <span class="dash-acceso__titulo">Equipos</span>
+        <span class="dash-acceso__texto">Súmate a un plantel</span>
+      </button>
+      <button type="button" class="dash-acceso revelar" data-ripple data-proximamente="Muy pronto podrás inscribirte en torneos.">
+        <svg class="dash-acceso__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4v3h-4z" /></svg>
+        <span class="dash-acceso__titulo">Torneos</span>
+        <span class="dash-acceso__texto">Compite por la copa</span>
+      </button>
     </div>
   </div>
 </section>

@@ -1,0 +1,1411 @@
+/* public/css/dashboard.css
+   Dashboard "cyber-sport" de SearchMatch (solo se carga en /dashboard, después de style.css).
+   Secciones: tokens · fondo · cursor de luz · hero · CTA y botones · ripple · visual con
+   parallax · HUD del remate · paneles · carta holográfica · stats · skeletons · accesos ·
+   aviso · dock · responsive.
+   Rendimiento: todo lo que se anima en bucle usa solo transform y opacity (GPU). */
+
+/* ---------- Tokens ---------- */
+.pagina-dashboard {
+  --fondo: #050505;
+  --fondo-verde: #0a0f0a;
+  --verde: #00ff41;
+  --verde-rgb: 0, 255, 65;
+  --verde-hover: #4dff7a;
+  --verde-oscuro: #00b82f;
+  --verde-tenue: rgba(var(--verde-rgb), 0.08);
+  --verde-borde: rgba(var(--verde-rgb), 0.3);
+  --sobre-verde: #00160a;
+  --texto: #f3f7f3;
+  --texto-suave: #98a398;
+  --vidrio: linear-gradient(160deg, rgba(22, 30, 22, 0.62), rgba(8, 11, 8, 0.5));
+  --vidrio-borde: rgba(255, 255, 255, 0.08);
+  --vidrio-blur: blur(18px) saturate(150%);
+  --sombra-panel: 0 24px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --fuente-titulo: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --radio-panel: 22px;
+  --alto-dock: 50px;
+
+  background: var(--fondo);
+  /* Espacio para que el dock flotante no tape el final de la página */
+  padding-bottom: calc(var(--alto-dock) + 28px + env(safe-area-inset-bottom));
+}
+
+/* La aurora del dashboard reemplaza al resplandor genérico de style.css */
+.pagina-dashboard::before {
+  display: none;
+}
+
+.pagina-dashboard .navbar {
+  background: rgba(5, 5, 5, 0.6);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.pagina-dashboard .pie {
+  border-top-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ---------- Fondo: aurora, cancha táctica y ruido ---------- */
+.dash-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 120% 70% at 50% 120%, rgba(var(--verde-rgb), 0.06), transparent 60%),
+    linear-gradient(180deg, var(--fondo) 0%, var(--fondo-verde) 100%);
+}
+
+/* Haz de luz verde que se desplaza muy lento (solo transform) */
+.dash-fondo__aurora {
+  position: absolute;
+  top: -35vh;
+  left: 35%;
+  width: 90vw;
+  height: 90vh;
+  background:
+    radial-gradient(ellipse 45% 55% at 50% 50%, rgba(var(--verde-rgb), 0.13), transparent 70%),
+    radial-gradient(ellipse 30% 40% at 20% 70%, rgba(0, 200, 120, 0.07), transparent 70%);
+  transform: translate3d(0, 0, 0) rotate(-12deg);
+  animation: aurora 22s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes aurora {
+  to { transform: translate3d(-18vw, 8vh, 0) rotate(6deg) scale(1.15); }
+}
+
+/* Cancha vista en perspectiva, como una pizarra táctica que se pierde en la oscuridad */
+.dash-fondo__cancha {
+  position: absolute;
+  left: 50%;
+  bottom: -12vh;
+  width: max(1200px, 130vw);
+  height: auto;
+  transform: translateX(-50%) perspective(900px) rotateX(58deg);
+  transform-origin: 50% 100%;
+  fill: none;
+  stroke: rgba(var(--verde-rgb), 0.1);
+  stroke-width: 2;
+  -webkit-mask-image: linear-gradient(to top, #000 10%, transparent 75%);
+  mask-image: linear-gradient(to top, #000 10%, transparent 75%);
+}
+
+.dash-fondo__cancha .relleno {
+  fill: rgba(var(--verde-rgb), 0.2);
+}
+
+.dash-fondo__cancha .jugada {
+  stroke: rgba(var(--verde-rgb), 0.28);
+  stroke-dasharray: 10 12;
+}
+
+.dash-fondo__cancha .ficha {
+  fill: rgba(var(--verde-rgb), 0.18);
+  stroke: rgba(var(--verde-rgb), 0.45);
+}
+
+.dash-fondo__cancha .ficha--meta {
+  fill: rgba(var(--verde-rgb), 0.45);
+}
+
+/* Ruido estático: textura de grano que da profundidad (no se anima) */
+.dash-fondo__ruido {
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- Cursor de luz (solo escritorio: dashboard.js agrega html.cursor-luz-activo) ---------- */
+.cursor-luz {
+  display: none;
+}
+
+html.cursor-luz-activo .cursor-luz {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(var(--verde-rgb), 0.7);
+  box-shadow: 0 0 18px rgba(var(--verde-rgb), 0.45), inset 0 0 10px rgba(var(--verde-rgb), 0.25);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(-100px, -100px, 0);
+  transition: opacity 0.3s ease;
+  will-change: transform;
+}
+
+/* Foco de luz grande y tenue alrededor del cursor */
+html.cursor-luz-activo .cursor-luz::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 420px;
+  height: 420px;
+  margin: -210px 0 0 -210px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--verde-rgb), 0.07), transparent 65%);
+}
+
+.cursor-luz__punto {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: var(--verde);
+  box-shadow: 0 0 8px var(--verde);
+}
+
+/* El anillo crece sobre botones y enlaces (escala dentro de un hijo para no pisar el transform del JS) */
+.cursor-luz::after {
+  content: "";
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 50%;
+  background: rgba(var(--verde-rgb), 0.12);
+  transform: scale(0.4);
+  opacity: 0;
+  transition: transform 0.3s var(--curva), opacity 0.3s ease;
+}
+
+.cursor-luz.cursor-luz--visible {
+  opacity: 1;
+}
+
+.cursor-luz.cursor-luz--sobre::after {
+  transform: scale(1.6);
+  opacity: 1;
+}
+
+/* ---------- Hero ---------- */
+.dash-hero {
+  position: relative;
+  padding: 44px 0 24px;
+  overflow-x: clip;          /* la pelota de fondo (celular) no genera scroll horizontal */
+}
+
+.dash-hero__grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+}
+
+.dash-hero__texto {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  min-width: 0;
+}
+
+.dash-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 15px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--verde);
+  background: rgba(var(--verde-rgb), 0.06);
+  border: 1px solid rgba(var(--verde-rgb), 0.22);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.dash-chip .badge__punto {
+  background: var(--verde);
+  box-shadow: 0 0 10px var(--verde);
+}
+
+.dash-hero__titulo {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  font-family: var(--fuente-titulo);
+  font-size: clamp(2.3rem, 9vw, 4.4rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+}
+
+.dash-hero__saludo {
+  color: var(--texto-suave);
+  font-family: var(--fuente);
+  font-size: clamp(0.95rem, 0.32em, 1.15rem);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin-bottom: 0.25em;
+}
+
+/* Nombre con degradado blanco → neón */
+.dash-hero__nombre {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-bottom: 0.1em;     /* que el "..." no corte los descendentes (g, p, y) */
+  color: var(--verde);
+  background: linear-gradient(100deg, #ffffff 0%, #d9ffe2 35%, var(--verde) 75%, var(--verde-oscuro) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 28px rgba(var(--verde-rgb), 0.25));
+}
+
+.dash-hero__parrafo {
+  max-width: 31rem;
+  color: var(--texto-suave);
+  font-size: 1.04rem;
+  line-height: 1.65;
+}
+
+.dash-hero__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+/* ---------- CTA "Buscar partido": respira y brilla ---------- */
+.dash-cta {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #5dff86 0%, var(--verde) 40%, var(--verde-oscuro) 100%);
+  color: var(--sobre-verde);
+  font-family: var(--fuente-titulo);
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(var(--verde-rgb), 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transform: translateZ(0);
+  transition: transform 0.25s var(--curva);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dash-cta__contenido {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 38px;
+}
+
+.dash-cta__icono {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+/* Halo que "respira": solo cambian opacity y scale */
+.dash-cta__halo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  box-shadow: 0 0 34px 4px rgba(var(--verde-rgb), 0.55), 0 0 90px 18px rgba(var(--verde-rgb), 0.22);
+  opacity: 0.5;
+  animation: respirar 3.4s ease-in-out infinite;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+@keyframes respirar {
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+/* Destello diagonal que cruza el botón al pasar el mouse */
+.dash-cta::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.6) 48%, transparent 62%) no-repeat;
+  background-size: 250% 100%;
+  background-position: 160% 0;
+  pointer-events: none;
+}
+
+.dash-cta:hover {
+  transform: translateY(-3px) scale(1.03);
+}
+
+.dash-cta:hover .dash-cta__halo {
+  animation-duration: 1.6s;
+}
+
+.dash-cta:hover::after {
+  background-position: -60% 0;
+  transition: background-position 0.9s ease;
+}
+
+.dash-cta:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Botón secundario de vidrio */
+.dash-btn-vidrio {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 28px;
+  border-radius: 999px;
+  border: 1px solid var(--vidrio-borde);
+  background: rgba(255, 255, 255, 0.03);
+  -webkit-backdrop-filter: var(--vidrio-blur);
+  backdrop-filter: var(--vidrio-blur);
+  color: var(--texto);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 0.25s var(--curva), border-color 0.25s ease, box-shadow 0.3s ease, color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dash-btn-vidrio:hover {
+  text-decoration: none;
+  color: var(--verde);
+  border-color: var(--verde-borde);
+  box-shadow: 0 0 28px rgba(var(--verde-rgb), 0.18), inset 0 0 18px rgba(var(--verde-rgb), 0.06);
+  transform: translateY(-2px);
+}
+
+.dash-btn-vidrio:active {
+  transform: scale(0.97);
+}
+
+@media (max-width: 479px) {
+  .dash-hero__acciones {
+    width: 100%;
+  }
+
+  .dash-hero__acciones > * {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .dash-cta__contenido {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Mini resumen de la carta */
+.dash-resumen {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 7px 16px 7px 7px;
+  border-radius: 999px;
+  color: var(--texto);
+  background: rgba(10, 14, 10, 0.55);
+  border: 1px solid var(--vidrio-borde);
+  -webkit-backdrop-filter: var(--vidrio-blur);
+  backdrop-filter: var(--vidrio-blur);
+  transition: border-color 0.25s ease, box-shadow 0.3s ease, transform 0.25s var(--curva);
+}
+
+.dash-resumen:hover {
+  text-decoration: none;
+  border-color: var(--verde-borde);
+  box-shadow: 0 0 24px rgba(var(--verde-rgb), 0.18);
+  transform: translateY(-2px);
+}
+
+.dash-resumen__media {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7dff9c, var(--verde) 50%, var(--verde-oscuro));
+  color: var(--sobre-verde);
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-resumen__texto {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  font-size: 0.84rem;
+  color: var(--texto-suave);
+}
+
+.dash-resumen__titulo {
+  color: var(--texto);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.dash-resumen__flecha {
+  color: var(--verde);
+  font-weight: 800;
+  transition: transform 0.25s var(--curva);
+}
+
+.dash-resumen:hover .dash-resumen__flecha {
+  transform: translateX(3px);
+}
+
+/* ---------- Ripple (dashboard.js crea una .ripple dentro de .ripple-capa) ---------- */
+.ripple-capa {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 70%);
+  transform: scale(0);
+  opacity: 1;
+  animation: ripple 0.65s ease-out forwards;
+}
+
+[data-ripple]:not(.dash-cta) .ripple {
+  background: radial-gradient(circle, rgba(var(--verde-rgb), 0.4), rgba(var(--verde-rgb), 0) 70%);
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* ---------- Visual: balón 3D con capas de parallax ---------- */
+/* Celular: la pelota queda de fondo tenue detrás del saludo (no empuja el contenido) */
+.dash-hero__visual {
+  position: absolute;
+  top: -50px;
+  right: -120px;
+  width: 320px;
+  aspect-ratio: 1;
+  opacity: 0.22;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* dashboard.js mueve cada capa según data-profundidad */
+.dash-capa {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.dash-capa--balon {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.dash-capa--balon .ball-stage {
+  max-width: none;
+}
+
+/* Glows del escenario con el verde del dashboard */
+.dash-hero .ball-stage::before {
+  background: radial-gradient(circle, rgba(var(--verde-rgb), 0.24) 0%, rgba(var(--verde-rgb), 0.07) 32%, transparent 60%);
+}
+
+.dash-hero .ball-stage::after {
+  background: radial-gradient(ellipse at center, rgba(var(--verde-rgb), 0.4), rgba(0, 0, 0, 0.6) 45%, transparent 72%);
+}
+
+.dash-hero .ball-cuadricula {
+  background-image:
+    linear-gradient(rgba(var(--verde-rgb), 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--verde-rgb), 0.07) 1px, transparent 1px);
+}
+
+.dash-hero .ball-anillo::before {
+  border-color: rgba(var(--verde-rgb), calc(0.22 + var(--energia) * 0.5));
+}
+
+/* Órbitas que giran detrás de la pelota */
+.dash-orbita {
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--verde-rgb), 0.12);
+  animation: girar 26s linear infinite;
+}
+
+.dash-orbita--2 {
+  inset: -6%;
+  border-color: rgba(255, 255, 255, 0.05);
+  border-style: dashed;
+  animation-duration: 60s;
+  animation-direction: reverse;
+}
+
+/* Satélite brillante sobre la órbita */
+.dash-orbita::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--verde);
+  box-shadow: 0 0 14px 3px rgba(var(--verde-rgb), 0.6);
+}
+
+.dash-orbita--2::after {
+  left: auto;
+  right: -3px;
+  width: 6px;
+  height: 6px;
+  background: #e8ffee;
+}
+
+/* Partículas de luz que suben: posición repartida en círculo con sin()/cos() */
+.dash-particula {
+  --angulo: calc(var(--i) * 25.7deg);
+  --radio: calc(30% + mod(var(--i) * 7, 5) * 4%);
+  position: absolute;
+  left: calc(50% + cos(var(--angulo)) * var(--radio));
+  top: calc(50% + sin(var(--angulo)) * var(--radio));
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--verde);
+  box-shadow: 0 0 10px 2px rgba(var(--verde-rgb), 0.55);
+  opacity: 0;
+  animation: particula calc(4.5s + var(--i) * 0.35s) ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.8s);
+  will-change: transform, opacity;
+}
+
+.dash-particula:nth-child(3n) {
+  width: 2px;
+  height: 2px;
+  background: #e9ffef;
+}
+
+@keyframes particula {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0) scale(0.6);
+  }
+  30%,
+  70% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -50px, 0) scale(1);
+  }
+}
+
+.dash-hero__pista {
+  display: none;
+}
+
+/* ---------- HUD del remate (ball.js alterna .visible, .golpe y .record) ---------- */
+.ball-hud {
+  position: absolute;
+  top: 6%;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 128px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--vidrio);
+  border: 1px solid var(--vidrio-borde);
+  -webkit-backdrop-filter: var(--vidrio-blur);
+  backdrop-filter: var(--vidrio-blur);
+  box-shadow: var(--sombra-panel);
+  opacity: 0;
+  transform: translate3d(0, 8px, 0) scale(0.96);
+  transition: opacity 0.3s ease, transform 0.35s var(--curva);
+  pointer-events: none;
+}
+
+.ball-hud.visible {
+  opacity: 1;
+  transform: none;
+}
+
+.ball-hud-titulo {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.ball-hud.record .ball-hud-titulo {
+  color: var(--verde);
+}
+
+.ball-hud-cifra {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: var(--fuente-titulo);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--texto);
+}
+
+.ball-hud-cifra small {
+  font-size: 0.8rem;
+  color: var(--verde);
+}
+
+.ball-hud.golpe .ball-hud-cifra {
+  animation: hud-golpe 0.45s var(--curva);
+}
+
+@keyframes hud-golpe {
+  from { transform: scale(1.25); }
+}
+
+.ball-hud-pie {
+  font-size: 0.74rem;
+  color: var(--texto-suave);
+}
+
+/* ---------- Paneles de vidrio ---------- */
+.dash-paneles {
+  padding: 16px 0 40px;
+}
+
+.dash-paneles__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+.dash-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  padding: 22px;
+  border-radius: var(--radio-panel);
+  background: var(--vidrio);
+  border: 1px solid var(--vidrio-borde);
+  -webkit-backdrop-filter: var(--vidrio-blur);
+  backdrop-filter: var(--vidrio-blur);
+  box-shadow: var(--sombra-panel);
+}
+
+/* Filo neón en el borde superior */
+.dash-panel::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--verde-rgb), 0.6), transparent);
+}
+
+.dash-panel__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dash-panel__titulo {
+  font-family: var(--fuente-titulo);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.dash-panel__enlace {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.dash-panel__nota {
+  font-size: 0.88rem;
+  color: var(--texto-suave);
+}
+
+.dash-etiqueta {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--verde);
+  background: var(--verde-tenue);
+  border: 1px solid rgba(var(--verde-rgb), 0.2);
+}
+
+.dash-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 1;
+  justify-content: center;
+}
+
+.dash-vacio__texto {
+  color: var(--texto-suave);
+  max-width: 28rem;
+}
+
+/* ---------- Carta holográfica ---------- */
+.dash-panel--carta {
+  overflow: hidden;
+}
+
+.dash-carta-zona {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 4px;
+  perspective: 900px;
+}
+
+/* Resplandor en el piso, detrás de la carta */
+.dash-carta-zona::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 260px;
+  height: 260px;
+  margin: -130px 0 0 -130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--verde-rgb), 0.22), transparent 65%);
+  pointer-events: none;
+}
+
+/* --rx/--ry inclinan la carta; --fx/--fy mueven el foil (los actualiza dashboard.js) */
+.dash-carta {
+  --rx: 0deg;
+  --ry: 0deg;
+  --fx: 50%;
+  --fy: 50%;
+  --foil-op: 0.35;
+  --forma: polygon(0 7%, 9% 0, 91% 0, 100% 7%, 100% 86%, 50% 100%, 0 86%);
+  position: relative;
+  width: 176px;
+  aspect-ratio: 0.72;
+  padding: 2px;
+  clip-path: var(--forma);
+  /* Marco metálico neón: asoma 2px alrededor del cuerpo */
+  background: linear-gradient(145deg, #d6ffe0, var(--verde) 28%, #06301a 52%, var(--verde) 76%, #f2fff5);
+  transform: rotateX(var(--rx)) rotateY(var(--ry)) translateZ(0);
+  transition: transform 0.5s var(--curva);
+  will-change: transform;
+}
+
+.dash-carta.inclinando {
+  transition: transform 0.08s linear;
+}
+
+.dash-carta__cuerpo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px 14px 22px;
+  clip-path: var(--forma);
+  background: linear-gradient(165deg, #0f1a11 0%, #050805 55%, #0b170d 100%);
+}
+
+/* Foil de colección: arcoíris que se desplaza con el cursor */
+.dash-carta__foil {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    115deg,
+    rgba(0, 255, 65, 0.0) 0%,
+    rgba(0, 255, 170, 0.5) 6%,
+    rgba(120, 180, 255, 0.45) 12%,
+    rgba(255, 120, 230, 0.35) 18%,
+    rgba(255, 240, 120, 0.4) 24%,
+    rgba(0, 255, 65, 0.0) 30%
+  );
+  background-size: 240% 240%;
+  background-position: var(--fx) var(--fy);
+  mix-blend-mode: color-dodge;
+  opacity: var(--foil-op);
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+/* Textura en relieve: rombos finos sobre la carta */
+.dash-carta__cuerpo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 7px);
+  pointer-events: none;
+}
+
+/* Emblema de fondo */
+.dash-carta__cuerpo::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 92px;
+  height: 92px;
+  margin: -46px 0 0 -46px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(var(--verde-rgb), 0.2);
+  box-shadow: inset 0 0 30px rgba(var(--verde-rgb), 0.12), 0 0 0 10px rgba(var(--verde-rgb), 0.04);
+}
+
+.dash-carta__brillo {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--fx) var(--fy), rgba(255, 255, 255, 0.28), transparent 45%);
+  opacity: calc(var(--foil-op) * 1.4);
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.dash-carta__cabecera {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.dash-carta__media {
+  font-family: var(--fuente-titulo);
+  font-size: 2.6rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--verde);
+  text-shadow: 0 0 18px rgba(var(--verde-rgb), 0.55);
+}
+
+.dash-carta__posicion {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--texto);
+}
+
+.dash-carta__nombre {
+  position: relative;
+  margin-top: auto;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: center;
+  font-family: var(--fuente-titulo);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-top: 1px solid rgba(var(--verde-rgb), 0.3);
+  padding-top: 8px;
+}
+
+.dash-carta__pie {
+  position: relative;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--texto-suave);
+}
+
+/* ---------- Barras de estadísticas ---------- */
+.dash-stats {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 20px;
+}
+
+.dash-stat {
+  display: grid;
+  grid-template-columns: 34px 1fr 26px;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+}
+
+.dash-stat__sigla {
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--texto-suave);
+}
+
+.dash-stat__valor {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-stat__barra {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+/* Se llena al aparecer el panel (scaleX: solo GPU) */
+.dash-stat__relleno {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(var(--verde-rgb), 0.2), rgba(var(--verde-rgb), 0.75) 60%, var(--verde));
+  box-shadow: 0 0 10px rgba(var(--verde-rgb), 0.5);
+  transform: scaleX(calc(var(--valor) / 100));
+  transform-origin: left center;
+  transition: transform 1.1s var(--curva);
+}
+
+html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
+  transform: scaleX(0);
+}
+
+.dash-stat:nth-child(2) .dash-stat__relleno { transition-delay: 0.08s; }
+.dash-stat:nth-child(3) .dash-stat__relleno { transition-delay: 0.16s; }
+.dash-stat:nth-child(4) .dash-stat__relleno { transition-delay: 0.24s; }
+.dash-stat:nth-child(5) .dash-stat__relleno { transition-delay: 0.32s; }
+.dash-stat:nth-child(6) .dash-stat__relleno { transition-delay: 0.4s; }
+
+/* ---------- Skeletons con shimmer ---------- */
+.dash-skeletons {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dash-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.dash-skeleton__lineas {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(var(--verde-rgb), 0.08) 40%, rgba(255, 255, 255, 0.08) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: shimmer 1.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+.dash-skeleton:nth-child(2) .skeleton::after { animation-delay: 0.15s; }
+.dash-skeleton:nth-child(3) .skeleton::after { animation-delay: 0.3s; }
+
+@keyframes shimmer {
+  to { transform: translateX(100%); }
+}
+
+.skeleton--circulo {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.skeleton--linea {
+  height: 10px;
+  width: 80%;
+}
+
+.skeleton--corta {
+  width: 45%;
+}
+
+.skeleton--pildora {
+  flex: none;
+  width: 64px;
+  height: 28px;
+  border-radius: 999px;
+}
+
+/* ---------- Accesos rápidos ---------- */
+.dash-accesos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dash-acceso {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  padding: 18px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--vidrio-borde);
+  background: var(--vidrio);
+  -webkit-backdrop-filter: var(--vidrio-blur);
+  backdrop-filter: var(--vidrio-blur);
+  box-shadow: var(--sombra-panel);
+  color: var(--texto);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* La aparición (main.js) no debe pisar las transiciones del hover */
+html.js .dash-acceso.revelar {
+  transition: opacity 0.7s ease, transform 0.5s var(--curva), border-color 0.3s ease, box-shadow 0.35s ease;
+  transition-delay: var(--retraso, 0ms), var(--retraso, 0ms), 0ms, 0ms;
+}
+
+html.js .dash-acceso.revelar.visible:hover,
+.dash-acceso:hover {
+  transform: translateY(-5px);
+  border-color: var(--verde-borde);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5), 0 0 30px rgba(var(--verde-rgb), 0.16), inset 0 1px 0 rgba(var(--verde-rgb), 0.2);
+}
+
+.dash-acceso:active {
+  transform: translateY(-2px) scale(0.98);
+}
+
+.dash-acceso__icono {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 8px;
+  fill: none;
+  stroke: var(--verde);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px rgba(var(--verde-rgb), 0.45));
+  transition: transform 0.35s var(--curva);
+}
+
+.dash-acceso:hover .dash-acceso__icono {
+  transform: scale(1.12) rotate(-4deg);
+}
+
+.dash-acceso__titulo {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.dash-acceso__texto {
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+@media (max-width: 479px) {
+  .dash-accesos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dash-acceso {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 14px;
+    align-items: center;
+  }
+
+  .dash-acceso__icono {
+    grid-row: span 2;
+    margin: 0;
+  }
+}
+
+/* ---------- Aviso flotante de "próximamente" (encima del dock) ---------- */
+.panel-aviso {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--alto-dock) + 30px + env(safe-area-inset-bottom));
+  z-index: 60;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: rgba(12, 18, 12, 0.82);
+  border: 1px solid var(--verde-borde);
+  -webkit-backdrop-filter: var(--vidrio-blur);
+  backdrop-filter: var(--vidrio-blur);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 24px rgba(var(--verde-rgb), 0.12);
+  font-size: 0.9rem;
+  text-align: center;
+  opacity: 0;
+  transform: translate(-50%, 10px);
+  transition: opacity 0.25s ease, transform 0.25s var(--curva);
+  pointer-events: none;
+}
+
+.panel-aviso--visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ---------- Dock: barra de navegación inferior flotante ---------- */
+.dock {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  z-index: 50;
+  width: min(calc(100% - 32px), 320px);
+  transform: translateX(-50%);
+  padding: 5px;
+  border-radius: 999px;
+  background: rgba(10, 14, 10, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+}
+
+/* Sin desenfoque disponible: fondos más opacos para que se lean */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .dock,
+  .dash-panel,
+  .dash-acceso,
+  .ball-hud {
+    background: rgba(12, 16, 12, 0.96);
+  }
+}
+
+.dock__lista {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.dock__item {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 9px 6px 13px;
+  border: 0;                 /* Canchas y Equipos son <button>: sin estilos del navegador */
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  color: #b5bcb5;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s var(--curva);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dock__item:hover {
+  text-decoration: none;
+  color: var(--texto);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dock__item:active {
+  transform: scale(0.94);
+}
+
+.dock__icono {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Pestaña actual: ícono neón con resplandor y un punto debajo */
+.dock__item--activo {
+  color: var(--verde);
+}
+
+.dock__item--activo:hover {
+  color: var(--verde);
+  background: var(--verde-tenue);
+}
+
+.dock__item--activo .dock__icono {
+  filter: drop-shadow(0 0 6px rgba(var(--verde-rgb), 0.75));
+}
+
+.dock__item--activo::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+  border-radius: 50%;
+  background: var(--verde);
+  box-shadow: 0 0 8px 2px rgba(var(--verde-rgb), 0.6);
+}
+
+/* ---------- Responsive ---------- */
+@media (min-width: 760px) {
+  .dash-paneles__grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  }
+
+  .dash-accesos {
+    grid-column: 1 / -1;
+  }
+
+  /* Carta y stats lado a lado */
+  .dash-panel--carta {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    column-gap: 26px;
+    align-items: center;
+  }
+
+  .dash-panel--carta .dash-panel__cabecera,
+  .dash-panel--carta .dash-vacio {
+    grid-column: 1 / -1;
+  }
+
+  .dash-stats {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (min-width: 900px) {
+  .dash-hero {
+    padding: 64px 0 32px;
+  }
+
+  .dash-hero__grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: 32px;
+  }
+
+  .dash-hero__visual {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    max-width: 440px;
+    justify-self: center;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .dash-hero__pista {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -14px;
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.35);
+  }
+
+  .dash-hero__visual:has(.sin-3d) .dash-hero__pista {
+    visibility: hidden;
+  }
+}
+
+/* Celular: menos capas animadas detrás del texto */
+@media (max-width: 899px) {
+  .dash-capa--particulas,
+  .ball-hud {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-fondo__aurora,
+  .dash-cta__halo,
+  .dash-orbita,
+  .dash-particula,
+  .skeleton::after {
+    animation: none;
+  }
+
+  .dash-cta__halo {
+    opacity: 0.8;
+  }
+}
