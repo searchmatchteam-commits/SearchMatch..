@@ -10,6 +10,8 @@ const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 // Celular chileno: 9 + 8 dígitos, con o sin +56 delante.
 const REGEX_CELULAR_CL = /^(?:\+?56)?(9\d{8})$/;
 
+const { POSICIONES, PIES, NIVELES } = require('../config/perfilJugador');
+
 const LONGITUD_MINIMA_PASSWORD = 8;
 const LONGITUD_MAXIMA_NOMBRE = 100; // jugador.nombre_apodo / jugador.apellido
 const LONGITUD_MAXIMA_CORREO = 150; // usuario.correo
@@ -17,6 +19,10 @@ const LONGITUD_MAXIMA_CORREO = 150; // usuario.correo
 // Rango de edad aceptado al registrarse (jugador.fecha_nacimiento).
 const EDAD_MINIMA = 13;
 const EDAD_MAXIMA = 100;
+
+// Rangos aceptados en el perfil deportivo.
+const ALTURA_CM = { min: 120, max: 230 };
+const PESO_KG = { min: 35, max: 200 };
 
 /**
  * Edad en años cumplidos a partir de una fecha "AAAA-MM-DD" (la que envía <input type="date">).
@@ -38,6 +44,30 @@ function calcularEdad(valor) {
   // Aún no cumple años este año
   if (hoy.getMonth() + 1 < mes || (hoy.getMonth() + 1 === mes && hoy.getDate() < dia)) edad -= 1;
   return edad;
+}
+
+/**
+ * Valida la fecha de nacimiento (obligatoria, real y con edad entre EDAD_MINIMA y EDAD_MAXIMA).
+ * @returns {string|null} El mensaje de error o null si es válida.
+ */
+function validarFechaNacimiento(fechaNacimiento) {
+  const edad = calcularEdad(fechaNacimiento);
+  if (!fechaNacimiento) return 'La fecha de nacimiento es obligatoria.';
+  if (edad === null) return 'La fecha de nacimiento no es válida.';
+  if (edad < 0) return 'La fecha de nacimiento no puede estar en el futuro.';
+  if (edad < EDAD_MINIMA) return `Debes tener al menos ${EDAD_MINIMA} años para registrarte.`;
+  if (edad > EDAD_MAXIMA) return 'Revisa la fecha de nacimiento: el año parece incorrecto.';
+  return null;
+}
+
+/**
+ * Convierte un número entero dentro de [min, max]; acepta coma decimal ("70,5" → 71).
+ * @returns {number|null} El número redondeado, o null si no es válido o está fuera de rango.
+ */
+function enteroEnRango(valor, { min, max }) {
+  const numero = Math.round(Number(String(valor || '').trim().replace(',', '.')));
+  if (!String(valor || '').trim() || !Number.isFinite(numero) || numero < min || numero > max) return null;
+  return numero;
 }
 
 /**
@@ -90,18 +120,8 @@ function validarRegistro(req, res, next) {
     errores.push('El teléfono debe ser un celular chileno, por ejemplo +56 9 1234 5678.');
   }
 
-  const edad = calcularEdad(fechaNacimiento);
-  if (!fechaNacimiento) {
-    errores.push('La fecha de nacimiento es obligatoria.');
-  } else if (edad === null) {
-    errores.push('La fecha de nacimiento no es válida.');
-  } else if (edad < 0) {
-    errores.push('La fecha de nacimiento no puede estar en el futuro.');
-  } else if (edad < EDAD_MINIMA) {
-    errores.push(`Debes tener al menos ${EDAD_MINIMA} años para registrarte.`);
-  } else if (edad > EDAD_MAXIMA) {
-    errores.push('Revisa la fecha de nacimiento: el año parece incorrecto.');
-  }
+  const errorFecha = validarFechaNacimiento(fechaNacimiento);
+  if (errorFecha) errores.push(errorFecha);
 
   if (!password) {
     errores.push('La contraseña es obligatoria.');
@@ -169,4 +189,55 @@ function validarLogin(req, res, next) {
   return next();
 }
 
-module.exports = { validarRegistro, validarLogin, normalizarTelefono };
+/**
+ * Valida el wizard de PERFIL DE JUGADOR (pasos 2 y 3).
+ * No corta la petición: deja los datos limpios en req.datosFormulario y los
+ * errores en req.erroresPerfil = { errores: [...], paso } (paso = el primero con error),
+ * para que jugadorController vuelva a pintar el wizard en ese paso.
+ */
+function validarPerfilJugador(req, res, next) {
+  const nombre = (req.body.nombre || '').trim();
+  const apellido = (req.body.apellido || '').trim();
+  const fechaNacimiento = (req.body.fecha_nacimiento || '').trim();
+  const altura = enteroEnRango(req.body.altura, ALTURA_CM);
+  const peso = enteroEnRango(req.body.peso, PESO_KG);
+  const posicion = req.body.posicion || '';
+  const pieHabil = req.body.pie_habil || '';
+  const nivel = req.body.nivel || '';
+
+  const paso2 = [];
+  const paso3 = [];
+
+  if (!nombre) paso2.push('El nombre es obligatorio.');
+  else if (nombre.length > LONGITUD_MAXIMA_NOMBRE) paso2.push(`El nombre no puede superar los ${LONGITUD_MAXIMA_NOMBRE} caracteres.`);
+
+  if (!apellido) paso2.push('El apellido es obligatorio.');
+  else if (apellido.length > LONGITUD_MAXIMA_NOMBRE) paso2.push(`El apellido no puede superar los ${LONGITUD_MAXIMA_NOMBRE} caracteres.`);
+
+  const errorFecha = validarFechaNacimiento(fechaNacimiento);
+  if (errorFecha) paso2.push(errorFecha);
+
+  if (altura === null) paso2.push(`La altura debe estar entre ${ALTURA_CM.min} y ${ALTURA_CM.max} cm.`);
+  if (peso === null) paso2.push(`El peso debe estar entre ${PESO_KG.min} y ${PESO_KG.max} kg.`);
+
+  if (!POSICIONES[posicion]) paso3.push('Elige tu posición en la cancha.');
+  if (!PIES[pieHabil]) paso3.push('Elige tu pie hábil.');
+  if (!NIVELES[nivel]) paso3.push('Elige tu nivel de experiencia.');
+
+  req.datosFormulario = { nombre, apellido, fechaNacimiento, altura, peso, posicion, pieHabil, nivel };
+  req.erroresPerfil = {
+    errores: [...paso2, ...paso3],
+    paso: paso2.length > 0 ? 2 : 3,
+  };
+  return next();
+}
+
+module.exports = {
+  validarRegistro,
+  validarLogin,
+  validarPerfilJugador,
+  normalizarTelefono,
+  calcularEdad,
+  ALTURA_CM,
+  PESO_KG,
+};

@@ -4,10 +4,17 @@
     <div class="pie__interior">
       <nav class="pie__links" aria-label="Pie de página">
         <a href="/">Inicio</a>
-        <span aria-hidden="true">·</span>
-        <a href="/login">Iniciar sesión</a>
-        <span aria-hidden="true">·</span>
-        <a href="/registro">Registrarse</a>
+        <% if (usuario) { %>
+          <span aria-hidden="true">·</span>
+          <a href="/dashboard">Mi panel</a>
+          <span aria-hidden="true">·</span>
+          <a href="/perfil-jugador">Editar mi perfil</a>
+        <% } else { %>
+          <span aria-hidden="true">·</span>
+          <a href="/login">Iniciar sesión</a>
+          <span aria-hidden="true">·</span>
+          <a href="/registro">Registrarse</a>
+        <% } %>
       </nav>
       <p class="pie__copy">&copy; <%= new Date().getFullYear() %> SearchMatch · Fútbol amateur en Chile</p>
     </div>
@@ -17,6 +24,18 @@
   <% if (locals.pagina === 'auth') { %>
     <!-- Validación y estado "cargando" de login/registro -->
     <script src="/js/auth.js" defer></script>
+  <% } %>
+  <% if (locals.pagina === 'rol') { %>
+    <!-- Selección de rol: texto y estado del botón -->
+    <script src="/js/rol.js" defer></script>
+  <% } %>
+  <% if (locals.pagina === 'wizard') { %>
+    <!-- Wizard de perfil: pasos, validación y resumen -->
+    <script src="/js/wizard.js" defer></script>
+  <% } %>
+  <% if (locals.pagina === 'perfil') { %>
+    <!-- Carta: vista previa de la foto, descargar y compartir -->
+    <script src="/js/perfil.js" defer></script>
   <% } %>
   <% if (locals.pagina === 'landing') { %>
     <!-- Balón 3D: Three.js se carga desde CDN dentro de ball.js -->

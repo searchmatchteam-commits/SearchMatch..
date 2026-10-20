@@ -16,8 +16,14 @@
       </p>
 
       <div class="hero__acciones revelar">
-        <a class="btn btn--verde btn--grande" href="/registro">CREAR CUENTA <span aria-hidden="true">→</span></a>
-        <a class="btn btn--contorno btn--grande" href="/login">Ya tengo cuenta</a>
+        <% if (usuario) { %>
+          <!-- Sesión activa: nunca mostrar CTAs de registro/login -->
+          <a class="btn btn--verde btn--grande btn--glow" href="/dashboard">IR A MI PANEL <span aria-hidden="true">→</span></a>
+          <a class="btn btn--contorno btn--grande" href="/perfil-jugador">Editar mi perfil</a>
+        <% } else { %>
+          <a class="btn btn--verde btn--grande" href="/registro">CREAR CUENTA <span aria-hidden="true">→</span></a>
+          <a class="btn btn--contorno btn--grande" href="/login">Ya tengo cuenta</a>
+        <% } %>
       </div>
     </div>
 
@@ -249,9 +255,15 @@
 <section class="seccion seccion--cta">
   <div class="contenedor">
     <div class="cta revelar">
-      <h2 class="cta__titulo">¿Listo para tu próxima pichanga?</h2>
-      <p class="cta__texto">Crear tu cuenta toma menos de un minuto.</p>
-      <a class="btn btn--verde btn--xl btn--glow" href="/registro">REGISTRARSE <span aria-hidden="true">→</span></a>
+      <% if (usuario) { %>
+        <h2 class="cta__titulo">¿Listo para tu próxima pichanga?</h2>
+        <p class="cta__texto">Busca un partido cerca de ti y sal a jugar.</p>
+        <a class="btn btn--verde btn--xl btn--glow" href="/dashboard">BUSCAR PARTIDOS <span aria-hidden="true">→</span></a>
+      <% } else { %>
+        <h2 class="cta__titulo">¿Listo para tu próxima pichanga?</h2>
+        <p class="cta__texto">Crear tu cuenta toma menos de un minuto.</p>
+        <a class="btn btn--verde btn--xl btn--glow" href="/registro">REGISTRARSE <span aria-hidden="true">→</span></a>
+      <% } %>
     </div>
   </div>
 </section>

@@ -587,3 +587,34 @@ ALTER TABLE jugador ALTER COLUMN fecha_nacimiento DROP NOT NULL;
 -- está sujeto a RLS, así que la app sigue funcionando.
 ALTER TABLE usuario ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jugador ENABLE ROW LEVEL SECURITY;
+
+
+-- ============================================================
+-- V) PERFIL DEPORTIVO DEL JUGADOR (wizard /perfil-jugador y carta /perfil)
+-- ============================================================
+-- Re-ejecutable: solo AGREGA columnas (nullable) y catálogos; no borra ni
+-- modifica datos existentes. La posición sigue en jugador_posicion.
+
+ALTER TABLE jugador
+    ADD COLUMN IF NOT EXISTS pie_habil       VARCHAR(10)
+        CHECK (pie_habil IN ('izquierdo', 'derecho')),
+    ADD COLUMN IF NOT EXISTS id_nivel        INT REFERENCES nivel(id),
+    -- Estadísticas de la carta (1-99). Se generan al terminar el wizard
+    -- y no se vuelven a sortear al editar el perfil.
+    ADD COLUMN IF NOT EXISTS stat_ritmo      SMALLINT CHECK (stat_ritmo   BETWEEN 1 AND 99),
+    ADD COLUMN IF NOT EXISTS stat_tiro       SMALLINT CHECK (stat_tiro    BETWEEN 1 AND 99),
+    ADD COLUMN IF NOT EXISTS stat_pase       SMALLINT CHECK (stat_pase    BETWEEN 1 AND 99),
+    ADD COLUMN IF NOT EXISTS stat_regate     SMALLINT CHECK (stat_regate  BETWEEN 1 AND 99),
+    ADD COLUMN IF NOT EXISTS stat_defensa    SMALLINT CHECK (stat_defensa BETWEEN 1 AND 99),
+    ADD COLUMN IF NOT EXISTS stat_fisico     SMALLINT CHECK (stat_fisico  BETWEEN 1 AND 99),
+    ADD COLUMN IF NOT EXISTS perfil_completo BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Niveles de experiencia que ofrece el wizard (se buscan por nombre).
+INSERT INTO nivel (nombre, puntaje_min, puntaje_max) VALUES
+    ('Principiante', 0,   299),
+    ('Intermedio',   300, 699),
+    ('Avanzado',     700, 1000)
+ON CONFLICT (nombre) DO NOTHING;
+
+-- Posiciones: se usan las de la sección de catálogos. El arco se busca
+-- como 'Arquero' o 'Portero' (models/jugadorModel.js), así que sirve cualquiera.

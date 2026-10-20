@@ -4,10 +4,18 @@
 //  - cargarSesion: crea el cliente de la petición (req.supabase), verifica la
 //    sesión con Supabase y deja el usuario en req.usuario y res.locals.usuario.
 //  - requireAuth: protege rutas (solo accesibles con sesión iniciada).
+//  - requireRol: manda a /select-role a quien aún no eligió cómo usar la app.
 //  - redirectIfAuthenticated: evita que un usuario logueado vea login/registro.
+//  - rutaDeInicio: a dónde va un usuario recién autenticado.
 
 const userModel = require('../models/userModel');
 const { crearClienteServidor } = require('../config/supabase');
+
+// Roles de la pantalla "¿Cómo quieres empezar?" y el siguiente paso de cada uno.
+const ROLES_INICIO = {
+  jugador: '/perfil-jugador',
+  equipo: '/registro-equipo',
+};
 
 // Cookies de la versión anterior (tokens guardados a mano). Se borran si aparecen.
 const COOKIES_ANTIGUAS = ['sm_access_token', 'sm_refresh_token'];
@@ -34,6 +42,7 @@ async function construirUsuario(usuarioAuth) {
     nombre: (perfil && perfil.nombre) || meta.nombre || usuarioAuth.email,
     apellido: (perfil && perfil.apellido) || meta.apellido || '',
     correo: usuarioAuth.email,
+    rolInicio: ROLES_INICIO[meta.rol_inicio] ? meta.rol_inicio : null,
   };
 }
 
@@ -79,10 +88,30 @@ function requireAuth(req, res, next) {
   return next();
 }
 
-/** Redirige al dashboard si el usuario ya tiene sesión. Se aplica a /login y /registro. */
+/**
+ * Página de inicio de un usuario autenticado: la selección de rol si aún no
+ * eligió uno, o el dashboard si ya lo hizo.
+ * @param {string|null|undefined} rolInicio - user_metadata.rol_inicio
+ */
+function rutaDeInicio(rolInicio) {
+  return ROLES_INICIO[rolInicio] ? '/dashboard' : '/select-role';
+}
+
+/**
+ * Exige haber elegido rol (va DESPUÉS de requireAuth):
+ *   router.get('/dashboard', requireAuth, requireRol, pageController.dashboard);
+ */
+function requireRol(req, res, next) {
+  if (!req.usuario.rolInicio) {
+    return res.redirect('/select-role');
+  }
+  return next();
+}
+
+/** Redirige a su inicio si el usuario ya tiene sesión. Se aplica a /login y /registro. */
 function redirectIfAuthenticated(req, res, next) {
   if (req.usuario) {
-    return res.redirect('/dashboard');
+    return res.redirect(rutaDeInicio(req.usuario.rolInicio));
   }
   return next();
 }
@@ -90,5 +119,8 @@ function redirectIfAuthenticated(req, res, next) {
 module.exports = {
   cargarSesion,
   requireAuth,
+  requireRol,
   redirectIfAuthenticated,
+  rutaDeInicio,
+  ROLES_INICIO,
 };

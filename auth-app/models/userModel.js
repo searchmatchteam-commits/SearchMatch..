@@ -57,6 +57,15 @@ function confirmarCorreoEnAuth(supabase, { code, tokenHash, type }) {
   return supabase.auth.exchangeCodeForSession(code);
 }
 
+/**
+ * Guarda el rol elegido en la pantalla "¿Cómo quieres empezar?" ('jugador' o 'equipo')
+ * en user_metadata.rol_inicio. Es una preferencia de uso, no un permiso: los permisos
+ * siguen en usuario.id_rol_aplicacion.
+ */
+function guardarRolInicio(supabase, rol) {
+  return supabase.auth.updateUser({ data: { rol_inicio: rol } });
+}
+
 /** Revoca la sesión en Supabase y borra las cookies de esta sesión. */
 function cerrarSesionEnAuth(supabase) {
   return supabase.auth.signOut({ scope: 'local' });
@@ -156,6 +165,7 @@ module.exports = {
   iniciarSesionEnAuth,
   obtenerUsuarioActual,
   confirmarCorreoEnAuth,
+  guardarRolInicio,
   cerrarSesionEnAuth,
   eliminarDeAuth,
   findByEmail,

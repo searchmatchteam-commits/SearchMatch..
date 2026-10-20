@@ -43,6 +43,7 @@ auth-app/
 ## Configuración
 
 1. **Base de datos:** en Supabase → *SQL Editor*, ejecuta `sql/seed.sql` (re-ejecutable). La sección **U** agrega `usuario.id_auth` (vínculo con `auth.users`), deja `contrasena` y `jugador.fecha_nacimiento` opcionales y activa RLS en `usuario` y `jugador`.
+   La sección **V** agrega a `jugador` las columnas del perfil deportivo (pie hábil, nivel y las 6 estadísticas de la carta); sin ella `/perfil-jugador` y `/perfil` fallan.
 2. **Variables de entorno:** copia `.env.example` a `.env` y complétalo:
 
 | Variable                    | Descripción                                                              |
@@ -76,13 +77,19 @@ Abre [http://localhost:3000](http://localhost:3000).
 | Método | Ruta         | Acción                                         | Protegida |
 |--------|--------------|------------------------------------------------|-----------|
 | GET    | `/`          | Landing page                                   | No        |
-| GET    | `/registro`  | Formulario de registro (logueado → dashboard)  | No        |
+| GET    | `/registro`  | Formulario de registro (logueado → su inicio)   | No        |
 | POST   | `/registro`  | Valida, crea la cuenta en Auth y el perfil     | No        |
 | GET    | `/auth/confirmar` | Enlace del correo: confirma y abre la sesión | No   |
-| GET    | `/login`     | Formulario de login (logueado → dashboard)     | No        |
+| GET    | `/login`     | Formulario de login (logueado → su inicio)      | No        |
 | POST   | `/login`     | Valida credenciales con Supabase               | No        |
 | POST   | `/logout`    | Revoca la sesión y borra las cookies           | —         |
-| GET    | `/dashboard` | Panel del usuario                              | **Sí**    |
+| GET    | `/select-role` | "¿Cómo quieres empezar?": jugador o equipo   | **Sí**    |
+| POST   | `/select-role` | Guarda el rol en `user_metadata.rol_inicio`  | **Sí**    |
+| GET    | `/perfil-jugador` | Wizard del perfil de jugador (crear/editar) | **Sí** + rol |
+| POST   | `/perfil-jugador` | Valida y guarda el perfil; sortea las stats la 1.ª vez | **Sí** + rol |
+| GET    | `/perfil`    | Carta de jugador + datos y estadísticas        | **Sí** + rol |
+| GET    | `/registro-equipo` | Siguiente paso del equipo (por construir) | **Sí** + rol |
+| GET    | `/dashboard` | Panel del usuario (sin rol → `/select-role`)   | **Sí** + rol |
 
 ---
 

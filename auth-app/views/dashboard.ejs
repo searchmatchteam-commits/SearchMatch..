@@ -19,6 +19,10 @@
       </div>
     </dl>
 
+    <% if (usuario.rolInicio === 'jugador') { %>
+      <a class="btn btn--verde btn--grande dashboard__carta" href="/perfil">Ver mi carta de jugador <span aria-hidden="true">→</span></a>
+    <% } %>
+
     <form action="/logout" method="POST">
       <button type="submit" class="btn btn--contorno btn--grande">Cerrar sesión</button>
     </form>

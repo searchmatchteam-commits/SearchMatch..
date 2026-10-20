@@ -7,6 +7,7 @@
 // (req.supabase, creado en authMiddleware.cargarSesion).
 
 const userModel = require('../models/userModel');
+const { rutaDeInicio } = require('../middlewares/authMiddleware');
 
 const MSG_CORREO_REGISTRADO = 'Este correo ya está registrado. Inicia sesión o usa otro correo.';
 
@@ -148,8 +149,9 @@ async function registrar(req, res, next) {
 
     // 4a) Confirmación de correo desactivada: Supabase ya entregó la sesión
     //     y el cliente la guardó en las cookies.
+    //     Cuenta nueva = aún sin rol → "¿Cómo quieres empezar?".
     if (data.session) {
-      return res.redirect('/dashboard');
+      return res.redirect('/select-role');
     }
 
     // 4b) Confirmación activada: hay que revisar el correo antes de entrar.
@@ -192,13 +194,14 @@ async function confirmarCorreo(req, res, next) {
   }
 
   try {
-    const { error } = await userModel.confirmarCorreoEnAuth(req.supabase, { code, tokenHash, type });
+    const { data, error } = await userModel.confirmarCorreoEnAuth(req.supabase, { code, tokenHash, type });
     if (error) {
       console.error('⚠️  No se pudo confirmar el correo:', error.code, error.message);
       return res.redirect('/login?msg=Enlace_invalido');
     }
     // Correo confirmado y sesión abierta (cookies ya escritas).
-    return res.redirect('/dashboard');
+    const meta = (data.user && data.user.user_metadata) || {};
+    return res.redirect(rutaDeInicio(meta.rol_inicio));
   } catch (err) {
     return next(err);
   }
@@ -211,7 +214,7 @@ async function iniciarSesion(req, res, next) {
   const { correo } = req.datosFormulario;
 
   try {
-    const { error } = await userModel.iniciarSesionEnAuth(req.supabase, {
+    const { data, error } = await userModel.iniciarSesionEnAuth(req.supabase, {
       correo,
       password: req.body.password,
     });
@@ -227,7 +230,8 @@ async function iniciarSesion(req, res, next) {
       });
     }
 
-    return res.redirect('/dashboard');
+    // Sin rol elegido → selección de rol; si ya eligió → dashboard.
+    return res.redirect(rutaDeInicio(data.user.user_metadata && data.user.user_metadata.rol_inicio));
   } catch (err) {
     return next(err);
   }
