@@ -5,7 +5,6 @@
 //    sesión con Supabase y deja el usuario en req.usuario y res.locals.usuario.
 //  - requireAuth: protege rutas (solo accesibles con sesión iniciada).
 //  - requireRol: manda a /select-role a quien aún no eligió cómo usar la app.
-//  - soloCapitanes: solo el rol "equipo" (capitán) puede crear equipos.
 //  - redirectIfAuthenticated: evita que un usuario logueado vea login/registro.
 //  - rutaDeInicio: a dónde va un usuario recién autenticado.
 
@@ -112,18 +111,6 @@ function requireRol(req, res, next) {
   return next();
 }
 
-/**
- * Solo capitanes (rol "equipo" en /select-role) pueden crear equipos (va DESPUÉS de requireRol).
- * Al jugador lo manda al directorio con el aviso de acceso denegado.
- *   router.get('/crear-equipo', requireAuth, requireRol, soloCapitanes, equipoController.mostrarCrear);
- */
-function soloCapitanes(req, res, next) {
-  if (req.usuario.rolInicio !== 'equipo') {
-    return res.redirect('/equipos?aviso=solo-capitanes');
-  }
-  return next();
-}
-
 /** Redirige a su inicio si el usuario ya tiene sesión. Se aplica a /login y /registro. */
 function redirectIfAuthenticated(req, res, next) {
   if (req.usuario) {
@@ -136,7 +123,6 @@ module.exports = {
   cargarSesion,
   requireAuth,
   requireRol,
-  soloCapitanes,
   redirectIfAuthenticated,
   rutaDeInicio,
   ROLES_INICIO,

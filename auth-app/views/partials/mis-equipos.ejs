@@ -1,0 +1,53 @@
+<%
+  // Lista de "Mis equipos" (dashboard y /mis-equipos). Uso:
+  //   include('partials/mis-equipos', { misEquipos })
+  // (Desde un partial, include busca junto a este archivo: por eso el escudo va sin 'partials/'.)
+  // misEquipos: [{ id, nombre, detalle, soyCapitan, plantel: [{ nombre, posicion, capitan }] }],
+  // o null si no se pudo leer. Cada equipo se despliega con su plantel (<details>, sin JS);
+  // en los que creó la cuenta (soyCapitan) aparece "Administrar" al lado.
+%>
+  <% if (misEquipos === null) { %>
+    <p class="dash-panel__nota">No pudimos cargar tus equipos. Vuelve a intentarlo en unos minutos.</p>
+  <% } else if (misEquipos.length === 0) { %>
+    <div class="dash-vacio">
+      <p class="dash-vacio__texto">Aún no estás en ningún equipo. Busca uno y envía tu solicitud para unirte.</p>
+      <a class="dash-btn-vidrio" data-ripple href="/equipos">Buscar equipos</a>
+    </div>
+  <% } else { %>
+    <ul class="dash-equipos">
+      <% misEquipos.forEach(function (equipo) { %>
+        <li class="dash-equipo">
+          <details class="dash-equipo__detalle">
+            <summary class="dash-equipo__resumen">
+              <span class="dash-equipo__escudo" aria-hidden="true"><%- include('escudo-equipo', { equipo }) %></span>
+              <span class="dash-equipo__texto">
+                <span class="dash-equipo__nombre"><%= equipo.nombre %></span>
+                <span class="dash-equipo__meta">
+                  <%= equipo.soyCapitan ? 'Capitán' : 'Jugador' %> · <%= equipo.plantel.length %> <%= equipo.plantel.length === 1 ? 'jugador' : 'jugadores' %><%= equipo.detalle ? ' · ' + equipo.detalle : '' %>
+                </span>
+              </span>
+              <svg class="dash-equipo__flecha" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+            </summary>
+
+            <% if (equipo.plantel.length === 0) { %>
+              <p class="dash-panel__nota dash-equipo__vacio">Este equipo todavía no tiene jugadores en su plantel.</p>
+            <% } else { %>
+              <ul class="dash-plantel">
+                <% equipo.plantel.forEach(function (jugador) { %>
+                  <li class="dash-plantel__jugador">
+                    <span class="dash-plantel__nombre"><%= jugador.nombre %></span>
+                    <% if (jugador.capitan) { %><span class="dash-etiqueta">Capitán</span><% } %>
+                    <span class="dash-plantel__posicion"><%= jugador.posicion %></span>
+                  </li>
+                <% }) %>
+              </ul>
+            <% } %>
+          </details>
+
+          <% if (equipo.soyCapitan) { %>
+            <a class="dash-equipo__admin" data-ripple href="/mi-equipo?equipo=<%= equipo.id %>">Administrar</a>
+          <% } %>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>

@@ -1,0 +1,6 @@
+<%
+  // Contenido del escudo de un equipo: la imagen que subió el capitán o, si no tiene, la inicial. Uso:
+  //   include('partials/escudo-equipo', { equipo }) dentro del recuadro (.eq-club__escudo, .dash-equipo__escudo...)
+  // equipo: { nombre, escudo: url | null }
+%>
+<% if (equipo.escudo) { %><img class="escudo-equipo__img" src="<%= equipo.escudo %>" alt="" loading="lazy" decoding="async" /><% } else { %><%= equipo.nombre.charAt(0).toUpperCase() %><% } %>

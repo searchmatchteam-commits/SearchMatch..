@@ -152,24 +152,15 @@
       <p class="dash-panel__nota">Estamos preparando la búsqueda de partidos por comuna y horario.</p>
     </article>
 
-    <!-- Accesos rápidos -->
-    <div class="dash-accesos">
-      <button type="button" class="dash-acceso revelar" data-ripple data-proximamente="Muy pronto podrás buscar y reservar canchas.">
-        <svg class="dash-acceso__icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M12 5v14" /><circle cx="12" cy="12" r="2.6" /><path d="M3 9.5h2.5v5H3M21 9.5h-2.5v5H21" /></svg>
-        <span class="dash-acceso__titulo">Canchas</span>
-        <span class="dash-acceso__texto">Reserva por hora</span>
-      </button>
-      <a class="dash-acceso revelar" data-ripple href="/equipos">
-        <svg class="dash-acceso__icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><circle cx="17" cy="9" r="2.4" /><path d="M16 14.2a4.5 4.5 0 0 1 5 4.8" /></svg>
-        <span class="dash-acceso__titulo">Equipos</span>
-        <span class="dash-acceso__texto">Súmate a un plantel</span>
-      </a>
-      <button type="button" class="dash-acceso revelar" data-ripple data-proximamente="Muy pronto podrás inscribirte en torneos.">
-        <svg class="dash-acceso__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4v3h-4z" /></svg>
-        <span class="dash-acceso__titulo">Torneos</span>
-        <span class="dash-acceso__texto">Compite por la copa</span>
-      </button>
-    </div>
+    <!-- Mis equipos: cada equipo se despliega con su plantel; en los que creó, "Administrar" -->
+    <article class="dash-panel dash-panel--equipos revelar">
+      <header class="dash-panel__cabecera">
+        <h2 class="dash-panel__titulo">Mis equipos</h2>
+        <a class="dash-panel__enlace" href="/equipos">Buscar equipos →</a>
+      </header>
+
+      <%- include('partials/mis-equipos', { misEquipos }) %>
+    </article>
   </div>
 </section>
 

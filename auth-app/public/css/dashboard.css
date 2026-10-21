@@ -788,6 +788,196 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
 .dash-stat:nth-child(5) .dash-stat__relleno { transition-delay: 0.32s; }
 .dash-stat:nth-child(6) .dash-stat__relleno { transition-delay: 0.4s; }
 
+/* ---------- Mis equipos ---------- */
+.dash-equipos {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* El equipo (desplegable) y, si es capitán, "Administrar" a su lado */
+.dash-equipo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+
+/* Sin "Administrar", el equipo ocupa toda la fila */
+.dash-equipo__detalle:only-child {
+  grid-column: 1 / -1;
+}
+
+.dash-equipo__detalle {
+  min-width: 0;
+  border-radius: 16px;
+  border: 1px solid var(--vidrio-borde);
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.dash-equipo__detalle[open],
+.dash-equipo__detalle:hover {
+  border-color: var(--verde-borde);
+  background: rgba(var(--verde-rgb), 0.04);
+}
+
+.dash-equipo__resumen {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  list-style: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dash-equipo__resumen::-webkit-details-marker {
+  display: none;
+}
+
+.dash-equipo__resumen:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+  border-radius: 16px;
+}
+
+/* Imagen del escudo (partials/escudo-equipo.ejs): cabe entera en el recuadro del escudo */
+.escudo-equipo__img {
+  width: 100%;
+  height: 100%;
+  padding: 8%;
+  object-fit: contain;
+}
+
+.dash-equipo__escudo {
+  overflow: hidden;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font-family: var(--fuente-titulo);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--verde);
+  background: var(--verde-tenue);
+  border: 1px solid rgba(var(--verde-rgb), 0.25);
+}
+
+.dash-equipo__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.dash-equipo__nombre {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 700;
+}
+
+.dash-equipo__meta {
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+.dash-equipo__flecha {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--texto-suave);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.3s var(--curva);
+}
+
+.dash-equipo__detalle[open] .dash-equipo__flecha {
+  transform: rotate(180deg);
+  stroke: var(--verde);
+}
+
+.dash-equipo__admin {
+  display: inline-flex;
+  align-items: center;
+  min-height: 66px;          /* misma altura que la fila del equipo */
+  padding: 0 18px;
+  border-radius: 16px;
+  border: 1px solid var(--verde-borde);
+  background: var(--verde-tenue);
+  color: var(--verde);
+  font-size: 0.85rem;
+  font-weight: 800;
+  transition: transform 0.25s var(--curva), box-shadow 0.3s ease;
+}
+
+.dash-equipo__admin:hover {
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: 0 0 22px rgba(var(--verde-rgb), 0.2);
+}
+
+.dash-equipo__vacio {
+  padding: 0 14px 14px;
+}
+
+/* Celular: "Administrar" pasa debajo del equipo, a todo el ancho */
+@media (max-width: 559px) {
+  .dash-equipo {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .dash-equipo__admin {
+    justify-content: center;
+    min-height: 44px;
+  }
+}
+
+/* Plantel al desplegar el equipo */
+.dash-plantel {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  margin: 0 14px 14px;
+  border-top: 1px solid var(--vidrio-borde);
+}
+
+.dash-plantel__jugador {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 0.9rem;
+}
+
+.dash-plantel__jugador:last-child {
+  border-bottom: 0;
+}
+
+.dash-plantel__nombre {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.dash-plantel__posicion {
+  margin-left: auto;
+  flex: none;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
 /* ---------- Skeletons con shimmer ---------- */
 .dash-skeletons {
   list-style: none;
@@ -861,97 +1051,6 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   border-radius: 999px;
 }
 
-/* ---------- Accesos rápidos ---------- */
-.dash-accesos {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.dash-acceso {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  min-width: 0;
-  padding: 18px 16px;
-  border-radius: 18px;
-  border: 1px solid var(--vidrio-borde);
-  background: var(--vidrio);
-  box-shadow: var(--sombra-panel);
-  color: var(--texto);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* La aparición (main.js) no debe pisar las transiciones del hover */
-html.js .dash-acceso.revelar {
-  transition: opacity 0.7s ease, transform 0.5s var(--curva), border-color 0.3s ease, box-shadow 0.35s ease;
-  transition-delay: var(--retraso, 0ms), var(--retraso, 0ms), 0ms, 0ms;
-}
-
-html.js .dash-acceso.revelar.visible:hover,
-.dash-acceso:hover {
-  text-decoration: none;     /* "Equipos" es un enlace */
-  transform: translateY(-5px);
-  border-color: var(--verde-borde);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5), 0 0 30px rgba(var(--verde-rgb), 0.16), inset 0 1px 0 rgba(var(--verde-rgb), 0.2);
-}
-
-.dash-acceso:active {
-  transform: translateY(-2px) scale(0.98);
-}
-
-.dash-acceso__icono {
-  width: 28px;
-  height: 28px;
-  margin-bottom: 8px;
-  fill: none;
-  stroke: var(--verde);
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 0 6px rgba(var(--verde-rgb), 0.45));
-  transition: transform 0.35s var(--curva);
-}
-
-.dash-acceso:hover .dash-acceso__icono {
-  transform: scale(1.12) rotate(-4deg);
-}
-
-.dash-acceso__titulo {
-  font-family: var(--fuente-titulo);
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-.dash-acceso__texto {
-  font-size: 0.8rem;
-  color: var(--texto-suave);
-}
-
-@media (max-width: 479px) {
-  .dash-accesos {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .dash-acceso {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    grid-template-rows: auto auto;
-    column-gap: 14px;
-    align-items: center;
-  }
-
-  .dash-acceso__icono {
-    grid-row: span 2;
-    margin: 0;
-  }
-}
-
 /* ---------- Aviso flotante de "próximamente" (encima del dock) ---------- */
 .panel-aviso {
   position: fixed;
@@ -984,7 +1083,7 @@ html.js .dash-acceso.revelar.visible:hover,
   left: 50%;
   bottom: calc(14px + env(safe-area-inset-bottom));
   z-index: 50;
-  width: min(calc(100% - 32px), 320px);
+  width: min(calc(100% - 24px), 420px);   /* 6 ítems */
   transform: translateX(-50%);
   padding: 5px;
   border-radius: 999px;
@@ -997,7 +1096,8 @@ html.js .dash-acceso.revelar.visible:hover,
 .dock__lista {
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-auto-flow: column;    /* un ítem por columna, sin importar cuántos haya */
+  grid-auto-columns: 1fr;
   gap: 4px;
 }
 
@@ -1071,7 +1171,7 @@ html.js .dash-acceso.revelar.visible:hover,
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
   }
 
-  .dash-accesos {
+  .dash-panel--equipos {
     grid-column: 1 / -1;
   }
 

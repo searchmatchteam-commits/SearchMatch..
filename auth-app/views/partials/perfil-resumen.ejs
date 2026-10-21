@@ -1,0 +1,32 @@
+<%
+  // Tarjetas "Datos" y "Estadísticas" del perfil (/perfil y el perfil de una solicitud). Uso:
+  //   include('partials/perfil-resumen', { jugador, nota: 'texto bajo las barras' | null })
+  // jugador: lo arma jugadorController.jugadorParaVista.
+%>
+<article class="perfil__tarjeta">
+  <h2 class="perfil__tarjeta-titulo">Datos</h2>
+  <dl class="perfil__datos">
+    <div class="perfil__dato--ancho"><dt>Nombre completo</dt><dd><%= jugador.nombreCompleto %></dd></div>
+    <div class="perfil__dato--ancho"><dt>Apodo</dt><dd><%= jugador.apodo %></dd></div>
+    <div class="perfil__dato--ancho"><dt>Posiciones</dt><dd><%= jugador.posiciones %></dd></div>
+    <div><dt>Edad</dt><dd><%= jugador.edad !== null ? jugador.edad + ' años' : '—' %></dd></div>
+    <div><dt>Altura</dt><dd><%= jugador.altura ? jugador.altura + ' cm' : '—' %></dd></div>
+    <div><dt>Peso</dt><dd><%= jugador.peso ? jugador.peso + ' kg' : '—' %></dd></div>
+  </dl>
+</article>
+
+<article class="perfil__tarjeta">
+  <h2 class="perfil__tarjeta-titulo">Estadísticas</h2>
+  <ul class="barras">
+    <% jugador.estadisticas.forEach(function (s) { %>
+      <li class="barras__item">
+        <span class="barras__sigla" title="<%= s.nombre %>"><%= s.sigla %></span>
+        <span class="barras__track" role="meter" aria-label="<%= s.nombre %>" aria-valuemin="0" aria-valuemax="99" aria-valuenow="<%= s.valor %>">
+          <span class="barras__relleno" style="--valor: <%= s.valor %>"></span>
+        </span>
+        <span class="barras__valor"><%= s.valor %></span>
+      </li>
+    <% }) %>
+  </ul>
+  <% if (locals.nota) { %><p class="perfil__nota"><%= nota %></p><% } %>
+</article>

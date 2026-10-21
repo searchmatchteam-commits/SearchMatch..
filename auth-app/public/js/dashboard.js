@@ -1,6 +1,6 @@
 // public/js/dashboard.js
 // Interacciones del dashboard (todo en JS puro; las animaciones las hace el CSS con transform/opacity):
-//  1) Avisos de "próximamente": "Buscar partido", accesos rápidos y los íconos del dock
+//  1) Avisos de "próximamente": "Buscar partido" y los íconos del dock
 //     todavía no tienen backend, así que muestran un aviso flotante con el texto de data-proximamente.
 //  2) Parallax del hero: las capas con data-profundidad se desplazan según el mouse.
 // El ripple y el cursor de luz están en cyber.js; la aparición al hacer scroll (.revelar), en main.js.

@@ -6,7 +6,7 @@
   const estados = { capitan: 'Eres el capitán', miembro: 'Ya eres parte', pendiente: 'Solicitud enviada ✓' };
 %>
 
-<!-- Directorio de equipos (solo jugadores: el capitán va a /mi-equipo). Datos de la tabla "equipo";
+<!-- Directorio de equipos. Datos de la tabla "equipo";
      "Solicitar unirme" guarda una fila pendiente en solicitud_union_equipo (equipo.js lo envía sin recargar). -->
 <section class="eq">
   <div class="contenedor">
@@ -17,11 +17,12 @@
       </div>
       <div class="eq-cabecera__acciones">
         <% if (tieneEquipo) { %>
-          <a class="btn btn--contorno btn--grande" href="/mi-equipo">Mi equipo</a>
-        <% } else if (esCapitan) { %>
-          <!-- Solo capitanes: el jugador únicamente envía solicitudes -->
-          <a class="btn btn--contorno btn--grande" href="/crear-equipo">
-            Crear equipo <span aria-hidden="true">+</span>
+          <a class="btn btn--contorno btn--grande" href="/mis-equipos">Mis equipos</a>
+        <% } %>
+        <% if (puedeCrear) { %>
+          <!-- Quien crea el equipo queda como su capitán (cada cuenta crea uno) -->
+          <a class="btn btn--verde btn--grande" href="/crear-equipo">
+            <span aria-hidden="true">+</span> Crear equipo
           </a>
         <% } %>
       </div>
@@ -30,7 +31,7 @@
     <% if (equipos.length === 0) { %>
       <div class="dash-panel eq-panel revelar">
         <p class="dash-panel__nota">
-          <%= esCapitan
+          <%= puedeCrear
             ? 'Todavía no hay equipos registrados. ¡Crea el primero y empieza a recibir jugadores!'
             : 'Todavía no hay equipos registrados. Vuelve pronto para enviar tu solicitud.' %>
         </p>
@@ -46,7 +47,7 @@
       <ul class="eq-clubes">
         <% equipos.forEach(function (equipo) { %>
           <li class="eq-club" data-busqueda="<%= [equipo.nombre, equipo.zona].filter(Boolean).join(' ') %>">
-            <span class="eq-club__escudo" aria-hidden="true"><%= equipo.nombre.charAt(0).toUpperCase() %></span>
+            <span class="eq-club__escudo" aria-hidden="true"><%- include('partials/escudo-equipo', { equipo }) %></span>
             <span class="eq-club__texto">
               <span class="eq-nombre"><%= equipo.nombre %></span>
               <span class="eq-posicion">Comuna: <%= equipo.zona || 'Sin definir' %></span>
@@ -55,7 +56,7 @@
             <% if (equipo.relacion) { %>
               <button type="button" class="btn eq-club__boton" disabled><%= estados[equipo.relacion] %></button>
             <% } else { %>
-              <form action="/equipos/<%= equipo.id %>/unirme" method="POST" data-unirme>
+              <form action="/equipos/<%= equipo.id %>/unirme" method="POST" data-unirme data-equipo="<%= equipo.nombre %>">
                 <button type="submit" class="btn btn--verde eq-club__boton">Solicitar unirme</button>
               </form>
             <% } %>
@@ -66,6 +67,26 @@
     <% } %>
   </div>
 </section>
+
+<!-- Modal de "Solicitar unirme": el mensaje para el capitán (equipo.js lo abre y envía la solicitud) -->
+<div class="modal" hidden data-modal-union>
+  <div class="modal__caja" role="dialog" aria-modal="true" aria-labelledby="modal-union-titulo">
+    <h2 class="modal__titulo" id="modal-union-titulo">Unirme a <span class="texto-verde" data-modal-equipo></span></h2>
+    <p class="modal__texto">Cuéntale al capitán quién eres: lo verá junto a tu perfil antes de aceptarte.</p>
+    <form class="modal__form" data-form-union novalidate>
+      <label class="modal__campo">
+        <span>Mensaje para el capitán</span>
+        <textarea name="mensaje" rows="3" maxlength="<%= LONGITUD_MENSAJE %>" required
+                  placeholder="Ej. Juego de lateral derecho y puedo los fines de semana."></textarea>
+      </label>
+      <p class="modal__error" role="alert" hidden data-modal-error></p>
+      <div class="modal__acciones">
+        <button type="button" class="btn btn--contorno" data-cerrar-modal>Cancelar</button>
+        <button type="submit" class="btn btn--verde">Enviar solicitud</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <!-- Aviso tras enviar la solicitud (equipo.js lo esconde a los pocos segundos) -->
 <p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>

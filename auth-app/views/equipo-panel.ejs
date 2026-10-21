@@ -11,6 +11,19 @@
 
     <!-- ============ ENCABEZADO DEL EQUIPO ============ -->
     <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__identidad">
+      <!-- Escudo: el capitán lo cambia aquí (equipo.js lo reduce y lo sube a POST /equipos/:id/escudo) -->
+      <div class="eq-escudo">
+        <span class="eq-escudo__imagen" data-escudo-vista><%- include('partials/escudo-equipo', { equipo }) %></span>
+        <% if (equipo.soyCapitan) { %>
+          <label class="eq-escudo__cambiar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
+            <span class="solo-lectores">Cambiar escudo</span>
+            <input type="file" class="solo-lectores" accept="image/jpeg,image/png,image/webp"
+                   data-escudo-input data-url="/equipos/<%= equipo.id %>/escudo" />
+          </label>
+        <% } %>
+      </div>
       <div class="eq-cabecera__texto">
         <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span><%= equipo.soyCapitan ? 'Panel del capitán' : 'Mi equipo' %></span>
         <h1 class="eq-cabecera__titulo">Mi Equipo: <span class="texto-verde"><%= equipo.nombre %></span></h1>
@@ -19,6 +32,7 @@
           <li>Capitán: <strong><%= capitan ? capitan.nombre : 'Sin capitán' %></strong></li>
         </ul>
         <% if (equipo.detalle) { %><p class="eq-cabecera__stats"><%= equipo.detalle %></p><% } %>
+      </div>
       </div>
       <div class="eq-cabecera__acciones">
         <% if (equipo.soyCapitan) { %>
@@ -52,8 +66,12 @@
                 <span class="eq-solicitud__datos">
                   <span class="eq-nombre"><%= solicitud.nombre %></span>
                   <span class="eq-posicion"><%= solicitud.posicion %></span>
+                  <% if (solicitud.mensaje) { %>
+                    <span class="eq-solicitud__mensaje">“<%= solicitud.mensaje %>”</span>
+                  <% } %>
                 </span>
                 <span class="eq-solicitud__acciones">
+                  <a class="btn btn--contorno btn--chico" href="/mi-equipo/solicitudes/<%= solicitud.id %>">Ver perfil</a>
                   <form action="/mi-equipo/solicitudes/<%= solicitud.id %>/aceptar" method="POST" data-responder>
                     <button type="submit" class="btn btn--verde btn--chico">Aceptar</button>
                   </form>
@@ -85,7 +103,7 @@
           <ul class="eq-clubes eq-rivales">
             <% rivales.forEach(function (rival) { %>
               <li class="eq-club">
-                <span class="eq-club__escudo" aria-hidden="true"><%= rival.nombre.charAt(0).toUpperCase() %></span>
+                <span class="eq-club__escudo" aria-hidden="true"><%- include('partials/escudo-equipo', { equipo: rival }) %></span>
                 <span class="eq-club__texto">
                   <span class="eq-nombre"><%= rival.nombre %></span>
                   <span class="eq-posicion">Comuna: <%= rival.zona || 'Sin definir' %></span>
@@ -136,30 +154,22 @@
 
     <!-- ============ PLANTEL: CANCHA TÁCTICA ============ -->
     <%
-      // Líneas de la cancha, de arriba (ataque) hacia abajo (arco propio).
-      // Cada jugador va a la línea de su posición; sin posición queda en la banca, bajo la cancha.
-      const lineas = [
-        { clave: 'delantero', nombre: 'Delanteros' },
-        { clave: 'mediocampista', nombre: 'Mediocampistas' },
-        { clave: 'defensa', nombre: 'Defensas' },
-        { clave: 'arquero', nombre: 'Arquero' },
-      ];
-      const banca = plantel.filter(function (jugador) { return !jugador.clavePosicion; });
+      // Cada jugador es su carta (partials/carta-jugador con mini) en la posición x/y (%) que armó
+      // equipoController.plantelEnCancha: la que dejó el capitán o la automática según su línea.
+      // El capitán (que creó el equipo) las arrastra; equipo.js guarda cada posición al soltar.
       // Con menos de 5 (lo mínimo para Fútbol 5) la cancha se ve vacía: aviso sutil encima.
       const JUGADORES_MINIMOS = 5;
-      /** Nombre corto para la ficha: "Joaquín Araya" → { nombre: 'Joaquín', inicial: 'A.' } (el completo va en el title). */
-      function nombreCorto(nombre) {
-        const partes = nombre.split(/\s+/);
-        return { nombre: partes[0], inicial: partes.length > 1 ? partes[1].charAt(0).toUpperCase() + '.' : '' };
-      }
     %>
     <section class="dash-panel eq-panel revelar" aria-labelledby="eq-plantel-titulo">
       <div class="dash-panel__cabecera">
         <h2 class="dash-panel__titulo" id="eq-plantel-titulo">Plantel Actual</h2>
         <span class="eq-total"><%= plantel.length %> <%= plantel.length === 1 ? 'Jugador' : 'Jugadores' %></span>
       </div>
+      <% if (equipo.soyCapitan && plantel.length > 0) { %>
+        <p class="dash-panel__nota">Arrastra las cartas para armar tu formación (con el teclado: Tab y las flechas). Se guarda sola.</p>
+      <% } %>
 
-      <div class="cancha">
+      <div class="cancha <%= equipo.soyCapitan ? 'cancha--editable' : '' %>" <%- equipo.soyCapitan ? 'data-cancha-editable' : '' %>>
         <!-- Líneas: solo bordes y posiciones absolutas (decorativas) -->
         <div class="cancha__lineas" aria-hidden="true">
           <span class="cancha__mitad"></span>
@@ -175,42 +185,19 @@
           <p class="cancha__aviso">Faltan jugadores</p>
         <% } %>
 
-        <!-- Jugadores: cuatro franjas de igual alto; cada una centra sus fichas (o queda vacía) -->
-        <div class="cancha__formacion">
-          <% lineas.forEach(function (linea) {
-               const enLinea = plantel.filter(function (jugador) { return jugador.clavePosicion === linea.clave; }); %>
-            <ul class="cancha__linea" aria-label="<%= linea.nombre %>">
-              <% enLinea.forEach(function (jugador) { %>
-                <li class="ficha <%= jugador.capitan ? 'ficha--capitan' : '' %>" title="<%= jugador.nombre %> · <%= jugador.posicion %>">
-                  <span class="ficha__circulo" aria-hidden="true">
-                    <%= jugador.nombre.charAt(0).toUpperCase() %>
-                    <% if (jugador.capitan) { %><span class="ficha__c">C</span><% } %>
-                  </span>
-                  <span class="ficha__nombre"><%= nombreCorto(jugador.nombre).nombre %><span class="ficha__inicial"> <%= nombreCorto(jugador.nombre).inicial %></span><% if (jugador.capitan) { %><span class="solo-lectores"> (capitán)</span><% } %></span>
-                </li>
-              <% }) %>
-            </ul>
+        <ul class="cancha__jugadores">
+          <% plantel.forEach(function (jugador) { %>
+            <li class="cancha__jugador" style="--x: <%= jugador.x %>; --y: <%= jugador.y %>"
+                title="<%= jugador.nombre %> · <%= jugador.posicion %><%= jugador.capitan ? ' · Capitán' : '' %>"
+                aria-label="<%= jugador.nombre %>, <%= jugador.posicion %><%= jugador.capitan ? ', capitán' : '' %>"
+                <% if (equipo.soyCapitan) { %>tabindex="0" data-ficha data-x="<%= jugador.x %>" data-y="<%= jugador.y %>"
+                data-url="/equipos/<%= equipo.id %>/plantel/<%= jugador.id %>/posicion"<% } %>>
+              <%- include('partials/carta-jugador', { jugador: jugador.carta, editor: false, mini: true }) %>
+              <% if (jugador.capitan) { %><span class="cancha__c" aria-hidden="true">C</span><% } %>
+            </li>
           <% }) %>
-        </div>
+        </ul>
       </div>
-
-      <% if (banca.length > 0) { %>
-        <!-- Banca: quienes aún no eligen posición en su perfil -->
-        <div class="banca">
-          <span class="banca__titulo">Sin posición</span>
-          <ul class="banca__lista">
-            <% banca.forEach(function (jugador) { %>
-              <li class="ficha <%= jugador.capitan ? 'ficha--capitan' : '' %>" title="<%= jugador.nombre %>">
-                <span class="ficha__circulo" aria-hidden="true">
-                  <%= jugador.nombre.charAt(0).toUpperCase() %>
-                  <% if (jugador.capitan) { %><span class="ficha__c">C</span><% } %>
-                </span>
-                <span class="ficha__nombre"><%= nombreCorto(jugador.nombre).nombre %><span class="ficha__inicial"> <%= nombreCorto(jugador.nombre).inicial %></span><% if (jugador.capitan) { %><span class="solo-lectores"> (capitán)</span><% } %></span>
-              </li>
-            <% }) %>
-          </ul>
-        </div>
-      <% } %>
 
       <% if (plantel.length <= 1) { %>
         <p class="dash-panel__nota eq-vacio">Aún no tienes más jugadores en tu plantel. ¡Comparte tu equipo para que se unan!</p>

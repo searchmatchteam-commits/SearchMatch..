@@ -109,6 +109,31 @@ async function guardarWizard(req, res, next) {
   }
 }
 
+/**
+ * Datos de la carta y del resumen (views/partials/carta-jugador.ejs y perfil-resumen.ejs).
+ * Sin estadísticas (perfil a medias) la media y las barras muestran "—".
+ * @param {object} perfil - De jugadorModel.obtenerPerfil / obtenerPerfilPorId.
+ * @param {string|null} foto - URL de la foto o null.
+ */
+function jugadorParaVista(perfil, foto) {
+  const posicion = POSICIONES[perfil.posicion] || { etiqueta: '—', sigla: '—' };
+  const posiciones = perfil.posiciones.map((clave) => POSICIONES[clave].etiqueta);
+  return {
+    // La carta muestra el apodo (los perfiles antiguos sin apodo, el nombre)
+    nombre: nombreEnCarta(perfil),
+    apodo: perfil.apodo || '—',
+    nombreCompleto: `${perfil.nombre} ${perfil.apellido}`.trim(),
+    edad: calcularEdad(perfil.fechaNacimiento),
+    altura: perfil.altura ? Math.round(perfil.altura) : null,
+    peso: perfil.peso ? Math.round(perfil.peso) : null,
+    posicion,
+    posiciones: posiciones.length > 0 ? posiciones.join(', ') : '—',
+    media: perfil.stats ? calcularMedia(perfil.stats) : '—',
+    estadisticas: ESTADISTICAS.map(({ clave, sigla, nombre }) => ({ sigla, nombre, valor: perfil.stats ? perfil.stats[clave] : '—' })),
+    foto,
+  };
+}
+
 // ---------------------------------------------------------------
 // GET /perfil → carta de jugador + resumen
 // ---------------------------------------------------------------
@@ -119,25 +144,10 @@ async function mostrarPerfil(req, res, next) {
       return res.redirect('/perfil-jugador');
     }
 
-    const posicion = POSICIONES[perfil.posicion] || { etiqueta: '—', sigla: '—' };
-    const posiciones = perfil.posiciones.map((clave) => POSICIONES[clave].etiqueta);
     return res.render('perfil', {
       titulo: 'Tu carta de jugador',
       pagina: 'perfil',
-      jugador: {
-        // La carta muestra el apodo (los perfiles antiguos sin apodo, el nombre)
-        nombre: nombreEnCarta(perfil),
-        apodo: perfil.apodo || '—',
-        nombreCompleto: `${perfil.nombre} ${perfil.apellido}`.trim(),
-        edad: calcularEdad(perfil.fechaNacimiento),
-        altura: perfil.altura ? Math.round(perfil.altura) : null,
-        peso: perfil.peso ? Math.round(perfil.peso) : null,
-        posicion,
-        posiciones: posiciones.length > 0 ? posiciones.join(', ') : '—',
-        media: calcularMedia(perfil.stats),
-        estadisticas: ESTADISTICAS.map(({ clave, sigla, nombre }) => ({ sigla, nombre, valor: perfil.stats[clave] })),
-        foto: urlFoto(perfil),
-      },
+      jugador: jugadorParaVista(perfil, urlFoto(perfil)),
     });
   } catch (err) {
     return next(err);
@@ -262,6 +272,27 @@ async function eliminarFoto(req, res, next) {
 }
 
 // ---------------------------------------------------------------
+// GET /jugadores/:id/foto → la foto de la carta de un jugador (las cartas del plantel en /mi-equipo).
+// La carta es pública dentro de la app ("Así te verán otros jugadores"): basta con tener sesión.
+// ---------------------------------------------------------------
+async function servirFotoJugador(req, res, next) {
+  const idJugador = Number(req.params.id);
+  try {
+    const foto = Number.isInteger(idJugador) && idJugador > 0 ? await jugadorModel.obtenerFotoPorId(idJugador) : null;
+    if (!foto) return next();
+
+    res.set({
+      'Content-Type': foto.tipo,
+      'Cache-Control': 'private, max-age=31536000',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    return res.send(foto.datos);
+  } catch (err) {
+    return next(err);
+  }
+}
+
+// ---------------------------------------------------------------
 // GET /perfil/foto → la foto del jugador de la sesión (404 si no tiene)
 // ---------------------------------------------------------------
 async function servirFoto(req, res, next) {
@@ -290,4 +321,7 @@ module.exports = {
   subirFoto,
   eliminarFoto,
   servirFoto,
+  servirFotoJugador,
+  jugadorParaVista,
+  detectarTipoImagen,
 };

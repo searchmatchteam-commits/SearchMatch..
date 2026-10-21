@@ -19,14 +19,14 @@ function clavePosicion(nombreDb) {
 }
 
 /**
- * Perfil del jugador de una cuenta de Supabase Auth.
- * @param {string} authId - UUID de auth.users.
+ * Perfil de un jugador: el de una cuenta (filtro 'u.auth_id') o uno por su id (filtro 'j.id').
+ * @param {'u.auth_id'|'j.id'} filtro - Columna fija del código, nunca algo que llegue del usuario.
  * @returns {Promise<object|null>} { id, nombre, apellido, apodo ('' si no tiene), fechaNacimiento, altura, peso,
  *          posiciones: ['defensa', ...], posicion: la primera (principal) | null,
  *          stats: {ritmo, ...} | null, perfilCompleto,
  *          fotoVersion: ms de la última foto (para la URL) | null }
  */
-async function obtenerPerfil(authId) {
+async function leerPerfil(filtro, valor) {
   const columnasStats = ESTADISTICAS.map(({ columna }) => `j.${columna}`).join(', ');
   const consulta = `
     SELECT j.id, j.nombre_apodo, j.apellido, j.apodo,
@@ -39,9 +39,9 @@ async function obtenerPerfil(authId) {
                   ORDER BY jp.id) AS posiciones
     FROM usuario u
     JOIN jugador j ON j.id_usuario = u.id
-    WHERE u.auth_id = $1
+    WHERE ${filtro} = $1
   `;
-  const { rows } = await pool.query(consulta, [authId]);
+  const { rows } = await pool.query(consulta, [valor]);
   const fila = rows[0];
   if (!fila) return null;
 
@@ -61,6 +61,16 @@ async function obtenerPerfil(authId) {
     perfilCompleto: fila.perfil_completo,
     fotoVersion: fila.foto_actualizada ? fila.foto_actualizada.getTime() : null,
   };
+}
+
+/** Perfil del jugador de una cuenta de Supabase Auth (ver leerPerfil). */
+function obtenerPerfil(authId) {
+  return leerPerfil('u.auth_id', authId);
+}
+
+/** Perfil de un jugador por su id (el capitán revisando una solicitud; ver leerPerfil). */
+function obtenerPerfilPorId(idJugador) {
+  return leerPerfil('j.id', idJugador);
 }
 
 
@@ -160,6 +170,15 @@ async function obtenerFoto(authId) {
 }
 
 /**
+ * Foto de un jugador por su id (la sirve GET /mi-equipo/solicitudes/:id/foto).
+ * @returns {Promise<{datos: Buffer, tipo: string}|null>}
+ */
+async function obtenerFotoPorId(idJugador) {
+  const { rows } = await pool.query('SELECT foto, foto_tipo FROM jugador WHERE id = $1 AND foto IS NOT NULL', [idJugador]);
+  return rows[0] ? { datos: rows[0].foto, tipo: rows[0].foto_tipo } : null;
+}
+
+/**
  * Reemplaza la foto del jugador.
  * @param {Buffer} datos - Imagen ya validada.
  * @param {string} tipo - 'image/jpeg' | 'image/png' | 'image/webp'
@@ -180,9 +199,11 @@ async function eliminarFoto(idJugador) {
 module.exports = {
   COLUMNA_INEXISTENTE,
   obtenerPerfil,
+  obtenerPerfilPorId,
   guardarPerfil,
   actualizarPerfil,
   obtenerFoto,
+  obtenerFotoPorId,
   guardarFoto,
   eliminarFoto,
 };

@@ -3098,6 +3098,26 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   margin-bottom: 16px;
 }
 
+/* Perfil de una solicitud: el mensaje del jugador y Aceptar/Rechazar */
+.perfil__mensaje {
+  margin: 0;
+  padding: 4px 0 4px 14px;
+  border-left: 3px solid var(--verde);
+  font-size: 1.02rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.perfil__acciones.perfil__acciones--solicitud {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.perfil__acciones--solicitud .btn {
+  width: 100%;
+}
+
 .perfil__datos {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

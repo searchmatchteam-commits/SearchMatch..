@@ -1,0 +1,41 @@
+<%- include('partials/header') %>
+
+<%- include('partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- Torneos: aún sin backend (no hay tablas de torneos). Muestra la sección con un skeleton y el aviso. -->
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <h1 class="eq-cabecera__titulo">Torneos</h1>
+        <p class="eq-cabecera__stats">Inscribe a tu equipo y compite por la copa</p>
+      </div>
+      <div class="eq-cabecera__acciones">
+        <span class="dash-etiqueta">Próximamente</span>
+      </div>
+    </header>
+
+    <div class="dash-panel eq-panel revelar">
+      <header class="dash-panel__cabecera">
+        <h2 class="dash-panel__titulo">Torneos cerca de ti</h2>
+      </header>
+      <ul class="dash-skeletons" aria-hidden="true">
+        <% for (let i = 0; i < 3; i++) { %>
+          <li class="dash-skeleton">
+            <span class="skeleton skeleton--circulo"></span>
+            <span class="dash-skeleton__lineas">
+              <span class="skeleton skeleton--linea"></span>
+              <span class="skeleton skeleton--linea skeleton--corta"></span>
+            </span>
+            <span class="skeleton skeleton--pildora"></span>
+          </li>
+        <% } %>
+      </ul>
+      <p class="dash-panel__nota">Estamos preparando los torneos por comuna, modalidad y nivel. Muy pronto podrás inscribir a tu equipo.</p>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/dock', { activo: 'torneos' }) %>
+
+<%- include('partials/footer') %>

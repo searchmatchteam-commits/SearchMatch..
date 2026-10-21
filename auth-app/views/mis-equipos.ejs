@@ -1,0 +1,32 @@
+<%- include('partials/header') %>
+
+<%- include('partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- Mis equipos: los equipos de la cuenta (equipoModel.listarMisEquiposConPlantel). Al tocar uno se
+     despliega su plantel; en los que creó (es su capitán) aparece "Administrar" al lado. -->
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <h1 class="eq-cabecera__titulo">Mis equipos</h1>
+        <p class="eq-cabecera__stats">Toca un equipo para ver su plantel</p>
+      </div>
+      <div class="eq-cabecera__acciones">
+        <a class="btn btn--contorno btn--grande" href="/equipos">Buscar equipos</a>
+        <% if (puedeCrear) { %>
+          <a class="btn btn--verde btn--grande" href="/crear-equipo">
+            <span aria-hidden="true">+</span> Crear equipo
+          </a>
+        <% } %>
+      </div>
+    </header>
+
+    <div class="dash-panel eq-panel revelar">
+      <%- include('partials/mis-equipos', { misEquipos }) %>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/dock', { activo: 'mis-equipos' }) %>
+
+<%- include('partials/footer') %>

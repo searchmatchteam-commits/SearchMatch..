@@ -1,0 +1,57 @@
+<%- include('partials/header') %>
+<%
+  const fechaSolicitud = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', day: 'numeric', month: 'long' })
+    .format(solicitud.fecha);
+  const estados = { aceptada: 'Ya aceptaste esta solicitud: el jugador es parte de tu plantel.', rechazada: 'Rechazaste esta solicitud.' };
+%>
+
+<!-- Perfil de quien pidió unirse (equipoController.verSolicitud): la misma carta y resumen de /perfil,
+     su mensaje y Aceptar/Rechazar (los formularios de /mi-equipo/solicitudes/:id/:accion). -->
+<section class="perfil">
+  <div class="perfil__carta">
+    <%- include('partials/carta-jugador', { jugador, editor: false }) %>
+  </div>
+
+  <header class="perfil__cabecera">
+    <span class="rol__eyebrow">SOLICITUD PARA UNIRSE · <%= solicitud.equipo.nombre.toUpperCase() %></span>
+    <h1 class="perfil__titulo"><%= jugador.nombreCompleto || jugador.nombre %></h1>
+    <p class="perfil__subtitulo">Envió su solicitud el <%= fechaSolicitud %>.</p>
+  </header>
+
+  <div class="perfil__info">
+    <article class="perfil__tarjeta">
+      <h2 class="perfil__tarjeta-titulo">Mensaje</h2>
+      <% if (solicitud.mensaje) { %>
+        <blockquote class="perfil__mensaje">“<%= solicitud.mensaje %>”</blockquote>
+      <% } else { %>
+        <p class="perfil__nota">El jugador no dejó un mensaje.</p>
+      <% } %>
+    </article>
+
+    <%- include('partials/perfil-resumen', { jugador, nota: null }) %>
+
+    <% if (solicitud.pendiente) { %>
+      <div class="perfil__acciones perfil__acciones--solicitud">
+        <form action="/mi-equipo/solicitudes/<%= solicitud.id %>/aceptar" method="POST">
+          <button type="submit" class="btn btn--verde btn--grande">Aceptar</button>
+        </form>
+        <form action="/mi-equipo/solicitudes/<%= solicitud.id %>/rechazar" method="POST">
+          <button type="submit" class="btn btn--contorno btn--grande">Rechazar</button>
+        </form>
+      </div>
+    <% } else { %>
+      <p class="perfil__nota"><%= estados[solicitud.estado] || 'Esta solicitud ya fue respondida.' %></p>
+    <% } %>
+
+    <div class="perfil__enlaces">
+      <a class="enlace-icono" href="/mi-equipo?equipo=<%= solicitud.equipo.id %>">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+        Volver al panel del equipo
+      </a>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/dock', { activo: 'mis-equipos' }) %>
+
+<%- include('partials/footer') %>

@@ -43,8 +43,8 @@
   <% if (locals.pagina === 'perfil' && locals.editorPerfil) { %>
     <!-- Editor de perfil: carta en vivo, estadísticas y foto -->
     <script src="/js/editar-perfil.js?v=<%= versionAssets %>" defer></script>
-  <% } else if (locals.pagina === 'perfil') { %>
-    <!-- Carta: descargar y compartir -->
+  <% } else if (locals.pagina === 'perfil' && !locals.perfilAjeno) { %>
+    <!-- Carta: descargar y compartir (no en el perfil de otro jugador) -->
     <script src="/js/perfil.js?v=<%= versionAssets %>" defer></script>
   <% } %>
   <% if (locals.pagina === 'landing' || locals.pagina === 'dashboard') { %>

@@ -668,3 +668,34 @@ ALTER TABLE jugador
 
 ALTER TABLE jugador
     ADD COLUMN IF NOT EXISTS apodo VARCHAR(20);
+
+
+-- ============================================================
+-- Z) MENSAJE DE LA SOLICITUD PARA UNIRSE (directorio /equipos)
+-- ============================================================
+-- Re-ejecutable: solo AGREGA una columna (nullable).
+-- Lo que escribe el jugador al pedir unirse; el capitán lo lee en /mi-equipo
+-- y en el perfil del jugador. Las solicitudes anteriores quedan sin mensaje.
+
+ALTER TABLE solicitud_union_equipo
+    ADD COLUMN IF NOT EXISTS mensaje VARCHAR(200);
+
+
+-- ============================================================
+-- AA) ESCUDO DEL EQUIPO Y POSICIONES EN LA CANCHA (/mi-equipo)
+-- ============================================================
+-- Re-ejecutable: solo AGREGA columnas (nullable).
+-- El escudo llega ya reducido desde el navegador (~256 px, PNG), así que se guarda
+-- directo en la fila del equipo; escudo_actualizado sirve de versión en la URL.
+-- pos_x / pos_y: dónde dejó el capitán la carta de cada jugador en la cancha táctica,
+-- en % del ancho y del alto (NULL = posición automática según su línea).
+
+ALTER TABLE equipo
+    ADD COLUMN IF NOT EXISTS escudo             BYTEA,
+    ADD COLUMN IF NOT EXISTS escudo_tipo        VARCHAR(20)
+        CHECK (escudo_tipo IN ('image/jpeg', 'image/png', 'image/webp')),
+    ADD COLUMN IF NOT EXISTS escudo_actualizado TIMESTAMPTZ;
+
+ALTER TABLE equipo_jugador
+    ADD COLUMN IF NOT EXISTS pos_x NUMERIC(5, 2) CHECK (pos_x BETWEEN 0 AND 100),
+    ADD COLUMN IF NOT EXISTS pos_y NUMERIC(5, 2) CHECK (pos_y BETWEEN 0 AND 100);

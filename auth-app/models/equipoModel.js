@@ -3,10 +3,10 @@
 // el plantel en "equipo_jugador" (rol "capitan" o "integrante" de rol_equipo, con el
 // nombre y la posición desde "jugador"), las solicitudes en "solicitud_union_equipo"
 // y los desafíos entre equipos en "desafio" (estados en "estado_desafio").
-// Requiere la sección W de sql/seed.sql. Todas las consultas son parametrizadas.
+// Requiere las secciones W, Z (mensaje de la solicitud) y AA (escudo y posiciones en la cancha) de sql/seed.sql. Todas las consultas son parametrizadas.
 
 const { pool } = require('../config/db');
-const { NIVELES, POSICIONES } = require('../config/perfilJugador');
+const { NIVELES, POSICIONES, ESTADISTICAS } = require('../config/perfilJugador');
 const { MODALIDADES } = require('../config/equipo');
 
 // Nombres aceptados en los catálogos (se buscan en minúsculas).
@@ -22,6 +22,11 @@ function detalleEquipo(fila) {
   return [MODALIDADES[fila.jugadores], fila.nivel, fila.zona].filter(Boolean).join(' · ');
 }
 
+/** URL del escudo subido (la versión evita que el navegador muestre uno viejo), o null: la vista usa la inicial. */
+function urlEscudo(fila) {
+  return fila.escudo_actualizado ? `/equipos/${fila.id}/escudo?v=${fila.escudo_actualizado.getTime()}` : null;
+}
+
 /**
  * Equipo activo que creó la cuenta (su capitán).
  * @param {string} authId - UUID de auth.users.
@@ -29,7 +34,7 @@ function detalleEquipo(fila) {
  */
 async function obtenerEquipoDeCapitan(authId) {
   const { rows } = await pool.query(
-    `SELECT e.id, e.nombre, e.zona, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel
+    `SELECT e.id, e.nombre, e.zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel
        FROM usuario u
        JOIN equipo e ON e.id_usuario_creador = u.id AND e.activo
        LEFT JOIN modalidad m ON m.id = e.id_modalidad
@@ -48,6 +53,7 @@ async function obtenerEquipoDeCapitan(authId) {
     modalidad: MODALIDADES[fila.jugadores] || null,
     nivel: fila.nivel,
     detalle: detalleEquipo(fila),
+    escudo: urlEscudo(fila),
   };
 }
 
@@ -65,53 +71,80 @@ function etiquetaPosicion(nombreDb) {
   return clave ? POSICIONES[clave].etiqueta : nombreDb;
 }
 
-/**
- * Equipo activo de la cuenta: el que creó (equipo.id_usuario_creador, siempre es su
- * capitán) o al que pertenece según "equipo_jugador" (capitán o integrante).
- * El creador lo encuentra aunque falte su fila en equipo_jugador o en jugador.
- * Si tiene varios, prioriza el que capitanea.
- * @param {string} authId - UUID de auth.users.
- * @returns {Promise<{id, nombre, zona, detalle, soyCapitan: boolean}|null>}
- */
-async function obtenerMiEquipo(authId) {
-  const { rows } = await pool.query(
-    `SELECT e.id, e.nombre, e.zona, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
-            (e.id_usuario_creador = u.id OR coalesce(lower(r.nombre) = ANY($2), false)) AS soy_capitan
-       FROM usuario u
-       LEFT JOIN jugador j ON j.id_usuario = u.id
-       JOIN equipo e ON e.activo
-        AND (e.id_usuario_creador = u.id
-             OR EXISTS (SELECT 1 FROM equipo_jugador x WHERE x.id_equipo = e.id AND x.id_jugador = j.id))
-       LEFT JOIN equipo_jugador ej ON ej.id_equipo = e.id AND ej.id_jugador = j.id
-       LEFT JOIN rol_equipo r ON r.id = ej.id_rol_equipo
-       LEFT JOIN modalidad m ON m.id = e.id_modalidad
-       LEFT JOIN nivel n ON n.id = e.id_nivel
-      WHERE u.auth_id = $1
-      ORDER BY soy_capitan DESC, e.id
-      LIMIT 1`,
-    [authId, NOMBRES_ROL_CAPITAN]
-  );
-  const fila = rows[0];
-  if (!fila) return null;
+// Equipos activos de la cuenta ($1): los que creó y a los que pertenece según "equipo_jugador".
+// Solo es capitán de los que creó (equipo.id_usuario_creador); en el resto es jugador.
+// El creador los encuentra aunque falte su fila en equipo_jugador o en jugador.
+// $2: un equipo en particular (o null para todos). Primero los que capitanea.
+const SQL_MIS_EQUIPOS = `
+  SELECT e.id, e.nombre, e.zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
+         e.id_usuario_creador = u.id AS soy_capitan
+    FROM usuario u
+    LEFT JOIN jugador j ON j.id_usuario = u.id
+    JOIN equipo e ON e.activo
+     AND (e.id_usuario_creador = u.id
+          OR EXISTS (SELECT 1 FROM equipo_jugador x WHERE x.id_equipo = e.id AND x.id_jugador = j.id))
+    LEFT JOIN modalidad m ON m.id = e.id_modalidad
+    LEFT JOIN nivel n ON n.id = e.id_nivel
+   WHERE u.auth_id = $1 AND ($2::int IS NULL OR e.id = $2)
+   ORDER BY soy_capitan DESC, e.id`;
+
+function filaMiEquipo(fila) {
   return {
     id: fila.id,
     nombre: fila.nombre,
     zona: fila.zona,
     detalle: detalleEquipo(fila),
+    escudo: urlEscudo(fila),
     soyCapitan: Boolean(fila.soy_capitan),
   };
 }
 
 /**
- * Plantel de un equipo: equipo_jugador + jugador (nombre) + su primera posición + rol.
- * El capitán va primero; el resto, en orden de llegada.
+ * Equipo activo de la cuenta (ver SQL_MIS_EQUIPOS). Si tiene varios, prioriza el que capitanea.
+ * @param {string} authId - UUID de auth.users.
+ * @param {number|null} [idEquipo] - Uno en particular: null si la cuenta no pertenece a ese equipo.
+ * @returns {Promise<{id, nombre, zona, detalle, escudo: string|null, soyCapitan: boolean}|null>}
+ */
+async function obtenerMiEquipo(authId, idEquipo = null) {
+  const { rows } = await pool.query(`${SQL_MIS_EQUIPOS} LIMIT 1`, [authId, idEquipo]);
+  return rows[0] ? filaMiEquipo(rows[0]) : null;
+}
+
+/**
+ * Todos los equipos activos de la cuenta (ver SQL_MIS_EQUIPOS), primero los que capitanea.
+ * @param {string} authId - UUID de auth.users.
+ * @returns {Promise<Array<{id, nombre, zona, detalle, soyCapitan: boolean}>>}
+ */
+async function listarMisEquipos(authId) {
+  const { rows } = await pool.query(SQL_MIS_EQUIPOS, [authId, null]);
+  return rows.map(filaMiEquipo);
+}
+
+/**
+ * "Mis equipos" (dashboard y /mis-equipos): los equipos de la cuenta, cada uno con su plantel.
+ * @param {string} authId - UUID de auth.users.
+ * @returns {Promise<Array<{id, nombre, zona, detalle, soyCapitan: boolean, plantel: Array}>>}
+ */
+async function listarMisEquiposConPlantel(authId) {
+  const equipos = await listarMisEquipos(authId);
+  const planteles = await Promise.all(equipos.map((equipo) => listarPlantel(equipo.id)));
+  return equipos.map((equipo, i) => ({ ...equipo, plantel: planteles[i] }));
+}
+
+/**
+ * Plantel de un equipo: equipo_jugador + jugador (nombre, carta y foto) + su primera posición + rol,
+ * y dónde dejó el capitán su carta en la cancha. El capitán va primero; el resto, en orden de llegada.
  * @param {number} idEquipo
- * @returns {Promise<Array<{id, nombre, posicion, clavePosicion, capitan: boolean}>>}
+ * @returns {Promise<Array<{id, nombre, nombreCarta, posicion, clavePosicion, capitan: boolean,
+ *          stats: {ritmo, ...}|null, fotoVersion: number|null, posX: number|null, posY: number|null}>>}
  *          clavePosicion: 'arquero' | 'defensa' | 'mediocampista' | 'delantero' | null (la línea en la cancha).
  */
 async function listarPlantel(idEquipo) {
+  const columnasStats = ESTADISTICAS.map(({ columna }) => `j.${columna}`).join(', ');
   const { rows } = await pool.query(
     `SELECT j.id, trim(concat_ws(' ', j.nombre_apodo, j.apellido)) AS nombre,
+            coalesce(nullif(j.apodo, ''), j.nombre_apodo) AS nombre_carta,
+            j.foto_actualizada, ${columnasStats}, ej.pos_x, ej.pos_y,
             (SELECT p.nombre
                FROM jugador_posicion jp
                JOIN posicion p ON p.id = jp.id_posicion
@@ -129,21 +162,74 @@ async function listarPlantel(idEquipo) {
   return rows.map((fila) => ({
     id: fila.id,
     nombre: fila.nombre || 'Jugador',
+    nombreCarta: fila.nombre_carta || 'Jugador', // apodo si tiene (como en su carta)
     posicion: etiquetaPosicion(fila.posicion) || 'Sin posición',
     clavePosicion: clavePosicion(fila.posicion),
     capitan: Boolean(fila.capitan),
+    stats: ESTADISTICAS.every(({ columna }) => fila[columna] !== null)
+      ? Object.fromEntries(ESTADISTICAS.map(({ clave, columna }) => [clave, fila[columna]]))
+      : null,
+    fotoVersion: fila.foto_actualizada ? fila.foto_actualizada.getTime() : null,
+    posX: fila.pos_x === null ? null : Number(fila.pos_x),
+    posY: fila.pos_y === null ? null : Number(fila.pos_y),
   }));
 }
 
 /**
+ * El capitán deja la carta de un jugador en un punto de la cancha (en % del ancho y del alto).
+ * Solo el que creó el equipo, y solo con jugadores de su plantel.
+ * @param {string} authId - UUID de auth.users (el capitán).
+ * @returns {Promise<boolean>} false si el equipo no es suyo o el jugador no está en el plantel.
+ */
+async function guardarPosicionEnCancha(authId, idEquipo, idJugador, x, y) {
+  const { rowCount } = await pool.query(
+    `UPDATE equipo_jugador ej
+        SET pos_x = $4, pos_y = $5
+       FROM equipo e
+       JOIN usuario u ON u.id = e.id_usuario_creador
+      WHERE ej.id_equipo = e.id AND e.id = $2 AND e.activo AND u.auth_id = $1 AND ej.id_jugador = $3`,
+    [authId, idEquipo, idJugador, x, y]
+  );
+  return rowCount > 0;
+}
+
+/**
+ * Reemplaza el escudo del equipo (solo el capitán que lo creó).
+ * @param {Buffer} datos - Imagen ya validada.
+ * @param {string} tipo - 'image/jpeg' | 'image/png' | 'image/webp'
+ * @returns {Promise<boolean>} false si el equipo no es de esta cuenta.
+ */
+async function guardarEscudo(authId, idEquipo, datos, tipo) {
+  const { rowCount } = await pool.query(
+    `UPDATE equipo e
+        SET escudo = $3, escudo_tipo = $4, escudo_actualizado = NOW()
+       FROM usuario u
+      WHERE e.id = $2 AND e.activo AND u.id = e.id_usuario_creador AND u.auth_id = $1`,
+    [authId, idEquipo, datos, tipo]
+  );
+  return rowCount > 0;
+}
+
+/**
+ * Escudo de un equipo activo (lo sirve GET /equipos/:id/escudo).
+ * @returns {Promise<{datos: Buffer, tipo: string}|null>}
+ */
+async function obtenerEscudo(idEquipo) {
+  const { rows } = await pool.query('SELECT escudo, escudo_tipo FROM equipo WHERE id = $1 AND activo AND escudo IS NOT NULL', [
+    idEquipo,
+  ]);
+  return rows[0] ? { datos: rows[0].escudo, tipo: rows[0].escudo_tipo } : null;
+}
+
+/**
  * Solicitudes pendientes de un equipo, de la más antigua a la más nueva,
- * con el nombre y la primera posición del jugador.
+ * con el nombre y la primera posición del jugador y su mensaje.
  * @param {number} idEquipo
- * @returns {Promise<Array<{id, nombre, posicion}>>} id es el de la solicitud.
+ * @returns {Promise<Array<{id, nombre, posicion, mensaje: string|null}>>} id es el de la solicitud.
  */
 async function listarSolicitudesPendientes(idEquipo) {
   const { rows } = await pool.query(
-    `SELECT s.id, trim(concat_ws(' ', j.nombre_apodo, j.apellido)) AS nombre,
+    `SELECT s.id, s.mensaje, trim(concat_ws(' ', j.nombre_apodo, j.apellido)) AS nombre,
             (SELECT p.nombre
                FROM jugador_posicion jp
                JOIN posicion p ON p.id = jp.id_posicion
@@ -161,7 +247,40 @@ async function listarSolicitudesPendientes(idEquipo) {
     id: fila.id,
     nombre: fila.nombre || 'Jugador',
     posicion: etiquetaPosicion(fila.posicion) || 'Sin posición',
+    mensaje: fila.mensaje,
   }));
+}
+
+/**
+ * Una solicitud de un equipo creado por la cuenta (para que su capitán vea el perfil y el mensaje).
+ * Cualquier estado: si ya se respondió, la vista lo dice en vez de mostrar Aceptar/Rechazar.
+ * @param {string} authId - UUID de auth.users (el capitán).
+ * @param {number} idSolicitud
+ * @returns {Promise<{id, idJugador, mensaje, fecha: Date, estado: string, pendiente: boolean,
+ *          equipo: {id, nombre}}|null>} null si no existe o no es de un equipo suyo.
+ */
+async function obtenerSolicitudDeMiEquipo(authId, idSolicitud) {
+  const { rows } = await pool.query(
+    `SELECT s.id, s.id_jugador, s.mensaje, s.fecha_solicitud, lower(es.nombre) AS estado,
+            e.id AS id_equipo, e.nombre AS equipo
+       FROM solicitud_union_equipo s
+       JOIN estado_solicitud es ON es.id = s.id_estado_solicitud
+       JOIN equipo e ON e.id = s.id_equipo AND e.activo
+       JOIN usuario u ON u.id = e.id_usuario_creador
+      WHERE s.id = $1 AND u.auth_id = $2`,
+    [idSolicitud, authId]
+  );
+  const fila = rows[0];
+  if (!fila) return null;
+  return {
+    id: fila.id,
+    idJugador: fila.id_jugador,
+    mensaje: fila.mensaje,
+    fecha: fila.fecha_solicitud,
+    estado: fila.estado,
+    pendiente: fila.estado === ESTADO_PENDIENTE,
+    equipo: { id: fila.id_equipo, nombre: fila.equipo },
+  };
 }
 
 /**
@@ -235,7 +354,7 @@ async function responderSolicitud(authId, idSolicitud, aceptar) {
  */
 async function listarRivales(idEquipo) {
   const { rows } = await pool.query(
-    `SELECT e.id, e.nombre, e.zona, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
+    `SELECT e.id, e.nombre, e.zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
             EXISTS (SELECT 1 FROM desafio d JOIN estado_desafio ed ON ed.id = d.id_estado_desafio
                      WHERE d.id_equipo_desafiante = $1 AND d.id_equipo_desafiado = e.id
                        AND lower(ed.nombre) = $2) AS enviado,
@@ -255,6 +374,7 @@ async function listarRivales(idEquipo) {
     zona: fila.zona,
     nivel: fila.nivel,
     modalidad: MODALIDADES[fila.jugadores] || null,
+    escudo: urlEscudo(fila),
     desafio: fila.enviado ? 'enviado' : fila.recibido ? 'recibido' : null,
   }));
 }
@@ -415,7 +535,7 @@ async function listarEquipos(authId) {
          LEFT JOIN jugador j ON j.id_usuario = u.id
         WHERE u.auth_id = $1
      )
-     SELECT e.id, e.nombre, e.zona, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
+     SELECT e.id, e.nombre, e.zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
             e.id_usuario_creador = yo.id_usuario AS es_capitan,
             EXISTS (SELECT 1 FROM equipo_jugador ej
                      WHERE ej.id_equipo = e.id AND ej.id_jugador = yo.id_jugador) AS es_miembro,
@@ -438,19 +558,21 @@ async function listarEquipos(authId) {
     nivel: fila.nivel,
     modalidad: MODALIDADES[fila.jugadores] || null,
     detalle: detalleEquipo(fila),
+    escudo: urlEscudo(fila),
     relacion: fila.es_capitan ? 'capitan' : fila.es_miembro ? 'miembro' : fila.pendiente ? 'pendiente' : null,
   }));
 }
 
 /**
- * Envía la solicitud del jugador de la cuenta para unirse a un equipo.
+ * Envía la solicitud del jugador de la cuenta para unirse a un equipo, con su mensaje.
  * Bloquea la fila del jugador durante la transacción: dos clics seguidos no
  * crean dos solicitudes pendientes.
  * @param {string} authId - UUID de auth.users.
  * @param {number} idEquipo
+ * @param {string|null} mensaje - Ya validado (validarSolicitudUnion).
  * @returns {Promise<'enviada'|'miembro'|'pendiente'|'inexistente'>}
  */
-async function solicitarUnion(authId, idEquipo) {
+async function solicitarUnion(authId, idEquipo, mensaje) {
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
@@ -486,8 +608,8 @@ async function solicitarUnion(authId, idEquipo) {
         resultado = 'pendiente';
       } else {
         await cliente.query(
-          'INSERT INTO solicitud_union_equipo (id_jugador, id_equipo, id_estado_solicitud) VALUES ($1, $2, $3)',
-          [idJugador, idEquipo, estado.rows[0].id]
+          'INSERT INTO solicitud_union_equipo (id_jugador, id_equipo, id_estado_solicitud, mensaje) VALUES ($1, $2, $3, $4)',
+          [idJugador, idEquipo, estado.rows[0].id, mensaje]
         );
         resultado = 'enviada';
       }
@@ -506,8 +628,14 @@ async function solicitarUnion(authId, idEquipo) {
 module.exports = {
   obtenerEquipoDeCapitan,
   obtenerMiEquipo,
+  listarMisEquipos,
+  listarMisEquiposConPlantel,
   listarPlantel,
+  guardarPosicionEnCancha,
+  guardarEscudo,
+  obtenerEscudo,
   listarSolicitudesPendientes,
+  obtenerSolicitudDeMiEquipo,
   responderSolicitud,
   listarRivales,
   enviarDesafio,

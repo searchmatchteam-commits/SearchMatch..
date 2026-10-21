@@ -19,6 +19,7 @@ const LONGITUD_MAXIMA_APODO = 20; // jugador.apodo (lo que cabe en la carta)
 const LONGITUD_MAXIMA_CORREO = 150; // usuario.correo / equipo.correo_contacto
 const LONGITUD_MAXIMA_ZONA = 100; // equipo.zona
 const LONGITUD_MAXIMA_MENSAJE_DESAFIO = 200; // lo que escribe el capitán en desafio.mensaje
+const LONGITUD_MAXIMA_MENSAJE_SOLICITUD = 200; // solicitud_union_equipo.mensaje (sección Z de sql/seed.sql)
 const DIAS_MAXIMOS_DESAFIO = 365; // la fecha tentativa no puede estar a más de un año
 
 // Rango de edad aceptado al registrarse (jugador.fecha_nacimiento).
@@ -351,6 +352,23 @@ function validarDesafio(req, res, next) {
   return next();
 }
 
+/**
+ * Mensaje de "Solicitar unirme" (POST /equipos/:id/unirme). En el directorio es obligatorio
+ * (el modal lo pide); aquí solo se limpia y se limita: sin JavaScript la solicitud llega sin mensaje.
+ * Deja req.datosSolicitud = { mensaje: string|null } y req.erroresSolicitud = [].
+ */
+function validarSolicitudUnion(req, res, next) {
+  // Espacios y saltos de línea repetidos cuentan como uno (el capitán lo lee en una tarjeta)
+  const mensaje = (req.body.mensaje || '').replace(/\s+/g, ' ').trim();
+  const errores = [];
+  if (mensaje.length > LONGITUD_MAXIMA_MENSAJE_SOLICITUD) {
+    errores.push(`El mensaje no puede superar los ${LONGITUD_MAXIMA_MENSAJE_SOLICITUD} caracteres.`);
+  }
+  req.datosSolicitud = { mensaje: mensaje || null };
+  req.erroresSolicitud = errores;
+  return next();
+}
+
 module.exports = {
   validarRegistro,
   validarLogin,
@@ -358,6 +376,8 @@ module.exports = {
   validarEdicionPerfil,
   validarEquipo,
   validarDesafio,
+  validarSolicitudUnion,
+  LONGITUD_MAXIMA_MENSAJE_SOLICITUD,
   normalizarTelefono,
   calcularEdad,
   ALTURA_CM,
