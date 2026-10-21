@@ -55,6 +55,10 @@
     <!-- Dashboard: avisos de "próximamente", parallax y foil de la carta -->
     <script src="/js/dashboard.js?v=<%= versionAssets %>" defer></script>
   <% } %>
+  <% if (locals.pagina === 'dashboard') { %>
+    <!-- Silueta a escala del panel "Tu carta" -->
+    <script src="/js/visualizador-corporal.js?v=<%= versionAssets %>" defer></script>
+  <% } %>
   <% if (locals.pagina === 'equipo') { %>
     <!-- Panel del capitán: solicitudes y plantel (datos de prueba) -->
     <script src="/js/equipo.js?v=<%= versionAssets %>" defer></script>

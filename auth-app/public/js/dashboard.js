@@ -3,7 +3,6 @@
 //  1) Avisos de "próximamente": "Buscar partido", accesos rápidos y los íconos del dock
 //     todavía no tienen backend, así que muestran un aviso flotante con el texto de data-proximamente.
 //  2) Parallax del hero: las capas con data-profundidad se desplazan según el mouse.
-//  3) Carta holográfica: inclinación 3D y foil que se mueve con el cursor.
 // El ripple y el cursor de luz están en cyber.js; la aparición al hacer scroll (.revelar), en main.js.
 
 const DURACION_AVISO_MS = 3200;
@@ -64,41 +63,4 @@ document.addEventListener('DOMContentLoaded', () => {
       new IntersectionObserver(([entrada]) => { heroVisible = entrada.isIntersecting; }).observe(hero);
     }
   }
-
-  /* ---------- 3) Carta holográfica ---------- */
-  const INCLINACION_MAX = 16; // grados
-  document.querySelectorAll('[data-holo]').forEach((carta) => {
-    // El área que detecta el mouse es el contenedor (no cambia al inclinarse la carta)
-    const zona = carta.parentElement;
-    let pendiente = null;
-
-    zona.addEventListener('pointerenter', () => carta.classList.add('inclinando'));
-
-    zona.addEventListener('pointermove', (evento) => {
-      const rect = carta.getBoundingClientRect();
-      const x = Math.min(1, Math.max(0, (evento.clientX - rect.left) / rect.width));
-      const y = Math.min(1, Math.max(0, (evento.clientY - rect.top) / rect.height));
-      // Un cambio por cuadro como máximo
-      if (pendiente) return;
-      pendiente = requestAnimationFrame(() => {
-        pendiente = null;
-        carta.style.setProperty('--ry', `${((x - 0.5) * 2 * INCLINACION_MAX).toFixed(2)}deg`);
-        carta.style.setProperty('--rx', `${((0.5 - y) * 2 * INCLINACION_MAX).toFixed(2)}deg`);
-        carta.style.setProperty('--fx', `${(x * 100).toFixed(1)}%`);
-        carta.style.setProperty('--fy', `${(y * 100).toFixed(1)}%`);
-        carta.style.setProperty('--foil-op', '0.85');
-      });
-    });
-
-    zona.addEventListener('pointerleave', () => {
-      if (pendiente) cancelAnimationFrame(pendiente);
-      pendiente = null;
-      carta.classList.remove('inclinando'); // vuelve a su lugar con transición suave
-      carta.style.setProperty('--rx', '0deg');
-      carta.style.setProperty('--ry', '0deg');
-      carta.style.setProperty('--fx', '50%');
-      carta.style.setProperty('--fy', '50%');
-      carta.style.setProperty('--foil-op', '0.35');
-    });
-  });
 });

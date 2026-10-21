@@ -26,13 +26,14 @@
   </div>
 
   <!-- ============ COLUMNA DERECHA: FORMULARIO ============ -->
-  <div class="perfil__info">
-    <header class="perfil__cabecera">
-      <span class="rol__eyebrow">SEARCH MATCH · PERFIL</span>
-      <h1 class="perfil__titulo">Editar perfil</h1>
-      <p class="perfil__subtitulo">Los cambios se ven en tu carta al instante; se guardan al presionar “Guardar cambios”.</p>
-    </header>
+  <!-- Encabezado aparte: en escritorio va sobre la columna derecha y la carta queda al nivel de la primera tarjeta -->
+  <header class="perfil__cabecera">
+    <span class="rol__eyebrow">SEARCH MATCH · PERFIL</span>
+    <h1 class="perfil__titulo">Editar perfil</h1>
+    <p class="perfil__subtitulo">Los cambios se ven en tu carta al instante; se guardan al presionar “Guardar cambios”.</p>
+  </header>
 
+  <div class="perfil__info">
     <form action="/perfil/editar" method="POST" class="formulario editor__form" data-editor>
       <!-- Errores del servidor o de editar-perfil.js -->
       <div class="alerta alerta--error" role="alert" data-alerta-errores <%= errores.length > 0 ? '' : 'hidden' %>>

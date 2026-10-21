@@ -61,6 +61,11 @@ function nombreEnCarta({ apodo, nombre }) {
   return apodo || nombre;
 }
 
+/** URL de la foto guardada (la versión evita que el navegador muestre una foto vieja), o null. */
+function urlFoto(perfil) {
+  return perfil.fotoVersion ? `/perfil/foto?v=${perfil.fotoVersion}` : null;
+}
+
 module.exports = {
   POSICIONES,
   PIES,
@@ -70,4 +75,5 @@ module.exports = {
   sortearEstadisticas,
   calcularMedia,
   nombreEnCarta,
+  urlFoto,
 };

@@ -2730,24 +2730,36 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 .perfil {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 32px;
+  grid-template-areas: "carta" "cabecera" "info";
+  gap: 18px;
   width: 100%;
   max-width: 1080px;
   margin: 0 auto;
   padding: 32px 16px 72px;
 }
 
+.perfil__carta { grid-area: carta; margin-bottom: 14px; }
+.perfil__cabecera { grid-area: cabecera; }
+.perfil__info { grid-area: info; }
+
+/* Escritorio: el encabezado va sobre la columna derecha y la carta empieza a la altura de la primera tarjeta */
 @media (min-width: 900px) {
   .perfil {
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-areas: ". cabecera" "carta info";
     align-items: start;
-    gap: 56px;
+    gap: 18px 56px;
     padding: 56px 24px 88px;
   }
 
   .perfil__carta {
     position: sticky;
     top: calc(var(--alto-navbar) + 32px);
+    margin-bottom: 0;
+  }
+
+  .perfil__escenario {
+    padding-top: 0;
   }
 }
 
@@ -2813,14 +2825,43 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   display: block;
 }
 
+/* Foto cuadrada sin borde: se desvanece en los cuatro bordes con un degradado suave (varias paradas,
+   para que no se note dónde empieza) y más largo abajo, donde se funde con el nombre.
+   La máscara va en la imagen y en ::before, no en el contenedor, para no desvanecer el botón "Subir foto". */
 .carta-jugador--perfil .carta-jugador__foto {
+  --foto-borde:
+    linear-gradient(to right, transparent, rgba(0, 0, 0, 0.35) 7%, rgba(0, 0, 0, 0.75) 15%, #000 24%,
+      #000 76%, rgba(0, 0, 0, 0.75) 85%, rgba(0, 0, 0, 0.35) 93%, transparent),
+    linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.5) 6%, #000 16%,
+      #000 60%, rgba(0, 0, 0, 0.7) 75%, rgba(0, 0, 0, 0.3) 88%, transparent);
   position: absolute;
   left: calc(140 * var(--u));
   top: calc(38 * var(--u));
   width: calc(140 * var(--u));
   height: calc(140 * var(--u));
-  border: calc(3 * var(--u)) solid #39ff14;
-  box-shadow: 0 0 calc(22 * var(--u)) rgba(57, 255, 20, 0.35);
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.carta-jugador--perfil .carta-jugador__foto::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 35%, #2a2f2a, #0c0e0c 70%);
+}
+
+.carta-jugador--perfil .carta-jugador__foto::before,
+.carta-jugador--perfil .carta-jugador__foto img {
+  -webkit-mask-image: var(--foto-borde);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--foto-borde);
+  mask-composite: intersect;
+}
+
+.carta-jugador--perfil .carta-jugador__foto > svg {
+  position: relative;
 }
 
 /* Rating, posición, bandera y balón en columna centrada */

@@ -596,160 +596,137 @@
   max-width: 28rem;
 }
 
-/* ---------- Carta holográfica ---------- */
+/* ---------- Tu carta: silueta + físico y estadísticas ---------- */
 .dash-panel--carta {
   overflow: hidden;
 }
 
-.dash-carta-zona {
-  position: relative;
-  display: flex;
-  justify-content: center;
+/* ---------- Visualizador corporal (views/partials/visualizador-corporal.ejs) ---------- */
+.vc {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  margin: 0;
   padding: 8px 0 4px;
-  perspective: 900px;
 }
 
-/* Resplandor en el piso, detrás de la carta */
-.dash-carta-zona::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 260px;
-  height: 260px;
-  margin: -130px 0 0 -130px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--verde-rgb), 0.22), transparent 65%);
-  pointer-events: none;
+.vc__svg {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  overflow: visible;
+  font-family: "Barlow Condensed", var(--fuente);
 }
 
-/* --rx/--ry inclinan la carta; --fx/--fy mueven el foil (los actualiza dashboard.js) */
-.dash-carta {
-  --rx: 0deg;
-  --ry: 0deg;
-  --fx: 50%;
-  --fy: 50%;
-  --foil-op: 0.35;
-  --forma: polygon(0 7%, 9% 0, 91% 0, 100% 7%, 100% 86%, 50% 100%, 0 86%);
-  position: relative;
-  width: 176px;
-  aspect-ratio: 0.72;
-  padding: 2px;
-  clip-path: var(--forma);
-  /* Marco metálico neón: asoma 2px alrededor del cuerpo */
-  background: linear-gradient(145deg, #d6ffe0, var(--verde) 28%, #06301a 52%, var(--verde) 76%, #f2fff5);
-  transform: rotateX(var(--rx)) rotateY(var(--ry)) translateZ(0);
-  transition: transform 0.5s var(--curva);
-  will-change: transform;
+/* visualizador-corporal.js coloca la silueta y los valores: hasta entonces no se muestran */
+html.js .vc:not(.vc--listo) .vc__dinamico {
+  visibility: hidden;
 }
 
-.dash-carta.inclinando {
-  transition: transform 0.08s linear;
+.vc__linea {
+  stroke: rgba(57, 255, 20, 0.1);
+  stroke-width: 1;
 }
 
-.dash-carta__cuerpo {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 16px 14px 22px;
-  clip-path: var(--forma);
-  background: linear-gradient(165deg, #0f1a11 0%, #050805 55%, #0b170d 100%);
+.vc__linea--fina {
+  stroke: rgba(57, 255, 20, 0.045);
 }
 
-/* Foil de colección: arcoíris que se desplaza con el cursor */
-.dash-carta__foil {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    115deg,
-    rgba(0, 255, 65, 0.0) 0%,
-    rgba(0, 255, 170, 0.5) 6%,
-    rgba(120, 180, 255, 0.45) 12%,
-    rgba(255, 120, 230, 0.35) 18%,
-    rgba(255, 240, 120, 0.4) 24%,
-    rgba(0, 255, 65, 0.0) 30%
-  );
-  background-size: 240% 240%;
-  background-position: var(--fx) var(--fy);
-  mix-blend-mode: color-dodge;
-  opacity: var(--foil-op);
-  transition: opacity 0.4s ease;
-  pointer-events: none;
+.vc__piso {
+  stroke: rgba(57, 255, 20, 0.5);
+  stroke-width: 1.5;
 }
 
-/* Textura en relieve: rombos finos sobre la carta */
-.dash-carta__cuerpo::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 7px),
-    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 7px);
-  pointer-events: none;
+.vc__regla line {
+  stroke: rgba(57, 255, 20, 0.65);
+  stroke-width: 1;
 }
 
-/* Emblema de fondo */
-.dash-carta__cuerpo::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  width: 92px;
-  height: 92px;
-  margin: -46px 0 0 -46px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(var(--verde-rgb), 0.2);
-  box-shadow: inset 0 0 30px rgba(var(--verde-rgb), 0.12), 0 0 0 10px rgba(var(--verde-rgb), 0.04);
+.vc__regla .vc__regla-eje {
+  stroke: rgba(57, 255, 20, 0.35);
 }
 
-.dash-carta__brillo {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at var(--fx) var(--fy), rgba(255, 255, 255, 0.28), transparent 45%);
-  opacity: calc(var(--foil-op) * 1.4);
-  transition: opacity 0.4s ease;
-  pointer-events: none;
+.vc__regla text {
+  fill: #b7c4b7;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-anchor: end;
+  dominant-baseline: central;
 }
 
-.dash-carta__cabecera {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  line-height: 1;
+.vc__silueta {
+  fill: rgba(57, 255, 20, 0.14);
+  stroke: #39ff14;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
 }
 
-.dash-carta__media {
-  font-family: var(--fuente-titulo);
-  font-size: 2.6rem;
+.vc__figura {
+  filter: drop-shadow(0 0 6px rgba(57, 255, 20, 0.45));
+}
+
+.vc__altura line {
+  stroke: #39ff14;
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  opacity: 0.85;
+}
+
+.vc__altura text,
+.vc__valor {
+  fill: #39ff14;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: -0.04em;
-  color: var(--verde);
-  text-shadow: 0 0 18px rgba(var(--verde-rgb), 0.55);
+  letter-spacing: 1px;
 }
 
-.dash-carta__posicion {
-  margin-top: 4px;
-  font-size: 0.82rem;
+.vc__altura text {
+  text-anchor: end;
+}
+
+.vc__peso {
+  dominant-baseline: central;
+}
+
+/* ---------- Altura y peso (sobre las barras) ---------- */
+.dash-fisico {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.dash-medidas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.dash-medidas div {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(var(--verde-rgb), 0.18);
+  background: rgba(var(--verde-rgb), 0.05);
+}
+
+.dash-medidas dt {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.dash-medidas dd {
+  margin: 2px 0 0;
+  font-family: "Barlow Condensed", var(--fuente-titulo);
+  font-size: 1.7rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
-  color: var(--texto);
-}
-
-.dash-carta__nombre {
-  position: relative;
-  margin-top: auto;
-  overflow: hidden;
+  line-height: 1.1;
   white-space: nowrap;
-  text-overflow: ellipsis;
-  text-align: center;
-  font-family: var(--fuente-titulo);
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  border-top: 1px solid rgba(var(--verde-rgb), 0.3);
-  padding-top: 8px;
+  color: var(--verde);
 }
 
 /* ---------- Barras de estadísticas ---------- */
@@ -1098,7 +1075,7 @@ html.js .dash-acceso.revelar.visible:hover,
     grid-column: 1 / -1;
   }
 
-  /* Carta y stats lado a lado */
+  /* Silueta a la izquierda; altura, peso y estadísticas a la derecha */
   .dash-panel--carta {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -1110,6 +1087,10 @@ html.js .dash-acceso.revelar.visible:hover,
   .dash-panel--carta .dash-panel__cabecera,
   .dash-panel--carta .dash-vacio {
     grid-column: 1 / -1;
+  }
+
+  .dash-panel--carta .vc {
+    width: 240px;
   }
 
   .dash-stats {

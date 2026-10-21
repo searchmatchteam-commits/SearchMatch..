@@ -18,6 +18,7 @@ const {
   sortearEstadisticas,
   calcularMedia,
   nombreEnCarta,
+  urlFoto,
 } = require('../config/perfilJugador');
 
 /**
@@ -44,11 +45,6 @@ async function leerPerfilObligatorio(req) {
     throw err;
   }
   return perfil;
-}
-
-/** URL de la foto guardada (la versión evita que el navegador muestre una foto vieja), o null. */
-function urlFoto(perfil) {
-  return perfil.fotoVersion ? `/perfil/foto?v=${perfil.fotoVersion}` : null;
 }
 
 function renderWizard(res, { status = 200, datos, errores = [], paso = 2 }) {

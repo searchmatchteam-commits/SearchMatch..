@@ -49,6 +49,8 @@ function resumenCarta(perfil) {
     posicion: POSICIONES[perfil.posicion] ? POSICIONES[perfil.posicion].sigla : '—',
     // Barras de estadísticas del panel, en el orden de la carta
     stats: ESTADISTICAS.map(({ clave, sigla, nombre }) => ({ sigla, nombre, valor: Number(perfil.stats[clave]) || 0 })),
+    altura: perfil.altura, // cm o null: el visualizador corporal usa un valor por defecto
+    peso: perfil.peso,     // kg o null
   };
 }
 

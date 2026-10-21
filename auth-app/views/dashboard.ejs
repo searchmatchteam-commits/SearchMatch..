@@ -83,34 +83,30 @@
     <!-- Carta de jugador con foil holográfico -->
     <article class="dash-panel dash-panel--carta revelar">
       <header class="dash-panel__cabecera">
-        <h2 class="dash-panel__titulo">Tu carta</h2>
+        <h2 class="dash-panel__titulo">Personaliza tu perfil</h2>
         <% if (carta) { %><a class="dash-panel__enlace" href="/perfil">Ver completa →</a><% } %>
       </header>
 
       <% if (carta) { %>
-        <div class="dash-carta-zona">
-          <!-- dashboard.js inclina la carta y mueve el foil con el cursor (data-holo) -->
-          <div class="dash-carta" data-holo>
-            <div class="dash-carta__cuerpo">
-              <span class="dash-carta__foil" aria-hidden="true"></span>
-              <span class="dash-carta__brillo" aria-hidden="true"></span>
-              <div class="dash-carta__cabecera">
-                <span class="dash-carta__media"><%= carta.media %></span>
-                <span class="dash-carta__posicion"><%= carta.posicion %></span>
-              </div>
-              <p class="dash-carta__nombre" title="<%= carta.nombre || usuario.nombre %>"><%= (carta.nombre || usuario.nombre).toUpperCase() %></p>
-            </div>
-          </div>
+        <!-- Silueta a escala con la altura y el peso del perfil (sin dato: 178 cm y 72 kg) -->
+        <%- include('partials/visualizador-corporal', { altura: carta.altura, peso: carta.peso }) %>
+
+        <!-- A la derecha: altura, peso y estadísticas -->
+        <div class="dash-fisico">
+          <dl class="dash-medidas">
+            <div><dt>Altura</dt><dd><%= carta.altura ? Math.round(carta.altura) + ' cm' : '—' %></dd></div>
+            <div><dt>Peso</dt><dd><%= carta.peso ? Math.round(carta.peso) + ' kg' : '—' %></dd></div>
+          </dl>
+          <ul class="dash-stats">
+            <% carta.stats.forEach(function (stat) { %>
+              <li class="dash-stat" title="<%= stat.nombre %>">
+                <span class="dash-stat__sigla"><%= stat.sigla %></span>
+                <span class="dash-stat__barra"><span class="dash-stat__relleno" style="--valor: <%= stat.valor %>"></span></span>
+                <span class="dash-stat__valor"><%= stat.valor %></span>
+              </li>
+            <% }) %>
+          </ul>
         </div>
-        <ul class="dash-stats">
-          <% carta.stats.forEach(function (stat) { %>
-            <li class="dash-stat" title="<%= stat.nombre %>">
-              <span class="dash-stat__sigla"><%= stat.sigla %></span>
-              <span class="dash-stat__barra"><span class="dash-stat__relleno" style="--valor: <%= stat.valor %>"></span></span>
-              <span class="dash-stat__valor"><%= stat.valor %></span>
-            </li>
-          <% }) %>
-        </ul>
       <% } else { %>
         <div class="dash-vacio">
           <p class="dash-vacio__texto">

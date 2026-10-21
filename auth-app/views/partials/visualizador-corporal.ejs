@@ -1,0 +1,69 @@
+<%
+  // Visualizador corporal: silueta a escala sobre una regla de altura. Uso:
+  //   include('partials/visualizador-corporal', { altura: 178, peso: 72 })
+  // altura (cm) y peso (kg) son opcionales: sin dato (null) se usan 178 cm y 72 kg.
+  // public/js/visualizador-corporal.js coloca la silueta según data-altura / data-peso y la anima
+  // cuando esos atributos cambian (para conectarlo a otra fuente basta con actualizarlos).
+  const alturaCm = Number(locals.altura) > 0 ? Number(locals.altura) : 178;
+  const pesoKg = Number(locals.peso) > 0 ? Number(locals.peso) : 72;
+
+  // Lienzo (viewBox 240x320): el piso (0 cm) en y = 300 y 210 cm en y = 20
+  const PISO = 300;
+  const PX_CM = 280 / 210;
+  const CENTRO = 132;            // x del centro de la silueta
+  const REGLA_X = 40;
+  const y = (cm) => +(PISO - cm * PX_CM).toFixed(2);
+%>
+<figure class="vc" data-visualizador-corporal data-altura="<%= alturaCm %>" data-peso="<%= pesoKg %>">
+  <svg class="vc__svg" viewBox="0 0 240 320" role="img" aria-label="Altura <%= alturaCm %> cm, peso <%= pesoKg %> kg"
+       data-piso="<%= PISO %>" data-px-cm="<%= PX_CM %>" data-centro="<%= CENTRO %>">
+    <!-- Papel milimetrado: líneas cada 5 cm (las de 10 cm más marcadas) -->
+    <g class="vc__papel" aria-hidden="true">
+      <% for (let cm = 5; cm <= 210; cm += 5) { %>
+        <line class="<%= cm % 10 === 0 ? 'vc__linea' : 'vc__linea vc__linea--fina' %>" x1="<%= REGLA_X + 4 %>" x2="236" y1="<%= y(cm) %>" y2="<%= y(cm) %>" />
+      <% } %>
+      <% for (let x = REGLA_X + 4 + 13.33; x < 236; x += 13.33) { %>
+        <line class="vc__linea vc__linea--fina" x1="<%= x.toFixed(2) %>" x2="<%= x.toFixed(2) %>" y1="<%= y(210) %>" y2="<%= PISO %>" />
+      <% } %>
+      <line class="vc__piso" x1="<%= REGLA_X %>" x2="236" y1="<%= PISO %>" y2="<%= PISO %>" />
+    </g>
+
+    <!-- Regla: marcas cada 10 cm y etiquetas cada 20 cm (140–210 cm) -->
+    <g class="vc__regla" aria-hidden="true">
+      <line x1="<%= REGLA_X %>" x2="<%= REGLA_X %>" y1="<%= y(210) %>" y2="<%= PISO %>" class="vc__regla-eje" />
+      <% for (let cm = 140; cm <= 210; cm += 10) { %>
+        <line x1="<%= REGLA_X %>" x2="<%= REGLA_X - (cm % 20 === 0 ? 9 : 5) %>" y1="<%= y(cm) %>" y2="<%= y(cm) %>" />
+        <% if (cm % 20 === 0) { %><text x="<%= REGLA_X - 12 %>" y="<%= y(cm) %>"><%= cm %></text><% } %>
+      <% } %>
+    </g>
+
+    <!-- Silueta en coordenadas propias: pies en y = 0, cabeza en y = -100, centrada en x = 0.
+         .vc__cuerpo (torso, brazos y piernas) se ensancha según el IMC; la cabeza no. -->
+    <g class="vc__figura vc__dinamico" aria-hidden="true">
+      <g class="vc__cuerpo">
+        <path class="vc__silueta" vector-effect="non-scaling-stroke" d="
+          M -2.6 -88 L -2.6 -86.5 C -6 -86 -10 -85.5 -11.6 -83 C -12.2 -80 -11 -76 -10.4 -72
+          C -9.6 -66 -8.2 -62 -8.4 -58 C -8.6 -54 -10 -51 -10 -47 C -10 -38 -8.6 -28 -7.6 -18
+          C -7 -11 -6.2 -6 -5.8 -3 L -8.4 0 L -2.4 0 L -2.8 -3 C -3 -10 -2.8 -18 -2.6 -26
+          C -2.2 -34 -1.4 -41 0 -45 C 1.4 -41 2.2 -34 2.6 -26 C 2.8 -18 3 -10 2.8 -3
+          L 2.4 0 L 8.4 0 L 5.8 -3 C 6.2 -6 7 -11 7.6 -18 C 8.6 -28 10 -38 10 -47
+          C 10 -51 8.6 -54 8.4 -58 C 8.2 -62 9.6 -66 10.4 -72 C 11 -76 12.2 -80 11.6 -83
+          C 10 -85.5 6 -86 2.6 -86.5 L 2.6 -88 Z
+          M -11.6 -83 C -13.6 -81 -14.4 -77 -14.6 -72 C -15 -64 -15.6 -58 -16 -52
+          C -16.3 -48 -16.6 -45 -16.4 -42 C -16.2 -40.5 -14.6 -40.5 -14.4 -42
+          C -14 -46 -13.6 -50 -13.2 -54 C -12.8 -60 -12 -66 -11.6 -71 Z
+          M 11.6 -83 C 13.6 -81 14.4 -77 14.6 -72 C 15 -64 15.6 -58 16 -52
+          C 16.3 -48 16.6 -45 16.4 -42 C 16.2 -40.5 14.6 -40.5 14.4 -42
+          C 14 -46 13.6 -50 13.2 -54 C 12.8 -60 12 -66 11.6 -71 Z" />
+      </g>
+      <ellipse class="vc__silueta" vector-effect="non-scaling-stroke" cx="0" cy="-93.6" rx="5.2" ry="6.4" />
+    </g>
+
+    <!-- Valores: línea punteada a la altura del jugador y el peso junto a la silueta -->
+    <g class="vc__altura vc__dinamico">
+      <line x1="<%= REGLA_X + 4 %>" x2="236" y1="0" y2="0" />
+      <text x="236" y="0"><%= alturaCm %> cm</text>
+    </g>
+    <text class="vc__valor vc__peso vc__dinamico" x="0" y="0"><%= pesoKg %> kg</text>
+  </svg>
+</figure>
