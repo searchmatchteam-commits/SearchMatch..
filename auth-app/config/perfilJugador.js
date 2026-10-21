@@ -37,6 +37,9 @@ const ESTADISTICAS = [
 const STAT_MIN = 50;
 const STAT_MAX = 85;
 
+// Rango que acepta el editor /perfil/editar (el mismo CHECK de la tabla jugador).
+const STAT_RANGO = { min: 1, max: 99 };
+
 /** Estadísticas iniciales al azar entre STAT_MIN y STAT_MAX: { ritmo: 72, ... }. */
 function sortearEstadisticas() {
   return Object.fromEntries(
@@ -50,11 +53,21 @@ function calcularMedia(stats) {
   return Math.round(valores.reduce((suma, valor) => suma + valor, 0) / valores.length);
 }
 
+/**
+ * Nombre que muestra la carta: el apodo (obligatorio en el wizard y el editor).
+ * Los perfiles creados antes del apodo no tienen: muestran el nombre hasta que lo agreguen.
+ */
+function nombreEnCarta({ apodo, nombre }) {
+  return apodo || nombre;
+}
+
 module.exports = {
   POSICIONES,
   PIES,
   NIVELES,
   ESTADISTICAS,
+  STAT_RANGO,
   sortearEstadisticas,
   calcularMedia,
+  nombreEnCarta,
 };

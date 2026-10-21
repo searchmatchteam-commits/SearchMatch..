@@ -24,8 +24,11 @@ function calcularEdad(valor) {
 // Reglas por paso. Cada una devuelve el mensaje de error o null.
 const REGLAS = {
   2: {
-    nombre: (v) => (v ? null : 'El nombre es obligatorio.'),
-    apellido: (v) => (v ? null : 'El apellido es obligatorio.'),
+    apodo: (v, input) => {
+      if (!v) return 'El apodo es obligatorio: es el nombre que aparece en tu carta.';
+      if (v.length > Number(input.maxLength)) return `El apodo no puede superar los ${input.maxLength} caracteres.`;
+      return null;
+    },
     fecha_nacimiento: (v) => {
       if (!v) return 'La fecha de nacimiento es obligatoria.';
       if (!REGEX_FECHA.test(v)) return 'La fecha de nacimiento no es válida.';
@@ -37,9 +40,7 @@ const REGLAS = {
     peso: (v, input) => enRango(v, input, 'El peso', 'kg'),
   },
   3: {
-    posicion: (v) => (v ? null : 'Elige tu posición en la cancha.'),
-    pie_habil: (v) => (v ? null : 'Elige tu pie hábil.'),
-    nivel: (v) => (v ? null : 'Elige tu nivel de juego.'),
+    posicion: (v) => (v ? null : 'Elige al menos una posición en la cancha.'),
   },
 };
 
@@ -71,6 +72,11 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ---------- Validación ---------- */
 
   function valorDe(nombre) {
+    // Casillas (posiciones): los valores marcados separados por coma ('' si ninguno).
+    const marcadas = formulario.querySelectorAll(`input[type="checkbox"][name="${nombre}"]`);
+    if (marcadas.length > 0) {
+      return Array.from(marcadas).filter((casilla) => casilla.checked).map((casilla) => casilla.value).join(',');
+    }
     const elemento = formulario.elements[nombre];
     // RadioNodeList.value es el valor del radio marcado ('' si ninguno).
     return elemento.value === undefined ? '' : elemento.value.trim();
@@ -119,21 +125,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ---------- Resumen del paso 4 ---------- */
 
+  // Radios: la opción marcada; casillas: todas las marcadas separadas por coma.
   function textoDeOpcion(nombre) {
-    const marcado = formulario.querySelector(`input[name="${nombre}"]:checked`);
-    return marcado ? marcado.closest('label').querySelector('.opcion__nombre').textContent.trim() : '—';
+    const marcadas = Array.from(formulario.querySelectorAll(`input[name="${nombre}"]:checked`));
+    const textos = marcadas.map((input) => input.closest('label').querySelector('.opcion__nombre').textContent.trim());
+    return textos.length > 0 ? textos.join(', ') : '—';
   }
 
   function llenarResumen() {
     const fecha = valorDe('fecha_nacimiento');
     const valores = {
-      nombre_completo: `${valorDe('nombre')} ${valorDe('apellido')}`.trim() || '—',
+      apodo: (valorDe('apodo') || '—').toUpperCase(),
       fecha_nacimiento: REGEX_FECHA.test(fecha) ? fecha.split('-').reverse().join('/') : '—',
       altura: valorDe('altura') ? `${valorDe('altura')} cm` : '—',
       peso: valorDe('peso') ? `${valorDe('peso')} kg` : '—',
       posicion: textoDeOpcion('posicion'),
-      pie_habil: textoDeOpcion('pie_habil'),
-      nivel: textoDeOpcion('nivel'),
     };
     Object.entries(valores).forEach(([clave, valor]) => {
       formulario.querySelector(`[data-resumen="${clave}"]`).textContent = valor;

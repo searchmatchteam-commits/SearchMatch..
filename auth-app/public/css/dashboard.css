@@ -8,10 +8,17 @@
 
 /* ---------- Tokens (los compartidos están en cyber.css) ---------- */
 .pagina-dashboard,
-.pagina-equipo {
+.pagina-equipo,
+.pagina-perfil {
   --alto-dock: 50px;
   /* Espacio para que el dock flotante no tape el final de la página */
   padding-bottom: calc(var(--alto-dock) + 28px + env(safe-area-inset-bottom));
+}
+
+/* El perfil no carga cyber.css: tokens que usan el dock y el aviso, con el verde de style.css */
+.pagina-perfil {
+  --verde-rgb: 57, 255, 20;
+  --verde-borde: rgba(var(--verde-rgb), 0.3);
 }
 
 /* ---------- Hero ---------- */
@@ -743,13 +750,6 @@
   letter-spacing: 0.06em;
   border-top: 1px solid rgba(var(--verde-rgb), 0.3);
   padding-top: 8px;
-}
-
-.dash-carta__pie {
-  position: relative;
-  text-align: center;
-  font-size: 0.72rem;
-  color: var(--texto-suave);
 }
 
 /* ---------- Barras de estadísticas ---------- */

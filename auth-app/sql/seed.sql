@@ -641,3 +641,30 @@ ALTER TABLE equipo ALTER COLUMN id_comuna DROP NOT NULL;
 ALTER TABLE equipo ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipo_jugador ENABLE ROW LEVEL SECURITY;
 ALTER TABLE solicitud_union_equipo ENABLE ROW LEVEL SECURITY;
+
+
+-- ============================================================
+-- X) FOTO DEL JUGADOR (editor /perfil/editar y carta /perfil)
+-- ============================================================
+-- Re-ejecutable: solo AGREGA columnas (nullable).
+-- La foto llega ya recortada y comprimida desde el navegador (~600 px, unos
+-- 50-150 KB), así que se guarda directo en la fila del jugador.
+-- foto_actualizada sirve de versión en la URL (/perfil/foto?v=...) para
+-- que el navegador la guarde en caché sin quedar desactualizada.
+
+ALTER TABLE jugador
+    ADD COLUMN IF NOT EXISTS foto             BYTEA,
+    ADD COLUMN IF NOT EXISTS foto_tipo        VARCHAR(20)
+        CHECK (foto_tipo IN ('image/jpeg', 'image/png', 'image/webp')),
+    ADD COLUMN IF NOT EXISTS foto_actualizada TIMESTAMPTZ;
+
+
+-- ============================================================
+-- Y) APODO DEL JUGADOR (wizard /perfil-jugador y editor /perfil/editar)
+-- ============================================================
+-- Re-ejecutable: solo AGREGA una columna (nullable).
+-- Es el nombre que muestra la carta; si está vacío, la carta usa nombre_apodo
+-- (que guarda el nombre real). 20 caracteres caben en la carta.
+
+ALTER TABLE jugador
+    ADD COLUMN IF NOT EXISTS apodo VARCHAR(20);

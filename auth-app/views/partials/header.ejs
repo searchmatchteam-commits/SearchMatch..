@@ -30,6 +30,10 @@
     <% } %>
     <link rel="stylesheet" href="/css/<%= pagina %>.css?v=<%= versionAssets %>" />
   <% } %>
+  <% if (locals.pagina === 'perfil') { %>
+    <!-- El perfil reutiliza el dock y el aviso flotante del dashboard -->
+    <link rel="stylesheet" href="/css/dashboard.css?v=<%= versionAssets %>" />
+  <% } %>
   <% if (locals.pagina === 'landing' || locals.pagina === 'dashboard') { %>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <% } %>
@@ -74,8 +78,10 @@
 
       <nav class="navbar__nav" aria-label="Cuenta">
         <% if (usuario) { %>
-          <!-- Usuario con sesión activa -->
-          <a class="btn btn--contorno btn--chico" href="/dashboard">Mi panel</a>
+          <!-- Usuario con sesión activa. Las páginas con dock ya llevan a Inicio desde la barra inferior -->
+          <% if (!['dashboard', 'equipo', 'perfil'].includes(locals.pagina)) { %>
+            <a class="btn btn--contorno btn--chico" href="/dashboard">Mi panel</a>
+          <% } %>
           <form action="/logout" method="POST" class="navbar__form">
             <button type="submit" class="btn btn--verde btn--chico">Cerrar sesión</button>
           </form>

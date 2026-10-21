@@ -1,16 +1,13 @@
 // public/js/perfil.js
-// Página /perfil (carta de jugador):
-//  1) "Subir foto": vista previa local de la imagen en la carta.
-//     Todavía NO se guarda en el servidor (falta el almacenamiento de fotos).
-//  2) "Descargar carta": dibuja la carta en un <canvas> y la descarga como PNG.
-//  3) "Compartir carta": comparte el PNG con el menú nativo del dispositivo
+// Página /perfil (carta de jugador). La foto se sube en /perfil/editar (editar-perfil.js).
+//  1) "Descargar carta": dibuja la carta (con la foto guardada) en un <canvas> y la descarga como PNG.
+//  2) "Compartir carta": comparte el PNG con el menú nativo del dispositivo
 //     (Web Share); si el navegador no lo permite, la descarga.
 
 const ANCHO = 600;
 const ALTO = 900;
 const CORTE = 40;              // corte de las esquinas (las de abajo miden el doble)
 const VERDE = '#39ff14';
-const TAMANO_MAXIMO_FOTO = 10 * 1024 * 1024;
 
 /** Contorno de la carta: esquinas superiores cortadas y las inferiores, más grandes. */
 function trazarContorno(ctx, x, y, ancho, alto, corte) {
@@ -203,42 +200,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const datos = JSON.parse(carta.dataset.carta);
   const estado = document.querySelector('[data-estado]');
-  const inputFoto = document.querySelector('[data-foto-input]');
   const preview = carta.querySelector('[data-foto-preview]');
-  const silueta = carta.querySelector('[data-foto-silueta]');
   const nombreArchivo = `carta-${datos.nombre.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-')}.png`;
 
   function avisar(mensaje) {
     estado.textContent = mensaje;
   }
 
-  /* ---------- 1) Foto (vista previa local) ---------- */
-  inputFoto.addEventListener('change', () => {
-    const archivo = inputFoto.files[0];
-    if (!archivo) return;
-    if (!archivo.type.startsWith('image/')) {
-      avisar('Elige un archivo de imagen (JPG, PNG o WebP).');
-      return;
-    }
-    if (archivo.size > TAMANO_MAXIMO_FOTO) {
-      avisar('La imagen pesa más de 10 MB. Elige una más liviana.');
-      return;
-    }
-    if (preview.src) URL.revokeObjectURL(preview.src);
-    preview.src = URL.createObjectURL(archivo);
-    preview.hidden = false;
-    silueta.hidden = true;
-    carta.classList.add('carta-jugador--con-foto');
-    avisar('Vista previa lista: la foto aparece en tu carta y en la descarga. Guardarla en tu perfil llegará pronto.');
-  });
-
   async function generarImagen() {
     const foto = preview.hidden ? null : preview;
-    if (foto && !foto.complete) await new Promise((resolve) => foto.addEventListener('load', resolve, { once: true }));
-    return aBlob(await dibujarCarta(datos, foto));
+    if (foto && !foto.complete) {
+      await new Promise((resolve) => {
+        foto.addEventListener('load', resolve, { once: true });
+        foto.addEventListener('error', resolve, { once: true });
+      });
+    }
+    // Si la foto no cargó (naturalWidth 0) se dibuja la silueta
+    return aBlob(await dibujarCarta(datos, foto && foto.naturalWidth ? foto : null));
   }
 
-  /* ---------- 2) Descargar ---------- */
+  /* ---------- 1) Descargar ---------- */
   document.querySelector('[data-descargar]').addEventListener('click', async () => {
     try {
       descargarBlob(await generarImagen(), nombreArchivo);
@@ -248,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  /* ---------- 3) Compartir ---------- */
+  /* ---------- 2) Compartir ---------- */
   document.querySelector('[data-compartir]').addEventListener('click', async () => {
     try {
       const blob = await generarImagen();

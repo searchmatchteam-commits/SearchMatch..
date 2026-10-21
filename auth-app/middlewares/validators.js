@@ -10,11 +10,12 @@ const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 // Celular chileno: 9 + 8 dígitos, con o sin +56 delante.
 const REGEX_CELULAR_CL = /^(?:\+?56)?(9\d{8})$/;
 
-const { POSICIONES, PIES, NIVELES } = require('../config/perfilJugador');
+const { POSICIONES, NIVELES, ESTADISTICAS, STAT_RANGO } = require('../config/perfilJugador');
 const { MODALIDADES } = require('../config/equipo');
 
 const LONGITUD_MINIMA_PASSWORD = 8;
 const LONGITUD_MAXIMA_NOMBRE = 100; // jugador.nombre_apodo / jugador.apellido
+const LONGITUD_MAXIMA_APODO = 20; // jugador.apodo (lo que cabe en la carta)
 const LONGITUD_MAXIMA_CORREO = 150; // usuario.correo / equipo.correo_contacto
 const LONGITUD_MAXIMA_ZONA = 100; // equipo.zona
 const LONGITUD_MAXIMA_MENSAJE_DESAFIO = 200; // lo que escribe el capitán en desafio.mensaje
@@ -194,29 +195,27 @@ function validarLogin(req, res, next) {
 }
 
 /**
- * Valida el wizard de PERFIL DE JUGADOR (pasos 2 y 3).
- * No corta la petición: deja los datos limpios en req.datosFormulario y los
- * errores en req.erroresPerfil = { errores: [...], paso } (paso = el primero con error),
- * para que jugadorController vuelva a pintar el wizard en ese paso.
+ * Limpia y valida los datos del perfil deportivo (los comparten el wizard y el editor).
+ * Nombre y apellido no van aquí: se piden solo al crear la cuenta (validarRegistro).
+ * @returns {{ datos: object, paso2: string[], paso3: string[] }}
+ *          paso2 = errores de datos personales, paso3 = errores del perfil deportivo.
  */
-function validarPerfilJugador(req, res, next) {
-  const nombre = (req.body.nombre || '').trim();
-  const apellido = (req.body.apellido || '').trim();
-  const fechaNacimiento = (req.body.fecha_nacimiento || '').trim();
-  const altura = enteroEnRango(req.body.altura, ALTURA_CM);
-  const peso = enteroEnRango(req.body.peso, PESO_KG);
-  const posicion = req.body.posicion || '';
-  const pieHabil = req.body.pie_habil || '';
-  const nivel = req.body.nivel || '';
+function revisarDatosPerfil(body) {
+  // Lo único que muestra la carta como nombre; espacios repetidos se juntan (va en una sola línea)
+  const apodo = (body.apodo || '').trim().replace(/\s+/g, ' ');
+  const fechaNacimiento = (body.fecha_nacimiento || '').trim();
+  const altura = enteroEnRango(body.altura, ALTURA_CM);
+  const peso = enteroEnRango(body.peso, PESO_KG);
+  // Casillas "posicion": urlencoded entrega un texto (una marcada) o un arreglo (varias).
+  const posicionesEnviadas = [].concat(body.posicion || []);
+  // Orden del catálogo, sin repetidas: la primera es la principal (la que muestra la carta).
+  const posiciones = Object.keys(POSICIONES).filter((clave) => posicionesEnviadas.includes(clave));
 
   const paso2 = [];
   const paso3 = [];
 
-  if (!nombre) paso2.push('El nombre es obligatorio.');
-  else if (nombre.length > LONGITUD_MAXIMA_NOMBRE) paso2.push(`El nombre no puede superar los ${LONGITUD_MAXIMA_NOMBRE} caracteres.`);
-
-  if (!apellido) paso2.push('El apellido es obligatorio.');
-  else if (apellido.length > LONGITUD_MAXIMA_NOMBRE) paso2.push(`El apellido no puede superar los ${LONGITUD_MAXIMA_NOMBRE} caracteres.`);
+  if (!apodo) paso2.push('El apodo es obligatorio: es el nombre que aparece en tu carta.');
+  else if (apodo.length > LONGITUD_MAXIMA_APODO) paso2.push(`El apodo no puede superar los ${LONGITUD_MAXIMA_APODO} caracteres.`);
 
   const errorFecha = validarFechaNacimiento(fechaNacimiento);
   if (errorFecha) paso2.push(errorFecha);
@@ -224,15 +223,47 @@ function validarPerfilJugador(req, res, next) {
   if (altura === null) paso2.push(`La altura debe estar entre ${ALTURA_CM.min} y ${ALTURA_CM.max} cm.`);
   if (peso === null) paso2.push(`El peso debe estar entre ${PESO_KG.min} y ${PESO_KG.max} kg.`);
 
-  if (!POSICIONES[posicion]) paso3.push('Elige tu posición en la cancha.');
-  if (!PIES[pieHabil]) paso3.push('Elige tu pie hábil.');
-  if (!NIVELES[nivel]) paso3.push('Elige tu nivel de juego.');
+  if (posiciones.length === 0 || posiciones.length !== new Set(posicionesEnviadas).size) {
+    paso3.push('Elige al menos una posición en la cancha.');
+  }
 
-  req.datosFormulario = { nombre, apellido, fechaNacimiento, altura, peso, posicion, pieHabil, nivel };
+  return { datos: { apodo, fechaNacimiento, altura, peso, posiciones }, paso2, paso3 };
+}
+
+/**
+ * Valida el wizard de PERFIL DE JUGADOR (pasos 2 y 3).
+ * No corta la petición: deja los datos limpios en req.datosFormulario y los
+ * errores en req.erroresPerfil = { errores: [...], paso } (paso = el primero con error),
+ * para que jugadorController vuelva a pintar el wizard en ese paso.
+ */
+function validarPerfilJugador(req, res, next) {
+  const { datos, paso2, paso3 } = revisarDatosPerfil(req.body);
+  req.datosFormulario = datos;
   req.erroresPerfil = {
     errores: [...paso2, ...paso3],
     paso: paso2.length > 0 ? 2 : 3,
   };
+  return next();
+}
+
+/**
+ * Valida el EDITOR DE PERFIL (/perfil/editar): los datos del wizard más las
+ * 6 estadísticas (stat_ritmo, stat_tiro... entre STAT_RANGO.min y STAT_RANGO.max).
+ * No corta la petición: deja req.datosFormulario (con .stats) y req.erroresPerfil = { errores }.
+ * Las estadísticas inválidas quedan en null para que el editor re-pinte lo que había.
+ */
+function validarEdicionPerfil(req, res, next) {
+  const { datos, paso2, paso3 } = revisarDatosPerfil(req.body);
+  const erroresStats = [];
+  const stats = {};
+
+  ESTADISTICAS.forEach(({ clave, nombre }) => {
+    stats[clave] = enteroEnRango(req.body[`stat_${clave}`], STAT_RANGO);
+    if (stats[clave] === null) erroresStats.push(`${nombre} debe estar entre ${STAT_RANGO.min} y ${STAT_RANGO.max}.`);
+  });
+
+  req.datosFormulario = { ...datos, stats };
+  req.erroresPerfil = { errores: [...paso2, ...paso3, ...erroresStats] };
   return next();
 }
 
@@ -324,6 +355,7 @@ module.exports = {
   validarRegistro,
   validarLogin,
   validarPerfilJugador,
+  validarEdicionPerfil,
   validarEquipo,
   validarDesafio,
   normalizarTelefono,

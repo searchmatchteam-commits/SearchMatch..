@@ -1,0 +1,67 @@
+<%
+  // Carta de jugador grande (/perfil y vista previa de /perfil/editar). Uso:
+  //   include('partials/carta-jugador', { jugador, editor: false })
+  // jugador: { nombre, media, posicion: { sigla }, estadisticas: [{ clave?, sigla, valor }], foto: url | null }
+  // Con editor: true la foto lleva el botón "Cambiar foto" (abre el input #foto del editor) y los
+  // data-carta-* que editar-perfil.js actualiza mientras el jugador cambia el formulario.
+  // data-carta: lo que perfil.js usa para dibujar la carta en un <canvas> (descargar / compartir).
+  const datosCarta = {
+    nombre: jugador.nombre,
+    media: jugador.media,
+    posicion: jugador.posicion.sigla,
+    estadisticas: jugador.estadisticas.map(function (s) { return [s.sigla, s.valor]; }),
+  };
+%>
+<!-- main.js inclina la carta (data-tilt) usando este contenedor como zona del mouse -->
+<div class="perfil__escenario">
+  <div class="carta-jugador carta-jugador--neon carta-jugador--perfil <%= jugador.foto ? 'carta-jugador--con-foto' : '' %>"
+       data-tilt data-carta="<%= JSON.stringify(datosCarta) %>">
+    <div class="carta-jugador__marco">
+      <div class="carta-jugador__cuerpo">
+        <div class="carta-jugador__cabecera">
+          <div class="carta-jugador__media">
+            <span class="carta-jugador__numero" data-carta-media><%= jugador.media %></span>
+            <span class="carta-jugador__posicion" data-carta-posicion><%= jugador.posicion.sigla %></span>
+            <svg class="carta-jugador__bandera" viewBox="0 0 30 20" role="img" aria-label="Chile">
+              <rect width="30" height="10" fill="#fff" />
+              <rect y="10" width="30" height="10" fill="#d52b1e" />
+              <rect width="10" height="10" fill="#0039a6" />
+              <path d="M5 2.2l.66 2.03h2.13l-1.72 1.25.66 2.03L5 6.26 3.27 7.51l.66-2.03-1.72-1.25h2.13z" fill="#fff" />
+            </svg>
+            <svg class="carta-jugador__marca" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.8" />
+              <path d="M12 7.2l4.1 3-1.6 4.8h-5L7.9 10.2z" fill="currentColor" />
+              <path d="M12 7.2V2.3M16.1 10.2l4.6-1.5M14.5 15l2.9 4M9.5 15l-2.9 4M7.9 10.2L3.3 8.7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+          </div>
+
+          <!-- Foto guardada o la silueta -->
+          <div class="carta-jugador__foto">
+            <% if (jugador.foto) { %>
+              <img alt="" src="<%= jugador.foto %>" data-foto-preview />
+            <% } else { %>
+              <img alt="" hidden data-foto-preview />
+            <% } %>
+            <svg viewBox="0 0 24 24" aria-hidden="true" <%= jugador.foto ? 'hidden' : '' %> data-foto-silueta><circle cx="12" cy="9" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></svg>
+            <% if (editor) { %>
+              <label class="carta-jugador__subir" for="foto">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
+                <%= jugador.foto ? 'Cambiar foto' : 'Subir foto' %>
+              </label>
+            <% } %>
+          </div>
+        </div>
+
+        <p class="carta-jugador__nombre" data-carta-nombre><%= jugador.nombre.toUpperCase() %></p>
+
+        <dl class="carta-jugador__stats">
+          <% jugador.estadisticas.forEach(function (s) { %>
+            <div><dt><%= s.sigla %></dt><dd <%- s.clave ? 'data-carta-stat="' + s.clave + '"' : '' %>><%= s.valor %></dd></div>
+          <% }) %>
+        </dl>
+
+        <span class="carta-jugador__brillo"></span>
+      </div>
+    </div>
+  </div>
+</div>

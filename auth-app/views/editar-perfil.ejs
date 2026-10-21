@@ -1,0 +1,145 @@
+<%- include('partials/header') %>
+<%
+  // Altura de la marca en la mini cancha de cada posición (0 = arco rival, 32 = arco propio).
+  const alturaPosicion = { arquero: 27, defensa: 21, mediocampista: 15, delantero: 7 };
+  const hoy = new Date().toISOString().slice(0, 10);
+%>
+
+<section class="perfil editor">
+  <!-- ============ COLUMNA IZQUIERDA: VISTA PREVIA DE LA CARTA + FOTO ============ -->
+  <div class="perfil__carta">
+    <%- include('partials/carta-jugador', { jugador, editor: true }) %>
+
+    <!-- La foto se guarda junto con el formulario (editar-perfil.js la envía a POST /perfil/foto) -->
+    <div class="editor__foto">
+      <label class="btn btn--contorno" for="foto">
+        <svg class="btn__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
+        <span data-texto-subir><%= jugador.foto ? 'Cambiar foto' : 'Subir foto' %></span>
+      </label>
+      <button type="button" class="enlace-icono" data-quitar-foto <%= jugador.foto ? '' : 'hidden' %>>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13" /></svg>
+        Quitar foto
+      </button>
+    </div>
+    <p class="editor__ayuda">JPG, PNG o WebP. La recortamos y comprimimos antes de guardarla.</p>
+    <input type="file" id="foto" accept="image/jpeg,image/png,image/webp" class="solo-lectores" data-foto-input />
+  </div>
+
+  <!-- ============ COLUMNA DERECHA: FORMULARIO ============ -->
+  <div class="perfil__info">
+    <header class="perfil__cabecera">
+      <span class="rol__eyebrow">SEARCH MATCH · PERFIL</span>
+      <h1 class="perfil__titulo">Editar perfil</h1>
+      <p class="perfil__subtitulo">Los cambios se ven en tu carta al instante; se guardan al presionar “Guardar cambios”.</p>
+    </header>
+
+    <form action="/perfil/editar" method="POST" class="formulario editor__form" data-editor>
+      <!-- Errores del servidor o de editar-perfil.js -->
+      <div class="alerta alerta--error" role="alert" data-alerta-errores <%= errores.length > 0 ? '' : 'hidden' %>>
+        <ul>
+          <% errores.forEach(function (error) { %><li><%= error %></li><% }) %>
+        </ul>
+      </div>
+
+      <!-- ============ DATOS PERSONALES ============ -->
+      <fieldset class="perfil__tarjeta editor__seccion">
+        <legend class="perfil__tarjeta-titulo">Datos personales</legend>
+
+        <!-- Nombre y apellido se piden solo al crear la cuenta -->
+        <div class="campo">
+          <label for="apodo">Apodo</label>
+          <input type="text" id="apodo" name="apodo" value="<%= datos.apodo || '' %>" placeholder="Ej. El Niño Maravilla"
+                 maxlength="20" autocomplete="nickname" aria-describedby="apodo-ayuda" required data-editor-apodo />
+          <small class="campo__ayuda" id="apodo-ayuda">Es el nombre que aparece en tu carta.</small>
+        </div>
+
+        <div class="campo">
+          <label for="fecha_nacimiento">Fecha de nacimiento</label>
+          <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" value="<%= datos.fechaNacimiento || '' %>"
+                 max="<%= hoy %>" autocomplete="bday" required />
+        </div>
+
+        <div class="formulario__fila">
+          <div class="campo">
+            <label for="altura">Altura</label>
+            <div class="campo__unidad" data-unidad="cm">
+              <input type="number" id="altura" name="altura" value="<%= datos.altura || '' %>"
+                     inputmode="numeric" min="<%= rangos.ALTURA_CM.min %>" max="<%= rangos.ALTURA_CM.max %>" required />
+            </div>
+          </div>
+          <div class="campo">
+            <label for="peso">Peso</label>
+            <div class="campo__unidad" data-unidad="kg">
+              <input type="number" id="peso" name="peso" value="<%= datos.peso || '' %>"
+                     inputmode="numeric" min="<%= rangos.PESO_KG.min %>" max="<%= rangos.PESO_KG.max %>" required />
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- ============ PERFIL DEPORTIVO ============ -->
+      <fieldset class="perfil__tarjeta editor__seccion">
+        <legend class="perfil__tarjeta-titulo">Perfil deportivo</legend>
+
+        <div class="grupo-opciones" role="group" aria-labelledby="posicion-label" aria-describedby="posicion-ayuda" data-grupo="posicion">
+          <span class="grupo-opciones__label" id="posicion-label">Posiciones en la cancha</span>
+          <small class="campo__ayuda" id="posicion-ayuda">Marca todas las que juegas (toca otra vez para quitarla). La primera es la que muestra tu carta.</small>
+          <div class="opciones opciones--4">
+            <% Object.entries(catalogos.POSICIONES).forEach(function ([clave, pos]) { %>
+              <label class="opcion opcion--posicion">
+                <input class="opcion__radio" type="checkbox" name="posicion" value="<%= clave %>" data-sigla="<%= pos.sigla %>"
+                       <%= datos.posiciones.includes(clave) ? 'checked' : '' %> />
+                <svg class="opcion__cancha" viewBox="0 0 24 34" aria-hidden="true">
+                  <rect x="1" y="1" width="22" height="32" rx="2" />
+                  <path d="M1 17h22M8 1v4h8V1M8 33v-4h8v4" />
+                  <circle cx="12" cy="17" r="3.2" />
+                  <circle class="opcion__punto" cx="12" cy="<%= alturaPosicion[clave] %>" r="3" />
+                </svg>
+                <span class="opcion__sigla"><%= pos.sigla %></span>
+                <span class="opcion__nombre"><%= pos.etiqueta %></span>
+              </label>
+            <% }) %>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- ============ ESTADÍSTICAS ============ -->
+      <fieldset class="perfil__tarjeta editor__seccion">
+        <legend class="perfil__tarjeta-titulo">Estadísticas</legend>
+        <p class="perfil__nota editor__nota">
+          Media actual: <strong class="texto-verde" data-editor-media><%= jugador.media %></strong> · promedio de las 6 estadísticas.
+        </p>
+
+        <ul class="editor__stats">
+          <% jugador.estadisticas.forEach(function (s) { %>
+            <li class="editor__stat">
+              <label class="editor__stat-nombre" for="stat_<%= s.clave %>">
+                <span class="barras__sigla"><%= s.sigla %></span> <%= s.nombre %>
+              </label>
+              <input class="editor__rango" type="range" id="stat_<%= s.clave %>" name="stat_<%= s.clave %>"
+                     min="<%= rangos.STAT.min %>" max="<%= rangos.STAT.max %>" step="1" value="<%= s.valor %>"
+                     style="--valor: <%= s.valor %>" data-editor-stat="<%= s.clave %>" />
+              <output class="barras__valor" for="stat_<%= s.clave %>" data-editor-valor="<%= s.clave %>"><%= s.valor %></output>
+            </li>
+          <% }) %>
+        </ul>
+      </fieldset>
+
+      <div class="perfil__acciones">
+        <button type="submit" class="btn btn--verde btn--grande" data-guardar>
+          <span class="btn__spinner" aria-hidden="true"></span>
+          <span class="btn__texto">Guardar cambios</span>
+        </button>
+        <a class="btn btn--contorno btn--grande" href="/perfil">Cancelar</a>
+      </div>
+
+      <p class="perfil__estado" role="status" aria-live="polite" data-estado></p>
+    </form>
+  </div>
+</section>
+
+<p class="panel-aviso" role="status" aria-live="polite" data-aviso></p>
+
+<%- include('partials/dock', { activo: 'perfil' }) %>
+
+<%- include('partials/footer') %>

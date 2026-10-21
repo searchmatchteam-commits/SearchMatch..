@@ -44,6 +44,8 @@ auth-app/
 
 1. **Base de datos:** en Supabase → *SQL Editor*, ejecuta `sql/seed.sql` (re-ejecutable). La sección **U** agrega `usuario.id_auth` (vínculo con `auth.users`), deja `contrasena` y `jugador.fecha_nacimiento` opcionales y activa RLS en `usuario` y `jugador`. La sección **W** agrega a `equipo` la zona, el correo de contacto, la modalidad y el nivel (wizard `/crear-equipo`).
    La sección **V** agrega a `jugador` las columnas del perfil deportivo (pie hábil, nivel y las 6 estadísticas de la carta); sin ella `/perfil-jugador` y `/perfil` fallan.
+   La sección **X** agrega a `jugador` la foto de la carta (`foto`, `foto_tipo`, `foto_actualizada`); sin ella `/perfil` y `/perfil/editar` fallan.
+   La sección **Y** agrega `jugador.apodo` (opcional), el nombre que muestra la carta; sin ella `/perfil`, `/perfil/editar` y `/dashboard` fallan.
 2. **Variables de entorno:** copia `.env.example` a `.env` y complétalo:
 
 | Variable                    | Descripción                                                              |
@@ -85,9 +87,13 @@ Abre [http://localhost:3000](http://localhost:3000).
 | POST   | `/logout`    | Revoca la sesión y borra las cookies           | —         |
 | GET    | `/select-role` | "¿Cómo quieres empezar?": jugador o equipo   | **Sí**    |
 | POST   | `/select-role` | Guarda el rol en `user_metadata.rol_inicio`  | **Sí**    |
-| GET    | `/perfil-jugador` | Wizard del perfil de jugador (crear/editar) | **Sí** + rol |
-| POST   | `/perfil-jugador` | Valida y guarda el perfil; sortea las stats la 1.ª vez | **Sí** + rol |
+| GET    | `/perfil-jugador` | Wizard para crear el perfil de jugador (con el perfil listo → `/perfil/editar`) | **Sí** + rol |
+| POST   | `/perfil-jugador` | Valida y guarda el perfil; sortea las stats iniciales | **Sí** + rol |
 | GET    | `/perfil`    | Carta de jugador + datos y estadísticas        | **Sí** + rol |
+| GET    | `/perfil/editar` | Editor: datos, perfil deportivo, estadísticas (1-99) y foto, con la carta en vivo | **Sí** + rol |
+| POST   | `/perfil/editar` | Valida y guarda datos y estadísticas | **Sí** + rol |
+| GET    | `/perfil/foto` | Foto de la carta del usuario (404 si no tiene) | **Sí** |
+| POST   | `/perfil/foto` · `/perfil/foto/eliminar` | Guarda la foto (cuerpo = imagen JPG/PNG/WebP, máx. 2 MB) o la quita; responde JSON | **Sí** + rol |
 | GET    | `/crear-equipo` | Wizard para crear el equipo, solo capitanes (jugador → `/equipos` con "Acceso denegado"; si ya tiene → `/mi-equipo`) | **Sí** + capitán |
 | POST   | `/crear-equipo` | Valida, crea el equipo y deja al usuario como capitán | **Sí** + capitán |
 | GET    | `/crear-equipo/listo` | Confirmación del equipo recién creado | **Sí** + capitán |

@@ -37,11 +37,11 @@
       </div>
 
       <% if (carta) { %>
-        <a class="dash-resumen revelar" href="/perfil" aria-label="Tu carta: media <%= carta.media %>, <%= carta.posicion %>, <%= carta.pie %>">
+        <a class="dash-resumen revelar" href="/perfil" aria-label="Tu carta: media <%= carta.media %>, <%= carta.posicion %>">
           <span class="dash-resumen__media"><%= carta.media %></span>
           <span class="dash-resumen__texto">
             <span class="dash-resumen__titulo">Tu carta</span>
-            <span><%= carta.posicion %> · <%= carta.pie %></span>
+            <span><%= carta.posicion %></span>
           </span>
           <span class="dash-resumen__flecha" aria-hidden="true">→</span>
         </a>
@@ -99,7 +99,6 @@
                 <span class="dash-carta__posicion"><%= carta.posicion %></span>
               </div>
               <p class="dash-carta__nombre" title="<%= carta.nombre || usuario.nombre %>"><%= (carta.nombre || usuario.nombre).toUpperCase() %></p>
-              <p class="dash-carta__pie"><%= carta.pie %></p>
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@
 
 const jugadorModel = require('../models/jugadorModel');
 const equipoModel = require('../models/equipoModel');
-const { POSICIONES, PIES, ESTADISTICAS, calcularMedia } = require('../config/perfilJugador');
+const { POSICIONES, ESTADISTICAS, calcularMedia, nombreEnCarta } = require('../config/perfilJugador');
 
 // GET / → landing page pública.
 function landing(req, res) {
@@ -44,10 +44,9 @@ async function leerMiEquipo(usuario) {
 function resumenCarta(perfil) {
   if (!perfil || !perfil.perfilCompleto || !perfil.stats) return null;
   return {
-    nombre: perfil.nombre,
+    nombre: nombreEnCarta(perfil), // apodo si tiene
     media: calcularMedia(perfil.stats),
     posicion: POSICIONES[perfil.posicion] ? POSICIONES[perfil.posicion].sigla : '—',
-    pie: PIES[perfil.pieHabil] ? `Pie ${PIES[perfil.pieHabil].toLowerCase()}` : '—',
     // Barras de estadísticas del panel, en el orden de la carta
     stats: ESTADISTICAS.map(({ clave, sigla, nombre }) => ({ sigla, nombre, valor: Number(perfil.stats[clave]) || 0 })),
   };

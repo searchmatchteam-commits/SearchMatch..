@@ -10,7 +10,10 @@ const rolController = require('../controllers/rolController');
 const jugadorController = require('../controllers/jugadorController');
 const equipoController = require('../controllers/equipoController');
 const { requireAuth, requireRol, soloCapitanes } = require('../middlewares/authMiddleware');
-const { validarPerfilJugador, validarEquipo, validarDesafio } = require('../middlewares/validators');
+const { validarPerfilJugador, validarEdicionPerfil, validarEquipo, validarDesafio } = require('../middlewares/validators');
+
+// Cuerpo binario de la foto. Pesa ~100 KB tras reducirla; el tope evita cargas enormes.
+const subirImagen = express.raw({ type: ['image/jpeg', 'image/png', 'image/webp'], limit: '2mb' });
 
 // GET / → landing page.
 router.get('/', pageController.landing);
@@ -19,10 +22,16 @@ router.get('/', pageController.landing);
 router.get('/select-role', requireAuth, rolController.mostrarSeleccion);
 router.post('/select-role', requireAuth, rolController.guardarSeleccion);
 
-// Rol "jugador": wizard para crear/editar el perfil y la carta resultante.
+// Rol "jugador": wizard para crear el perfil, la carta resultante y el editor.
 router.get('/perfil-jugador', requireAuth, requireRol, jugadorController.mostrarWizard);
 router.post('/perfil-jugador', requireAuth, requireRol, validarPerfilJugador, jugadorController.guardarWizard);
 router.get('/perfil', requireAuth, requireRol, jugadorController.mostrarPerfil);
+router.get('/perfil/editar', requireAuth, requireRol, jugadorController.mostrarEditor);
+router.post('/perfil/editar', requireAuth, requireRol, validarEdicionPerfil, jugadorController.guardarEditor);
+// Foto de la carta: el cuerpo es la imagen (ya reducida en el navegador por editar-perfil.js).
+router.get('/perfil/foto', requireAuth, jugadorController.servirFoto);
+router.post('/perfil/foto', requireAuth, requireRol, subirImagen, jugadorController.subirFoto);
+router.post('/perfil/foto/eliminar', requireAuth, requireRol, jugadorController.eliminarFoto);
 
 // Equipos: wizard para crear el equipo, panel del capitán y directorio con solicitudes.
 // Crear equipo: solo capitanes (el jugador vuelve a /equipos con "Acceso denegado").

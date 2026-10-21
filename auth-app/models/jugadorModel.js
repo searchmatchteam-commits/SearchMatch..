@@ -1,11 +1,11 @@
 // models/jugadorModel.js
-// Perfil deportivo del jugador: tabla "jugador" (datos, pie hábil y
-// estadísticas de la carta) y "jugador_posicion". Requiere la sección V de
-// sql/seed.sql; si falta, PostgreSQL responde 42703 (columna inexistente).
+// Perfil deportivo del jugador: tabla "jugador" (datos, estadísticas de la carta,
+// foto, apodo) y "jugador_posicion". Requiere las secciones V, X e Y
+// de sql/seed.sql; si faltan, PostgreSQL responde 42703 (columna inexistente).
 // Todas las consultas son parametrizadas.
 
 const { pool } = require('../config/db');
-const { POSICIONES, NIVELES, ESTADISTICAS } = require('../config/perfilJugador');
+const { POSICIONES, ESTADISTICAS } = require('../config/perfilJugador');
 
 // Código de PostgreSQL para "la columna no existe".
 const COLUMNA_INEXISTENTE = '42703';
@@ -18,35 +18,27 @@ function clavePosicion(nombreDb) {
   return encontrada ? encontrada[0] : null;
 }
 
-/** Clave del catálogo (ej. 'intermedio') a partir del nombre en la tabla nivel. */
-function claveNivel(nombreDb) {
-  if (!nombreDb) return null;
-  const encontrada = Object.entries(NIVELES).find(([, nombre]) => nombre.toLowerCase() === nombreDb.toLowerCase());
-  return encontrada ? encontrada[0] : null;
-}
-
 /**
  * Perfil del jugador de una cuenta de Supabase Auth.
  * @param {string} authId - UUID de auth.users.
- * @returns {Promise<object|null>} { id, nombre, apellido, fechaNacimiento, altura, peso,
- *          posicion, pieHabil, nivel, stats: {ritmo, ...} | null, perfilCompleto }
+ * @returns {Promise<object|null>} { id, nombre, apellido, apodo ('' si no tiene), fechaNacimiento, altura, peso,
+ *          posiciones: ['defensa', ...], posicion: la primera (principal) | null,
+ *          stats: {ritmo, ...} | null, perfilCompleto,
+ *          fotoVersion: ms de la última foto (para la URL) | null }
  */
 async function obtenerPerfil(authId) {
   const columnasStats = ESTADISTICAS.map(({ columna }) => `j.${columna}`).join(', ');
   const consulta = `
-    SELECT j.id, j.nombre_apodo, j.apellido,
+    SELECT j.id, j.nombre_apodo, j.apellido, j.apodo,
            to_char(j.fecha_nacimiento, 'YYYY-MM-DD') AS fecha_nacimiento,
-           j.altura, j.peso, j.pie_habil, j.perfil_completo, ${columnasStats},
-           (SELECT p.nombre
-              FROM jugador_posicion jp
-              JOIN posicion p ON p.id = jp.id_posicion
-             WHERE jp.id_jugador = j.id
-             ORDER BY jp.id
-             LIMIT 1) AS posicion,
-           n.nombre AS nivel
+           j.altura, j.peso, j.perfil_completo, j.foto_actualizada, ${columnasStats},
+           ARRAY(SELECT p.nombre
+                   FROM jugador_posicion jp
+                   JOIN posicion p ON p.id = jp.id_posicion
+                  WHERE jp.id_jugador = j.id
+                  ORDER BY jp.id) AS posiciones
     FROM usuario u
     JOIN jugador j ON j.id_usuario = u.id
-    LEFT JOIN nivel n ON n.id = j.id_nivel
     WHERE u.auth_id = $1
   `;
   const { rows } = await pool.query(consulta, [authId]);
@@ -54,77 +46,81 @@ async function obtenerPerfil(authId) {
   if (!fila) return null;
 
   const tieneStats = ESTADISTICAS.every(({ columna }) => fila[columna] !== null);
+  const posiciones = fila.posiciones.map(clavePosicion).filter(Boolean);
   return {
     id: fila.id,
     nombre: fila.nombre_apodo,
     apellido: fila.apellido,
+    apodo: fila.apodo || '', // los perfiles anteriores al apodo no tienen
     fechaNacimiento: fila.fecha_nacimiento,
     altura: fila.altura === null ? null : Number(fila.altura),
     peso: fila.peso === null ? null : Number(fila.peso),
-    posicion: clavePosicion(fila.posicion),
-    pieHabil: fila.pie_habil,
-    nivel: claveNivel(fila.nivel),
+    posiciones,
+    posicion: posiciones[0] || null, // la principal (la que muestra la carta)
     stats: tieneStats ? Object.fromEntries(ESTADISTICAS.map(({ clave, columna }) => [clave, fila[columna]])) : null,
     perfilCompleto: fila.perfil_completo,
+    fotoVersion: fila.foto_actualizada ? fila.foto_actualizada.getTime() : null,
   };
 }
 
 
 /**
- * Guarda el perfil del wizard en UNA transacción: datos de "jugador" (con su nivel),
- * su posición (reemplaza la anterior) y las estadísticas iniciales.
- * Las estadísticas solo se escriben si aún no tenía (no se re-sortean al editar).
+ * Escribe el perfil en UNA transacción: datos de "jugador",
+ * sus posiciones (reemplazan las anteriores) y las estadísticas.
  * @param {number} idJugador
- * @param {{nombre, apellido, fechaNacimiento, altura, peso, posicion, pieHabil, nivel}} datos
- *        Ya validados; posicion y nivel son claves de config/perfilJugador.js.
- * @param {object} statsIniciales - { ritmo: 72, ... }
+ * @param {{apodo, fechaNacimiento, altura, peso, posiciones}} datos
+ *        Ya validados; posiciones (1 o más, la primera es la principal) son
+ *        claves de config/perfilJugador.js.
+ * @param {object} stats - { ritmo: 72, ... }
+ * @param {boolean} conservarStats - true: solo se escriben si aún no tenía (wizard).
  */
-async function guardarPerfil(idJugador, datos, statsIniciales) {
+async function escribirPerfil(idJugador, datos, stats, conservarStats) {
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
 
-    const posicion = await cliente.query(
-      'SELECT id FROM posicion WHERE lower(nombre) = ANY($1) ORDER BY id LIMIT 1',
-      [POSICIONES[datos.posicion].db.map((n) => n.toLowerCase())]
-    );
-    if (posicion.rowCount === 0) {
-      throw new Error(`No existe la posición '${datos.posicion}' en la tabla posicion.`);
+    // Id de cada posición elegida, en el mismo orden (la primera es la principal).
+    const idsPosiciones = [];
+    for (const clave of datos.posiciones) {
+      const posicion = await cliente.query(
+        'SELECT id FROM posicion WHERE lower(nombre) = ANY($1) ORDER BY id LIMIT 1',
+        [POSICIONES[clave].db.map((n) => n.toLowerCase())]
+      );
+      if (posicion.rowCount === 0) {
+        throw new Error(`No existe la posición '${clave}' en la tabla posicion.`);
+      }
+      idsPosiciones.push(posicion.rows[0].id);
     }
 
-    const nivel = await cliente.query('SELECT id FROM nivel WHERE lower(nombre) = lower($1)', [NIVELES[datos.nivel]]);
-    if (nivel.rowCount === 0) {
-      throw new Error(`No existe el nivel '${NIVELES[datos.nivel]}' en la tabla nivel (sección V de sql/seed.sql).`);
-    }
-
-    // $9.. = estadísticas; COALESCE conserva las que ya tenía.
-    const asignacionStats = ESTADISTICAS.map(({ columna }, i) => `${columna} = COALESCE(${columna}, $${i + 9})`).join(',\n           ');
+    // Nombre y apellido no se tocan: se piden solo al crear la cuenta (/registro).
+    // Pie hábil y nivel ya no se piden: las columnas quedan como estaban.
+    // $6.. = estadísticas; con conservarStats, COALESCE deja las que ya tenía.
+    const asignacionStats = ESTADISTICAS.map(({ columna }, i) => (
+      conservarStats ? `${columna} = COALESCE(${columna}, $${i + 6})` : `${columna} = $${i + 6}`
+    )).join(',\n           ');
     await cliente.query(
       `UPDATE jugador
-          SET nombre_apodo = $1, apellido = $2, fecha_nacimiento = $3,
-              altura = $4, peso = $5, pie_habil = $6, id_nivel = $8,
+          SET apodo = $1, fecha_nacimiento = $2, altura = $3, peso = $4,
               ${asignacionStats},
               perfil_completo = TRUE
-        WHERE id = $7`,
+        WHERE id = $5`,
       [
-        datos.nombre,
-        datos.apellido,
+        datos.apodo,
         datos.fechaNacimiento,
         datos.altura,
         datos.peso,
-        datos.pieHabil,
         idJugador,
-        nivel.rows[0].id,
-        ...ESTADISTICAS.map(({ clave }) => statsIniciales[clave]),
+        ...ESTADISTICAS.map(({ clave }) => stats[clave]),
       ]
     );
 
-    // Por ahora una sola posición por jugador: se reemplaza la anterior.
+    // Se reemplazan todas: WITH ORDINALITY inserta en el orden elegido (jp.id marca la principal).
     await cliente.query('DELETE FROM jugador_posicion WHERE id_jugador = $1', [idJugador]);
-    await cliente.query('INSERT INTO jugador_posicion (id_jugador, id_posicion) VALUES ($1, $2)', [
-      idJugador,
-      posicion.rows[0].id,
-    ]);
+    await cliente.query(
+      `INSERT INTO jugador_posicion (id_jugador, id_posicion)
+       SELECT $1, id FROM unnest($2::int[]) WITH ORDINALITY AS t(id, orden) ORDER BY orden`,
+      [idJugador, idsPosiciones]
+    );
 
     await cliente.query('COMMIT');
   } catch (err) {
@@ -135,8 +131,58 @@ async function guardarPerfil(idJugador, datos, statsIniciales) {
   }
 }
 
+/**
+ * Wizard (primera vez): guarda el perfil con las estadísticas sorteadas.
+ * Si ya tenía estadísticas no se re-sortean.
+ */
+function guardarPerfil(idJugador, datos, statsIniciales) {
+  return escribirPerfil(idJugador, datos, statsIniciales, true);
+}
+
+/** Editor /perfil/editar: guarda el perfil con las estadísticas que eligió el jugador. */
+function actualizarPerfil(idJugador, datos, stats) {
+  return escribirPerfil(idJugador, datos, stats, false);
+}
+
+/**
+ * Foto del jugador de una cuenta (la sirve GET /perfil/foto).
+ * @returns {Promise<{datos: Buffer, tipo: string}|null>}
+ */
+async function obtenerFoto(authId) {
+  const { rows } = await pool.query(
+    `SELECT j.foto, j.foto_tipo
+       FROM usuario u
+       JOIN jugador j ON j.id_usuario = u.id
+      WHERE u.auth_id = $1 AND j.foto IS NOT NULL`,
+    [authId]
+  );
+  return rows[0] ? { datos: rows[0].foto, tipo: rows[0].foto_tipo } : null;
+}
+
+/**
+ * Reemplaza la foto del jugador.
+ * @param {Buffer} datos - Imagen ya validada.
+ * @param {string} tipo - 'image/jpeg' | 'image/png' | 'image/webp'
+ */
+async function guardarFoto(idJugador, datos, tipo) {
+  await pool.query('UPDATE jugador SET foto = $1, foto_tipo = $2, foto_actualizada = NOW() WHERE id = $3', [
+    datos,
+    tipo,
+    idJugador,
+  ]);
+}
+
+/** Quita la foto: la carta vuelve a la silueta. */
+async function eliminarFoto(idJugador) {
+  await pool.query('UPDATE jugador SET foto = NULL, foto_tipo = NULL, foto_actualizada = NULL WHERE id = $1', [idJugador]);
+}
+
 module.exports = {
   COLUMNA_INEXISTENTE,
   obtenerPerfil,
   guardarPerfil,
+  actualizarPerfil,
+  obtenerFoto,
+  guardarFoto,
+  eliminarFoto,
 };

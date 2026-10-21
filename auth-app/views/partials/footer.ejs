@@ -8,7 +8,7 @@
           <span aria-hidden="true">·</span>
           <a href="/dashboard">Mi panel</a>
           <span aria-hidden="true">·</span>
-          <a href="/perfil-jugador">Editar mi perfil</a>
+          <a href="/perfil/editar">Editar mi perfil</a>
         <% } else { %>
           <span aria-hidden="true">·</span>
           <a href="/login">Iniciar sesión</a>
@@ -40,15 +40,18 @@
     <!-- Wizard de perfil: pasos, validación y resumen -->
     <script src="/js/wizard.js?v=<%= versionAssets %>" defer></script>
   <% } %>
-  <% if (locals.pagina === 'perfil') { %>
-    <!-- Carta: vista previa de la foto, descargar y compartir -->
+  <% if (locals.pagina === 'perfil' && locals.editorPerfil) { %>
+    <!-- Editor de perfil: carta en vivo, estadísticas y foto -->
+    <script src="/js/editar-perfil.js?v=<%= versionAssets %>" defer></script>
+  <% } else if (locals.pagina === 'perfil') { %>
+    <!-- Carta: descargar y compartir -->
     <script src="/js/perfil.js?v=<%= versionAssets %>" defer></script>
   <% } %>
   <% if (locals.pagina === 'landing' || locals.pagina === 'dashboard') { %>
     <!-- Balón 3D: Three.js se carga desde CDN dentro de ball.js -->
     <script type="module" src="/js/ball.js?v=<%= versionAssets %>"></script>
   <% } %>
-  <% if (locals.pagina === 'dashboard' || locals.pagina === 'equipo') { %>
+  <% if (locals.pagina === 'dashboard' || locals.pagina === 'equipo' || locals.pagina === 'perfil') { %>
     <!-- Dashboard: avisos de "próximamente", parallax y foil de la carta -->
     <script src="/js/dashboard.js?v=<%= versionAssets %>" defer></script>
   <% } %>

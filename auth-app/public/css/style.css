@@ -1747,7 +1747,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   color: var(--texto-suave);
   font-size: 0.8rem;
 }
-
 /* ---------- Alertas ---------- */
 .alerta {
   padding: 12px 16px;
@@ -3089,6 +3088,160 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   min-height: 1.4em;
   color: var(--texto-suave);
   font-size: 0.88rem;
+}
+
+/* ---------- Editor de perfil (/perfil/editar): reutiliza la carta y las tarjetas del perfil ---------- */
+.editor__foto {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px 22px;
+  margin-top: 8px;
+}
+
+.editor__foto .btn {
+  cursor: pointer;
+}
+
+.editor__foto [hidden] {
+  display: none;
+}
+
+.editor__ayuda {
+  margin-top: 10px;
+  text-align: center;
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+}
+
+.editor__form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.editor__form .alerta {
+  margin-bottom: 0;
+}
+
+/* fieldset sin estilos del navegador; la leyenda queda dentro de la tarjeta (float) */
+.editor__seccion {
+  min-width: 0;
+  margin: 0;
+}
+
+.editor__seccion > legend {
+  float: left;
+  width: 100%;
+  padding: 0;
+}
+
+.editor__seccion > * + * {
+  margin-top: 18px;
+}
+
+/* El primer bloque tras la leyenda ya tiene el espacio del título */
+.editor__seccion > legend + * {
+  clear: both;
+  margin-top: 0;
+}
+
+.editor__seccion .campo input {
+  background: #0b0b0b;
+}
+
+.editor__seccion .opcion {
+  background: #0b0b0b;
+}
+
+.editor__seccion .opcion:has(.opcion__radio:checked) {
+  background: rgba(57, 255, 20, 0.06);
+}
+
+.editor__nota {
+  margin-top: 0;
+}
+
+/* Estadísticas: deslizador con relleno neón hasta el valor (--valor lo actualiza editar-perfil.js) */
+.editor__stats {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.editor__stat {
+  display: grid;
+  grid-template-columns: minmax(92px, 130px) 1fr 32px;
+  align-items: center;
+  gap: 14px;
+}
+
+.editor__stat-nombre {
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.editor__stat-nombre .barras__sigla {
+  display: inline-block;
+  min-width: 36px;
+}
+
+.editor__rango {
+  --relleno: calc((var(--valor) - 1) / 98 * 100%);
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.editor__rango::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #1fae0a, var(--verde)) 0 / var(--relleno) 100% no-repeat, #2a2a2a;
+}
+
+.editor__rango::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #1fae0a, var(--verde)) 0 / var(--relleno) 100% no-repeat, #2a2a2a;
+}
+
+.editor__rango::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+  margin-top: -6px;
+  border: 3px solid #0b0b0b;
+  border-radius: 50%;
+  background: var(--verde);
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.6);
+  -webkit-appearance: none;
+  appearance: none;
+  transition: transform 0.15s var(--curva);
+}
+
+.editor__rango::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 3px solid #0b0b0b;
+  border-radius: 50%;
+  background: var(--verde);
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.6);
+}
+
+.editor__rango:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+
+.editor__rango:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 4px;
+  border-radius: 999px;
 }
 
 /* Dashboard y dock: ver public/css/dashboard.css (solo se carga en /dashboard) */

@@ -67,19 +67,13 @@
         <legend class="wizard__titulo">Datos personales</legend>
         <p class="wizard__subtitulo">Así aparecerás en tu carta y en las búsquedas.</p>
 
-        <div class="formulario__fila">
-          <div class="campo">
-            <label for="nombre">Nombre</label>
-            <input type="text" id="nombre" name="nombre" placeholder="Ej. Alexis" value="<%= datos.nombre || '' %>"
-                   autocomplete="given-name" maxlength="100" aria-describedby="nombre-error" required />
-            <small class="campo__error" id="nombre-error"></small>
-          </div>
-          <div class="campo">
-            <label for="apellido">Apellido</label>
-            <input type="text" id="apellido" name="apellido" placeholder="Ej. Sánchez" value="<%= datos.apellido || '' %>"
-                   autocomplete="family-name" maxlength="100" aria-describedby="apellido-error" required />
-            <small class="campo__error" id="apellido-error"></small>
-          </div>
+        <!-- Nombre y apellido ya se pidieron al crear la cuenta (/registro) -->
+        <div class="campo">
+          <label for="apodo">Apodo</label>
+          <input type="text" id="apodo" name="apodo" placeholder="Ej. El Niño Maravilla" value="<%= datos.apodo || '' %>"
+                 autocomplete="nickname" maxlength="20" aria-describedby="apodo-ayuda apodo-error" required />
+          <small class="campo__ayuda" id="apodo-ayuda">Es el nombre que aparecerá en tu carta.</small>
+          <small class="campo__error" id="apodo-error"></small>
         </div>
 
         <div class="campo">
@@ -116,12 +110,13 @@
         <legend class="wizard__titulo">Perfil deportivo</legend>
         <p class="wizard__subtitulo">Con esto armamos tu carta y te sugerimos partidos.</p>
 
-        <div class="grupo-opciones" role="radiogroup" aria-labelledby="posicion-label" aria-describedby="posicion-error" data-grupo="posicion">
-          <span class="grupo-opciones__label" id="posicion-label">Posición en la cancha</span>
+        <div class="grupo-opciones" role="group" aria-labelledby="posicion-label" aria-describedby="posicion-ayuda posicion-error" data-grupo="posicion">
+          <span class="grupo-opciones__label" id="posicion-label">Posiciones en la cancha</span>
+          <small class="campo__ayuda" id="posicion-ayuda">Puedes marcar más de una (toca otra vez para quitarla).</small>
           <div class="opciones opciones--4">
             <% Object.entries(catalogos.POSICIONES).forEach(function ([clave, pos]) { %>
               <label class="opcion opcion--posicion">
-                <input class="opcion__radio" type="radio" name="posicion" value="<%= clave %>" <%= datos.posicion === clave ? 'checked' : '' %> />
+                <input class="opcion__radio" type="checkbox" name="posicion" value="<%= clave %>" <%= (datos.posiciones || []).includes(clave) ? 'checked' : '' %> />
                 <svg class="opcion__cancha" viewBox="0 0 24 34" aria-hidden="true">
                   <rect x="1" y="1" width="22" height="32" rx="2" />
                   <path d="M1 17h22M8 1v4h8V1M8 33v-4h8v4" />
@@ -135,35 +130,6 @@
           </div>
           <small class="campo__error" id="posicion-error"></small>
         </div>
-
-        <div class="grupo-opciones" role="radiogroup" aria-labelledby="pie-label" aria-describedby="pie_habil-error" data-grupo="pie_habil">
-          <span class="grupo-opciones__label" id="pie-label">Pie hábil</span>
-          <div class="opciones opciones--2">
-            <% Object.entries(catalogos.PIES).forEach(function ([clave, nombre]) { %>
-              <label class="opcion opcion--fila">
-                <input class="opcion__radio" type="radio" name="pie_habil" value="<%= clave %>" <%= datos.pieHabil === clave ? 'checked' : '' %> />
-                <svg class="opcion__pie <%= clave === 'izquierdo' ? 'opcion__pie--espejo' : '' %>" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M9 3c2.5 0 4 2 4 5v5.5c0 1 .6 1.7 1.6 2l3.6 1c1.6.5 2.3 1.6 2.3 2.8V20H5.5l-.3-3.3C5 14 6 12.5 6 10.5V6c0-1.8 1.2-3 3-3z" />
-                </svg>
-                <span class="opcion__nombre"><%= nombre %></span>
-              </label>
-            <% }) %>
-          </div>
-          <small class="campo__error" id="pie_habil-error"></small>
-        </div>
-
-        <div class="grupo-opciones" role="radiogroup" aria-labelledby="nivel-label" aria-describedby="nivel-error" data-grupo="nivel">
-          <span class="grupo-opciones__label" id="nivel-label">Nivel de juego</span>
-          <div class="opciones opciones--3">
-            <% Object.entries(catalogos.NIVELES).forEach(function ([clave, nombre]) { %>
-              <label class="opcion opcion--fila">
-                <input class="opcion__radio" type="radio" name="nivel" value="<%= clave %>" <%= datos.nivel === clave ? 'checked' : '' %> />
-                <span class="opcion__nombre"><%= nombre %></span>
-              </label>
-            <% }) %>
-          </div>
-          <small class="campo__error" id="nivel-error"></small>
-        </div>
       </fieldset>
 
       <!-- ============ PASO 4: CONFIRMACIÓN ============ -->
@@ -173,13 +139,11 @@
 
         <!-- wizard.js copia aquí los valores de los pasos anteriores -->
         <dl class="resumen">
-          <div><dt>Nombre</dt><dd data-resumen="nombre_completo">—</dd></div>
+          <div><dt>Apodo en la carta</dt><dd data-resumen="apodo">—</dd></div>
           <div><dt>Nacimiento</dt><dd data-resumen="fecha_nacimiento">—</dd></div>
           <div><dt>Altura</dt><dd data-resumen="altura">—</dd></div>
           <div><dt>Peso</dt><dd data-resumen="peso">—</dd></div>
-          <div><dt>Posición</dt><dd data-resumen="posicion">—</dd></div>
-          <div><dt>Pie hábil</dt><dd data-resumen="pie_habil">—</dd></div>
-          <div><dt>Nivel</dt><dd data-resumen="nivel">—</dd></div>
+          <div><dt>Posiciones</dt><dd data-resumen="posicion">—</dd></div>
         </dl>
       </fieldset>
 
@@ -196,9 +160,9 @@
           <span aria-hidden="true">←</span> Volver
         </a>
         <button type="submit" class="btn btn--verde btn--grande" data-continuar
-                data-texto-final="<%= editando ? 'GUARDAR CAMBIOS' : 'GUARDAR Y ENTRAR AL PANEL' %>" data-texto-cargando="GUARDANDO...">
+                data-texto-final="GUARDAR Y ENTRAR AL PANEL" data-texto-cargando="GUARDANDO...">
           <span class="btn__spinner" aria-hidden="true"></span>
-          <span class="btn__texto"><%= editando ? 'GUARDAR CAMBIOS' : 'GUARDAR Y ENTRAR AL PANEL' %></span>
+          <span class="btn__texto">GUARDAR Y ENTRAR AL PANEL</span>
           <span class="btn__flecha" aria-hidden="true">→</span>
         </button>
       </div>
