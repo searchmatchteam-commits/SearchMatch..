@@ -8,8 +8,9 @@ const router = express.Router();
 const pageController = require('../controllers/pageController');
 const rolController = require('../controllers/rolController');
 const jugadorController = require('../controllers/jugadorController');
-const { requireAuth, requireRol } = require('../middlewares/authMiddleware');
-const { validarPerfilJugador } = require('../middlewares/validators');
+const equipoController = require('../controllers/equipoController');
+const { requireAuth, requireRol, soloCapitanes } = require('../middlewares/authMiddleware');
+const { validarPerfilJugador, validarEquipo, validarDesafio } = require('../middlewares/validators');
 
 // GET / → landing page.
 router.get('/', pageController.landing);
@@ -23,8 +24,18 @@ router.get('/perfil-jugador', requireAuth, requireRol, jugadorController.mostrar
 router.post('/perfil-jugador', requireAuth, requireRol, validarPerfilJugador, jugadorController.guardarWizard);
 router.get('/perfil', requireAuth, requireRol, jugadorController.mostrarPerfil);
 
-// Rol "equipo": siguiente paso (por construir).
-router.get('/registro-equipo', requireAuth, requireRol, rolController.registroEquipo);
+// Equipos: wizard para crear el equipo, panel del capitán y directorio con solicitudes.
+// Crear equipo: solo capitanes (el jugador vuelve a /equipos con "Acceso denegado").
+router.get('/crear-equipo', requireAuth, requireRol, soloCapitanes, equipoController.mostrarCrear);
+router.post('/crear-equipo', requireAuth, requireRol, soloCapitanes, validarEquipo, equipoController.crear);
+router.get('/crear-equipo/listo', requireAuth, requireRol, soloCapitanes, equipoController.confirmacion);
+router.get('/mi-equipo', requireAuth, requireRol, equipoController.panel);
+router.post('/mi-equipo/solicitudes/:id/:accion', requireAuth, requireRol, equipoController.responder);
+router.post('/mi-equipo/desafios/:id', requireAuth, requireRol, soloCapitanes, validarDesafio, equipoController.desafiar);
+router.get('/equipos', requireAuth, requireRol, equipoController.directorio);
+router.post('/equipos/:id/unirme', requireAuth, requireRol, equipoController.unirse);
+// Dirección antigua del paso de equipo (enlaces o marcadores guardados).
+router.get('/registro-equipo', (req, res) => res.redirect('/mi-equipo'));
 
 // GET /dashboard → página protegida: requireAuth verifica la sesión y
 // requireRol manda a /select-role a quien aún no eligió rol.

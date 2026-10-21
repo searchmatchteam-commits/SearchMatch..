@@ -21,7 +21,7 @@
   </footer>
 
   <script src="/js/main.js?v=<%= versionAssets %>" defer></script>
-  <% if (locals.pagina === 'dashboard' || locals.pagina === 'auth') { %>
+  <% if (locals.pagina === 'dashboard' || locals.pagina === 'auth' || locals.pagina === 'equipo') { %>
     <!-- Ripple y cursor de luz del sistema "cyber-sport" -->
     <script src="/js/cyber.js?v=<%= versionAssets %>" defer></script>
   <% } %>
@@ -33,7 +33,10 @@
     <!-- Selección de rol: texto y estado del botón -->
     <script src="/js/rol.js?v=<%= versionAssets %>" defer></script>
   <% } %>
-  <% if (locals.pagina === 'wizard') { %>
+  <% if (locals.pagina === 'wizard' && locals.wizardEquipo) { %>
+    <!-- Wizard de equipo: pasos, validación y vista previa del club -->
+    <script src="/js/crear-equipo.js?v=<%= versionAssets %>" defer></script>
+  <% } else if (locals.pagina === 'wizard') { %>
     <!-- Wizard de perfil: pasos, validación y resumen -->
     <script src="/js/wizard.js?v=<%= versionAssets %>" defer></script>
   <% } %>
@@ -45,9 +48,13 @@
     <!-- Balón 3D: Three.js se carga desde CDN dentro de ball.js -->
     <script type="module" src="/js/ball.js?v=<%= versionAssets %>"></script>
   <% } %>
-  <% if (locals.pagina === 'dashboard') { %>
+  <% if (locals.pagina === 'dashboard' || locals.pagina === 'equipo') { %>
     <!-- Dashboard: avisos de "próximamente", parallax y foil de la carta -->
     <script src="/js/dashboard.js?v=<%= versionAssets %>" defer></script>
+  <% } %>
+  <% if (locals.pagina === 'equipo') { %>
+    <!-- Panel del capitán: solicitudes y plantel (datos de prueba) -->
+    <script src="/js/equipo.js?v=<%= versionAssets %>" defer></script>
   <% } %>
   <% if (!usuario) { %>
     <!-- Prerender: al pasar el mouse (o tocar) un enlace a login/registro, Chrome y Edge

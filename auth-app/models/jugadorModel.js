@@ -5,7 +5,7 @@
 // Todas las consultas son parametrizadas.
 
 const { pool } = require('../config/db');
-const { POSICIONES, ESTADISTICAS } = require('../config/perfilJugador');
+const { POSICIONES, NIVELES, ESTADISTICAS } = require('../config/perfilJugador');
 
 // Código de PostgreSQL para "la columna no existe".
 const COLUMNA_INEXISTENTE = '42703';
@@ -18,11 +18,18 @@ function clavePosicion(nombreDb) {
   return encontrada ? encontrada[0] : null;
 }
 
+/** Clave del catálogo (ej. 'intermedio') a partir del nombre en la tabla nivel. */
+function claveNivel(nombreDb) {
+  if (!nombreDb) return null;
+  const encontrada = Object.entries(NIVELES).find(([, nombre]) => nombre.toLowerCase() === nombreDb.toLowerCase());
+  return encontrada ? encontrada[0] : null;
+}
+
 /**
  * Perfil del jugador de una cuenta de Supabase Auth.
  * @param {string} authId - UUID de auth.users.
  * @returns {Promise<object|null>} { id, nombre, apellido, fechaNacimiento, altura, peso,
- *          posicion, pieHabil, stats: {ritmo, ...} | null, perfilCompleto }
+ *          posicion, pieHabil, nivel, stats: {ritmo, ...} | null, perfilCompleto }
  */
 async function obtenerPerfil(authId) {
   const columnasStats = ESTADISTICAS.map(({ columna }) => `j.${columna}`).join(', ');
@@ -35,9 +42,11 @@ async function obtenerPerfil(authId) {
               JOIN posicion p ON p.id = jp.id_posicion
              WHERE jp.id_jugador = j.id
              ORDER BY jp.id
-             LIMIT 1) AS posicion
+             LIMIT 1) AS posicion,
+           n.nombre AS nivel
     FROM usuario u
     JOIN jugador j ON j.id_usuario = u.id
+    LEFT JOIN nivel n ON n.id = j.id_nivel
     WHERE u.auth_id = $1
   `;
   const { rows } = await pool.query(consulta, [authId]);
@@ -54,18 +63,20 @@ async function obtenerPerfil(authId) {
     peso: fila.peso === null ? null : Number(fila.peso),
     posicion: clavePosicion(fila.posicion),
     pieHabil: fila.pie_habil,
+    nivel: claveNivel(fila.nivel),
     stats: tieneStats ? Object.fromEntries(ESTADISTICAS.map(({ clave, columna }) => [clave, fila[columna]])) : null,
     perfilCompleto: fila.perfil_completo,
   };
 }
 
+
 /**
- * Guarda el perfil del wizard en UNA transacción: datos de "jugador",
+ * Guarda el perfil del wizard en UNA transacción: datos de "jugador" (con su nivel),
  * su posición (reemplaza la anterior) y las estadísticas iniciales.
  * Las estadísticas solo se escriben si aún no tenía (no se re-sortean al editar).
  * @param {number} idJugador
- * @param {{nombre, apellido, fechaNacimiento, altura, peso, posicion, pieHabil}} datos
- *        Ya validados; posicion es clave de config/perfilJugador.js.
+ * @param {{nombre, apellido, fechaNacimiento, altura, peso, posicion, pieHabil, nivel}} datos
+ *        Ya validados; posicion y nivel son claves de config/perfilJugador.js.
  * @param {object} statsIniciales - { ritmo: 72, ... }
  */
 async function guardarPerfil(idJugador, datos, statsIniciales) {
@@ -81,12 +92,17 @@ async function guardarPerfil(idJugador, datos, statsIniciales) {
       throw new Error(`No existe la posición '${datos.posicion}' en la tabla posicion.`);
     }
 
-    // $8.. = estadísticas; COALESCE conserva las que ya tenía.
-    const asignacionStats = ESTADISTICAS.map(({ columna }, i) => `${columna} = COALESCE(${columna}, $${i + 8})`).join(',\n           ');
+    const nivel = await cliente.query('SELECT id FROM nivel WHERE lower(nombre) = lower($1)', [NIVELES[datos.nivel]]);
+    if (nivel.rowCount === 0) {
+      throw new Error(`No existe el nivel '${NIVELES[datos.nivel]}' en la tabla nivel (sección V de sql/seed.sql).`);
+    }
+
+    // $9.. = estadísticas; COALESCE conserva las que ya tenía.
+    const asignacionStats = ESTADISTICAS.map(({ columna }, i) => `${columna} = COALESCE(${columna}, $${i + 9})`).join(',\n           ');
     await cliente.query(
       `UPDATE jugador
           SET nombre_apodo = $1, apellido = $2, fecha_nacimiento = $3,
-              altura = $4, peso = $5, pie_habil = $6,
+              altura = $4, peso = $5, pie_habil = $6, id_nivel = $8,
               ${asignacionStats},
               perfil_completo = TRUE
         WHERE id = $7`,
@@ -98,6 +114,7 @@ async function guardarPerfil(idJugador, datos, statsIniciales) {
         datos.peso,
         datos.pieHabil,
         idJugador,
+        nivel.rows[0].id,
         ...ESTADISTICAS.map(({ clave }) => statsIniciales[clave]),
       ]
     );

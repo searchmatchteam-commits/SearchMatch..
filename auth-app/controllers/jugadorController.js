@@ -2,6 +2,7 @@
 // Perfil del jugador:
 //  - GET/POST /perfil-jugador → wizard de 4 pasos (tipo de cuenta, datos personales,
 //    perfil deportivo y confirmación). Sirve para crear y para editar el perfil.
+//    Es el onboarding obligatorio: /dashboard manda aquí al jugador sin perfil completo.
 //  - GET /perfil → la carta de jugador y el resumen de datos y estadísticas.
 // La validación está en middlewares/validators.js (validarPerfilJugador) y
 // el acceso a datos en models/jugadorModel.js.
@@ -11,6 +12,7 @@ const { calcularEdad, ALTURA_CM, PESO_KG } = require('../middlewares/validators'
 const {
   POSICIONES,
   PIES,
+  NIVELES,
   ESTADISTICAS,
   sortearEstadisticas,
   calcularMedia,
@@ -39,7 +41,7 @@ function renderWizard(res, { status = 200, datos, errores = [], paso = 2, editan
     errores,
     paso,
     editando,
-    catalogos: { POSICIONES, PIES },
+    catalogos: { POSICIONES, PIES, NIVELES },
     rangos: { ALTURA_CM, PESO_KG },
   });
 }
@@ -66,6 +68,7 @@ async function mostrarWizard(req, res, next) {
         peso: perfil.peso ? Math.round(perfil.peso) : '',
         posicion: perfil.posicion,
         pieHabil: perfil.pieHabil,
+        nivel: perfil.nivel,
       },
     });
   } catch (err) {
@@ -101,7 +104,8 @@ async function guardarWizard(req, res, next) {
 
     // Las estadísticas se sortean solo la primera vez (el modelo conserva las existentes).
     await jugadorModel.guardarPerfil(perfil.id, datos, sortearEstadisticas());
-    return res.redirect('/perfil');
+    // Primera vez (onboarding) → al panel; si estaba editando → a su carta.
+    return res.redirect(perfil.perfilCompleto ? '/perfil' : '/dashboard');
   } catch (err) {
     return next(err);
   }

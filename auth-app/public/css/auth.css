@@ -456,3 +456,56 @@
     justify-self: end;
   }
 }
+
+/* ---------- Crear equipo: tarjeta sola y centrada, con select ---------- */
+@media (min-width: 1024px) {
+  .pagina-auth .auth--centrada {
+    grid-template-columns: minmax(0, 580px);
+    justify-content: center;
+  }
+
+  .pagina-auth .auth--centrada .auth__tarjeta {
+    justify-self: stretch;
+  }
+}
+
+/* El select copia el aspecto de los inputs de la tarjeta, con flecha propia */
+.pagina-auth .auth__tarjeta .campo select {
+  width: 100%;
+  font: inherit;
+  font-size: 16px;
+  color: var(--texto);
+  padding: 14px 40px 14px 46px;
+  border-radius: 14px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2398a398' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+      no-repeat right 14px center / 18px,
+    rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color-scheme: dark;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.25s ease, box-shadow 0.3s ease;
+}
+
+.pagina-auth .auth__tarjeta .campo select:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.pagina-auth .auth__tarjeta .campo select:focus {
+  outline: none;
+  border-color: rgba(var(--verde-rgb), 0.6);
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--verde-rgb), 0.3),
+    inset 0 0 20px rgba(var(--verde-rgb), 0.12),
+    0 0 24px rgba(var(--verde-rgb), 0.12);
+}
+
+.pagina-auth .auth__tarjeta .campo--error select {
+  border-color: rgba(255, 107, 107, 0.6);
+}
+
+.pagina-auth .auth__tarjeta .campo select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -244,6 +244,8 @@ async function cerrarSesion(req, res) {
   // signOut borra las cookies aunque Supabase no responda; el error solo se registra.
   const { error } = await userModel.cerrarSesionEnAuth(req.supabase).catch((err) => ({ error: err }));
   if (error) console.error('⚠️  No se pudo revocar la sesión en Supabase:', error.message);
+  // Por si quedó alguna página de la cuenta en la caché del navegador (las privadas ya van con no-store).
+  res.set('Clear-Site-Data', '"cache"');
   return res.redirect('/login?msg=Sesion_cerrada');
 }
 

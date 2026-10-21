@@ -42,7 +42,7 @@ auth-app/
 
 ## Configuración
 
-1. **Base de datos:** en Supabase → *SQL Editor*, ejecuta `sql/seed.sql` (re-ejecutable). La sección **U** agrega `usuario.id_auth` (vínculo con `auth.users`), deja `contrasena` y `jugador.fecha_nacimiento` opcionales y activa RLS en `usuario` y `jugador`.
+1. **Base de datos:** en Supabase → *SQL Editor*, ejecuta `sql/seed.sql` (re-ejecutable). La sección **U** agrega `usuario.id_auth` (vínculo con `auth.users`), deja `contrasena` y `jugador.fecha_nacimiento` opcionales y activa RLS en `usuario` y `jugador`. La sección **W** agrega a `equipo` la zona, el correo de contacto, la modalidad y el nivel (wizard `/crear-equipo`).
    La sección **V** agrega a `jugador` las columnas del perfil deportivo (pie hábil, nivel y las 6 estadísticas de la carta); sin ella `/perfil-jugador` y `/perfil` fallan.
 2. **Variables de entorno:** copia `.env.example` a `.env` y complétalo:
 
@@ -88,7 +88,14 @@ Abre [http://localhost:3000](http://localhost:3000).
 | GET    | `/perfil-jugador` | Wizard del perfil de jugador (crear/editar) | **Sí** + rol |
 | POST   | `/perfil-jugador` | Valida y guarda el perfil; sortea las stats la 1.ª vez | **Sí** + rol |
 | GET    | `/perfil`    | Carta de jugador + datos y estadísticas        | **Sí** + rol |
-| GET    | `/registro-equipo` | Siguiente paso del equipo (por construir) | **Sí** + rol |
+| GET    | `/crear-equipo` | Wizard para crear el equipo, solo capitanes (jugador → `/equipos` con "Acceso denegado"; si ya tiene → `/mi-equipo`) | **Sí** + capitán |
+| POST   | `/crear-equipo` | Valida, crea el equipo y deja al usuario como capitán | **Sí** + capitán |
+| GET    | `/crear-equipo/listo` | Confirmación del equipo recién creado | **Sí** + capitán |
+| GET    | `/mi-equipo` | Mi equipo: cabecera, solicitudes pendientes (capitán) y plantel real de `equipo_jugador` (sin equipo → `/crear-equipo` o `/equipos`) | **Sí** + rol |
+| POST   | `/mi-equipo/solicitudes/:id/aceptar` · `/rechazar` | El capitán responde una solicitud; al aceptar, el jugador entra al plantel como integrante | **Sí** + rol |
+| POST   | `/mi-equipo/desafios/:id` | El capitán desafía a otro equipo: fila "pendiente" en `desafio` (fecha tentativa y mensaje opcionales en `desafio.mensaje`) | **Sí** + capitán |
+| GET    | `/equipos`   | Directorio de equipos con buscador y "Solicitar unirme" (capitán → `/mi-equipo`) | **Sí** + rol |
+| POST   | `/equipos/:id/unirme` | Guarda una solicitud pendiente en `solicitud_union_equipo` (JSON si se pide con `fetch`) | **Sí** + rol |
 | GET    | `/dashboard` | Panel del usuario (sin rol → `/select-role`)   | **Sí** + rol |
 
 ---

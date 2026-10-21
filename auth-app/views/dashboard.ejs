@@ -24,7 +24,11 @@
           </span>
         </button>
         <% if (usuario.rolInicio === 'equipo') { %>
-          <a class="dash-btn-vidrio" data-ripple href="/registro-equipo">Mi equipo</a>
+          <% if (miEquipo) { %>
+            <a class="dash-btn-vidrio" data-ripple href="/mi-equipo"><%= miEquipo.nombre ? 'Ir a ' + miEquipo.nombre : 'Ir a mi equipo' %></a>
+          <% } else { %>
+            <a class="dash-btn-vidrio" data-ripple href="/crear-equipo">Crear mi equipo</a>
+          <% } %>
         <% } else if (carta) { %>
           <a class="dash-btn-vidrio" data-ripple href="/perfil">Ver mi carta</a>
         <% } else { %>
@@ -111,13 +115,23 @@
       <% } else { %>
         <div class="dash-vacio">
           <p class="dash-vacio__texto">
-            <%= usuario.rolInicio === 'equipo'
-              ? 'Las cartas son para jugadores. Arma tu equipo y recluta a los mejores.'
-              : 'Completa tu perfil y recibe tu carta con media y estadísticas.' %>
+            <% if (usuario.rolInicio !== 'equipo') { %>
+              Completa tu perfil y recibe tu carta con media y estadísticas.
+            <% } else if (miEquipo && miEquipo.nombre) { %>
+              Tu equipo <strong class="texto-verde"><%= miEquipo.nombre %></strong> te espera: revisa el plantel y las solicitudes.
+            <% } else if (miEquipo) { %>
+              Revisa el plantel y las solicitudes de tu equipo.
+            <% } else { %>
+              Las cartas son para jugadores. Arma tu equipo y recluta a los mejores.
+            <% } %>
           </p>
-          <a class="dash-btn-vidrio" data-ripple href="<%= usuario.rolInicio === 'equipo' ? '/registro-equipo' : '/perfil-jugador' %>">
-            <%= usuario.rolInicio === 'equipo' ? 'Ir a mi equipo' : 'Crear mi carta' %>
-          </a>
+          <% if (usuario.rolInicio === 'equipo') { %>
+            <a class="dash-btn-vidrio" data-ripple href="<%= miEquipo ? '/mi-equipo' : '/crear-equipo' %>">
+              <%= miEquipo ? 'Ir a mi equipo' : 'Crear mi equipo' %>
+            </a>
+          <% } else { %>
+            <a class="dash-btn-vidrio" data-ripple href="/perfil-jugador">Crear mi carta</a>
+          <% } %>
         </div>
       <% } %>
     </article>
@@ -150,11 +164,11 @@
         <span class="dash-acceso__titulo">Canchas</span>
         <span class="dash-acceso__texto">Reserva por hora</span>
       </button>
-      <button type="button" class="dash-acceso revelar" data-ripple data-proximamente="Muy pronto podrás buscar equipos y enviar solicitudes.">
+      <a class="dash-acceso revelar" data-ripple href="/equipos">
         <svg class="dash-acceso__icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><circle cx="17" cy="9" r="2.4" /><path d="M16 14.2a4.5 4.5 0 0 1 5 4.8" /></svg>
         <span class="dash-acceso__titulo">Equipos</span>
         <span class="dash-acceso__texto">Súmate a un plantel</span>
-      </button>
+      </a>
       <button type="button" class="dash-acceso revelar" data-ripple data-proximamente="Muy pronto podrás inscribirte en torneos.">
         <svg class="dash-acceso__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4v3h-4z" /></svg>
         <span class="dash-acceso__titulo">Torneos</span>

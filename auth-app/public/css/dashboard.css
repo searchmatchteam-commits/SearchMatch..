@@ -7,7 +7,8 @@
    elemento usa backdrop-filter y las animaciones se pausan durante el scroll (ver cyber.css). */
 
 /* ---------- Tokens (los compartidos están en cyber.css) ---------- */
-.pagina-dashboard {
+.pagina-dashboard,
+.pagina-equipo {
   --alto-dock: 50px;
   /* Espacio para que el dock flotante no tape el final de la página */
   padding-bottom: calc(var(--alto-dock) + 28px + env(safe-area-inset-bottom));
@@ -917,6 +918,7 @@ html.js .dash-acceso.revelar {
 
 html.js .dash-acceso.revelar.visible:hover,
 .dash-acceso:hover {
+  text-decoration: none;     /* "Equipos" es un enlace */
   transform: translateY(-5px);
   border-color: var(--verde-borde);
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5), 0 0 30px rgba(var(--verde-rgb), 0.16), inset 0 1px 0 rgba(var(--verde-rgb), 0.2);

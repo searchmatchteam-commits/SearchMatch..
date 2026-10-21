@@ -1,0 +1,221 @@
+<%- include('partials/header') %>
+<%
+  // Pasos del wizard: 1 y 2 son el formulario; el 3 se muestra al crear el equipo (/crear-equipo/listo).
+  const pasos = ['Crea tu equipo', 'Configura tu equipo', 'Confirmación'];
+  const iconoEscudo = '<path d="M12 3l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6z" />';
+  const iconoCheck = '<path d="M5 12.5l4.2 4.2L19 7" />';
+  // Vista previa "Así te verán los rivales" con lo que ya se sabe del equipo
+  const vista = creado || {
+    nombre: datos.nombre,
+    detalle: [catalogos.MODALIDADES[datos.jugadores], catalogos.NIVELES[datos.nivel]].filter(Boolean).join(' · '),
+  };
+%>
+
+<section class="wizard ceq">
+  <!-- Lado izquierdo: branding y vista previa del club -->
+  <aside class="wizard__marca">
+    <span class="rol__eyebrow">SEARCH MATCH · EQUIPOS</span>
+    <h2 class="wizard__marca-titulo">Lleva a tu equipo al siguiente nivel</h2>
+    <p class="wizard__marca-texto">Registra tu escuadra y empieza a jugar contra equipos de tu zona.</p>
+
+    <ul class="wizard__beneficios">
+      <li>
+        <span class="wizard__beneficio-icono" aria-hidden="true"><svg viewBox="0 0 24 24"><%- iconoEscudo %></svg></span>
+        <span class="ceq-beneficio"><strong>Perfil e identidad de tu club</strong>Nombre, escudo y colores de tu equipo.</span>
+      </li>
+      <li>
+        <span class="wizard__beneficio-icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2" /></svg>
+        </span>
+        <span class="ceq-beneficio"><strong>Rivales al instante</strong>Según tu zona y tu nivel de juego.</span>
+      </li>
+      <li>
+        <span class="wizard__beneficio-icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><circle cx="17" cy="9" r="2.4" /><path d="M16 14.2a4.5 4.5 0 0 1 5 4.8" /></svg>
+        </span>
+        <span class="ceq-beneficio"><strong>Gestiona tu escuadra</strong>Jugadores, partidos y desafíos en un solo lugar.</span>
+      </li>
+    </ul>
+
+    <!-- crear-equipo.js actualiza nombre, detalle y escudo mientras se escribe -->
+    <div class="ceq-vista">
+      <span class="ceq-etiqueta">Así te verán los rivales</span>
+      <div class="ceq-club">
+        <span class="ceq-escudo" data-escudo><svg viewBox="0 0 24 24" aria-hidden="true"><%- iconoEscudo %></svg></span>
+        <span class="ceq-club__texto">
+          <strong class="ceq-club__nombre" data-vista-nombre><%= vista.nombre || 'Nombre del Club' %></strong>
+          <span class="ceq-club__detalle" data-vista-detalle><%= vista.detalle || 'Tipo de fútbol · Nivel' %></span>
+        </span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Lado derecho: el formulario -->
+  <div class="wizard__panel">
+    <!-- Barra de progreso: crear-equipo.js actualiza las clases y --progreso al cambiar de paso -->
+    <div class="pasos pasos--3" data-pasos style="--progreso: <%= (paso - 1) / (pasos.length - 1) %>">
+      <div class="pasos__barra" aria-hidden="true"><span></span></div>
+      <ol class="pasos__lista">
+        <% pasos.forEach(function (nombre, i) { const numero = i + 1; %>
+          <li class="pasos__item <%= numero < paso ? 'pasos__item--hecho' : numero === paso ? 'pasos__item--activo' : '' %>"
+              data-indicador="<%= numero %>" <%- numero === paso ? 'aria-current="step"' : '' %>>
+            <span class="pasos__marca">
+              <svg class="pasos__check" viewBox="0 0 24 24" aria-hidden="true"><%- iconoCheck %></svg>
+              <span class="pasos__numero"><%= numero %></span>
+            </span>
+            <span class="pasos__nombre"><%= nombre %></span>
+          </li>
+        <% }) %>
+      </ol>
+    </div>
+
+    <% if (creado) { %>
+      <!-- ============ PASO 3: CONFIRMACIÓN ============ -->
+      <div class="ceq-listo">
+        <span class="ceq-listo__icono" aria-hidden="true"><svg viewBox="0 0 24 24"><%- iconoCheck %></svg></span>
+        <h1 class="wizard__titulo">¡Tu equipo está listo!</h1>
+        <p class="wizard__subtitulo">Ya eres el capitán de <strong><%= creado.nombre %></strong>: los jugadores ya pueden encontrarlo y pedir unirse.</p>
+        <div class="ceq-club ceq-club--grande">
+          <span class="ceq-escudo"><svg viewBox="0 0 24 24" aria-hidden="true"><%- iconoEscudo %></svg></span>
+          <span class="ceq-club__texto">
+            <strong class="ceq-club__nombre"><%= creado.nombre %></strong>
+            <span class="ceq-club__detalle"><%= creado.detalle %></span>
+          </span>
+          <span class="ceq-capitan">Capitán</span>
+        </div>
+        <div class="wizard__nav">
+          <a class="btn btn--oscuro btn--grande" href="/equipos">Ver equipos</a>
+          <a class="btn btn--verde btn--grande" href="/mi-equipo">Entrar al panel <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    <% } else { %>
+      <form action="/crear-equipo" method="POST" class="formulario wizard__form" data-wizard-equipo data-paso-inicial="<%= paso %>" novalidate>
+        <!-- ============ PASO 1: IDENTIDAD ============ -->
+        <fieldset class="wizard__paso" data-paso="1">
+          <legend class="wizard__titulo">Crea tu equipo</legend>
+          <p class="wizard__subtitulo">Nombre, escudo, zona y nivel de tu escuadra.</p>
+
+          <div class="ceq-identidad">
+            <span class="ceq-escudo ceq-escudo--grande" data-escudo><svg viewBox="0 0 24 24" aria-hidden="true"><%- iconoEscudo %></svg></span>
+            <span class="ceq-identidad__texto">
+              <span class="ceq-etiqueta">Identidad de club</span>
+              <strong class="ceq-identidad__nombre <%= datos.nombre ? '' : 'ceq-identidad__nombre--vacio' %>" data-vista-nombre><%= datos.nombre || 'Nombre del Club' %></strong>
+              <!-- El escudo es solo una vista previa: el input no tiene name, así que no se envía -->
+              <label class="ceq-subir">
+                Subir escudo
+                <input type="file" accept="image/*" class="solo-lectores" data-subir-escudo />
+              </label>
+            </span>
+            <span class="ceq-capitan">Capitán</span>
+          </div>
+
+          <div class="campo">
+            <label for="nombre_equipo">Nombre de la escuadra</label>
+            <div class="campo__control">
+              <svg class="campo__icono" viewBox="0 0 24 24" aria-hidden="true"><%- iconoEscudo %></svg>
+              <input type="text" id="nombre_equipo" name="nombre_equipo" placeholder="Ej. Los Titanes F.C." value="<%= datos.nombre || '' %>"
+                     autocomplete="off" maxlength="100" aria-describedby="nombre_equipo-error" required />
+            </div>
+            <small class="campo__error" id="nombre_equipo-error"></small>
+          </div>
+
+          <div class="campo">
+            <label for="correo_contacto">Correo de contacto del club</label>
+            <div class="campo__control">
+              <svg class="campo__icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
+              <input type="email" id="correo_contacto" name="correo_contacto" value="<%= datos.correo || '' %>"
+                     autocomplete="email" maxlength="150" aria-describedby="correo_contacto-error correo_contacto-ayuda" required />
+            </div>
+            <small class="campo__error" id="correo_contacto-error"></small>
+            <small class="campo__ayuda" id="correo_contacto-ayuda">Por defecto, el correo de tu cuenta. Los rivales lo usarán para contactarte.</small>
+          </div>
+        </fieldset>
+
+        <!-- ============ PASO 2: CONFIGURACIÓN ============ -->
+        <fieldset class="wizard__paso" data-paso="2">
+          <legend class="wizard__titulo">Configura tu equipo</legend>
+          <p class="wizard__subtitulo">Con esto te sugerimos rivales de tu nivel y de tu zona.</p>
+
+          <div class="grupo-opciones" role="radiogroup" aria-labelledby="nivel-label" aria-describedby="nivel-error" data-grupo="nivel">
+            <span class="grupo-opciones__label" id="nivel-label">Nivel de juego</span>
+            <div class="opciones opciones--3">
+              <% Object.entries(catalogos.NIVELES).forEach(function ([clave, nombre]) { %>
+                <label class="opcion opcion--nivel">
+                  <input class="opcion__radio" type="radio" name="nivel" value="<%= clave %>" <%= datos.nivel === clave ? 'checked' : '' %> />
+                  <span class="ceq-marca" aria-hidden="true"><svg viewBox="0 0 24 24"><%- iconoCheck %></svg></span>
+                  <span class="opcion__barras" aria-hidden="true">
+                    <% for (let b = 1; b <= 3; b++) { %><span class="<%= b <= catalogos.BARRAS_NIVEL[clave] ? 'llena' : '' %>"></span><% } %>
+                  </span>
+                  <span class="opcion__nombre"><%= nombre %></span>
+                  <span class="opcion__detalle"><%= catalogos.DETALLE_NIVEL[clave] %></span>
+                </label>
+              <% }) %>
+            </div>
+            <small class="campo__error" id="nivel-error"></small>
+          </div>
+
+          <div class="campo">
+            <label for="zona">Zona habitual de juego</label>
+            <div class="campo__control">
+              <svg class="campo__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+              <input type="text" id="zona" name="zona" placeholder="Ej. Puente Alto" value="<%= datos.zona || '' %>"
+                     autocomplete="address-level2" maxlength="100" aria-describedby="zona-error zona-ayuda" required />
+            </div>
+            <small class="campo__error" id="zona-error"></small>
+            <small class="campo__ayuda" id="zona-ayuda">Usamos esta zona para sugerirte rivales cercanos.</small>
+          </div>
+
+          <div class="grupo-opciones" role="radiogroup" aria-labelledby="modalidad-label" aria-describedby="modalidad-error" data-grupo="modalidad">
+            <span class="ceq-fila-label">
+              <span class="grupo-opciones__label" id="modalidad-label">Tipo de fútbol</span>
+              <span class="ceq-chip">Aproximado</span>
+            </span>
+            <div class="opciones opciones--3 ceq-modalidades">
+              <% Object.keys(catalogos.MODALIDADES).forEach(function (jugadores) { %>
+                <label class="opcion opcion--modalidad">
+                  <input class="opcion__radio" type="radio" name="modalidad" value="<%= jugadores %>" <%= String(datos.jugadores) === jugadores ? 'checked' : '' %>
+                         data-texto="<%= catalogos.MODALIDADES[jugadores] %>" />
+                  <span class="ceq-marca" aria-hidden="true"><svg viewBox="0 0 24 24"><%- iconoCheck %></svg></span>
+                  <span class="ceq-numero"><%= jugadores %></span>
+                  <span class="opcion__nombre">Fútbol</span>
+                </label>
+              <% }) %>
+            </div>
+            <small class="campo__error" id="modalidad-error"></small>
+          </div>
+
+          <div class="ceq-activo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg>
+            <span><strong>Search Match activo</strong>Encontraremos rivales al instante con estos datos.</span>
+          </div>
+        </fieldset>
+
+        <!-- Errores del servidor o de crear-equipo.js -->
+        <div class="alerta alerta--error" role="alert" data-alerta-errores <%= errores.length > 0 ? '' : 'hidden' %>>
+          <ul>
+            <% errores.forEach(function (error) { %><li><%= error %></li><% }) %>
+          </ul>
+        </div>
+
+        <div class="wizard__nav">
+          <!-- Sin JS vuelve a la selección de rol; crear-equipo.js lo convierte en "paso anterior" -->
+          <a class="btn btn--oscuro btn--grande" href="/select-role" data-volver>
+            <span aria-hidden="true">←</span> Volver
+          </a>
+          <!-- Sin JS los dos pasos se ven juntos y este botón crea el equipo -->
+          <button type="submit" class="btn btn--verde btn--grande" data-continuar data-texto-cargando="CREANDO EQUIPO...">
+            <span class="btn__spinner" aria-hidden="true"></span>
+            <span class="btn__texto">Crear equipo</span>
+            <svg class="ceq-btn-icono" viewBox="0 0 24 24" aria-hidden="true" data-icono-final><%- iconoCheck %></svg>
+            <span class="btn__flecha" aria-hidden="true" data-icono-continuar hidden>→</span>
+          </button>
+        </div>
+        <p class="ceq-nota" data-nota-final>Podrás completar más información después.</p>
+      </form>
+    <% } %>
+  </div>
+</section>
+
+<p class="ceq-pie">¿No es lo que buscabas? <a href="/select-role">Cambiar tipo de cuenta</a></p>
+
+<%- include('partials/footer') %>

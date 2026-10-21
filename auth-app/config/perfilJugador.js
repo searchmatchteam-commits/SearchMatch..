@@ -15,6 +15,13 @@ const PIES = {
   derecho: 'Derecho',
 };
 
+// Nivel de juego: el valor es el nombre en la tabla nivel (jugador.id_nivel, sql/seed.sql sección V).
+const NIVELES = {
+  principiante: 'Principiante',
+  intermedio: 'Intermedio',
+  avanzado: 'Avanzado',
+};
+
 // Estadísticas de la carta, en el orden en que se muestran.
 // "columna" es la columna de la tabla jugador (sql/seed.sql, sección V).
 const ESTADISTICAS = [
@@ -46,6 +53,7 @@ function calcularMedia(stats) {
 module.exports = {
   POSICIONES,
   PIES,
+  NIVELES,
   ESTADISTICAS,
   sortearEstadisticas,
   calcularMedia,

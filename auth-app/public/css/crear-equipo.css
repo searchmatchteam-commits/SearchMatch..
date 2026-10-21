@@ -1,0 +1,409 @@
+/* public/css/crear-equipo.css
+   Wizard de equipo (/crear-equipo). Se carga después de style.css y reutiliza la base
+   del wizard de jugador (.wizard, .pasos, .opcion, .opcion--nivel, .wizard__nav).
+   Secciones: base · pasos (3) · panel de marca · identidad de club · campos ·
+   nivel y tipo de fútbol · aviso "Search Match activo" · confirmación · responsive. */
+
+/* ---------- Base ---------- */
+.ceq [hidden] {
+  display: none !important;
+}
+
+/* ---------- Pasos: 3 en vez de 4 ---------- */
+.pasos--3 .pasos__lista {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.pasos--3 .pasos__barra {
+  left: 16.67%;
+  right: 16.67%;
+}
+
+/* ---------- Panel de marca ---------- */
+.ceq .wizard__marca {
+  display: flex;
+  flex-direction: column;
+}
+
+.ceq-beneficio {
+  display: flex;
+  flex-direction: column;
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.ceq-beneficio strong {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+/* "Así te verán los rivales" (solo escritorio, como los beneficios) */
+.ceq-vista {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+@media (min-width: 960px) {
+  .ceq-vista {
+    display: flex;
+    margin-top: 36px;
+  }
+}
+
+.ceq-etiqueta {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.ceq-club {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.ceq-club__texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ceq-club__nombre {
+  font-size: 1.05rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.ceq-club__detalle {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+/* Caja del escudo: ícono neón o la imagen elegida */
+.ceq-escudo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 12px;
+  color: var(--verde);
+  background: var(--verde-tenue);
+  border: 1px solid var(--verde-borde);
+}
+
+.ceq-escudo svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+  stroke: none;
+  filter: drop-shadow(0 0 6px rgba(57, 255, 20, 0.5));
+}
+
+.ceq-escudo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ceq-escudo--grande {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+}
+
+.ceq-escudo--grande svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* ---------- Identidad de club (paso 1) ---------- */
+.ceq-identidad {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #0b0b0b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ceq-identidad__texto {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ceq-identidad__nombre {
+  font-size: 1.15rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.ceq-identidad__nombre--vacio {
+  color: #4f564f;
+}
+
+.ceq-subir {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--verde);
+  cursor: pointer;
+}
+
+.ceq-subir:hover {
+  text-decoration: underline;
+}
+
+.ceq-subir:focus-within {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.ceq-capitan {
+  align-self: flex-start;
+  flex: none;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--verde);
+  border: 1px solid var(--verde-borde);
+  background: var(--verde-tenue);
+}
+
+/* ---------- Campos: etiquetas en mayúsculas e ícono a la izquierda ---------- */
+.ceq .campo label,
+.ceq .grupo-opciones__label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.ceq .wizard__panel .campo__control input {
+  padding-left: 46px;
+}
+
+.ceq .wizard__panel .campo input:focus {
+  border-color: var(--verde);
+  box-shadow: 0 0 0 1px var(--verde), 0 0 18px rgba(57, 255, 20, 0.18);
+}
+
+.ceq-fila-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ceq-chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+/* ---------- Nivel y tipo de fútbol ---------- */
+/* Check verde en la esquina de la opción elegida */
+.ceq-marca {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--verde);
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.6);
+}
+
+.ceq-marca svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: var(--sobre-verde);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.opcion:has(.opcion__radio:checked) .ceq-marca {
+  display: grid;
+}
+
+.ceq .opcion--nivel {
+  gap: 8px;
+  padding: 16px 14px;
+}
+
+.ceq .opcion--nivel .opcion__nombre {
+  font-size: 0.95rem;
+}
+
+/* Tipo de fútbol: siempre 3 columnas (son números cortos) */
+.ceq-modalidades {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.opcion--modalidad {
+  gap: 2px;
+  padding: 18px 10px;
+}
+
+.ceq-numero {
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.opcion:has(.opcion__radio:checked) .ceq-numero {
+  color: var(--verde);
+  text-shadow: 0 0 18px rgba(57, 255, 20, 0.5);
+}
+
+.opcion--modalidad .opcion__nombre {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+/* ---------- Aviso "Search Match activo" ---------- */
+.ceq-activo {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(57, 255, 20, 0.05);
+  border: 1px solid rgba(57, 255, 20, 0.18);
+  font-size: 0.88rem;
+  color: var(--texto-suave);
+}
+
+.ceq-activo svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  fill: var(--verde);
+  filter: drop-shadow(0 0 6px rgba(57, 255, 20, 0.6));
+}
+
+.ceq-activo span {
+  display: flex;
+  flex-direction: column;
+}
+
+.ceq-activo strong {
+  color: var(--texto);
+}
+
+/* ---------- Botones y notas ---------- */
+.ceq .wizard__nav {
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ceq-btn-icono {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ceq-nota {
+  margin-top: 10px;
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+.ceq-pie {
+  margin: -40px 0 56px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+}
+
+.ceq-pie a {
+  font-weight: 700;
+}
+
+/* ---------- Confirmación (paso 3) ---------- */
+.ceq-listo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ceq-listo__icono {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--verde);
+  box-shadow: 0 0 0 6px rgba(57, 255, 20, 0.12), 0 0 28px rgba(57, 255, 20, 0.5);
+  animation: aparecer 0.5s var(--curva) both;
+}
+
+.ceq-listo__icono svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--sobre-verde);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ceq-club--grande {
+  padding: 16px;
+  border-radius: 16px;
+  background: #0b0b0b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ceq-club--grande .ceq-club__texto {
+  flex: 1;
+}
+
+.ceq-club--grande .ceq-capitan {
+  align-self: center;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 479px) {
+  .ceq-identidad {
+    flex-wrap: wrap;
+  }
+
+  .ceq-nota {
+    text-align: center;
+  }
+}

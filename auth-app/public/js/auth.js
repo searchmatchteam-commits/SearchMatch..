@@ -1,5 +1,5 @@
 // public/js/auth.js
-// Formularios de login y registro (form[data-validar]):
+// Formularios de login, registro y crear equipo (form[data-validar]):
 //  1) Validación en el navegador: campos obligatorios, formato del correo,
 //     celular chileno, contraseña de 8+ caracteres y confirmación.
 //  2) Errores bajo cada campo + resumen en la alerta roja bajo el formulario.
@@ -11,6 +11,17 @@
 const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const REGEX_CELULAR_CL = /^(?:\+?56)?9\d{8}$/;
 const LONGITUD_MINIMA_PASSWORD = 8;
+const EDAD_MINIMA = 18;
+
+/** Años cumplidos a partir de "AAAA-MM-DD", comparando con el día de hoy. */
+function calcularEdad(valor) {
+  const [anio, mes, dia] = valor.split('-').map(Number);
+  const hoy = new Date();
+  let edad = hoy.getFullYear() - anio;
+  // Aún no cumple años este año
+  if (hoy.getMonth() + 1 < mes || (hoy.getMonth() + 1 === mes && hoy.getDate() < dia)) edad -= 1;
+  return edad;
+}
 
 // Reglas por campo. Cada una recibe el valor (y el formulario) y devuelve
 // el mensaje de error, o null si el valor es válido.
@@ -37,6 +48,7 @@ const REGLAS = {
     if (!valor) return 'La fecha de nacimiento es obligatoria.';
     // "AAAA-MM-DD" se compara bien como texto
     if (valor > new Date().toISOString().slice(0, 10)) return 'La fecha de nacimiento no puede estar en el futuro.';
+    if (calcularEdad(valor) < EDAD_MINIMA) return `Debes tener al menos ${EDAD_MINIMA} años para registrarte.`;
     return null;
   },
 
@@ -48,6 +60,11 @@ const REGLAS = {
     }
     return null;
   },
+
+  // Crear equipo
+  nombre_equipo: (valor) => (valor ? null : 'El nombre del equipo es obligatorio.'),
+
+  id_comuna: (valor) => (valor ? null : 'Elige la comuna del equipo.'),
 
   confirmar_password: (valor, formulario) => {
     if (!valor) return 'Confirma tu contraseña.';
@@ -120,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('form[data-validar]').forEach((formulario) => {
     const boton = formulario.querySelector('button[type="submit"]');
     const alerta = formulario.parentElement.querySelector('[data-alerta-errores]');
-    const inputs = Array.from(formulario.querySelectorAll('input[name]'));
+    const inputs = Array.from(formulario.querySelectorAll('input[name], select[name]'));
 
     formulario.addEventListener('submit', (evento) => {
       // Evita doble envío si el usuario hace clic varias veces.
@@ -166,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Al salir de un campo con contenido se valida (no molestamos con campos aún vacíos).
     formulario.addEventListener('focusout', (evento) => {
       const input = evento.target;
-      if (input.matches('input[name]') && input.value) validarCampo(input, formulario);
+      if (input.matches('input[name], select[name]') && input.value) validarCampo(input, formulario);
     });
   });
 

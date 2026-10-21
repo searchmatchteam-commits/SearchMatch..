@@ -11,15 +11,23 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <%
     // Páginas "cyber-sport": sistema compartido + hoja propia de la página
-    const cyber = locals.pagina === 'dashboard' || locals.pagina === 'auth';
+    const cyber = locals.pagina === 'dashboard' || locals.pagina === 'auth' || locals.pagina === 'equipo';
     // Una sola petición a Google Fonts (cada hoja de fuentes extra bloquea el primer pintado)
     const fuentes = 'family=Inter:wght@400;500;600;700;800;900' + (cyber ? '&family=Space+Grotesk:wght@500;600;700' : '');
   %>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?<%= fuentes %>&display=swap" />
   <!-- ?v= cambia en cada arranque del servidor: el navegador puede guardar los archivos en caché sin quedar desactualizado -->
   <link rel="stylesheet" href="/css/style.css?v=<%= versionAssets %>" />
+  <% if (locals.wizardEquipo) { %>
+    <!-- Wizard de equipo: la base es la del wizard de jugador (style.css) -->
+    <link rel="stylesheet" href="/css/crear-equipo.css?v=<%= versionAssets %>" />
+  <% } %>
   <% if (cyber) { %>
     <link rel="stylesheet" href="/css/cyber.css?v=<%= versionAssets %>" />
+    <% if (pagina === 'equipo') { %>
+      <!-- El panel del equipo reutiliza los paneles, el aviso y el dock del dashboard -->
+      <link rel="stylesheet" href="/css/dashboard.css?v=<%= versionAssets %>" />
+    <% } %>
     <link rel="stylesheet" href="/css/<%= pagina %>.css?v=<%= versionAssets %>" />
   <% } %>
   <% if (locals.pagina === 'landing' || locals.pagina === 'dashboard') { %>

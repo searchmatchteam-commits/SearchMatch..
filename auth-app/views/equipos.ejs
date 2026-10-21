@@ -1,0 +1,75 @@
+<%- include('partials/header') %>
+
+<%- include('partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<%
+  // Texto del botón cuando ya no se puede pedir unirse
+  const estados = { capitan: 'Eres el capitán', miembro: 'Ya eres parte', pendiente: 'Solicitud enviada ✓' };
+%>
+
+<!-- Directorio de equipos (solo jugadores: el capitán va a /mi-equipo). Datos de la tabla "equipo";
+     "Solicitar unirme" guarda una fila pendiente en solicitud_union_equipo (equipo.js lo envía sin recargar). -->
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <h1 class="eq-cabecera__titulo">Directorio de Equipos</h1>
+        <p class="eq-cabecera__stats">Encuentra un equipo cerca de ti y envía tu solicitud</p>
+      </div>
+      <div class="eq-cabecera__acciones">
+        <% if (tieneEquipo) { %>
+          <a class="btn btn--contorno btn--grande" href="/mi-equipo">Mi equipo</a>
+        <% } else if (esCapitan) { %>
+          <!-- Solo capitanes: el jugador únicamente envía solicitudes -->
+          <a class="btn btn--contorno btn--grande" href="/crear-equipo">
+            Crear equipo <span aria-hidden="true">+</span>
+          </a>
+        <% } %>
+      </div>
+    </header>
+
+    <% if (equipos.length === 0) { %>
+      <div class="dash-panel eq-panel revelar">
+        <p class="dash-panel__nota">
+          <%= esCapitan
+            ? 'Todavía no hay equipos registrados. ¡Crea el primero y empieza a recibir jugadores!'
+            : 'Todavía no hay equipos registrados. Vuelve pronto para enviar tu solicitud.' %>
+        </p>
+      </div>
+    <% } else { %>
+      <!-- Buscador: equipo.js filtra las tarjetas por nombre o comuna mientras se escribe -->
+      <label class="eq-buscador revelar">
+        <svg class="eq-buscador__icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2" /></svg>
+        <span class="solo-lectores">Buscar equipo</span>
+        <input class="eq-buscador__input" type="search" placeholder="Buscar por nombre o comuna" autocomplete="off" data-buscar-equipo>
+      </label>
+
+      <ul class="eq-clubes">
+        <% equipos.forEach(function (equipo) { %>
+          <li class="eq-club" data-busqueda="<%= [equipo.nombre, equipo.zona].filter(Boolean).join(' ') %>">
+            <span class="eq-club__escudo" aria-hidden="true"><%= equipo.nombre.charAt(0).toUpperCase() %></span>
+            <span class="eq-club__texto">
+              <span class="eq-nombre"><%= equipo.nombre %></span>
+              <span class="eq-posicion">Comuna: <%= equipo.zona || 'Sin definir' %></span>
+              <span class="eq-posicion">Nivel: <%= equipo.nivel || 'Sin definir' %><% if (equipo.modalidad) { %> · <%= equipo.modalidad %><% } %></span>
+            </span>
+            <% if (equipo.relacion) { %>
+              <button type="button" class="btn eq-club__boton" disabled><%= estados[equipo.relacion] %></button>
+            <% } else { %>
+              <form action="/equipos/<%= equipo.id %>/unirme" method="POST" data-unirme>
+                <button type="submit" class="btn btn--verde eq-club__boton">Solicitar unirme</button>
+              </form>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+      <p class="dash-panel__nota eq-sin-resultados" data-sin-resultados hidden>No hay equipos que coincidan con tu búsqueda.</p>
+    <% } %>
+  </div>
+</section>
+
+<!-- Aviso tras enviar la solicitud (equipo.js lo esconde a los pocos segundos) -->
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('partials/dock', { activo: 'equipos' }) %>
+
+<%- include('partials/footer') %>

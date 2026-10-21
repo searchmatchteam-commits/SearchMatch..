@@ -618,3 +618,26 @@ ON CONFLICT (nombre) DO NOTHING;
 
 -- Posiciones: se usan las de la sección de catálogos. El arco se busca
 -- como 'Arquero' o 'Portero' (models/jugadorModel.js), así que sirve cualquiera.
+
+
+-- ============================================================
+-- W) EQUIPOS DESDE LA APP (wizard /crear-equipo y directorio /equipos)
+-- ============================================================
+-- Re-ejecutable: solo AGREGA columnas (nullable) y quita un NOT NULL;
+-- no borra ni modifica datos existentes.
+-- La zona de juego es texto libre ("Puente Alto"), así que id_comuna deja
+-- de ser obligatoria. Modalidad y nivel usan los catálogos que ya existen
+-- (la modalidad se busca por cantidad_de_jugadores: 5, 7 u 11).
+
+ALTER TABLE equipo
+    ADD COLUMN IF NOT EXISTS zona            VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS correo_contacto VARCHAR(150),
+    ADD COLUMN IF NOT EXISTS id_modalidad    INT REFERENCES modalidad(id),
+    ADD COLUMN IF NOT EXISTS id_nivel        INT REFERENCES nivel(id);
+
+ALTER TABLE equipo ALTER COLUMN id_comuna DROP NOT NULL;
+
+-- Igual que usuario y jugador: solo el servidor (DATABASE_URL) lee y escribe.
+ALTER TABLE equipo ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipo_jugador ENABLE ROW LEVEL SECURITY;
+ALTER TABLE solicitud_union_equipo ENABLE ROW LEVEL SECURITY;

@@ -151,6 +151,19 @@
           </div>
           <small class="campo__error" id="pie_habil-error"></small>
         </div>
+
+        <div class="grupo-opciones" role="radiogroup" aria-labelledby="nivel-label" aria-describedby="nivel-error" data-grupo="nivel">
+          <span class="grupo-opciones__label" id="nivel-label">Nivel de juego</span>
+          <div class="opciones opciones--3">
+            <% Object.entries(catalogos.NIVELES).forEach(function ([clave, nombre]) { %>
+              <label class="opcion opcion--fila">
+                <input class="opcion__radio" type="radio" name="nivel" value="<%= clave %>" <%= datos.nivel === clave ? 'checked' : '' %> />
+                <span class="opcion__nombre"><%= nombre %></span>
+              </label>
+            <% }) %>
+          </div>
+          <small class="campo__error" id="nivel-error"></small>
+        </div>
       </fieldset>
 
       <!-- ============ PASO 4: CONFIRMACIÓN ============ -->
@@ -166,6 +179,7 @@
           <div><dt>Peso</dt><dd data-resumen="peso">—</dd></div>
           <div><dt>Posición</dt><dd data-resumen="posicion">—</dd></div>
           <div><dt>Pie hábil</dt><dd data-resumen="pie_habil">—</dd></div>
+          <div><dt>Nivel</dt><dd data-resumen="nivel">—</dd></div>
         </dl>
       </fieldset>
 
@@ -182,9 +196,9 @@
           <span aria-hidden="true">←</span> Volver
         </a>
         <button type="submit" class="btn btn--verde btn--grande" data-continuar
-                data-texto-final="<%= editando ? 'GUARDAR CAMBIOS' : 'CREAR MI CARTA' %>" data-texto-cargando="GUARDANDO...">
+                data-texto-final="<%= editando ? 'GUARDAR CAMBIOS' : 'GUARDAR Y ENTRAR AL PANEL' %>" data-texto-cargando="GUARDANDO...">
           <span class="btn__spinner" aria-hidden="true"></span>
-          <span class="btn__texto"><%= editando ? 'GUARDAR CAMBIOS' : 'CREAR MI CARTA' %></span>
+          <span class="btn__texto"><%= editando ? 'GUARDAR CAMBIOS' : 'GUARDAR Y ENTRAR AL PANEL' %></span>
           <span class="btn__flecha" aria-hidden="true">→</span>
         </button>
       </div>

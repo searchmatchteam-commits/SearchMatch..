@@ -1,6 +1,6 @@
 /* public/css/cyber.css
    Sistema de diseño "cyber-sport" compartido por las páginas rediseñadas
-   (dashboard, login y registro). Se carga después de style.css y antes de la hoja de cada página.
+   (dashboard, panel del equipo, login y registro). Se carga después de style.css y antes de la hoja de cada página.
    Secciones: tokens · base · fondo (aurora, cancha táctica, haz de luz, ruido) ·
    cursor de luz · ripple.
    Rendimiento: lo que se anima en bucle usa solo transform y opacity (GPU), ningún elemento
@@ -8,6 +8,7 @@
 
 /* ---------- Tokens ---------- */
 .pagina-dashboard,
+.pagina-equipo,
 .pagina-auth {
   --fondo: #050505;
   --fondo-verde: #0a0f0a;
@@ -36,6 +37,7 @@
 /* ---------- Base ---------- */
 /* El fondo cyber reemplaza a los resplandores y líneas genéricos de style.css */
 .pagina-dashboard::before,
+.pagina-equipo::before,
 .pagina-auth::before,
 .pagina-auth::after {
   display: none;
@@ -43,6 +45,7 @@
 
 /* Navbar sin desenfoque: la aurora animada pasa justo detrás y lo obligaría a re-desenfocar cada cuadro */
 .pagina-dashboard .navbar,
+.pagina-equipo .navbar,
 .pagina-auth .navbar {
   background: rgba(5, 6, 5, 0.9);
   border-bottom-color: rgba(255, 255, 255, 0.06);
@@ -51,6 +54,7 @@
 }
 
 .pagina-dashboard .pie,
+.pagina-equipo .pie,
 .pagina-auth .pie {
   background: transparent;
   border-top-color: rgba(255, 255, 255, 0.05);

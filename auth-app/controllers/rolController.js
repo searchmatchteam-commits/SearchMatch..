@@ -49,18 +49,9 @@ async function guardarSeleccion(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// GET /registro-equipo → aviso "en construcción" (el registro de equipos aún no existe).
-// El siguiente paso del jugador es el wizard de jugadorController.
-// ---------------------------------------------------------------
-function registroEquipo(req, res) {
-  res.render('equipo-en-construccion', {
-    titulo: 'Equipos: en construcción',
-  });
-}
+// El siguiente paso de cada rol está en jugadorController (wizard) y equipoController (crear equipo).
 
 module.exports = {
   mostrarSeleccion,
   guardarSeleccion,
-  registroEquipo,
 };

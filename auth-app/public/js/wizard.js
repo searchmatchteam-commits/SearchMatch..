@@ -9,6 +9,17 @@
 const PRIMER_PASO = 2;
 const ULTIMO_PASO = 4;
 const REGEX_FECHA = /^\d{4}-\d{2}-\d{2}$/;
+const EDAD_MINIMA = 18;
+
+/** Años cumplidos a partir de "AAAA-MM-DD", comparando con el día de hoy. */
+function calcularEdad(valor) {
+  const [anio, mes, dia] = valor.split('-').map(Number);
+  const hoy = new Date();
+  let edad = hoy.getFullYear() - anio;
+  // Aún no cumple años este año
+  if (hoy.getMonth() + 1 < mes || (hoy.getMonth() + 1 === mes && hoy.getDate() < dia)) edad -= 1;
+  return edad;
+}
 
 // Reglas por paso. Cada una devuelve el mensaje de error o null.
 const REGLAS = {
@@ -19,6 +30,7 @@ const REGLAS = {
       if (!v) return 'La fecha de nacimiento es obligatoria.';
       if (!REGEX_FECHA.test(v)) return 'La fecha de nacimiento no es válida.';
       if (v > new Date().toISOString().slice(0, 10)) return 'La fecha de nacimiento no puede estar en el futuro.';
+      if (calcularEdad(v) < EDAD_MINIMA) return `Debes tener al menos ${EDAD_MINIMA} años para registrarte.`;
       return null;
     },
     altura: (v, input) => enRango(v, input, 'La altura', 'cm'),
@@ -27,6 +39,7 @@ const REGLAS = {
   3: {
     posicion: (v) => (v ? null : 'Elige tu posición en la cancha.'),
     pie_habil: (v) => (v ? null : 'Elige tu pie hábil.'),
+    nivel: (v) => (v ? null : 'Elige tu nivel de juego.'),
   },
 };
 
@@ -120,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
       peso: valorDe('peso') ? `${valorDe('peso')} kg` : '—',
       posicion: textoDeOpcion('posicion'),
       pie_habil: textoDeOpcion('pie_habil'),
+      nivel: textoDeOpcion('nivel'),
     };
     Object.entries(valores).forEach(([clave, valor]) => {
       formulario.querySelector(`[data-resumen="${clave}"]`).textContent = valor;
