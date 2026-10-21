@@ -2757,51 +2757,96 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   padding: 12px 0;
 }
 
-/* Carta del perfil: más grande, esquinas inferiores con corte doble */
+/* Carta del perfil: silueta de escudo dibujada en SVG (svg.carta-jugador__silueta en
+   views/partials/carta-jugador.ejs, viewBox 320x460): fondo, textura y borde doble siguen la forma.
+   La carta mantiene esa proporción, así el SVG escala sin deformarse; el cuerpo (los datos) se recorta
+   con la misma silueta (#carta-escudo-recorte, en unidades relativas: sirve a cualquier ancho).
+   El resplandor es drop-shadow en la carta: sigue el contorno del escudo (un box-shadow quedaría rectangular). */
 .carta-jugador--perfil {
-  --corte: 22px;
   width: min(100%, 340px);
   filter:
-    drop-shadow(0 0 22px rgba(57, 255, 20, 0.45))
+    drop-shadow(0 0 16px rgba(57, 255, 20, 0.5))
     drop-shadow(0 26px 34px rgba(0, 0, 0, 0.65));
 }
 
-.carta-jugador--perfil .carta-jugador__marco,
-.carta-jugador--perfil .carta-jugador__cuerpo {
-  clip-path: polygon(
-    var(--corte) 0, calc(100% - var(--corte)) 0,
-    100% var(--corte), 100% calc(100% - var(--corte) * 2),
-    calc(100% - var(--corte) * 2) 100%, calc(var(--corte) * 2) 100%,
-    0 calc(100% - var(--corte) * 2), 0 var(--corte)
-  );
-}
-
 .carta-jugador--perfil .carta-jugador__marco {
-  padding: 3px;
+  position: relative;
+  aspect-ratio: 320 / 460;
+  padding: 0;
+  background: none;
+  clip-path: none;
+  container-type: inline-size;   /* el cuerpo mide en cqw: el lienzo 320x460 escala con la carta */
 }
 
+.carta-jugador__silueta {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Datos encima de la silueta, posicionados sobre el lienzo de la silueta (320x460).
+   --u = 1px del lienzo a cualquier ancho de carta: todas las medidas van en múltiplos de --u. */
 .carta-jugador--perfil .carta-jugador__cuerpo {
-  --corte: 21px;
-  padding: 22px 22px 40px;
+  --u: calc(100cqw / 320);
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  background: none;
+  clip-path: url(#carta-escudo-recorte);
+  font-family: "Barlow Condensed", var(--fuente);
+}
+
+/* Línea divisoria entre el nombre y las stats */
+.carta-jugador--perfil .carta-jugador__cuerpo::before {
+  content: "";
+  position: absolute;
+  left: calc(52 * var(--u));
+  top: calc(254 * var(--u));
+  width: calc(216 * var(--u));
+  height: calc(2 * var(--u));
+  background: linear-gradient(90deg, transparent, #39ff14, transparent);
 }
 
 .carta-jugador--perfil .carta-jugador__cabecera {
-  gap: 12px;
+  display: block;
 }
 
+.carta-jugador--perfil .carta-jugador__foto {
+  position: absolute;
+  left: calc(140 * var(--u));
+  top: calc(38 * var(--u));
+  width: calc(140 * var(--u));
+  height: calc(140 * var(--u));
+  border: calc(3 * var(--u)) solid #39ff14;
+  box-shadow: 0 0 calc(22 * var(--u)) rgba(57, 255, 20, 0.35);
+}
+
+/* Rating, posición, bandera y balón en columna centrada */
 .carta-jugador--perfil .carta-jugador__media {
+  position: absolute;
+  left: calc(34 * var(--u));
+  top: calc(40 * var(--u));
+  width: calc(90 * var(--u));
   align-items: center;
-  gap: 8px;
-  padding-top: 4px;
+  text-align: center;
 }
 
 .carta-jugador--perfil .carta-jugador__numero {
-  font-size: 3.6rem;
+  font-size: calc(68 * var(--u));
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: 0;
+  color: #39ff14;
 }
 
 .carta-jugador--perfil .carta-jugador__posicion {
-  margin-top: -2px;
-  font-size: 1rem;
+  margin-top: calc(4 * var(--u));
+  font-size: calc(20 * var(--u));
+  font-weight: 700;
+  letter-spacing: calc(3 * var(--u));
+  line-height: 1;
 }
 
 .carta-jugador__bandera {
@@ -2811,9 +2856,16 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
 }
 
+.carta-jugador--perfil .carta-jugador__bandera {
+  width: calc(34 * var(--u));
+  height: calc(23 * var(--u));
+  margin-top: calc(6 * var(--u));
+}
+
 .carta-jugador--perfil .carta-jugador__marca {
-  width: 24px;
-  height: 24px;
+  width: calc(26 * var(--u));
+  height: calc(26 * var(--u));
+  margin-top: calc(6 * var(--u));
 }
 
 /* Foto de perfil con botón "Subir foto" encima */
@@ -2895,25 +2947,62 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 }
 
 .carta-jugador--perfil .carta-jugador__nombre {
-  margin: 16px 0 12px;
-  padding-bottom: 12px;
-  font-size: clamp(1.5rem, 7vw, 2rem);
-  letter-spacing: 0.06em;
-  line-height: 1.1;
+  position: absolute;
+  left: calc(20 * var(--u));
+  top: calc(196 * var(--u));
+  width: calc(280 * var(--u));
+  margin: 0;
+  padding: 0;
+  border: 0;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+  font-size: calc(46 * var(--u));
+  font-weight: 800;
+  letter-spacing: calc(5 * var(--u));
+  line-height: 1;
   overflow-wrap: anywhere;
 }
 
 .carta-jugador--perfil .carta-jugador__stats {
-  row-gap: 6px;
-  padding: 0 6px;
+  position: absolute;
+  left: calc(56 * var(--u));
+  top: calc(268 * var(--u));
+  width: calc(208 * var(--u));
+  grid-template-rows: repeat(3, calc(34 * var(--u)));
+  column-gap: calc(20 * var(--u));
+  row-gap: calc(4 * var(--u));
+  margin: 0;
+}
+
+.carta-jugador--perfil .carta-jugador__stats div {
+  justify-content: center;
+  align-items: baseline;
+  gap: calc(8 * var(--u));
+  height: calc(34 * var(--u));
+  line-height: calc(34 * var(--u));
+}
+
+.carta-jugador--perfil .carta-jugador__stats div:nth-child(n + 4) {
+  padding-left: 0;
+  border-left: 0;
 }
 
 .carta-jugador--perfil .carta-jugador__stats dd {
-  font-size: 1.35rem;
+  font-size: calc(30 * var(--u));
+  font-weight: 800;
 }
 
 .carta-jugador--perfil .carta-jugador__stats dt {
-  font-size: 0.82rem;
+  font-size: calc(16 * var(--u));
+  font-weight: 600;
+  letter-spacing: calc(1.5 * var(--u));
+  color: #b7c4b7;
+}
+
+/* El botón "Subir foto" sigue con la fuente del sitio */
+.carta-jugador--perfil .carta-jugador__subir {
+  font-family: var(--fuente);
 }
 
 /* Columna derecha */

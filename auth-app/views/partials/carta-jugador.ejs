@@ -17,6 +17,33 @@
   <div class="carta-jugador carta-jugador--neon carta-jugador--perfil <%= jugador.foto ? 'carta-jugador--con-foto' : '' %>"
        data-tilt data-carta="<%= JSON.stringify(datosCarta) %>">
     <div class="carta-jugador__marco">
+      <!-- Silueta de escudo (viewBox 320x460): fondo con degradado, rayas sutiles y borde doble.
+           #carta-escudo-recorte recorta los datos con la misma forma (en unidades 0-1 del cuerpo). -->
+      <svg class="carta-jugador__silueta" viewBox="0 0 320 460" aria-hidden="true">
+        <defs>
+          <linearGradient id="carta-escudo-borde" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#39ff14" />
+            <stop offset="1" stop-color="#0d5c05" />
+          </linearGradient>
+          <linearGradient id="carta-escudo-fondo" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#0f1a0f" />
+            <stop offset="0.55" stop-color="#080b08" />
+            <stop offset="1" stop-color="#030403" />
+          </linearGradient>
+          <pattern id="carta-escudo-rayas" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <rect width="2" height="7" fill="rgba(255, 255, 255, 0.035)" />
+          </pattern>
+          <path id="carta-escudo-forma" d="M14 6 L2 24 L2 300 C2 372 72 424 160 452 C248 424 318 372 318 300 L318 24 L306 6 C262 6 214 22 160 22 C106 22 58 6 14 6 Z" />
+          <clipPath id="carta-escudo-recorte" clipPathUnits="objectBoundingBox">
+            <use href="#carta-escudo-forma" transform="scale(0.003125 0.002174)" />
+          </clipPath>
+        </defs>
+        <use href="#carta-escudo-forma" fill="url(#carta-escudo-fondo)" />
+        <use href="#carta-escudo-forma" fill="url(#carta-escudo-rayas)" />
+        <use href="#carta-escudo-forma" fill="none" stroke="url(#carta-escudo-borde)" stroke-width="3.5" stroke-linejoin="round" />
+        <use href="#carta-escudo-forma" fill="none" stroke="#39ff14" stroke-opacity="0.45" stroke-width="1"
+             transform="translate(10.5 15.5) scale(0.934)" />
+      </svg>
       <div class="carta-jugador__cuerpo">
         <div class="carta-jugador__cabecera">
           <div class="carta-jugador__media">

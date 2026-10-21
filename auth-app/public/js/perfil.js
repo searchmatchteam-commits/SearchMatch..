@@ -4,24 +4,21 @@
 //  2) "Compartir carta": comparte el PNG con el menú nativo del dispositivo
 //     (Web Share); si el navegador no lo permite, la descarga.
 
+// La carta descargada tiene la proporción de la silueta (320x460): 600 x 862 px.
 const ANCHO = 600;
-const ALTO = 900;
-const CORTE = 40;              // corte de las esquinas (las de abajo miden el doble)
+const ALTO = 862;
+const ESCALA = ANCHO / 320;
 const VERDE = '#39ff14';
 
-/** Contorno de la carta: esquinas superiores cortadas y las inferiores, más grandes. */
-function trazarContorno(ctx, x, y, ancho, alto, corte) {
-  const abajo = corte * 2;
-  ctx.beginPath();
-  ctx.moveTo(x + corte, y);
-  ctx.lineTo(x + ancho - corte, y);
-  ctx.lineTo(x + ancho, y + corte);
-  ctx.lineTo(x + ancho, y + alto - abajo);
-  ctx.lineTo(x + ancho - abajo, y + alto);
-  ctx.lineTo(x + abajo, y + alto);
-  ctx.lineTo(x, y + alto - abajo);
-  ctx.lineTo(x, y + corte);
-  ctx.closePath();
+// Silueta de escudo: el mismo path que svg.carta-jugador__silueta (views/partials/carta-jugador.ejs).
+const ESCUDO = new Path2D('M14 6 L2 24 L2 300 C2 372 72 424 160 452 C248 424 318 372 318 300 L318 24 L306 6 C262 6 214 22 160 22 C106 22 58 6 14 6 Z');
+
+/** Rellena o traza la silueta en coordenadas del viewBox 320x460. */
+function conSilueta(ctx, dibujar) {
+  ctx.save();
+  ctx.scale(ESCALA, ESCALA);
+  dibujar();
+  ctx.restore();
 }
 
 function dibujarBandera(ctx, x, y, ancho) {
@@ -91,29 +88,41 @@ async function dibujarCarta(datos, foto) {
   canvas.height = ALTO;
   const ctx = canvas.getContext('2d');
 
-  // Marco: degradado verde con brillo en las esquinas
-  const marco = ctx.createLinearGradient(0, 0, ANCHO, ALTO);
-  marco.addColorStop(0, VERDE);
-  marco.addColorStop(0.42, '#0c3804');
-  marco.addColorStop(0.6, '#0c3804');
-  marco.addColorStop(1, VERDE);
-  trazarContorno(ctx, 0, 0, ANCHO, ALTO, CORTE);
-  ctx.fillStyle = marco;
-  ctx.fill();
+  // Silueta igual a la de la página: fondo con degradado, rayas a 45° y borde doble
+  conSilueta(ctx, () => {
+    const fondo = ctx.createLinearGradient(0, 0, 0, 460);
+    fondo.addColorStop(0, '#0f1a0f');
+    fondo.addColorStop(0.55, '#080b08');
+    fondo.addColorStop(1, '#030403');
+    ctx.fillStyle = fondo;
+    ctx.fill(ESCUDO);
 
-  // Cuerpo oscuro con resplandor superior
-  const borde = 6;
-  trazarContorno(ctx, borde, borde, ANCHO - borde * 2, ALTO - borde * 2, CORTE - 2);
-  ctx.save();
-  ctx.clip();
-  ctx.fillStyle = '#070807';
-  ctx.fillRect(0, 0, ANCHO, ALTO);
-  const resplandor = ctx.createRadialGradient(ANCHO / 2, 0, 0, ANCHO / 2, 0, ALTO * 0.6);
-  resplandor.addColorStop(0, 'rgba(57, 255, 20, 0.2)');
-  resplandor.addColorStop(1, 'rgba(57, 255, 20, 0)');
-  ctx.fillStyle = resplandor;
-  ctx.fillRect(0, 0, ANCHO, ALTO);
-  ctx.restore();
+    ctx.save();
+    ctx.clip(ESCUDO);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+    ctx.lineWidth = 2;
+    for (let d = -460; d < 320; d += 7) {
+      ctx.beginPath();
+      ctx.moveTo(d, 460);
+      ctx.lineTo(d + 460, 0);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    const borde = ctx.createLinearGradient(0, 0, 0, 460);
+    borde.addColorStop(0, VERDE);
+    borde.addColorStop(1, '#0d5c05');
+    ctx.strokeStyle = borde;
+    ctx.lineWidth = 3.5;
+    ctx.lineJoin = 'round';
+    ctx.stroke(ESCUDO);
+
+    ctx.translate(10.5, 15.5);
+    ctx.scale(0.934, 0.934);
+    ctx.strokeStyle = 'rgba(57, 255, 20, 0.45)';
+    ctx.lineWidth = 1;
+    ctx.stroke(ESCUDO);
+  });
 
   // Columna izquierda: media, posición, bandera
   ctx.textBaseline = 'alphabetic';
@@ -122,16 +131,16 @@ async function dibujarCarta(datos, foto) {
   ctx.shadowBlur = 24;
   ctx.fillStyle = VERDE;
   ctx.font = '900 128px Inter, system-ui, sans-serif';
-  ctx.fillText(String(datos.media), 52, 168);
+  ctx.fillText(String(datos.media), 52, 150);
   ctx.shadowBlur = 0;
 
   ctx.fillStyle = '#f2f5f2';
   ctx.font = '800 38px Inter, system-ui, sans-serif';
-  ctx.fillText(datos.posicion, 58, 222);
-  dibujarBandera(ctx, 58, 250, 60);
+  ctx.fillText(datos.posicion, 58, 202);
+  dibujarBandera(ctx, 58, 226, 60);
 
   // Foto
-  dibujarFoto(ctx, foto, 375, 220, 150);
+  dibujarFoto(ctx, foto, 380, 205, 140);
 
   // Nombre
   ctx.textAlign = 'center';
@@ -139,13 +148,13 @@ async function dibujarCarta(datos, foto) {
   ctx.font = '900 64px Inter, system-ui, sans-serif';
   let nombre = datos.nombre.toUpperCase();
   while (ctx.measureText(nombre).width > ANCHO - 100 && nombre.length > 3) nombre = nombre.slice(0, -1);
-  ctx.fillText(nombre, ANCHO / 2, 480);
+  ctx.fillText(nombre, ANCHO / 2, 398);
 
   ctx.strokeStyle = 'rgba(57, 255, 20, 0.35)';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(70, 515);
-  ctx.lineTo(ANCHO - 70, 515);
+  ctx.moveTo(70, 422);
+  ctx.lineTo(ANCHO - 70, 422);
   ctx.stroke();
 
   // Estadísticas: dos columnas de tres (RIT TIR PAS | REG DEF FIS)
@@ -154,7 +163,7 @@ async function dibujarCarta(datos, foto) {
     const columna = Math.floor(i / 3);
     const fila = i % 3;
     const x = columna === 0 ? 120 : 340;
-    const y = 590 + fila * 72;
+    const y = 468 + fila * 44;
     ctx.fillStyle = '#f2f5f2';
     ctx.font = '900 50px Inter, system-ui, sans-serif';
     ctx.fillText(String(valor), x, y);
@@ -164,15 +173,15 @@ async function dibujarCarta(datos, foto) {
   });
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
   ctx.beginPath();
-  ctx.moveTo(ANCHO / 2, 548);
-  ctx.lineTo(ANCHO / 2, 750);
+  ctx.moveTo(ANCHO / 2, 432);
+  ctx.lineTo(ANCHO / 2, 562);
   ctx.stroke();
 
   // Marca
   ctx.textAlign = 'center';
   ctx.fillStyle = VERDE;
   ctx.font = '900 22px Inter, system-ui, sans-serif';
-  ctx.fillText('SEARCHMATCH', ANCHO / 2, 820);
+  ctx.fillText('SEARCHMATCH', ANCHO / 2, 730); // dentro de la punta del escudo
 
   return canvas;
 }
