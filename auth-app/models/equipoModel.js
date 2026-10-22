@@ -17,6 +17,14 @@ const ESTADO_ACEPTADA = 'aceptada';
 const ESTADO_RECHAZADA = 'rechazada';
 const ROL_INTEGRANTE = 'integrante';
 const ESTADO_DESAFIO_PENDIENTE = 'pendiente'; // tabla estado_desafio
+const ESTADO_CANCELADA = 'cancelada'; // CORRECCIÓN: regla 6 (estado agregado por sql/nuevas_tablas.sql)
+
+/** CORRECCIÓN: regla 6 — id del estado "cancelada" de estado_solicitud (dentro de la transacción en curso). */
+async function idEstadoCancelada(cliente) {
+  const { rows } = await cliente.query('SELECT id FROM estado_solicitud WHERE lower(nombre) = $1', [ESTADO_CANCELADA]);
+  if (!rows[0]) throw new Error("No existe el estado 'cancelada' en estado_solicitud: ejecuta sql/nuevas_tablas.sql.");
+  return rows[0].id;
+}
 
 /** "Fútbol 11 · Intermedio · Puente Alto" (omite lo que falte). */
 function detalleEquipo(fila) {
@@ -35,10 +43,11 @@ function urlEscudo(fila) {
  */
 async function obtenerEquipoDeCapitan(authId) {
   const { rows } = await pool.query(
-    `SELECT e.id, e.nombre, e.zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel
+    `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel
        FROM usuario u
        JOIN equipo e ON e.id_usuario_creador = u.id AND e.activo
        LEFT JOIN modalidad m ON m.id = e.id_modalidad
+       LEFT JOIN comunas cz ON cz.id = e.id_comuna -- CORRECCIÓN: regla 11 (se muestra la comuna; equipos antiguos, su zona)
        LEFT JOIN nivel n ON n.id = e.id_nivel
       WHERE u.auth_id = $1
       ORDER BY e.id
@@ -56,6 +65,23 @@ async function obtenerEquipoDeCapitan(authId) {
     detalle: detalleEquipo(fila),
     escudo: urlEscudo(fila),
   };
+}
+
+/**
+ * CORRECCIÓN: regla 5 — cuántos equipos activos creó (capitanea) la cuenta, para compararlo con
+ * MAX_EQUIPOS_COMO_CAPITAN (config/equipo.js).
+ * @param {string} authId - UUID de auth.users.
+ * @returns {Promise<number>}
+ */
+async function contarEquiposDeCapitan(authId) {
+  const { rows } = await pool.query(
+    `SELECT count(*)::int AS total
+       FROM usuario u
+       JOIN equipo e ON e.id_usuario_creador = u.id AND e.activo
+      WHERE u.auth_id = $1`,
+    [authId]
+  );
+  return rows[0].total;
 }
 
 /** Clave del catálogo (ej. 'arquero') a partir del nombre en la tabla posicion. */
@@ -77,7 +103,7 @@ function etiquetaPosicion(nombreDb) {
 // El creador los encuentra aunque falte su fila en equipo_jugador o en jugador.
 // $2: un equipo en particular (o null para todos). Primero los que capitanea.
 const SQL_MIS_EQUIPOS = `
-  SELECT e.id, e.nombre, e.zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
+  SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
          e.id_usuario_creador = u.id AS soy_capitan
     FROM usuario u
     LEFT JOIN jugador j ON j.id_usuario = u.id
@@ -85,6 +111,7 @@ const SQL_MIS_EQUIPOS = `
      AND (e.id_usuario_creador = u.id
           OR EXISTS (SELECT 1 FROM equipo_jugador x WHERE x.id_equipo = e.id AND x.id_jugador = j.id))
     LEFT JOIN modalidad m ON m.id = e.id_modalidad
+    LEFT JOIN comunas cz ON cz.id = e.id_comuna -- CORRECCIÓN: regla 11 (se muestra la comuna; equipos antiguos, su zona)
     LEFT JOIN nivel n ON n.id = e.id_nivel
    WHERE u.auth_id = $1 AND ($2::int IS NULL OR e.id = $2)
    ORDER BY soy_capitan DESC, e.id`;
@@ -155,6 +182,7 @@ async function listarPlantel(idEquipo) {
             lower(r.nombre) = ANY($2) AS capitan
        FROM equipo_jugador ej
        JOIN jugador j ON j.id = ej.id_jugador
+       JOIN usuario uj ON uj.id = j.id_usuario AND uj.activo -- CORRECCIÓN: regla 7 (cuentas inactivas no aparecen)
        LEFT JOIN rol_equipo r ON r.id = ej.id_rol_equipo
       WHERE ej.id_equipo = $1
       ORDER BY capitan DESC NULLS LAST, ej.id`,
@@ -240,6 +268,7 @@ async function listarSolicitudesPendientes(idEquipo) {
        FROM solicitud_union_equipo s
        JOIN estado_solicitud es ON es.id = s.id_estado_solicitud
        JOIN jugador j ON j.id = s.id_jugador
+       JOIN usuario uj ON uj.id = j.id_usuario AND uj.activo -- CORRECCIÓN: regla 7
       WHERE s.id_equipo = $1 AND lower(es.nombre) = $2
       ORDER BY s.fecha_solicitud, s.id`,
     [idEquipo, ESTADO_PENDIENTE]
@@ -335,6 +364,15 @@ async function responderSolicitud(authId, idSolicitud, aceptar) {
          ON CONFLICT (id_jugador, id_equipo) DO NOTHING`,
         [idJugador, idEquipo, rol.rows[0].id]
       );
+      // CORRECCIÓN: regla 6 — si el equipo también lo había invitado, esa invitación pendiente se cancela.
+      await cliente.query(
+        `UPDATE invitacion_equipo i
+            SET id_estado_solicitud = $3, fecha_respuesta = now()
+           FROM estado_solicitud es
+          WHERE es.id = i.id_estado_solicitud AND lower(es.nombre) = $4
+            AND i.id_jugador = $1 AND i.id_equipo = $2`,
+        [idJugador, idEquipo, await idEstadoCancelada(cliente), ESTADO_PENDIENTE]
+      );
     }
 
     await cliente.query('COMMIT');
@@ -355,7 +393,7 @@ async function responderSolicitud(authId, idSolicitud, aceptar) {
  */
 async function listarRivales(idEquipo) {
   const { rows } = await pool.query(
-    `SELECT e.id, e.nombre, e.zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
+    `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
             EXISTS (SELECT 1 FROM desafio d JOIN estado_desafio ed ON ed.id = d.id_estado_desafio
                      WHERE d.id_equipo_desafiante = $1 AND d.id_equipo_desafiado = e.id
                        AND lower(ed.nombre) = $2) AS enviado,
@@ -364,8 +402,11 @@ async function listarRivales(idEquipo) {
                        AND lower(ed.nombre) = $2) AS recibido
        FROM equipo e
        LEFT JOIN modalidad m ON m.id = e.id_modalidad
+       LEFT JOIN comunas cz ON cz.id = e.id_comuna -- CORRECCIÓN: regla 11 (se muestra la comuna; equipos antiguos, su zona)
        LEFT JOIN nivel n ON n.id = e.id_nivel
       WHERE e.activo AND e.id <> $1
+        -- CORRECCIÓN: regla 12 — solo rivales de la misma modalidad que el equipo del capitán
+        AND e.id_modalidad = (SELECT propio.id_modalidad FROM equipo propio WHERE propio.id = $1)
       ORDER BY e.nombre`,
     [idEquipo, ESTADO_DESAFIO_PENDIENTE]
   );
@@ -419,8 +460,17 @@ async function enviarDesafio(authId, idRival, mensaje) {
       const estado = await cliente.query('SELECT id FROM estado_desafio WHERE lower(nombre) = $1', [ESTADO_DESAFIO_PENDIENTE]);
       if (estado.rowCount === 0) throw new Error("No existe el estado 'pendiente' en la tabla estado_desafio.");
 
+      // CORRECCIÓN: regla 12 — ¿el rival juega la misma modalidad?
+      const mismaModalidad = await cliente.query(
+        `SELECT 1 FROM equipo rival JOIN equipo propio ON propio.id = $2
+          WHERE rival.id = $1 AND rival.id_modalidad = propio.id_modalidad`,
+        [idRival, idEquipo]
+      );
+
       if (rival.rowCount === 0) {
         resultado = 'inexistente';
+      } else if (mismaModalidad.rowCount === 0) {
+        resultado = 'modalidad'; // CORRECCIÓN: regla 12
       } else if (
         (await cliente.query(
           `SELECT 1 FROM desafio
@@ -464,7 +514,7 @@ async function enviarDesafio(authId, idRival, mensaje) {
  *        nivel es clave de NIVELES y jugadores es 5, 7 u 11.
  * @returns {Promise<{id: number}>} El id del equipo creado.
  */
-async function crearEquipo(authId, { nombre, correo, zona, nivel, jugadores }) {
+async function crearEquipo(authId, { nombre, correo, zona, nivel, jugadores, idComuna = null }) { // CORRECCIÓN: regla 11 (idComuna)
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
@@ -488,7 +538,8 @@ async function crearEquipo(authId, { nombre, correo, zona, nivel, jugadores }) {
     ]);
     if (rol.rowCount === 0) throw new Error("No existe el rol 'capitan' en la tabla rol_equipo.");
 
-    const filaNivel = await cliente.query('SELECT id FROM nivel WHERE lower(nombre) = lower($1)', [NIVELES[nivel]]);
+    // CORRECCIÓN: regla 10 — también el puntaje mínimo del nivel, que será el puntaje inicial del equipo.
+    const filaNivel = await cliente.query('SELECT id, puntaje_min FROM nivel WHERE lower(nombre) = lower($1)', [NIVELES[nivel]]);
     if (filaNivel.rowCount === 0) throw new Error(`No existe el nivel '${NIVELES[nivel]}' en la tabla nivel.`);
 
     const modalidad = await cliente.query('SELECT id FROM modalidad WHERE cantidad_de_jugadores = $1 ORDER BY id LIMIT 1', [
@@ -496,12 +547,14 @@ async function crearEquipo(authId, { nombre, correo, zona, nivel, jugadores }) {
     ]);
     if (modalidad.rowCount === 0) throw new Error(`No existe una modalidad de ${jugadores} jugadores en la tabla modalidad.`);
 
-    // 3) El equipo; activo y puntaje_nivel toman su valor por defecto.
+    // 3) El equipo; activo toma su valor por defecto.
+    // CORRECCIÓN: regla 10 — puntaje_nivel parte en el mínimo del nivel elegido (antes quedaba en 0 para todos).
+    // CORRECCIÓN: regla 11 — se guarda la comuna elegida de la lista (id_comuna).
     const equipo = await cliente.query(
-      `INSERT INTO equipo (nombre, zona, correo_contacto, id_modalidad, id_nivel, id_usuario_creador)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO equipo (nombre, zona, correo_contacto, id_modalidad, id_nivel, id_usuario_creador, puntaje_nivel, id_comuna)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id`,
-      [nombre, zona, correo, modalidad.rows[0].id, filaNivel.rows[0].id, idUsuario]
+      [nombre, zona, correo, modalidad.rows[0].id, filaNivel.rows[0].id, idUsuario, filaNivel.rows[0].puntaje_min, idComuna]
     );
     const idEquipo = equipo.rows[0].id;
 
@@ -536,7 +589,7 @@ async function listarEquipos(authId) {
          LEFT JOIN jugador j ON j.id_usuario = u.id
         WHERE u.auth_id = $1
      )
-     SELECT e.id, e.nombre, e.zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
+     SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
             e.id_usuario_creador = yo.id_usuario AS es_capitan,
             EXISTS (SELECT 1 FROM equipo_jugador ej
                      WHERE ej.id_equipo = e.id AND ej.id_jugador = yo.id_jugador) AS es_miembro,
@@ -546,6 +599,7 @@ async function listarEquipos(authId) {
                        AND lower(es.nombre) = $2) AS pendiente
        FROM equipo e
        LEFT JOIN modalidad m ON m.id = e.id_modalidad
+       LEFT JOIN comunas cz ON cz.id = e.id_comuna -- CORRECCIÓN: regla 11 (se muestra la comuna; equipos antiguos, su zona)
        LEFT JOIN nivel n ON n.id = e.id_nivel
        LEFT JOIN yo ON TRUE
       WHERE e.activo
@@ -597,6 +651,15 @@ async function solicitarUnion(authId, idEquipo, mensaje) {
       (await cliente.query('SELECT 1 FROM equipo_jugador WHERE id_equipo = $1 AND id_jugador = $2', [idEquipo, idJugador])).rowCount > 0
     ) {
       resultado = 'miembro';
+    } else if (
+      // CORRECCIÓN: regla 6 — si ese equipo ya lo invitó, no se crea una solicitud paralela: acepta la invitación.
+      (await cliente.query(
+        `SELECT 1 FROM invitacion_equipo i JOIN estado_solicitud es ON es.id = i.id_estado_solicitud
+          WHERE i.id_equipo = $1 AND i.id_jugador = $2 AND lower(es.nombre) = $3`,
+        [idEquipo, idJugador, ESTADO_PENDIENTE]
+      )).rowCount > 0
+    ) {
+      resultado = 'invitado';
     } else {
       const estado = await cliente.query('SELECT id FROM estado_solicitud WHERE lower(nombre) = $1', [ESTADO_PENDIENTE]);
       if (estado.rowCount === 0) throw new Error("No existe el estado 'pendiente' en la tabla estado_solicitud.");
@@ -682,14 +745,20 @@ async function invitarJugador(authId, idEquipo, idJugador) {
   const { rows } = await pool.query(
     `SELECT EXISTS (SELECT 1 FROM equipo e JOIN usuario u ON u.id = e.id_usuario_creador
                      WHERE e.id = $2 AND e.activo AND u.auth_id = $1) AS soy_capitan,
-            EXISTS (SELECT 1 FROM jugador WHERE id = $3) AS existe,
-            EXISTS (SELECT 1 FROM equipo_jugador WHERE id_equipo = $2 AND id_jugador = $3) AS miembro`,
-    [authId, idEquipo, idJugador]
+            -- CORRECCIÓN: regla 7 — solo jugadores con la cuenta activa pueden ser invitados
+            EXISTS (SELECT 1 FROM jugador jx JOIN usuario ux ON ux.id = jx.id_usuario AND ux.activo
+                     WHERE jx.id = $3) AS existe,
+            EXISTS (SELECT 1 FROM equipo_jugador WHERE id_equipo = $2 AND id_jugador = $3) AS miembro,
+            -- CORRECCIÓN: regla 6 — ¿el jugador ya pidió unirse a este equipo? (no se duplica con una invitación)
+            EXISTS (SELECT 1 FROM solicitud_union_equipo s JOIN estado_solicitud es ON es.id = s.id_estado_solicitud
+                     WHERE s.id_equipo = $2 AND s.id_jugador = $3 AND lower(es.nombre) = $4) AS postulo`,
+    [authId, idEquipo, idJugador, ESTADO_PENDIENTE]
   );
-  const { soy_capitan: soyCapitan, existe, miembro } = rows[0];
+  const { soy_capitan: soyCapitan, existe, miembro, postulo } = rows[0];
   if (!soyCapitan) return 'sin-permiso';
   if (!existe) return 'inexistente';
   if (miembro) return 'miembro';
+  if (postulo) return 'solicitud-pendiente'; // CORRECCIÓN: regla 6
 
   const estado = await pool.query('SELECT id FROM estado_solicitud WHERE lower(nombre) = $1', [ESTADO_PENDIENTE]);
   if (estado.rowCount === 0) throw new Error("No existe el estado 'pendiente' en la tabla estado_solicitud.");
@@ -712,7 +781,7 @@ async function invitarJugador(authId, idEquipo, idJugador) {
  */
 async function listarMisInvitaciones(authId) {
   const { rows } = await pool.query(
-    `SELECT i.id, i.fecha_invitacion, e.id AS id_equipo, e.nombre, e.zona, e.escudo_actualizado,
+    `SELECT i.id, i.fecha_invitacion, e.id AS id_equipo, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado,
             m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
             (SELECT trim(concat_ws(' ', jc.nombre_apodo, jc.apellido))
                FROM jugador jc
@@ -723,6 +792,7 @@ async function listarMisInvitaciones(authId) {
        JOIN estado_solicitud es ON es.id = i.id_estado_solicitud
        JOIN equipo e ON e.id = i.id_equipo AND e.activo
        LEFT JOIN modalidad m ON m.id = e.id_modalidad
+       LEFT JOIN comunas cz ON cz.id = e.id_comuna -- CORRECCIÓN: regla 11 (se muestra la comuna; equipos antiguos, su zona)
        LEFT JOIN nivel n ON n.id = e.id_nivel
       WHERE u.auth_id = $1 AND lower(es.nombre) = $2
       ORDER BY i.fecha_invitacion DESC, i.id DESC`,
@@ -795,7 +865,8 @@ async function responderInvitacion(authId, idInvitacion, aceptar) {
            FROM estado_solicitud es
           WHERE es.id = s.id_estado_solicitud AND lower(es.nombre) = $4
             AND s.id_jugador = $1 AND s.id_equipo = $2`,
-        [idJugador, idEquipo, estado.rows[0].id, ESTADO_PENDIENTE]
+        // CORRECCIÓN: regla 6 — su solicitud pendiente a ese equipo queda "cancelada" (antes se marcaba "aceptada")
+        [idJugador, idEquipo, await idEstadoCancelada(cliente), ESTADO_PENDIENTE]
       );
     }
 
@@ -847,6 +918,7 @@ async function salirDeEquipo(authId, idEquipo) {
 }
 
 module.exports = {
+  contarEquiposDeCapitan, // CORRECCIÓN: regla 5
   obtenerEquipoDeCapitan,
   obtenerMiEquipo,
   listarMisEquipos,

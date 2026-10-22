@@ -33,18 +33,15 @@ const ESTADISTICAS = [
   { clave: 'fisico', sigla: 'FIS', nombre: 'Físico', columna: 'stat_fisico' },
 ];
 
-// Rango de las estadísticas iniciales (sorteadas al terminar el wizard).
-const STAT_MIN = 50;
-const STAT_MAX = 85;
+// CORRECCIÓN: regla 8 — todos parten con el mismo valor; solo cambia con las valoraciones de otros jugadores.
+const STAT_INICIAL = 50;
 
 // Rango que acepta el editor /perfil/editar (el mismo CHECK de la tabla jugador).
 const STAT_RANGO = { min: 1, max: 99 };
 
-/** Estadísticas iniciales al azar entre STAT_MIN y STAT_MAX: { ritmo: 72, ... }. */
+/** Estadísticas iniciales: STAT_INICIAL en las seis ({ ritmo: 50, ... }). CORRECCIÓN: regla 8 (antes al azar). */
 function sortearEstadisticas() {
-  return Object.fromEntries(
-    ESTADISTICAS.map(({ clave }) => [clave, STAT_MIN + Math.floor(Math.random() * (STAT_MAX - STAT_MIN + 1))])
-  );
+  return Object.fromEntries(ESTADISTICAS.map(({ clave }) => [clave, STAT_INICIAL]));
 }
 
 /** Media general de la carta: promedio redondeado de las 6 estadísticas. */

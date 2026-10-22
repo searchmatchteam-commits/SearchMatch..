@@ -26,13 +26,24 @@ const jugadorModel = require('../models/jugadorModel');
 const { jugadorParaVista, detectarTipoImagen } = require('./jugadorController');
 const { LONGITUD_MAXIMA_MENSAJE_SOLICITUD } = require('../middlewares/validators');
 const { NIVELES, POSICIONES, ESTADISTICAS, calcularMedia } = require('../config/perfilJugador');
-const { MODALIDADES, DETALLE_NIVEL, BARRAS_NIVEL } = require('../config/equipo');
+const { MODALIDADES, DETALLE_NIVEL, BARRAS_NIVEL, MAX_EQUIPOS_COMO_CAPITAN } = require('../config/equipo'); // CORRECCIÓN: regla 5
+const ubicacionModel = require('../models/ubicacionModel'); // CORRECCIÓN: regla 11
+
+// CORRECCIÓN: regla 5 — aviso cuando la cuenta ya capitanea el máximo de equipos.
+const AVISO_LIMITE_EQUIPOS = `Alcanzaste el límite de ${MAX_EQUIPOS_COMO_CAPITAN} `
+  + `${MAX_EQUIPOS_COMO_CAPITAN === 1 ? 'equipo' : 'equipos'} como capitán. Para crear otro, primero desactiva uno.`;
+
+/** CORRECCIÓN: regla 5 — ¿la cuenta ya capitanea el máximo de equipos permitido? */
+async function alcanzoLimiteEquipos(authId) {
+  return (await equipoModel.contarEquiposDeCapitan(authId)) >= MAX_EQUIPOS_COMO_CAPITAN;
+}
 
 // Avisos del directorio (?aviso=... o JSON): solo textos fijos, nunca lo que llega en la URL.
 // Responden a "Solicitar unirme".
 const AVISOS_UNION = {
   enviada: 'Solicitud enviada. El capitán la verá en su panel.',
   pendiente: 'Ya tienes una solicitud pendiente con ese equipo.',
+  invitado: 'Ese equipo ya te invitó: acepta la invitación desde tu panel.', // CORRECCIÓN: regla 6
   miembro: 'Ya eres parte de ese equipo.',
   inexistente: 'Ese equipo ya no está disponible.',
   'mensaje-largo': 'El mensaje es demasiado largo: acórtalo e inténtalo de nuevo.',
@@ -51,6 +62,7 @@ const AVISOS_DESAFIO = {
   pendiente: 'Ya hay un desafío pendiente con ese equipo.',
   'sin-equipo': 'Solo el capitán que creó el equipo puede enviar desafíos.',
   inexistente: 'Ese equipo ya no está disponible.',
+  modalidad: 'Solo puedes desafiar a equipos de tu misma modalidad.', // CORRECCIÓN: regla 12
 };
 
 // Avisos tras "Enviar Invitación" (?invitacion=... o JSON): solo textos fijos.
@@ -60,6 +72,7 @@ const AVISOS_INVITACION = {
   miembro: 'Ese jugador ya es parte de tu plantel.',
   'sin-permiso': 'Solo el capitán que creó el equipo puede invitar jugadores.',
   inexistente: 'Ese jugador ya no está disponible.',
+  'solicitud-pendiente': 'Ese jugador ya te envió una solicitud: respóndela en Solicitudes Pendientes.', // CORRECCIÓN: regla 6
 };
 
 // Etiquetas de las posiciones del catálogo: cualquier otra cosa se muestra como "Sin posición" en gris.
@@ -159,7 +172,7 @@ function pasarError(err, next) {
   return next(err);
 }
 
-function renderWizard(res, { status = 200, datos, errores = [], paso = 1, creado = null }) {
+function renderWizard(res, { status = 200, datos, errores = [], paso = 1, creado = null, regiones = [] }) {
   return res.status(status).render('crear-equipo', {
     titulo: creado ? 'Equipo creado' : 'Crea tu equipo',
     pagina: 'wizard',
@@ -168,6 +181,7 @@ function renderWizard(res, { status = 200, datos, errores = [], paso = 1, creado
     errores,
     paso,
     creado,
+    regiones, // CORRECCIÓN: regla 11 (listas Región y Comuna del paso 2)
     catalogos: { NIVELES, MODALIDADES, DETALLE_NIVEL, BARRAS_NIVEL },
   });
 }
@@ -177,8 +191,10 @@ function renderWizard(res, { status = 200, datos, errores = [], paso = 1, creado
 // ---------------------------------------------------------------
 async function mostrarCrear(req, res, next) {
   try {
-    if (await equipoModel.obtenerEquipoDeCapitan(req.usuario.idAuth)) return res.redirect('/mi-equipo');
-    return renderWizard(res, { datos: { correo: req.usuario.correo } });
+    // CORRECCIÓN: regla 5 — con el límite alcanzado se explica por qué (antes redirigía sin aviso).
+    if (await alcanzoLimiteEquipos(req.usuario.idAuth)) return res.redirect('/mis-equipos?aviso=limite');
+    const regiones = await ubicacionModel.listarRegionesConComunas(); // CORRECCIÓN: regla 11
+    return renderWizard(res, { datos: { correo: req.usuario.correo }, regiones });
   } catch (err) {
     return pasarError(err, next);
   }
@@ -192,8 +208,17 @@ async function crear(req, res, next) {
   const { errores, paso } = req.erroresEquipo;
 
   try {
-    if (await equipoModel.obtenerEquipoDeCapitan(req.usuario.idAuth)) return res.redirect('/mi-equipo');
-    if (errores.length > 0) return renderWizard(res, { status: 400, datos, errores, paso });
+    // CORRECCIÓN: regla 5 — límite de equipos como capitán, con aviso.
+    if (await alcanzoLimiteEquipos(req.usuario.idAuth)) return res.redirect('/mis-equipos?aviso=limite');
+
+    // CORRECCIÓN: regla 11 — la comuna debe existir en la lista (no se confía en lo que llega del formulario).
+    if (datos.idComuna && !(await ubicacionModel.obtenerComuna(datos.idComuna))) {
+      errores.push('La comuna elegida no es válida.');
+    }
+    if (errores.length > 0) {
+      const regiones = await ubicacionModel.listarRegionesConComunas();
+      return renderWizard(res, { status: 400, datos, errores, paso, regiones });
+    }
 
     await equipoModel.crearEquipo(req.usuario.idAuth, datos);
     return res.redirect('/crear-equipo/listo');
@@ -256,16 +281,17 @@ async function panel(req, res, next) {
 // ---------------------------------------------------------------
 async function misEquipos(req, res, next) {
   try {
-    const [equipos, equipoCreado] = await Promise.all([
+    const [equipos, limiteAlcanzado] = await Promise.all([
       equipoModel.listarMisEquiposConPlantel(req.usuario.idAuth),
-      equipoModel.obtenerEquipoDeCapitan(req.usuario.idAuth),
+      alcanzoLimiteEquipos(req.usuario.idAuth), // CORRECCIÓN: regla 5
     ]);
     return res.render('mis-equipos', {
       titulo: 'Mis equipos',
       pagina: 'equipo',
       misEquipos: equipos,
-      puedeCrear: !equipoCreado, // cada cuenta crea un solo equipo
-      aviso: AVISOS_SALIDA[req.query.salida] || null,
+      puedeCrear: !limiteAlcanzado, // CORRECCIÓN: regla 5 (MAX_EQUIPOS_COMO_CAPITAN)
+      avisoLimite: limiteAlcanzado ? AVISO_LIMITE_EQUIPOS : null, // CORRECCIÓN: regla 5
+      aviso: AVISOS_SALIDA[req.query.salida] || (req.query.aviso === 'limite' ? AVISO_LIMITE_EQUIPOS : null),
     });
   } catch (err) {
     return pasarError(err, next);
@@ -277,17 +303,18 @@ async function misEquipos(req, res, next) {
 // ---------------------------------------------------------------
 async function directorio(req, res, next) {
   try {
-    const [equipos, miEquipo, equipoCreado] = await Promise.all([
+    const [equipos, miEquipo, limiteAlcanzado] = await Promise.all([
       equipoModel.listarEquipos(req.usuario.idAuth),
       equipoModel.obtenerMiEquipo(req.usuario.idAuth),
-      equipoModel.obtenerEquipoDeCapitan(req.usuario.idAuth),
+      alcanzoLimiteEquipos(req.usuario.idAuth), // CORRECCIÓN: regla 5
     ]);
     return res.render('equipos', {
       titulo: 'Directorio de Equipos',
       pagina: 'equipo',
       equipos,
       tieneEquipo: Boolean(miEquipo),
-      puedeCrear: !equipoCreado, // cada cuenta crea un solo equipo
+      puedeCrear: !limiteAlcanzado, // CORRECCIÓN: regla 5 (MAX_EQUIPOS_COMO_CAPITAN)
+      avisoLimite: limiteAlcanzado ? AVISO_LIMITE_EQUIPOS : null, // CORRECCIÓN: regla 5
       LONGITUD_MENSAJE: LONGITUD_MAXIMA_MENSAJE_SOLICITUD,
       aviso: AVISOS_UNION[req.query.aviso] || null,
     });

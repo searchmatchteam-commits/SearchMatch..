@@ -88,6 +88,20 @@ function normalizarTelefono(valor) {
 }
 
 /**
+ * CORRECCIÓN: contraseña segura (la pantalla ya pedía "letras y números", pero solo se revisaba el largo).
+ * Regla única de la plataforma: la usan el registro, recuperar contraseña (AR-008) y cambiarla (AR-009).
+ * @returns {string|null} El mensaje de error o null si cumple.
+ */
+function errorPasswordSegura(password) {
+  if (!password) return 'La contraseña es obligatoria.';
+  if (password.length < LONGITUD_MINIMA_PASSWORD) return `La contraseña debe tener al menos ${LONGITUD_MINIMA_PASSWORD} caracteres.`;
+  if (!/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(password) || !/\d/.test(password)) {
+    return 'La contraseña debe combinar letras y números.';
+  }
+  return null;
+}
+
+/**
  * Valida el formulario de REGISTRO.
  */
 function validarRegistro(req, res, next) {
@@ -129,11 +143,8 @@ function validarRegistro(req, res, next) {
   const errorFecha = validarFechaNacimiento(fechaNacimiento);
   if (errorFecha) errores.push(errorFecha);
 
-  if (!password) {
-    errores.push('La contraseña es obligatoria.');
-  } else if (password.length < LONGITUD_MINIMA_PASSWORD) {
-    errores.push(`La contraseña debe tener al menos ${LONGITUD_MINIMA_PASSWORD} caracteres.`);
-  }
+  const errorPassword = errorPasswordSegura(password); // CORRECCIÓN: contraseña segura
+  if (errorPassword) errores.push(errorPassword);
 
   if (password && confirmarPassword !== password) {
     errores.push('Las contraseñas no coinciden.');
@@ -254,17 +265,11 @@ function validarPerfilJugador(req, res, next) {
  * Las estadísticas inválidas quedan en null para que el editor re-pinte lo que había.
  */
 function validarEdicionPerfil(req, res, next) {
+  // CORRECCIÓN: regla 8 — las estadísticas ya no llegan del formulario (las cambia solo el sistema);
+  // cualquier stat_* que alguien envíe a mano se ignora.
   const { datos, paso2, paso3 } = revisarDatosPerfil(req.body);
-  const erroresStats = [];
-  const stats = {};
-
-  ESTADISTICAS.forEach(({ clave, nombre }) => {
-    stats[clave] = enteroEnRango(req.body[`stat_${clave}`], STAT_RANGO);
-    if (stats[clave] === null) erroresStats.push(`${nombre} debe estar entre ${STAT_RANGO.min} y ${STAT_RANGO.max}.`);
-  });
-
-  req.datosFormulario = { ...datos, stats };
-  req.erroresPerfil = { errores: [...paso2, ...paso3, ...erroresStats] };
+  req.datosFormulario = datos;
+  req.erroresPerfil = { errores: [...paso2, ...paso3] };
   return next();
 }
 
@@ -297,7 +302,17 @@ function validarEquipo(req, res, next) {
 
   if (!MODALIDADES[jugadores]) paso2.push('Elige el tipo de fútbol.');
 
-  req.datosFormulario = { nombre, correo, nivel, zona, jugadores: MODALIDADES[jugadores] ? jugadores : null };
+  // CORRECCIÓN: regla 11 — comuna de la lista (para filtrar y recomendar rivales por ubicación).
+  // Que exista la revisa equipoController.crear con ubicacionModel.obtenerComuna.
+  const idComuna = Number(req.body.id_comuna);
+  const comunaValida = Number.isInteger(idComuna) && idComuna > 0;
+  if (!comunaValida) paso2.push('Elige la región y la comuna de tu equipo.');
+
+  req.datosFormulario = {
+    nombre, correo, nivel, zona, jugadores: MODALIDADES[jugadores] ? jugadores : null,
+    idComuna: comunaValida ? idComuna : null, // CORRECCIÓN: regla 11
+    idRegion: Number(req.body.id_region) || null, // CORRECCIÓN: regla 11 (solo para re-pintar el formulario)
+  };
   req.erroresEquipo = {
     errores: [...paso1, ...paso2],
     paso: paso1.length > 0 ? 1 : 2,
@@ -377,6 +392,8 @@ module.exports = {
   validarEquipo,
   validarDesafio,
   validarSolicitudUnion,
+  errorPasswordSegura, // CORRECCIÓN: contraseña segura (la reutilizan AR-008 y AR-009)
+  REGEX_CORREO, // NUEVO: AR-012 (y otros formularios nuevos)
   LONGITUD_MAXIMA_MENSAJE_SOLICITUD,
   normalizarTelefono,
   calcularEdad,

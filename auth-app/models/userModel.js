@@ -102,7 +102,8 @@ async function findByEmail(correo) {
  */
 async function findByAuthId(authId) {
   const consulta = `
-    SELECT u.id, u.correo, u.telefono, j.nombre_apodo AS nombre, j.apellido, j.fecha_nacimiento
+    SELECT u.id, u.correo, u.telefono, j.nombre_apodo AS nombre, j.apellido, j.fecha_nacimiento,
+           u.activo -- CORRECCIÓN: regla 7 (cuenta inactiva no entra)
     FROM usuario u
     LEFT JOIN jugador j ON j.id_usuario = u.id
     WHERE u.auth_id = $1

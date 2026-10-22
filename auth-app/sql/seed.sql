@@ -498,10 +498,10 @@ INSERT INTO rol_aplicacion (nombre) VALUES
 ON CONFLICT DO NOTHING;
 
 INSERT INTO nivel (nombre, puntaje_min, puntaje_max) VALUES
-    ('Novato',     0,  20),
-    ('Intermedio', 21, 50),
-    ('Avanzado',   51, 100),
-    ('Élite',      101, 200)
+    -- CORRECCIÓN: seed = código. Los 3 niveles de config/perfilJugador.js, sin rangos superpuestos.
+    ('Principiante', 0,   299),
+    ('Intermedio',   300, 699),
+    ('Avanzado',     700, 1000)
 ON CONFLICT DO NOTHING;
 
 INSERT INTO posicion (nombre) VALUES
@@ -514,12 +514,12 @@ ON CONFLICT DO NOTHING;
 INSERT INTO rol_equipo (nombre) VALUES
     ('Capitán'),
     ('Entrenador'),
-    ('Jugador')
+    ('Integrante') -- CORRECCIÓN: seed = código (equipoModel busca 'integrante'; en pantalla se muestra "Jugador")
 ON CONFLICT DO NOTHING;
 
 INSERT INTO estado_solicitud (nombre) VALUES
     ('Pendiente'),
-    ('Aprobada'),
+    ('Aceptada'), -- CORRECCIÓN: seed = código (equipoModel busca 'aceptada')
     ('Rechazada')
 ON CONFLICT DO NOTHING;
 
@@ -568,12 +568,13 @@ ON CONFLICT DO NOTHING;
 -- U) INTEGRACIÓN CON SUPABASE AUTH (la usa models/userModel.js)
 -- ============================================================
 -- Las contraseñas ahora las maneja Supabase Auth (tabla auth.users).
--- "usuario" se vincula a esa cuenta con id_auth (UUID).
+-- "usuario" se vincula a esa cuenta con auth_id (UUID).
 -- Re-ejecutable: IF NOT EXISTS / DROP NOT NULL no fallan si ya se aplicó.
 
 -- Vínculo con la cuenta de Supabase Auth.
+-- CORRECCIÓN: seed = código (todos los modelos consultan u.auth_id; antes decía id_auth)
 ALTER TABLE usuario
-    ADD COLUMN IF NOT EXISTS id_auth UUID UNIQUE
+    ADD COLUMN IF NOT EXISTS auth_id UUID UNIQUE
     REFERENCES auth.users(id) ON DELETE SET NULL;
 
 -- La contraseña ya no se guarda en nuestras tablas.

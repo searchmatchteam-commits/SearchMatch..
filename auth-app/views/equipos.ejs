@@ -26,6 +26,10 @@
             <span aria-hidden="true">+</span> Crear equipo
           </a>
         <% } %>
+        <%# CORRECCIÓN: regla 5 — si no puede crear más equipos, se explica el límite (antes solo se ocultaba el botón) %>
+        <% if (locals.avisoLimite) { %>
+          <p class="sm-aviso-limite" role="note"><%= avisoLimite %></p>
+        <% } %>
       </div>
     </header>
 

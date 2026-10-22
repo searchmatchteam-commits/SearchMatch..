@@ -100,7 +100,7 @@
           <span class="eq-total"><%= rivales.length %> <%= rivales.length === 1 ? 'equipo disponible' : 'equipos disponibles' %></span>
         </summary>
         <% if (rivales.length === 0) { %>
-          <p class="dash-panel__nota eq-vacio">Todavía no hay otros equipos en la plataforma para desafiar.</p>
+          <p class="dash-panel__nota eq-vacio">Todavía no hay otros equipos de tu modalidad para desafiar.<%# CORRECCIÓN: regla 12 %></p>
         <% } else { %>
           <ul class="eq-clubes eq-rivales">
             <% rivales.forEach(function (rival) { %>

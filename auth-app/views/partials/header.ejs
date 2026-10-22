@@ -19,6 +19,8 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?<%= fuentes %>&display=swap" />
   <!-- ?v= cambia en cada arranque del servidor: el navegador puede guardar los archivos en caché sin quedar desactualizado -->
   <link rel="stylesheet" href="/css/style.css?v=<%= versionAssets %>" />
+  <!-- NUEVO: estilos de las funciones nuevas (clases sm-*, no cambia las existentes) -->
+  <link rel="stylesheet" href="/css/modulos.css?v=<%= versionAssets %>" />
   <% if (locals.wizardEquipo) { %>
     <!-- Wizard de equipo: la base es la del wizard de jugador (style.css) -->
     <link rel="stylesheet" href="/css/crear-equipo.css?v=<%= versionAssets %>" />

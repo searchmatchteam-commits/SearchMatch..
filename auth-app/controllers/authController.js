@@ -10,6 +10,8 @@ const userModel = require('../models/userModel');
 const { rutaDeInicio } = require('../middlewares/authMiddleware');
 
 const MSG_CORREO_REGISTRADO = 'Este correo ya está registrado. Inicia sesión o usa otro correo.';
+// CORRECCIÓN: regla 7 — mensaje para cuentas desactivadas (por el usuario o por un administrador).
+const MSG_CUENTA_DESACTIVADA = 'Tu cuenta está desactivada. Si crees que es un error, escríbenos.';
 
 // Mensajes en español para los códigos de error más comunes de Supabase Auth.
 const ERRORES_SUPABASE = {
@@ -171,6 +173,7 @@ function mostrarLogin(req, res) {
     Enlace_invalido: 'El enlace de confirmación no es válido o ya expiró. Inicia sesión para recibir uno nuevo.',
     Debes_iniciar_sesion: 'Debes iniciar sesión para acceder a esa página.',
     Sesion_cerrada: 'Cerraste sesión correctamente.',
+    Cuenta_desactivada: MSG_CUENTA_DESACTIVADA, // CORRECCIÓN: regla 7
   };
 
   res.render('login', {
@@ -225,6 +228,19 @@ async function iniciarSesion(req, res, next) {
         pagina: 'auth',
         titulo: 'Iniciar sesión',
         errores: [traducirErrorSupabase(error)],
+        datos: { correo },
+        aviso: null,
+      });
+    }
+
+    // CORRECCIÓN: regla 7 — credenciales correctas pero cuenta inactiva: se cierra la sesión recién abierta.
+    const perfil = await userModel.findByAuthId(data.user.id);
+    if (perfil && perfil.activo === false) {
+      await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
+      return res.status(403).render('login', {
+        pagina: 'auth',
+        titulo: 'Iniciar sesión',
+        errores: [MSG_CUENTA_DESACTIVADA],
         datos: { correo },
         aviso: null,
       });

@@ -15,11 +15,12 @@ function landing(req, res) {
 }
 
 /**
- * Perfil del jugador para el dashboard (null si no es jugador).
+ * Perfil del jugador para el dashboard.
+ * CORRECCIÓN: regla 1 — también para el rol "equipo": el capitán es jugador de su equipo,
+ * así que completa su perfil (posiciones y carta) igual que todos.
  * Si la base de datos falla, el dashboard se muestra igual, sin el resumen.
  */
 async function leerPerfilJugador(usuario) {
-  if (usuario.rolInicio !== 'jugador') return null;
   return jugadorModel.obtenerPerfil(usuario.idAuth).catch((err) => {
     console.error('⚠️  No se pudo leer la carta para el dashboard:', err.message);
     return null;

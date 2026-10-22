@@ -43,6 +43,7 @@ async function construirUsuario(usuarioAuth) {
     apellido: (perfil && perfil.apellido) || meta.apellido || '',
     correo: usuarioAuth.email,
     rolInicio: ROLES_INICIO[meta.rol_inicio] ? meta.rol_inicio : null,
+    activo: !perfil || perfil.activo !== false, // CORRECCIÓN: regla 7 (sin fila en la BD se asume activa)
   };
 }
 
@@ -69,7 +70,16 @@ async function cargarSesion(req, res, next) {
     const { data, error } = await userModel.obtenerUsuarioActual(req.supabase);
     if (error || !data.user) return next();
 
-    req.usuario = await construirUsuario(data.user);
+    const usuario = await construirUsuario(data.user);
+
+    // CORRECCIÓN: regla 7 — una cuenta desactivada pierde la sesión en su próxima petición
+    // (también si un administrador la desactiva mientras navega, AD-012).
+    if (!usuario.activo) {
+      await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
+      return req.path === '/login' ? next() : res.redirect('/login?msg=Cuenta_desactivada');
+    }
+
+    req.usuario = usuario;
     res.locals.usuario = req.usuario;
     return next();
   } catch (err) {

@@ -1,0 +1,52 @@
+/* public/css/modulos.css
+   Estilos de las funciones nuevas (avance al 75 %). Solo clases nuevas con prefijo "sm-"
+   (y <select>/<textarea> dentro de .campo, que antes no se usaban), así no cambia nada
+   de lo que ya existía. Reutiliza las variables de style.css (colores, radios, fuente). */
+
+/* ---------- Listas desplegables y áreas de texto con el mismo aspecto que .campo input ---------- */
+.campo select,
+.campo textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 16px; /* evita el zoom de iOS al enfocar */
+  color: var(--texto);
+  background: var(--superficie-campo);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-chico);
+  padding: 13px 14px;
+  color-scheme: dark;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.campo textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.campo select:focus,
+.campo textarea:focus {
+  outline: none;
+  border-color: var(--verde);
+  box-shadow: 0 0 0 3px rgba(57, 255, 20, 0.18);
+}
+
+.campo select:disabled {
+  opacity: 0.55;
+}
+
+.campo--error select,
+.campo--error textarea {
+  border-color: var(--error);
+}
+
+/* ---------- Aviso del límite de equipos (regla 5) ---------- */
+.sm-aviso-limite {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radio-chico);
+  border: 1px solid var(--verde-borde);
+  background: var(--verde-tenue);
+  color: var(--texto);
+  font-size: 0.88rem;
+}
