@@ -8,6 +8,8 @@
 
 const userModel = require('../models/userModel');
 const { rutaDeInicio } = require('../middlewares/authMiddleware');
+const cuentaModel = require('../models/cuentaModel'); // NUEVO: AR-011
+const { TERMINOS, PRIVACIDAD } = require('../config/legal'); // NUEVO: AR-011
 
 const MSG_CORREO_REGISTRADO = 'Este correo ya está registrado. Inicia sesión o usa otro correo.';
 // CORRECCIÓN: regla 7 — mensaje para cuentas desactivadas (por el usuario o por un administrador).
@@ -71,6 +73,7 @@ function renderRegistroConError(req, res, status, mensaje) {
       correo: req.datosFormulario.correo,
       telefono: req.body.telefono || '',
       fecha_nacimiento: req.datosFormulario.fechaNacimiento,
+      acepto_terminos: req.body.acepto_terminos === 'si', // NUEVO: AR-011
     },
   });
 }
@@ -149,6 +152,11 @@ async function registrar(req, res, next) {
       throw err;
     }
 
+    // NUEVO: AR-011 — guarda la versión de términos y privacidad aceptada y la fecha.
+    // Si fallara, la cuenta igual se crea y se le pedirá aceptar al iniciar sesión.
+    await cuentaModel.guardarAceptacion(data.user.id, { terminos: TERMINOS.version, privacidad: PRIVACIDAD.version })
+      .catch((err) => console.error('⚠️  No se pudo guardar la aceptación de términos:', err.message));
+
     // 4a) Confirmación de correo desactivada: Supabase ya entregó la sesión
     //     y el cliente la guardó en las cookies.
     //     Cuenta nueva = aún sin rol → "¿Cómo quieres empezar?".
@@ -174,6 +182,7 @@ function mostrarLogin(req, res) {
     Debes_iniciar_sesion: 'Debes iniciar sesión para acceder a esa página.',
     Sesion_cerrada: 'Cerraste sesión correctamente.',
     Cuenta_desactivada: MSG_CUENTA_DESACTIVADA, // CORRECCIÓN: regla 7
+    Contrasena_actualizada: 'Tu contraseña se actualizó. Inicia sesión con la nueva.', // NUEVO: AR-008
   };
 
   res.render('login', {

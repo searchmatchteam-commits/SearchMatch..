@@ -91,3 +91,31 @@ SELECT c.comuna, r.id
   ) AS c(region, comuna)
   JOIN region r ON r.nombre = c.region
  WHERE NOT EXISTS (SELECT 1 FROM comunas x WHERE x.nombre = c.comuna AND x.id_region = r.id);
+
+
+-- ============================================================
+-- F1-1) ACEPTACIÓN DE TÉRMINOS Y PRIVACIDAD (AR-011)
+-- ============================================================
+-- Qué versión de cada documento aceptó la cuenta y cuándo. NULL = nunca aceptó
+-- (las cuentas anteriores deberán aceptar al entrar). Las versiones vigentes están en config/legal.js.
+ALTER TABLE usuario
+    ADD COLUMN IF NOT EXISTS terminos_version      VARCHAR(20),
+    ADD COLUMN IF NOT EXISTS privacidad_version    VARCHAR(20),
+    ADD COLUMN IF NOT EXISTS terminos_aceptados_en TIMESTAMPTZ;
+
+
+-- ============================================================
+-- F2-1) NOMBRE DE CANCHA ÚNICO DENTRO DE UN RECINTO (AD-002, AD-009)
+-- ============================================================
+-- Sin importar mayúsculas: "Cancha 1" y "cancha 1" son la misma.
+CREATE UNIQUE INDEX IF NOT EXISTS ux_cancha_nombre_por_recinto
+    ON cancha (id_recinto_deportivo, lower(nombre));
+
+
+-- ============================================================
+-- F2-2) COSTO GUARDADO EN CADA RESERVA (AD-009, PA-002)
+-- ============================================================
+-- Se calcula al reservar (precio por hora × duración) y no cambia si después
+-- el administrador edita el precio de la cancha.
+ALTER TABLE reservar_cancha
+    ADD COLUMN IF NOT EXISTS costo NUMERIC(10, 2) CHECK (costo IS NULL OR costo >= 0);

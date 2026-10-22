@@ -50,3 +50,191 @@
   color: var(--texto);
   font-size: 0.88rem;
 }
+
+/* ======================================================================
+   Fases 1 a 3: componentes nuevos (prefijo sm-). Reutilizan las variables
+   de style.css y cyber.css (--vidrio, --verde-rgb, --radio-panel...).
+   ====================================================================== */
+
+/* ---------- Contenedores y textos ---------- */
+.sm-angosto { max-width: 720px; }
+.sm-legal { max-width: 860px; }
+.sm-opcional { color: var(--texto-suave); font-weight: 500; font-size: 0.85em; }
+.sm-subtitulo {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+.sm-resultados { color: var(--texto-suave); font-size: 0.9rem; }
+
+/* Documentos legales (AR-010) */
+.sm-documento { gap: 26px; line-height: 1.65; }
+.sm-documento__seccion { display: flex; flex-direction: column; gap: 10px; }
+.sm-documento__seccion p { color: #d4dad4; }
+
+/* Lista de enlaces con detalle (documentos, seguridad de la cuenta) */
+.sm-lista-docs { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.sm-lista-docs li {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 12px 14px; border-radius: var(--radio-chico);
+  border: 1px solid var(--borde); background: rgba(255, 255, 255, 0.02);
+}
+.sm-lista-docs a { font-weight: 700; }
+.sm-lista-docs span { color: var(--texto-suave); font-size: 0.85rem; }
+
+/* ---------- Formularios ---------- */
+.sm-form { display: flex; flex-direction: column; gap: 16px; }
+.sm-form__acciones { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.sm-form__secundaria { margin-top: 4px; }
+.sm-form .campo__control input { padding-right: 48px; } /* espacio para el ojo de la contraseña */
+.sm-olvido { margin: -6px 0 4px; text-align: right; font-size: 0.86rem; }
+
+.sm-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 0.9rem; line-height: 1.45; }
+.sm-check input { width: 18px; height: 18px; margin-top: 2px; flex: none; accent-color: var(--verde); }
+.sm-check-campo { margin-bottom: 4px; }
+
+.sm-enlace {
+  background: none; border: 0; padding: 0; font: inherit; font-size: 0.88rem;
+  color: var(--texto-suave); text-decoration: underline; cursor: pointer;
+}
+.sm-enlace:hover { color: var(--texto); }
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sm-btn-peligro { color: #ffb4b4; border-color: rgba(255, 107, 107, 0.45); }
+.sm-btn-peligro:hover { color: #fff; background: rgba(255, 107, 107, 0.16); border-color: var(--error); }
+
+.sm-alerta-advertencia {
+  background: rgba(255, 196, 0, 0.08); border-color: rgba(255, 196, 0, 0.4); color: #ffe08a;
+}
+
+/* Enlaces de cuenta en el perfil (AR-012 / AR-010) */
+.sm-perfil-enlaces { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.88rem; }
+.sm-perfil-enlaces a { color: var(--texto-suave); }
+.sm-perfil-enlaces a:hover { color: var(--verde); }
+
+/* ---------- Pestañas (administración y lista/mapa) ---------- */
+.sm-pestanas {
+  display: flex; gap: 6px; padding: 5px; width: fit-content; max-width: 100%; overflow-x: auto;
+  border-radius: 999px; border: 1px solid var(--borde); background: rgba(255, 255, 255, 0.03);
+}
+.sm-pestanas__item {
+  padding: 8px 16px; border-radius: 999px; white-space: nowrap;
+  font-size: 0.88rem; font-weight: 700; color: var(--texto-suave);
+}
+.sm-pestanas__item:hover { color: var(--texto); }
+.sm-pestanas__item--activa { color: var(--sobre-verde); background: var(--verde); }
+.sm-pestanas__item--activa:hover { color: var(--sobre-verde); }
+
+/* ---------- Estados vacíos ---------- */
+.sm-vacio { align-items: flex-start; }
+.sm-vacio__titulo { font-weight: 800; font-size: 1.05rem; }
+
+/* ---------- Filtros ---------- */
+.sm-filtros { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.sm-filtros .formulario__fila { margin: 0; }
+
+/* ---------- Tarjetas y filas (listados) ---------- */
+.sm-tarjetas { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.sm-tarjeta { gap: 12px; }
+.sm-tarjeta--inactiva { opacity: 0.7; }
+.sm-tarjeta__cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.sm-tarjeta__titulo { font-size: 1.1rem; font-weight: 800; }
+.sm-tarjeta__titulo a { color: var(--texto); }
+.sm-tarjeta__titulo a:hover { color: var(--verde); }
+.sm-tarjeta__meta, .sm-tarjeta__linea { color: var(--texto-suave); font-size: 0.88rem; }
+.sm-tarjeta__enlace { font-size: 0.86rem; font-weight: 700; align-self: flex-start; }
+
+.sm-filas { list-style: none; display: flex; flex-direction: column; }
+.sm-fila {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px;
+  padding: 10px 0; border-top: 1px solid var(--borde); font-size: 0.9rem;
+}
+.sm-fila:first-child { border-top: 0; }
+.sm-fila > span { color: var(--texto-suave); }
+.sm-fila > a { font-weight: 700; min-width: 120px; }
+.sm-fila--inactiva { opacity: 0.65; }
+.sm-fila .sm-fila__principal { display: flex; flex-direction: column; flex: 1 1 220px; min-width: 0; color: var(--texto); }
+.sm-fila__principal small { color: var(--texto-suave); overflow-wrap: anywhere; }
+.sm-fila__accion { margin-left: auto; }
+
+.sm-estado, .sm-rol {
+  display: inline-block; padding: 3px 10px; border-radius: 999px; width: fit-content;
+  font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.sm-fila > .sm-estado--activo, .sm-estado--activo { color: var(--verde); background: var(--verde-tenue); border: 1px solid var(--verde-borde); }
+.sm-fila > .sm-estado--inactivo, .sm-estado--inactivo { color: #ffb4b4; background: rgba(255, 107, 107, 0.08); border: 1px solid rgba(255, 107, 107, 0.3); }
+.sm-fila > .sm-rol, .sm-rol { color: var(--texto); background: rgba(255, 255, 255, 0.06); border: 1px solid var(--borde-fuerte); }
+
+.sm-precio { font-weight: 800; font-size: 1.05rem; color: var(--verde); white-space: nowrap; }
+.sm-precio small { font-size: 0.75em; color: var(--texto-suave); font-weight: 600; }
+.sm-precio--grande { font-size: 1.5rem; }
+
+/* Datos en pares etiqueta / valor */
+.sm-datos { display: grid; gap: 12px; }
+.sm-datos div { display: grid; gap: 2px; }
+.sm-datos dt { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--texto-suave); }
+.sm-datos dd { overflow-wrap: anywhere; }
+
+/* Dos columnas en escritorio */
+.sm-columnas { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+
+/* ---------- Horario (AD-003 / DE-006) ---------- */
+.sm-horario, .sm-agenda { list-style: none; display: flex; flex-direction: column; }
+.sm-horario__dia, .sm-agenda__dia {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+  padding: 10px 0; border-top: 1px solid var(--borde);
+}
+.sm-horario__dia:first-child, .sm-agenda__dia:first-child { border-top: 0; }
+.sm-horario__nombre, .sm-agenda__fecha { width: 96px; font-weight: 700; text-transform: capitalize; }
+.sm-horario__bloques, .sm-agenda__detalle { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; flex: 1; color: var(--texto-suave); font-size: 0.9rem; }
+.sm-horario__cerrado { color: #ffb4b4; font-size: 0.85rem; font-weight: 700; }
+.sm-horario__dia--cerrado .sm-horario__nombre, .sm-agenda__dia--cerrado .sm-agenda__fecha { color: var(--texto-suave); }
+
+.sm-bloque {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+  font-size: 0.82rem; font-weight: 700; color: var(--verde);
+  background: var(--verde-tenue); border: 1px solid var(--verde-borde);
+}
+.sm-bloque form { display: inline; }
+.sm-bloque__quitar { border: 0; background: none; color: inherit; cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 2px; }
+.sm-bloque__quitar:hover { color: var(--error); }
+.sm-bloque--ocupado { color: #ffb4b4; background: rgba(255, 107, 107, 0.08); border-color: rgba(255, 107, 107, 0.3); }
+.sm-bloque--libre { color: var(--texto-suave); background: transparent; border-color: var(--borde); font-weight: 600; }
+
+/* ---------- Catálogos (AD-014) ---------- */
+.sm-catalogo { list-style: none; display: flex; flex-direction: column; }
+.sm-catalogo__fila { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 0; border-top: 1px solid var(--borde); }
+.sm-catalogo__fila:first-child { border-top: 0; }
+.sm-catalogo__form { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; flex: 1 1 320px; }
+.sm-catalogo__form .campo { flex: 1 1 110px; gap: 4px; }
+.sm-catalogo__form .campo input { padding: 9px 11px; }
+.sm-catalogo__form input[readonly] { opacity: 0.6; }
+.sm-catalogo__form > .btn { align-self: flex-start; margin-top: 2px; }
+.sm-catalogo__uso { color: var(--texto-suave); font-size: 0.82rem; display: inline-flex; gap: 8px; align-items: center; }
+.sm-catalogo__nuevo { padding-top: 14px; border-top: 1px dashed var(--borde-fuerte); align-items: flex-end; }
+.sm-catalogo__nuevo > .btn { align-self: flex-end; margin-bottom: 2px; }
+
+/* ---------- Mapa de canchas (DE-003) ---------- */
+.sm-mapa { width: 100%; height: 460px; border-radius: var(--radio-chico); overflow: hidden; border: 1px solid var(--borde-fuerte); }
+.sm-mapa .leaflet-popup-content { color: #111; font-family: var(--fuente); }
+.sm-mapa .leaflet-popup-content ul { margin: 6px 0 0; padding-left: 16px; }
+.sm-mapa .leaflet-popup-content p { margin: 4px 0; }
+
+/* ---------- Pantallas más anchas ---------- */
+@media (min-width: 760px) {
+  .sm-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
+  .sm-filtros .formulario__fila { grid-column: 1 / -1; }
+  .sm-filtros--linea { grid-template-columns: minmax(0, 1fr) auto; }
+  .sm-tarjetas--grilla { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sm-columnas { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .sm-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1100px) {
+  .sm-tarjetas--grilla { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .sm-mapa { height: 360px; }
+}

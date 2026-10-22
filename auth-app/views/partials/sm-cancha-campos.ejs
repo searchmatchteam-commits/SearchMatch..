@@ -1,0 +1,30 @@
+<%
+  // Campos de una cancha (AD-002 registrar y AD-009 editar). Uso:
+  //   include('partials/sm-cancha-campos', { datos, erroresCampo, modalidades })
+  // La modalidad muestra su cantidad de jugadores en cada opción (AD-002).
+  const errores = locals.erroresCampo || {};
+%>
+<div class="campo <%= errores.nombre ? 'campo--error' : '' %>">
+  <label for="nombre-cancha">Nombre de la cancha</label>
+  <input type="text" id="nombre-cancha" name="nombre" value="<%= datos.nombre || '' %>" maxlength="100"
+         placeholder="Ej. Cancha 1" required aria-describedby="nombre-cancha-error" />
+  <small class="campo__error" id="nombre-cancha-error"><%= errores.nombre || '' %></small>
+</div>
+<div class="formulario__fila">
+  <div class="campo <%= errores.precio ? 'campo--error' : '' %>">
+    <label for="precio">Precio por hora (CLP)</label>
+    <input type="number" id="precio" name="precio" value="<%= datos.precioIngresado || '' %>" min="1" step="1"
+           inputmode="numeric" placeholder="Ej. 25000" required aria-describedby="precio-error" />
+    <small class="campo__error" id="precio-error"><%= errores.precio || '' %></small>
+  </div>
+  <div class="campo <%= errores.id_modalidad ? 'campo--error' : '' %>">
+    <label for="id_modalidad">Modalidad</label>
+    <select id="id_modalidad" name="id_modalidad" required data-mensaje="Elige la modalidad." aria-describedby="id_modalidad-error">
+      <option value="">Elige la modalidad</option>
+      <% modalidades.forEach(function (m) { %>
+        <option value="<%= m.id %>" <%= String(datos.idModalidad) === String(m.id) ? 'selected' : '' %>><%= m.nombre %> · <%= m.jugadores %> jugadores por equipo</option>
+      <% }) %>
+    </select>
+    <small class="campo__error" id="id_modalidad-error"><%= errores.id_modalidad || '' %></small>
+  </div>
+</div>

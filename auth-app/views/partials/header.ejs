@@ -85,6 +85,10 @@
           <% if (!['dashboard', 'equipo', 'perfil'].includes(locals.pagina)) { %>
             <a class="btn btn--contorno btn--chico" href="/dashboard">Mi panel</a>
           <% } %>
+          <% if (usuario.esAdmin) { %>
+            <!-- NUEVO: AR-004 — acceso al módulo de administración, solo para administradores -->
+            <a class="btn btn--contorno btn--chico" href="/admin">Admin</a>
+          <% } %>
           <form action="/logout" method="POST" class="navbar__form">
             <button type="submit" class="btn btn--verde btn--chico">Cerrar sesión</button>
           </form>

@@ -14,6 +14,10 @@ const { probarConexion } = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const indexRoutes = require('./routes/indexRoutes');
 const { cargarSesion } = require('./middlewares/authMiddleware');
+const cuentaRoutes = require('./routes/cuentaRoutes'); // NUEVO: Fase 1 (AR-008..AR-012)
+const adminRoutes = require('./routes/adminRoutes'); // NUEVO: Fase 2 (AR-004, AD-001..AD-014)
+const canchasRoutes = require('./routes/canchasRoutes'); // NUEVO: Fase 3 (DE-002..DE-006)
+const { exigirTerminos } = require('./middlewares/terminosMiddleware'); // NUEVO: AR-011
 const { noEncontrado, manejarErrores } = require('./middlewares/errorHandler');
 
 const app = express();
@@ -54,11 +58,17 @@ app.use(cookieParser());
 // res.locals.usuario (disponible en TODAS las vistas).
 app.use(cargarSesion);
 
+// NUEVO: AR-011 — sin aceptar la versión vigente de los términos, los módulos internos quedan bloqueados.
+app.use(exigirTerminos);
+
 // ---------------------------------------------------------------
 // 3) Rutas (solo definen caminos y llaman a controladores)
 // ---------------------------------------------------------------
 app.use('/', indexRoutes);      // landing y /dashboard
 app.use('/', authRoutes);       // /login, /registro, /logout
+app.use('/', cuentaRoutes);     // NUEVO: /terminos, /privacidad, /aceptar-terminos, /recuperar, /cuenta
+app.use('/admin', adminRoutes); // NUEVO: módulo de administración (todo pasa por requireAdmin)
+app.use('/canchas', canchasRoutes); // NUEVO: buscar, explorar y ver canchas
 
 // ---------------------------------------------------------------
 // 4) Middlewares de errores: SIEMPRE al final, después de las rutas

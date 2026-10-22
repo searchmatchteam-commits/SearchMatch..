@@ -150,6 +150,10 @@ function validarRegistro(req, res, next) {
     errores.push('Las contraseñas no coinciden.');
   }
 
+  // NUEVO: AR-011 — sin aceptar los términos y la privacidad no se crea la cuenta.
+  const aceptoTerminos = req.body.acepto_terminos === 'si';
+  if (!aceptoTerminos) errores.push('Debes aceptar los términos y condiciones y la política de privacidad.');
+
   // Valores para el controlador (teléfono ya normalizado) y para re-pintar el formulario.
   req.datosFormulario = { nombre, apellido, correo, telefono, fechaNacimiento };
   const datos = {
@@ -158,6 +162,7 @@ function validarRegistro(req, res, next) {
     correo,
     telefono: telefonoIngresado,
     fecha_nacimiento: fechaNacimiento,
+    acepto_terminos: aceptoTerminos, // NUEVO: AR-011 (la casilla sigue marcada si hay otros errores)
   };
 
   if (errores.length > 0) {

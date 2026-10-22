@@ -1,0 +1,37 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- AR-010: términos y condiciones o política de privacidad (legalController.mostrarDocumento).
+     Se puede leer sin sesión; desde el registro se abre en otra pestaña para no perder lo escrito. -->
+<section class="eq">
+  <div class="contenedor sm-legal">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: usuario ? '/dashboard' : '/' }) %>
+        <h1 class="eq-cabecera__titulo"><%= documento.titulo %></h1>
+        <p class="eq-cabecera__stats">Versión <%= documento.version %> · Última actualización: <%= fecha %></p>
+      </div>
+      <div class="eq-cabecera__acciones">
+        <a class="btn btn--contorno btn--grande" href="/<%= otro.clave %>"><%= otro.titulo %></a>
+      </div>
+    </header>
+
+    <article class="dash-panel eq-panel sm-documento revelar">
+      <% documento.secciones.forEach(function (seccion) { %>
+        <section class="sm-documento__seccion">
+          <h2 class="dash-panel__titulo"><%= seccion.titulo %></h2>
+          <% seccion.parrafos.forEach(function (parrafo) { %>
+            <p><%= parrafo %></p>
+          <% }) %>
+        </section>
+      <% }) %>
+    </article>
+  </div>
+</section>
+
+<% if (usuario) { %>
+  <%- include('../partials/dock', { activo: 'perfil' }) %>
+<% } %>
+
+<%- include('../partials/footer') %>

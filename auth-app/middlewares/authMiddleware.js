@@ -9,6 +9,7 @@
 //  - rutaDeInicio: a dónde va un usuario recién autenticado.
 
 const userModel = require('../models/userModel');
+const cuentaModel = require('../models/cuentaModel'); // NUEVO: AR-012
 const { crearClienteServidor } = require('../config/supabase');
 
 // Roles de la pantalla "¿Cómo quieres empezar?" y el siguiente paso de cada uno.
@@ -44,6 +45,10 @@ async function construirUsuario(usuarioAuth) {
     correo: usuarioAuth.email,
     rolInicio: ROLES_INICIO[meta.rol_inicio] ? meta.rol_inicio : null,
     activo: !perfil || perfil.activo !== false, // CORRECCIÓN: regla 7 (sin fila en la BD se asume activa)
+    esAdmin: Boolean(perfil && /^administrador$/i.test(perfil.rol || '')), // NUEVO: AR-004
+    terminosVersion: perfil ? perfil.terminos_version : null, // NUEVO: AR-011
+    privacidadVersion: perfil ? perfil.privacidad_version : null, // NUEVO: AR-011
+    correoGuardado: perfil ? perfil.correo : null, // NUEVO: AR-012 (para sincronizar un cambio de correo)
   };
 }
 
@@ -77,6 +82,14 @@ async function cargarSesion(req, res, next) {
     if (!usuario.activo) {
       await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
       return req.path === '/login' ? next() : res.redirect('/login?msg=Cuenta_desactivada');
+    }
+
+    // NUEVO: AR-012 — si el usuario confirmó un correo principal nuevo (Supabase ya lo cambió),
+    // se copia a la tabla usuario para que búsquedas y validaciones usen el correo vigente.
+    if (usuario.correoGuardado && usuario.correo && usuario.correoGuardado !== usuario.correo) {
+      await cuentaModel.sincronizarCorreo(usuario.idAuth, usuario.correo).catch((err) => {
+        console.error('⚠️  No se pudo sincronizar el correo nuevo:', err.message);
+      });
     }
 
     req.usuario = usuario;
