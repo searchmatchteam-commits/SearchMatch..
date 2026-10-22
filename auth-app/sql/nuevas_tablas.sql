@@ -119,3 +119,57 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_cancha_nombre_por_recinto
 -- el administrador edita el precio de la cancha.
 ALTER TABLE reservar_cancha
     ADD COLUMN IF NOT EXISTS costo NUMERIC(10, 2) CHECK (costo IS NULL OR costo >= 0);
+
+
+-- ============================================================
+-- F4-1) TIPOS DE NOTIFICACIÓN Y ENLACE AL ELEMENTO (NT-001, NT-004)
+-- ============================================================
+-- Un tipo por clase de evento (la clave es la que usa models/notificacionModel.js).
+INSERT INTO tipo_notificacion (nombre)
+SELECT t.nombre
+  FROM (VALUES ('solicitud_equipo'), ('invitacion'), ('desafio'), ('partido'), ('reserva'),
+               ('comentario'), ('equipo'), ('moderacion')) AS t(nombre)
+ WHERE NOT EXISTS (SELECT 1 FROM tipo_notificacion x WHERE lower(x.nombre) = t.nombre);
+
+-- A dónde lleva la notificación al abrirla (ej. /desafios/12). NULL = solo informativa.
+ALTER TABLE notificacion
+    ADD COLUMN IF NOT EXISTS enlace VARCHAR(255);
+
+CREATE INDEX IF NOT EXISTS ix_notificacion_usuario ON notificacion (id_usuario, leida, fecha DESC);
+
+
+-- ============================================================
+-- F6-1) MODERACIÓN DE COMENTARIOS (AD-013)
+-- ============================================================
+-- El comentario retirado no se borra (queda como respaldo): se oculta a todos.
+ALTER TABLE comentario
+    ADD COLUMN IF NOT EXISTS oculto    BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS oculto_en TIMESTAMPTZ;
+
+
+-- ============================================================
+-- F6-2) POSICIONES QUE BUSCA UN EQUIPO (PE-021)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS equipo_posicion_buscada (
+    id_equipo   INT NOT NULL REFERENCES equipo(id) ON DELETE CASCADE,
+    id_posicion INT NOT NULL REFERENCES posicion(id),
+    PRIMARY KEY (id_equipo, id_posicion)
+);
+ALTER TABLE equipo_posicion_buscada ENABLE ROW LEVEL SECURITY;
+
+
+-- ============================================================
+-- F7-1) PARTIDOS CANCELADOS Y RESULTADO (PA-005, PA-007)
+-- ============================================================
+ALTER TABLE partido
+    ADD COLUMN IF NOT EXISTS cancelado          BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS motivo_cancelacion VARCHAR(200),
+    ADD COLUMN IF NOT EXISTS fecha_resultado    TIMESTAMPTZ;
+
+
+-- ============================================================
+-- F7-2) RESERVA ASOCIADA A UN PARTIDO (PA-001, PA-003, PA-007)
+-- ============================================================
+-- Al programar un partido se crea su reserva; así se sabe que no se puede cancelar sola.
+ALTER TABLE reservar_cancha
+    ADD COLUMN IF NOT EXISTS id_partido INT REFERENCES partido(id);

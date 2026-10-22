@@ -1,0 +1,36 @@
+<%
+  // IN-005 · Panel del inicio con el equipo elegido: selector (solo si pertenece a más de uno),
+  // su nivel y su próximo partido. El equipo elegido se recuerda en una cookie (agendaController.elegirEquipo).
+  // Uso: include('partials/sm-equipo-inicio', { equipoInicio })  — equipoInicio puede ser null.
+  const formatoDia = new Intl.DateTimeFormat('es-CL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+%>
+<% if (equipoInicio) { const e = equipoInicio.equipo; const p = equipoInicio.proximo; %>
+  <article class="dash-panel dash-panel--equipo-inicio revelar" id="equipo-inicio" aria-labelledby="titulo-equipo-inicio">
+    <header class="dash-panel__cabecera">
+      <h2 class="dash-panel__titulo" id="titulo-equipo-inicio">Mi equipo</h2>
+      <a class="dash-panel__enlace" href="/agenda">Agenda →</a>
+    </header>
+    <% if (equipoInicio.equipos.length > 1) { %>
+      <nav class="sm-selector-equipos" aria-label="Elegir equipo">
+        <% equipoInicio.equipos.forEach(function (op) { %>
+          <a class="sm-selector-equipos__item <%= op.id === e.id ? 'sm-selector-equipos__item--activo' : '' %>" href="/inicio/equipo?id=<%= op.id %>"
+             <%- op.id === e.id ? 'aria-current="true"' : '' %>>
+            <span class="dash-equipo__escudo" aria-hidden="true"><%- include('escudo-equipo', { equipo: op }) %></span>
+            <span><%= op.nombre %></span>
+          </a>
+        <% }) %>
+      </nav>
+    <% } %>
+    <p class="sm-tarjeta__titulo"><a href="/equipos/<%= e.id %>"><%= e.nombre %></a></p>
+    <p class="dash-panel__nota"><%= e.detalle || 'Sin datos' %> · <%= e.soyCapitan ? 'Capitán' : 'Jugador' %></p>
+    <% if (p) { %>
+      <a class="sm-proximo" href="/partidos/<%= p.id %>">
+        <small>Próximo partido</small>
+        <strong><%= p.desafiante %> vs <%= p.desafiado %></strong>
+        <span><%= formatoDia.format(new Date(p.fecha + 'T00:00:00Z')) %> · <%= p.hora %> · <%= p.cancha %></span>
+      </a>
+    <% } else { %>
+      <p class="dash-panel__nota">No hay partidos programados. <a href="/desafios?equipo=<%= e.id %>">Revisa sus desafíos</a>.</p>
+    <% } %>
+  </article>
+<% } %>

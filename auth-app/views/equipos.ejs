@@ -17,6 +17,7 @@
         <p class="eq-cabecera__stats">Encuentra un equipo cerca de ti y envía tu solicitud</p>
       </div>
       <div class="eq-cabecera__acciones">
+        <a class="btn btn--contorno btn--grande" href="/solicitudes">Mis solicitudes</a><%# NUEVO: PE-011 %>
         <% if (tieneEquipo) { %>
           <a class="btn btn--contorno btn--grande" href="/mis-equipos">Mis equipos</a>
         <% } %>
@@ -32,6 +33,9 @@
         <% } %>
       </div>
     </header>
+
+    <%# NUEVO: PE-021 — equipos que buscan jugadores, con las posiciones y el nivel %>
+    <%- include('partials/sm-equipos-buscan', { equiposQueBuscan: locals.equiposQueBuscan || [] }) %>
 
     <% if (equipos.length === 0) { %>
       <div class="dash-panel eq-panel revelar">
@@ -55,6 +59,7 @@
             <span class="eq-club__escudo" aria-hidden="true"><%- include('partials/escudo-equipo', { equipo }) %></span>
             <span class="eq-club__texto">
               <span class="eq-nombre"><%= equipo.nombre %></span>
+              <a class="sm-enlace-ficha" href="/equipos/<%= equipo.id %>">Ver ficha</a><%# NUEVO: PE-009 %>
               <span class="eq-posicion">Comuna: <%= equipo.zona || 'Sin definir' %></span>
               <span class="eq-posicion">Nivel: <%= equipo.nivel || 'Sin definir' %><% if (equipo.modalidad) { %> · <%= equipo.modalidad %><% } %></span>
             </span>

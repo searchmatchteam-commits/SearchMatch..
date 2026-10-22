@@ -54,9 +54,9 @@ document.addEventListener('DOMContentLoaded', () => {
         primero.focus();
         return;
       }
-      // Evita el doble envío
+      // Evita el doble envío (solo si el envío sigue en pie: una confirmación pendiente lo detiene)
       const boton = formulario.querySelector('button[type="submit"]');
-      if (boton) setTimeout(() => { boton.disabled = true; });
+      if (boton) setTimeout(() => { if (!evento.defaultPrevented) boton.disabled = true; });
     });
 
     // Al corregir un campo se quita su error
@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('form[data-confirmar]').forEach((formulario) => {
     formulario.addEventListener('submit', async (evento) => {
       if (formulario.dataset.confirmado === 'si') return; // ya confirmó: se envía de verdad
+      if (evento.defaultPrevented) return; // la validación (1) encontró errores: no se pregunta nada
       evento.preventDefault();
       if (typeof confirmarAccion !== 'function') return formulario.submit();
       const confirmado = await confirmarAccion({

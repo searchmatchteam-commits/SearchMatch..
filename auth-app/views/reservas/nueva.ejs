@@ -1,0 +1,72 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- PA-002 reservar una cancha (reservaController): fecha, inicio y fin; el costo estimado se calcula
+     en vivo (precio por hora × duración) y el servidor lo vuelve a calcular y lo guarda en la reserva. -->
+<%
+  const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+  const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: `/canchas/${cancha.id}` }) %>
+        <h1 class="eq-cabecera__titulo">Reservar <%= cancha.nombre %></h1>
+        <p class="eq-cabecera__stats"><%= cancha.recinto %> · <%= cancha.comuna %> · <%= pesos.format(cancha.precio) %>/hora</p>
+      </div>
+    </header>
+
+    <div class="sm-columnas">
+      <form class="dash-panel eq-panel sm-form" action="/canchas/<%= cancha.id %>/reservar" method="POST" novalidate data-sm-validar
+            data-costo-por-hora="<%= cancha.precio %>">
+        <h2 class="dash-panel__titulo">Tu reserva</h2>
+        <% if (error) { %><div class="alerta alerta--error" role="alert"><%= error %></div><% } %>
+        <div class="campo <%= erroresCampo.fecha ? 'campo--error' : '' %>">
+          <label for="fecha">Fecha</label>
+          <input type="date" id="fecha" name="fecha" min="<%= hoy %>" value="<%= datos.fecha || '' %>" required data-mensaje="Elige la fecha." aria-describedby="fecha-error" />
+          <small class="campo__error" id="fecha-error"><%= erroresCampo.fecha || '' %></small>
+        </div>
+        <div class="formulario__fila">
+          <div class="campo <%= erroresCampo.inicio ? 'campo--error' : '' %>">
+            <label for="inicio">Desde</label>
+            <input type="time" id="inicio" name="inicio" step="1800" value="<%= datos.inicio || '' %>" required data-mensaje="Indica la hora de inicio." aria-describedby="inicio-error" />
+            <small class="campo__error" id="inicio-error"><%= erroresCampo.inicio || '' %></small>
+          </div>
+          <div class="campo <%= erroresCampo.fin ? 'campo--error' : '' %>">
+            <label for="fin">Hasta</label>
+            <input type="time" id="fin" name="fin" step="1800" value="<%= datos.fin || '' %>" required data-mensaje="Indica la hora de fin." aria-describedby="fin-error" />
+            <small class="campo__error" id="fin-error"><%= erroresCampo.fin || '' %></small>
+          </div>
+        </div>
+        <p class="sm-costo" aria-live="polite">Costo estimado: <strong data-costo-estimado>—</strong></p>
+        <div class="sm-form__acciones">
+          <button type="submit" class="btn btn--verde btn--grande">Confirmar reserva</button>
+          <a class="btn btn--contorno btn--grande" href="/canchas/<%= cancha.id %>">Cancelar</a>
+        </div>
+      </form>
+
+      <div class="dash-panel eq-panel">
+        <h2 class="dash-panel__titulo">Horario de la cancha</h2>
+        <ul class="sm-horario">
+          <% horario.forEach(function (dia) { %>
+            <li class="sm-horario__dia <%= dia.bloques.length === 0 ? 'sm-horario__dia--cerrado' : '' %>">
+              <span class="sm-horario__nombre"><%= dia.nombre %></span>
+              <% if (dia.bloques.length === 0) { %><span class="sm-horario__cerrado">Cerrado</span><% } else { %>
+                <span class="sm-horario__bloques"><% dia.bloques.forEach(function (b) { %><span class="sm-bloque"><%= b.apertura %>–<%= b.cierre %></span><% }) %></span>
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+        <a class="sm-tarjeta__enlace" href="/canchas/<%= cancha.id %>">Ver horarios ocupados →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="/js/sm-reserva.js?v=<%= versionAssets %>" defer></script>
+
+<%- include('../partials/dock', { activo: 'canchas' }) %>
+
+<%- include('../partials/footer') %>

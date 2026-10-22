@@ -112,6 +112,9 @@
       </article>
     <% } %>
 
+    <!-- NUEVO: IN-005 — equipo elegido, su nivel y su próximo partido -->
+    <%- include('partials/sm-equipo-inicio', { equipoInicio: locals.equipoInicio }) %>
+
     <!-- Carta de jugador con foil holográfico -->
     <article class="dash-panel dash-panel--carta revelar">
       <header class="dash-panel__cabecera">

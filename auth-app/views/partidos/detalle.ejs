@@ -1,0 +1,88 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- AG-002 detalle de un partido (partidoController.detalle): ambos equipos, fecha, hora, modalidad con jugadores,
+     cancha, recinto, dirección y teléfono; el resultado solo si ya se jugó; el mensaje del desafío.
+     PA-005 registrar resultado (capitanes, después del partido, una vez) · PA-007 cancelar (capitanes, antes). -->
+<%
+  const formatoDia = new Intl.DateTimeFormat('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+%>
+<section class="eq">
+  <div class="contenedor sm-angosto">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: '/agenda' }) %>
+        <% if (partido.cancelado) { %><span class="sm-estado sm-estado--inactivo">Cancelado</span>
+        <% } else if (jugado) { %><span class="sm-estado sm-rol">Finalizado</span>
+        <% } else { %><span class="sm-estado sm-estado--activo"><%= partido.ya_empezo ? 'Por registrar' : 'Programado' %></span><% } %>
+        <h1 class="eq-cabecera__titulo">Partido</h1>
+        <p class="eq-cabecera__stats"><%= formatoDia.format(new Date(partido.fecha + 'T00:00:00Z')) %> · <%= partido.hora %> h</p>
+      </div>
+    </header>
+
+    <div class="dash-panel eq-panel revelar">
+      <div class="sm-versus">
+        <a class="sm-versus__equipo" href="/equipos/<%= partido.id_equipo_desafiante %>">
+          <small>Desafiante</small><strong><%= partido.desafiante %></strong>
+          <% if (jugado) { %><span class="sm-versus__goles"><%= partido.marcador_desafiante %></span><% } %>
+        </a>
+        <span class="sm-versus__vs" aria-hidden="true">VS</span>
+        <a class="sm-versus__equipo" href="/equipos/<%= partido.id_equipo_desafiado %>">
+          <small>Desafiado</small><strong><%= partido.desafiado %></strong>
+          <% if (jugado) { %><span class="sm-versus__goles"><%= partido.marcador_desafiado %></span><% } %>
+        </a>
+      </div>
+      <dl class="sm-datos">
+        <div><dt>Modalidad</dt><dd><%= partido.modalidad %> · <%= partido.jugadores %> jugadores por equipo</dd></div>
+        <div><dt>Cancha</dt><dd><a href="/canchas/<%= partido.id_cancha %>"><%= partido.cancha %></a> · <%= partido.recinto %></dd></div>
+        <div><dt>Dirección</dt><dd><%= partido.calle %> <%= partido.numero || '' %>, <%= partido.comuna %></dd></div>
+        <div><dt>Teléfono del recinto</dt><dd><% if (partido.telefono) { %><a href="tel:<%= partido.telefono %>"><%= partido.telefono %></a><% } else { %>—<% } %></dd></div>
+        <div><dt>Mensaje del desafío</dt><dd><%= partido.mensaje_desafio || 'Sin mensaje.' %></dd></div>
+        <% if (partido.cancelado) { %><div><dt>Motivo de la cancelación</dt><dd><%= partido.motivo_cancelacion || 'Sin motivo indicado.' %></dd></div><% } %>
+      </dl>
+      <% if (esperandoResultado && !puedeRegistrar) { %><p class="dash-panel__nota">Esperando que un capitán registre el resultado.</p><% } %>
+    </div>
+
+    <% if (puedeRegistrar) { %>
+      <!-- PA-005 -->
+      <form class="dash-panel eq-panel sm-form" action="/partidos/<%= partido.id %>/resultado" method="POST" novalidate data-sm-validar
+            data-confirmar="El resultado no se podrá modificar después y avisaremos al capitán rival." data-confirmar-titulo="¿Registrar este resultado?" data-confirmar-boton="Registrar">
+        <h2 class="dash-panel__titulo">Registrar resultado</h2>
+        <div class="formulario__fila">
+          <div class="campo">
+            <label for="marcador_desafiante">Goles de <%= partido.desafiante %></label>
+            <input type="number" id="marcador_desafiante" name="marcador_desafiante" min="0" max="99" step="1" inputmode="numeric" required data-mensaje="Ingresa el marcador." />
+            <small class="campo__error"></small>
+          </div>
+          <div class="campo">
+            <label for="marcador_desafiado">Goles de <%= partido.desafiado %></label>
+            <input type="number" id="marcador_desafiado" name="marcador_desafiado" min="0" max="99" step="1" inputmode="numeric" required data-mensaje="Ingresa el marcador." />
+            <small class="campo__error"></small>
+          </div>
+        </div>
+        <div class="sm-form__acciones"><button type="submit" class="btn btn--verde">Registrar resultado</button></div>
+      </form>
+    <% } %>
+
+    <% if (puedeCancelar) { %>
+      <!-- PA-007 -->
+      <form class="dash-panel eq-panel sm-form sm-peligro" action="/partidos/<%= partido.id %>/cancelar" method="POST"
+            data-confirmar="Se liberará la reserva de la cancha y avisaremos a los integrantes de ambos equipos. El puntaje no cambia."
+            data-confirmar-titulo="¿Cancelar el partido?" data-confirmar-boton="Cancelar partido">
+        <h2 class="dash-panel__titulo">Cancelar partido</h2>
+        <div class="campo">
+          <label for="motivo">Motivo <span class="sm-opcional">(opcional)</span></label>
+          <input type="text" id="motivo" name="motivo" maxlength="200" placeholder="Ej. No completamos el equipo" />
+        </div>
+        <div class="sm-form__acciones"><button type="submit" class="btn btn--contorno sm-btn-peligro">Cancelar partido</button></div>
+      </form>
+    <% } %>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: '' }) %>
+
+<%- include('../partials/footer') %>

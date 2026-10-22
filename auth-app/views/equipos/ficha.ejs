@@ -1,0 +1,191 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- PE-009 ficha pública de un equipo (equipoFichaController.ficha):
+     escudo, nombre, comuna, modalidad, puntaje y nivel · Postular (no integrantes) · Desafiar (capitanes de otros equipos)
+     · integrantes: solo las acciones de su rol · inactivo: aviso y acciones deshabilitadas
+     · secciones plantel, historial y comentarios (PE-008; AD-013 los administradores pueden retirarlos).
+     PE-017: el capitán desactiva o reactiva el equipo aquí. Nunca se muestran correos ni teléfonos. -->
+<%
+  const formatoFecha = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', dateStyle: 'medium', timeStyle: 'short' });
+  const formatoDia = new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeZone: 'UTC' });
+  const advertencia = `Quedará fuera de búsquedas y rivales recomendados. Se cancelarán ${pendientes.desafios} ${pendientes.desafios === 1 ? 'desafío pendiente' : 'desafíos pendientes'} y ${pendientes.partidos} ${pendientes.partidos === 1 ? 'partido futuro' : 'partidos futuros'}, y avisaremos a los rivales. El historial y el puntaje se conservan: podrás reactivarlo.`;
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__identidad">
+        <div class="eq-escudo"><span class="eq-escudo__imagen"><%- include('../partials/escudo-equipo', { equipo }) %></span></div>
+        <div class="eq-cabecera__texto">
+          <%- include('../partials/boton-volver', { fallbackUrl: '/equipos' }) %>
+          <% if (!equipo.activo) { %><span class="sm-estado sm-estado--inactivo">Equipo inactivo</span><% } %>
+          <h1 class="eq-cabecera__titulo"><%= equipo.nombre %></h1>
+          <ul class="eq-cabecera__datos">
+            <li>Comuna: <strong><%= equipo.comuna || 'Sin definir' %></strong></li>
+            <li>Nivel: <strong><%= equipo.nivel || 'Sin nivel' %></strong> · <%= equipo.puntaje_nivel %> pts</li>
+          </ul>
+          <p class="eq-cabecera__stats"><%= equipo.modalidad || '' %><% if (equipo.jugadores) { %> · <%= equipo.jugadores %> jugadores<% } %><% if (equipo.region) { %> · <%= equipo.region %><% } %></p>
+          <% if (buscadas.length > 0 && equipo.activo) { %><p class="eq-cabecera__stats">Busca: <strong class="texto-verde"><%= buscadas.join(', ') %></strong></p><% } %>
+        </div>
+      </div>
+
+      <div class="eq-cabecera__acciones">
+        <% if (relacion.esCapitan) { %>
+          <% if (equipo.activo) { %>
+            <a class="btn btn--verde btn--grande" href="/mi-equipo?equipo=<%= equipo.id %>">Administrar</a>
+            <a class="btn btn--contorno btn--grande" href="/equipos/<%= equipo.id %>/posiciones">Posiciones que buscamos</a>
+          <% } else { %>
+            <form action="/equipos/<%= equipo.id %>/reactivar" method="POST" data-confirmar="Volverá a aparecer en búsquedas con su puntaje anterior (<%= equipo.puntaje_nivel %> pts)." data-confirmar-titulo="¿Reactivar <%= equipo.nombre %>?" data-confirmar-boton="Reactivar">
+              <button type="submit" class="btn btn--verde btn--grande">Reactivar equipo</button>
+            </form>
+          <% } %>
+        <% } else if (relacion.esIntegrante) { %>
+          <form action="/equipos/<%= equipo.id %>/salir" method="POST" data-confirmar="Dejarás de ser parte del plantel de <%= equipo.nombre %>." data-confirmar-titulo="¿Salir del equipo?" data-confirmar-boton="Salir">
+            <input type="hidden" name="volver" value="/mis-equipos" />
+            <button type="submit" class="btn btn--contorno btn--grande sm-btn-peligro">Salir del equipo</button>
+          </form>
+        <% } else { %>
+          <% if (!equipo.activo) { %>
+            <button type="button" class="btn btn--grande" disabled>Postular</button>
+          <% } else if (relacion.postulo) { %>
+            <button type="button" class="btn btn--grande" disabled>Solicitud enviada ✓</button>
+          <% } else { %>
+            <a class="btn btn--verde btn--grande" href="#postular">Postular</a>
+          <% } %>
+          <% if (relacion.tieneEquipoPropio) { %>
+            <% if (!equipo.activo || !relacion.idEquipoParaDesafiar) { %>
+              <button type="button" class="btn btn--grande" disabled title="<%= equipo.activo ? 'Solo se desafía a equipos de tu misma modalidad' : 'El equipo está inactivo' %>">Desafiar</button>
+            <% } else if (desafioPendiente) { %>
+              <button type="button" class="btn btn--grande" disabled>Desafío pendiente</button>
+            <% } else { %>
+              <a class="btn btn--contorno btn--grande" href="#desafiar">Desafiar</a>
+            <% } %>
+          <% } %>
+        <% } %>
+      </div>
+    </header>
+
+    <% if (!equipo.activo) { %>
+      <p class="sm-aviso-limite" role="note">Este equipo está inactivo: no recibe solicitudes ni desafíos.</p>
+    <% } %>
+
+    <!-- Postular y desafiar (solo si corresponde) -->
+    <% if (equipo.activo && !relacion.esIntegrante && !relacion.postulo) { %>
+      <form class="dash-panel eq-panel sm-form" id="postular" action="/equipos/<%= equipo.id %>/unirme" method="POST" novalidate data-sm-validar>
+        <h2 class="dash-panel__titulo">Postular a <%= equipo.nombre %></h2>
+        <div class="campo">
+          <label for="mensaje-postular">Mensaje para el capitán</label>
+          <textarea id="mensaje-postular" name="mensaje" maxlength="200" required data-mensaje="Cuéntale al capitán quién eres." placeholder="Ej. Juego de lateral derecho y puedo los fines de semana."></textarea>
+          <small class="campo__error"></small>
+        </div>
+        <div class="sm-form__acciones"><button type="submit" class="btn btn--verde">Enviar solicitud</button></div>
+      </form>
+    <% } %>
+    <% if (equipo.activo && relacion.idEquipoParaDesafiar && !desafioPendiente && !relacion.esIntegrante) { %>
+      <form class="dash-panel eq-panel sm-form" id="desafiar" action="/mi-equipo/desafios/<%= equipo.id %>" method="POST">
+        <h2 class="dash-panel__titulo">Desafiar a <%= equipo.nombre %></h2>
+        <div class="campo">
+          <label for="mensaje-desafio">Mensaje <span class="sm-opcional">(opcional)</span></label>
+          <textarea id="mensaje-desafio" name="mensaje" maxlength="200" placeholder="Ej. ¿Jugamos el sábado en la tarde?"></textarea>
+        </div>
+        <div class="sm-form__acciones"><button type="submit" class="btn btn--verde">Enviar desafío</button></div>
+      </form>
+    <% } %>
+
+    <div class="sm-columnas">
+      <!-- Plantel -->
+      <section class="dash-panel eq-panel revelar" aria-labelledby="titulo-plantel">
+        <header class="dash-panel__cabecera">
+          <h2 class="dash-panel__titulo" id="titulo-plantel">Plantel</h2>
+          <span class="eq-contador"><%= plantel.length %></span>
+        </header>
+        <% if (plantel.length === 0) { %>
+          <p class="dash-panel__nota">Este equipo aún no tiene jugadores.</p>
+        <% } else { %>
+          <ul class="sm-filas">
+            <% plantel.forEach(function (j) { %>
+              <li class="sm-fila">
+                <strong><%= j.nombreCarta %></strong>
+                <span><%= j.posicion %></span>
+                <span class="sm-rol"><%= j.capitan ? 'Capitán' : 'Jugador' %></span>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </section>
+
+      <!-- Historial -->
+      <section class="dash-panel eq-panel revelar" aria-labelledby="titulo-historial">
+        <header class="dash-panel__cabecera">
+          <h2 class="dash-panel__titulo" id="titulo-historial">Historial</h2>
+        </header>
+        <% if (historial.length === 0) { %>
+          <p class="dash-panel__nota">Todavía no hay partidos jugados con resultado.</p>
+        <% } else { %>
+          <ul class="sm-filas">
+            <% historial.forEach(function (p) { %>
+              <li class="sm-fila">
+                <a href="/partidos/<%= p.id %>"><%= p.desafiante %> <%= p.marcador_desafiante %> – <%= p.marcador_desafiado %> <%= p.desafiado %></a>
+                <span><%= formatoDia.format(new Date(p.fecha + 'T00:00:00Z')) %></span>
+                <span class="sm-estado <%= p.resultado === 'Ganado' ? 'sm-estado--activo' : p.resultado === 'Perdido' ? 'sm-estado--inactivo' : '' %> sm-rol"><%= p.resultado %></span>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </section>
+    </div>
+
+    <!-- PE-008 comentarios -->
+    <section class="dash-panel eq-panel revelar" id="comentarios" aria-labelledby="titulo-comentarios">
+      <header class="dash-panel__cabecera">
+        <h2 class="dash-panel__titulo" id="titulo-comentarios">Comentarios</h2>
+        <span class="eq-contador"><%= comentarios.length %></span>
+      </header>
+      <% if (comentarios.length === 0) { %>
+        <p class="dash-panel__nota">Aún no hay comentarios. ¡Sé el primero en dejar tu opinión!</p>
+      <% } else { %>
+        <ul class="sm-comentarios">
+          <% comentarios.forEach(function (c) { %>
+            <li class="sm-comentario">
+              <p class="sm-comentario__autor"><strong><%= c.autor %></strong> · <small><%= formatoFecha.format(c.fecha) %></small></p>
+              <p class="sm-comentario__texto"><%= c.mensaje %></p>
+              <% if (usuario.esAdmin) { %>
+                <form action="/comentarios/<%= c.id %>/ocultar" method="POST" data-confirmar="El comentario dejará de verse para todos y avisaremos a su autor." data-confirmar-titulo="¿Retirar este comentario?" data-confirmar-boton="Retirar">
+                  <button type="submit" class="sm-enlace">Retirar por moderación</button>
+                </form>
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+      <form action="/equipos/<%= equipo.id %>/comentarios#comentarios" method="POST" class="sm-form" novalidate data-sm-validar>
+        <div class="campo <%= errorComentario ? 'campo--error' : '' %>">
+          <label for="comentario">Deja tu comentario</label>
+          <textarea id="comentario" name="mensaje" maxlength="<%= largoComentario %>" required data-mensaje="El comentario no puede estar vacío."
+                    aria-describedby="comentario-error comentario-ayuda" placeholder="Cuenta cómo fue jugar con o contra este equipo."><%= mensaje %></textarea>
+          <small class="campo__error" id="comentario-error"><%= errorComentario || '' %></small>
+          <small class="campo__ayuda" id="comentario-ayuda">Máximo <%= largoComentario %> caracteres. Sé respetuoso: los administradores retiran comentarios ofensivos.</small>
+        </div>
+        <div class="sm-form__acciones"><button type="submit" class="btn btn--verde">Publicar</button></div>
+      </form>
+    </section>
+
+    <% if (relacion.esCapitan && equipo.activo) { %>
+      <!-- PE-017 desactivar (solo el capitán) -->
+      <section class="dash-panel eq-panel sm-peligro" aria-labelledby="titulo-peligro">
+        <h2 class="dash-panel__titulo" id="titulo-peligro">Desactivar equipo</h2>
+        <p class="dash-panel__nota"><%= advertencia %></p>
+        <form action="/equipos/<%= equipo.id %>/desactivar" method="POST" data-confirmar="<%= advertencia %>" data-confirmar-titulo="¿Desactivar <%= equipo.nombre %>?" data-confirmar-boton="Desactivar">
+          <button type="submit" class="btn btn--contorno sm-btn-peligro">Desactivar equipo</button>
+        </form>
+      </section>
+    <% } %>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: 'equipos' }) %>
+
+<%- include('../partials/footer') %>

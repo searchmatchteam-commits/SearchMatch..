@@ -1,0 +1,69 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- PA-001 programar el partido de un desafío aceptado (partidoController): fecha, hora, modalidad y cancha.
+     El servidor valida disponibilidad, que la cancha esté activa y admita la modalidad, y que no haya choques. -->
+<%
+  const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
+  const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+%>
+<section class="eq">
+  <div class="contenedor sm-angosto">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: `/desafios/${desafio.id}` }) %>
+        <h1 class="eq-cabecera__titulo">Programar partido</h1>
+        <p class="eq-cabecera__stats"><%= desafio.desafiante %> vs <%= desafio.desafiado %> · duración <%= duracion %> min</p>
+      </div>
+    </header>
+
+    <form class="dash-panel eq-panel sm-form" action="/partidos/programar/<%= desafio.id %>" method="POST" novalidate data-sm-validar>
+      <% if (error) { %><div class="alerta alerta--error" role="alert"><%= error %></div><% } %>
+      <div class="formulario__fila">
+        <div class="campo <%= erroresCampo.fecha ? 'campo--error' : '' %>">
+          <label for="fecha">Fecha</label>
+          <input type="date" id="fecha" name="fecha" min="<%= hoy %>" value="<%= datos.fecha || '' %>" required data-mensaje="Elige la fecha." aria-describedby="fecha-error" />
+          <small class="campo__error" id="fecha-error"><%= erroresCampo.fecha || '' %></small>
+        </div>
+        <div class="campo <%= erroresCampo.hora ? 'campo--error' : '' %>">
+          <label for="hora">Hora de inicio</label>
+          <input type="time" id="hora" name="hora" step="1800" value="<%= datos.hora || '' %>" required data-mensaje="Indica la hora." aria-describedby="hora-error" />
+          <small class="campo__error" id="hora-error"><%= erroresCampo.hora || '' %></small>
+        </div>
+      </div>
+      <div class="campo <%= erroresCampo.id_modalidad ? 'campo--error' : '' %>">
+        <label for="id_modalidad">Modalidad</label>
+        <select id="id_modalidad" name="id_modalidad" required data-mensaje="Elige la modalidad." aria-describedby="id_modalidad-error">
+          <% modalidades.forEach(function (m) { %>
+            <option value="<%= m.id %>" <%= String(datos.idModalidad) === String(m.id) ? 'selected' : '' %>><%= m.nombre %> (<%= m.jugadores %> jugadores)</option>
+          <% }) %>
+        </select>
+        <small class="campo__error" id="id_modalidad-error"><%= erroresCampo.id_modalidad || '' %></small>
+      </div>
+      <div class="campo <%= erroresCampo.id_cancha ? 'campo--error' : '' %>">
+        <label for="id_cancha">Cancha</label>
+        <% if (canchas.length === 0) { %>
+          <p class="dash-panel__nota">No hay canchas disponibles todavía.</p>
+        <% } else { %>
+          <select id="id_cancha" name="id_cancha" required data-mensaje="Elige la cancha." aria-describedby="id_cancha-error">
+            <option value="">Elige la cancha</option>
+            <% canchas.forEach(function (c) { %>
+              <option value="<%= c.id %>" <%= String(datos.idCancha) === String(c.id) ? 'selected' : '' %>><%= c.nombre %> · <%= c.recinto %> (<%= c.comuna %>) · <%= c.modalidad %> · <%= pesos.format(c.precio) %>/h</option>
+            <% }) %>
+          </select>
+        <% } %>
+        <small class="campo__error" id="id_cancha-error"><%= erroresCampo.id_cancha || '' %></small>
+        <small class="campo__ayuda">Revisa el horario de cada cancha en <a href="/canchas" target="_blank" rel="noopener">Canchas</a>. La cancha queda reservada a tu nombre.</small>
+      </div>
+      <div class="sm-form__acciones">
+        <button type="submit" class="btn btn--verde btn--grande">Programar partido</button>
+        <a class="btn btn--contorno btn--grande" href="/desafios/<%= desafio.id %>">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</section>
+
+<%- include('../partials/dock', { activo: 'mis-equipos' }) %>
+
+<%- include('../partials/footer') %>

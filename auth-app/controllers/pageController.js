@@ -5,6 +5,7 @@ const jugadorModel = require('../models/jugadorModel');
 const equipoModel = require('../models/equipoModel');
 const { POSICIONES, ESTADISTICAS, calcularMedia, nombreEnCarta } = require('../config/perfilJugador');
 const { AVISOS_RESPUESTA_INVITACION, AVISOS_SALIDA } = require('./equipoController');
+const agendaController = require('./agendaController'); // NUEVO: IN-005
 
 // GET / → landing page pública.
 function landing(req, res) {
@@ -100,6 +101,7 @@ async function dashboard(req, res, next) {
       leerInvitaciones(req.usuario),
     ]);
     if (perfil && !perfil.perfilCompleto) return res.redirect('/perfil-jugador');
+    const equipoInicio = await agendaController.datosEquipoInicio(req, misEquipos); // NUEVO: IN-005
 
     res.render('dashboard', {
       titulo: 'Mi panel',
@@ -108,6 +110,7 @@ async function dashboard(req, res, next) {
       miEquipo,
       misEquipos,
       invitaciones,
+      equipoInicio, // NUEVO: IN-005
       aviso: AVISOS_RESPUESTA_INVITACION[req.query.invitacion] || AVISOS_SALIDA[req.query.salida] || null,
     });
   } catch (err) {

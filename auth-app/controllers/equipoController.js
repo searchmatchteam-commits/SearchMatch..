@@ -28,6 +28,8 @@ const { LONGITUD_MAXIMA_MENSAJE_SOLICITUD } = require('../middlewares/validators
 const { NIVELES, POSICIONES, ESTADISTICAS, calcularMedia } = require('../config/perfilJugador');
 const { MODALIDADES, DETALLE_NIVEL, BARRAS_NIVEL, MAX_EQUIPOS_COMO_CAPITAN } = require('../config/equipo'); // CORRECCIÓN: regla 5
 const ubicacionModel = require('../models/ubicacionModel'); // CORRECCIÓN: regla 11
+const avisosEquipo = require('./avisosEquipo');
+const equipoFichaModel = require('../models/equipoFichaModel'); // NUEVO: PE-021 / PE-017 // NUEVO: NT-001 (notificaciones de solicitudes, invitaciones y desafíos)
 
 // CORRECCIÓN: regla 5 — aviso cuando la cuenta ya capitanea el máximo de equipos.
 const AVISO_LIMITE_EQUIPOS = `Alcanzaste el límite de ${MAX_EQUIPOS_COMO_CAPITAN} `
@@ -291,6 +293,7 @@ async function misEquipos(req, res, next) {
       misEquipos: equipos,
       puedeCrear: !limiteAlcanzado, // CORRECCIÓN: regla 5 (MAX_EQUIPOS_COMO_CAPITAN)
       avisoLimite: limiteAlcanzado ? AVISO_LIMITE_EQUIPOS : null, // CORRECCIÓN: regla 5
+      equiposInactivos: await equipoFichaModel.listarInactivosDeCapitan(req.usuario.idAuth), // NUEVO: PE-017
       aviso: AVISOS_SALIDA[req.query.salida] || (req.query.aviso === 'limite' ? AVISO_LIMITE_EQUIPOS : null),
     });
   } catch (err) {
@@ -315,6 +318,7 @@ async function directorio(req, res, next) {
       tieneEquipo: Boolean(miEquipo),
       puedeCrear: !limiteAlcanzado, // CORRECCIÓN: regla 5 (MAX_EQUIPOS_COMO_CAPITAN)
       avisoLimite: limiteAlcanzado ? AVISO_LIMITE_EQUIPOS : null, // CORRECCIÓN: regla 5
+      equiposQueBuscan: await equipoFichaModel.listarEquiposQueBuscan(), // NUEVO: PE-021
       LONGITUD_MENSAJE: LONGITUD_MAXIMA_MENSAJE_SOLICITUD,
       aviso: AVISOS_UNION[req.query.aviso] || null,
     });
@@ -339,6 +343,7 @@ async function unirse(req, res, next) {
     const resultado = Number.isInteger(idEquipo) && idEquipo > 0
       ? await equipoModel.solicitarUnion(req.usuario.idAuth, idEquipo, req.datosSolicitud.mensaje)
       : 'inexistente';
+    if (resultado === 'enviada') await avisosEquipo.solicitudEnviada(req.usuario, idEquipo); // NUEVO: NT-001 / PE-004
     if (quiereJson) {
       return res.json({ resultado, mensaje: AVISOS_UNION[resultado] });
     }
@@ -359,6 +364,7 @@ async function responder(req, res, next) {
     const resultado = Number.isInteger(idSolicitud) && idSolicitud > 0 && (accion === 'aceptar' || accion === 'rechazar')
       ? await equipoModel.responderSolicitud(req.usuario.idAuth, idSolicitud, accion === 'aceptar')
       : 'inexistente';
+    if (resultado !== 'inexistente') await avisosEquipo.solicitudRespondida(idSolicitud, resultado); // NUEVO: NT-001 / PE-005
     return res.redirect(`/mi-equipo?aviso=${resultado}`);
   } catch (err) {
     return pasarError(err, next);
@@ -502,6 +508,7 @@ async function desafiar(req, res, next) {
     const resultado = Number.isInteger(idRival) && idRival > 0
       ? await equipoModel.enviarDesafio(req.usuario.idAuth, idRival, req.datosDesafio.mensaje)
       : 'inexistente';
+    if (resultado === 'enviado') await avisosEquipo.desafioEnviado(req.usuario, idRival); // NUEVO: NT-001 / DE-008
     if (quiereJson) return res.json({ resultado, mensaje: AVISOS_DESAFIO[resultado] });
     return res.redirect(`/mi-equipo?desafio=${resultado}`);
   } catch (err) {
@@ -521,6 +528,7 @@ async function invitar(req, res, next) {
     const resultado = idEquipo && idJugador
       ? await equipoModel.invitarJugador(req.usuario.idAuth, idEquipo, idJugador)
       : 'inexistente';
+    if (resultado === 'enviada') await avisosEquipo.invitacionEnviada(idEquipo, idJugador); // NUEVO: NT-001 / PE-022
     if (quiereJson) return res.json({ resultado, mensaje: AVISOS_INVITACION[resultado] });
     return res.redirect(`/mi-equipo?invitacion=${resultado}`);
   } catch (err) {
@@ -539,6 +547,7 @@ async function responderInvitacion(req, res, next) {
     const resultado = idInvitacion && (accion === 'aceptar' || accion === 'rechazar')
       ? await equipoModel.responderInvitacion(req.usuario.idAuth, idInvitacion, accion === 'aceptar')
       : 'inexistente';
+    if (resultado === 'aceptada') await avisosEquipo.invitacionAceptada(idInvitacion); // NUEVO: NT-001 / PE-023
     return res.redirect(`/dashboard?invitacion=${resultado}`);
   } catch (err) {
     return pasarError(err, next);

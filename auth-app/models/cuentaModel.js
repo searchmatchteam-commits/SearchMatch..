@@ -142,7 +142,27 @@ function solicitarCambioCorreo(supabase, correo, urlRedireccion) {
   return supabase.auth.updateUser({ email: correo }, { emailRedirectTo: urlRedireccion });
 }
 
+/* =====================================================================
+   PE-020 · Desactivar mi cuenta
+   ===================================================================== */
+
+/** Equipos activos que capitanea la cuenta (regla 4: debe desactivarlos antes de irse). */
+async function equiposActivosComoCapitan(authId) {
+  const { rows } = await pool.query(
+    `SELECT e.id, e.nombre FROM equipo e JOIN usuario u ON u.id = e.id_usuario_creador WHERE u.auth_id = $1 AND e.activo ORDER BY e.nombre`,
+    [authId]
+  );
+  return rows;
+}
+
+/** Deja la cuenta inactiva: no entra, no aparece en planteles ni búsquedas y no recibe notificaciones. */
+async function desactivarCuenta(authId) {
+  await pool.query('UPDATE usuario SET activo = FALSE WHERE auth_id = $1', [authId]);
+}
+
 module.exports = {
+  equiposActivosComoCapitan,
+  desactivarCuenta,
   guardarAceptacion,
   obtenerDatosCuenta,
   correoUsadoPorOtraCuenta,

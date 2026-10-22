@@ -75,6 +75,14 @@
           <span>Necesitarás tu contraseña actual.</span>
         </li>
         <li>
+          <a href="/solicitudes">Mis solicitudes a equipos</a>
+          <span>Revisa su estado o cancela las pendientes.</span>
+        </li>
+        <li>
+          <a href="/cuenta/desactivar">Desactivar mi cuenta</a>
+          <span>Dejarás de aparecer en la plataforma. Te pediremos tu contraseña.</span>
+        </li>
+        <li>
           <a href="/terminos"><%= legal.terminos.titulo %></a>
           <span>Aceptaste la versión <%= guardados.terminosVersion || '—' %><% if (guardados.aceptadoEn) { %> el <%= new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', dateStyle: 'long' }).format(guardados.aceptadoEn) %><% } %> · vigente <%= legal.terminos.version %></span>
         </li>

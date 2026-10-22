@@ -85,6 +85,15 @@
           <% if (!['dashboard', 'equipo', 'perfil'].includes(locals.pagina)) { %>
             <a class="btn btn--contorno btn--chico" href="/dashboard">Mi panel</a>
           <% } %>
+          <!-- NUEVO: AG-001 agenda y NT-002/NT-003 campana con el contador de no leídas -->
+          <a class="sm-icono-nav" href="/agenda" title="Agenda de partidos" aria-label="Agenda de partidos">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
+          </a>
+          <a class="sm-icono-nav" href="/notificaciones" title="Notificaciones"
+             aria-label="Notificaciones<%= locals.notificacionesSinLeer ? `, ${notificacionesSinLeer} sin leer` : '' %>">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 20a2 2 0 0 0 4 0" /></svg>
+            <% if (locals.notificacionesSinLeer) { %><span class="sm-icono-nav__contador"><%= notificacionesSinLeer > 99 ? '99+' : notificacionesSinLeer %></span><% } %>
+          </a>
           <% if (usuario.esAdmin) { %>
             <!-- NUEVO: AR-004 — acceso al módulo de administración, solo para administradores -->
             <a class="btn btn--contorno btn--chico" href="/admin">Admin</a>
