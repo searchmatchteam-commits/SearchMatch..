@@ -65,6 +65,27 @@
       </div>
     </div>
 
+    <% if (cancha.latitud !== null && cancha.longitud !== null) { %>
+      <!-- DE-003: ubicación del recinto en el mapa (mismo script que la lista de canchas) -->
+      <div class="dash-panel eq-panel revelar">
+        <header class="dash-panel__cabecera">
+          <h2 class="dash-panel__titulo">Ubicación</h2>
+          <a class="dash-panel__enlace" href="https://www.openstreetmap.org/?mlat=<%= cancha.latitud %>&mlon=<%= cancha.longitud %>#map=17/<%= cancha.latitud %>/<%= cancha.longitud %>" target="_blank" rel="noopener">Abrir mapa grande →</a>
+        </header>
+        <div class="sm-mapa sm-mapa--ficha" id="mapa-canchas" role="region" aria-label="Ubicación de <%= cancha.recinto %>"></div>
+      </div>
+      <script type="application/json" id="datos-mapa"><%- JSON.stringify([{
+        nombre: cancha.recinto, comuna: cancha.comuna, direccion: cancha.direccion,
+        latitud: cancha.latitud, longitud: cancha.longitud,
+        canchas: [{ id: cancha.id, nombre: cancha.nombre, modalidad: cancha.modalidad, precio: cancha.precio }],
+      }]).replace(/</g, '\\u003c') %></script>
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+              integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+      <script src="/js/canchas-mapa.js?v=<%= versionAssets %>" defer></script>
+    <% } %>
+
     <!-- DE-006: próximos 7 días con los horarios ocupados por reservas confirmadas -->
     <div class="dash-panel eq-panel revelar">
       <header class="dash-panel__cabecera">

@@ -20,7 +20,8 @@ function leerFiltros(query) {
     idRegion: idValido(query.id_region),
     idComuna: idValido(query.id_comuna),
     idModalidad: idValido(query.id_modalidad),
-    vista: query.vista === 'mapa' ? 'mapa' : 'lista',
+    // DE-003: el mapa se muestra de entrada (con la lista debajo); "lista" deja solo la lista.
+    vista: query.vista === 'lista' ? 'lista' : 'mapa',
   };
 }
 
@@ -74,9 +75,9 @@ async function listar(req, res, next) {
       filtros,
       hayFiltros: Boolean(filtros.textoIngresado || filtros.idRegion || filtros.idComuna || filtros.idModalidad),
       largoMinimo: LARGO_MINIMO_BUSQUEDA,
-      // Enlaces "Lista" y "Mapa" que conservan los filtros
-      urlLista: `/canchas?${parametros.toString()}`,
-      urlMapa: `/canchas?${parametros.toString()}${parametros.toString() ? '&' : ''}vista=mapa`,
+      // Enlaces "Mapa" y "Lista" que conservan los filtros
+      urlMapa: `/canchas?${parametros.toString()}`,
+      urlLista: `/canchas?${parametros.toString()}${parametros.toString() ? '&' : ''}vista=lista`,
       recintosMapa: recintosParaMapa(canchas),
     });
   } catch (err) {

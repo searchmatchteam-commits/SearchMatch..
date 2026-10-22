@@ -17,14 +17,16 @@
         <h1 class="eq-cabecera__titulo">Canchas</h1>
         <p class="eq-cabecera__stats">Encuentra dónde jugar según ubicación, tarifa y modalidad.</p>
       </div>
-      <div class="eq-cabecera__acciones"><a class="btn btn--contorno btn--grande" href="/reservas">Mis reservas</a></div><%# AG-003 %>
-      <% if (hayCanchas) { %>
-        <!-- DE-003: alternar vista (enlaces: conservan los filtros) -->
-        <nav class="sm-pestanas sm-pestanas--chicas" aria-label="Tipo de vista">
-          <a class="sm-pestanas__item <%= filtros.vista === 'lista' ? 'sm-pestanas__item--activa' : '' %>" href="<%= urlLista %>" <%- filtros.vista === 'lista' ? 'aria-current="page"' : '' %>>Lista</a>
-          <a class="sm-pestanas__item <%= filtros.vista === 'mapa' ? 'sm-pestanas__item--activa' : '' %>" href="<%= urlMapa %>" <%- filtros.vista === 'mapa' ? 'aria-current="page"' : '' %>>Mapa</a>
-        </nav>
-      <% } %>
+      <div class="eq-cabecera__acciones sm-acciones-canchas">
+        <% if (hayCanchas) { %>
+          <!-- DE-003: alternar vista (enlaces: conservan los filtros) -->
+          <nav class="sm-pestanas" aria-label="Tipo de vista">
+            <a class="sm-pestanas__item <%= filtros.vista === 'mapa' ? 'sm-pestanas__item--activa' : '' %>" href="<%= urlMapa %>" <%- filtros.vista === 'mapa' ? 'aria-current="page"' : '' %>>Mapa</a>
+            <a class="sm-pestanas__item <%= filtros.vista === 'lista' ? 'sm-pestanas__item--activa' : '' %>" href="<%= urlLista %>" <%- filtros.vista === 'lista' ? 'aria-current="page"' : '' %>>Lista</a>
+          </nav>
+        <% } %>
+        <a class="btn btn--contorno btn--grande" href="/reservas">Mis reservas</a><%# AG-003 %>
+      </div>
     </header>
 
     <% if (!hayCanchas) { %>
@@ -73,15 +75,16 @@
           </p>
           <a class="btn btn--contorno" href="/canchas?vista=<%= filtros.vista %>">Limpiar filtros</a>
         </div>
-      <% } else if (filtros.vista === 'mapa') { %>
-        <!-- DE-003: mapa con un marcador por recinto (Leaflet + OpenStreetMap, ver canchas-mapa.js) -->
-        <div class="dash-panel eq-panel">
-          <p class="dash-panel__nota"><%= recintosMapa.length %> <%= recintosMapa.length === 1 ? 'recinto' : 'recintos' %> en el mapa · <%= canchas.length %> <%= canchas.length === 1 ? 'cancha' : 'canchas' %></p>
-          <div class="sm-mapa" id="mapa-canchas" role="region" aria-label="Mapa de recintos con canchas"></div>
-          <noscript><p class="dash-panel__nota">El mapa necesita JavaScript. Usa la vista de lista.</p></noscript>
-        </div>
-        <script type="application/json" id="datos-mapa"><%- JSON.stringify(recintosMapa).replace(/</g, '\\u003c') %></script>
       <% } else { %>
+        <% if (filtros.vista === 'mapa') { %>
+          <!-- DE-003: mapa con un marcador por recinto (Leaflet + OpenStreetMap, ver canchas-mapa.js); la lista va debajo -->
+          <div class="dash-panel eq-panel">
+            <p class="dash-panel__nota"><%= recintosMapa.length %> <%= recintosMapa.length === 1 ? 'recinto' : 'recintos' %> en el mapa · toca un marcador para ver sus canchas</p>
+            <div class="sm-mapa" id="mapa-canchas" role="region" aria-label="Mapa de recintos con canchas"></div>
+            <noscript><p class="dash-panel__nota">El mapa necesita JavaScript. Usa la vista de lista.</p></noscript>
+          </div>
+          <script type="application/json" id="datos-mapa"><%- JSON.stringify(recintosMapa).replace(/</g, '\\u003c') %></script>
+        <% } %>
         <!-- DE-003: lista -->
         <p class="sm-resultados"><%= canchas.length %> <%= canchas.length === 1 ? 'cancha encontrada' : 'canchas encontradas' %></p>
         <ul class="sm-tarjetas sm-tarjetas--grilla">
