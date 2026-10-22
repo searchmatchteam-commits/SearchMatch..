@@ -1,0 +1,40 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'pizarra' }) %>
+
+<!-- AR-008: contraseña nueva, después de abrir el enlace del correo (cuentaController.guardarNuevaPassword).
+     Al guardar, la anterior deja de servir y se vuelve al login. -->
+<section class="auth auth--login">
+  <%- include('../partials/auth-marca', { titulo: 'Una clave nueva, <em>y a jugar</em>.' }) %>
+
+  <div class="tarjeta auth__tarjeta">
+    <span class="auth__filo" aria-hidden="true"></span>
+
+    <span class="etiqueta-verde">Recuperar acceso</span>
+    <h1 class="auth__titulo">Crea tu nueva contraseña</h1>
+    <p class="auth__subtitulo">Mínimo 8 caracteres, combinando letras y números.</p>
+
+    <form action="/recuperar/nueva" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+      <% [['password', 'Contraseña nueva', 'new-password'], ['confirmar_password', 'Confirmar contraseña', 'new-password']].forEach(function ([nombre, etiqueta, auto]) { %>
+        <div class="campo <%= erroresCampo[nombre] ? 'campo--error' : '' %>">
+          <label for="<%= nombre %>"><%= etiqueta %></label>
+          <div class="campo__control">
+            <svg class="campo__icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+            <input type="password" id="<%= nombre %>" name="<%= nombre %>" autocomplete="<%= auto %>" minlength="8"
+                   aria-describedby="<%= nombre %>-error" required data-mensaje="Completa este campo." />
+            <%- include('../partials/sm-ojo', { campo: nombre }) %>
+          </div>
+          <small class="campo__error" id="<%= nombre %>-error"><%= erroresCampo[nombre] || '' %></small>
+        </div>
+      <% }) %>
+
+      <button type="submit" class="btn btn--verde btn--bloque btn--grande auth-btn" data-ripple="claro">
+        <span class="auth-btn__halo" aria-hidden="true"></span>
+        <span class="btn__texto">GUARDAR CONTRASEÑA</span>
+        <span class="btn__flecha" aria-hidden="true">→</span>
+      </button>
+    </form>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

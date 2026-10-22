@@ -8,7 +8,7 @@
   const itemsDock = [
     { clave: 'inicio', texto: 'Inicio', href: '/dashboard',
       icono: '<path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6h-6v6H4.5a1 1 0 0 1-1-1z" />' },
-    { clave: 'canchas', texto: 'Canchas', proximamente: 'Muy pronto podrás buscar y reservar canchas.',
+    { clave: 'canchas', texto: 'Canchas', href: '/canchas', // NUEVO: DE-003 (antes "próximamente")
       icono: '<rect x="3" y="5" width="18" height="14" rx="2" /><path d="M12 5v14" /><circle cx="12" cy="12" r="2.6" /><path d="M3 9.5h2.5v5H3M21 9.5h-2.5v5H21" />' },
     { clave: 'equipos', texto: 'Equipos', href: '/equipos',
       icono: '<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6z" /><circle cx="12" cy="11.5" r="3" />' },
@@ -19,6 +19,11 @@
     { clave: 'perfil', texto: esEquipo ? 'Mi equipo' : 'Perfil', href: esEquipo ? '/mi-equipo' : '/perfil',
       icono: '<rect x="4" y="3" width="16" height="18" rx="3" /><circle cx="12" cy="10" r="3" /><path d="M7.5 17.5a4.5 4.5 0 0 1 9 0" />' },
   ];
+  // NUEVO: AR-004 / IN-002 — el acceso al panel de administración solo aparece a administradores
+  if (usuario.esAdmin) {
+    itemsDock.push({ clave: 'admin', texto: 'Administración', href: '/admin',
+      icono: '<path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z" /><path d="M9 12l2 2 4-4" />' });
+  }
 %>
 <nav class="dock" aria-label="Navegación principal">
   <ul class="dock__lista">

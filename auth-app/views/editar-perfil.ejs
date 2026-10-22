@@ -112,19 +112,20 @@
           Media actual: <strong class="texto-verde" data-editor-media><%= jugador.media %></strong> · promedio de las 6 estadísticas.
         </p>
 
-        <ul class="editor__stats">
+        <!-- CORRECCIÓN: regla 8 — solo lectura (antes eran deslizadores editables): cambian con las
+             valoraciones de otros jugadores después de los partidos. Mismas barras que /perfil. -->
+        <ul class="barras">
           <% jugador.estadisticas.forEach(function (s) { %>
-            <li class="editor__stat">
-              <label class="editor__stat-nombre" for="stat_<%= s.clave %>">
-                <span class="barras__sigla"><%= s.sigla %></span> <%= s.nombre %>
-              </label>
-              <input class="editor__rango" type="range" id="stat_<%= s.clave %>" name="stat_<%= s.clave %>"
-                     min="<%= rangos.STAT.min %>" max="<%= rangos.STAT.max %>" step="1" value="<%= s.valor %>"
-                     style="--valor: <%= s.valor %>" data-editor-stat="<%= s.clave %>" />
-              <output class="barras__valor" for="stat_<%= s.clave %>" data-editor-valor="<%= s.clave %>"><%= s.valor %></output>
+            <li class="barras__item">
+              <span class="barras__sigla" title="<%= s.nombre %>"><%= s.sigla %></span>
+              <span class="barras__track" role="meter" aria-label="<%= s.nombre %>" aria-valuemin="0" aria-valuemax="99" aria-valuenow="<%= s.valor %>">
+                <span class="barras__relleno" style="--valor: <%= s.valor %>"></span>
+                <span class="barras__valor"><%= s.valor %></span>
+              </span>
             </li>
           <% }) %>
         </ul>
+        <p class="perfil__nota">Tus estadísticas cambian con las valoraciones de otros jugadores después de cada partido.</p>
       </fieldset>
 
       <div class="perfil__acciones">

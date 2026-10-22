@@ -1,0 +1,118 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- AD-014: catálogos de modalidades, posiciones y niveles (adminCatalogosController).
+     Cada fila es un formulario para editar; "Eliminar" solo funciona si no está en uso (se indica dónde).
+     Los elementos "protegidos" los usa la aplicación por su nombre: se pueden editar otros datos, no renombrar. -->
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Administración</span>
+        <h1 class="eq-cabecera__titulo">Catálogos</h1>
+        <p class="eq-cabecera__stats">Opciones que ven los usuarios al registrar canchas, equipos y perfiles.</p>
+      </div>
+    </header>
+
+    <%- include('../partials/admin-nav', { seccion }) %>
+
+    <% if (error) { %>
+      <div class="alerta alerta--error" role="alert"><%= error %></div>
+    <% } %>
+
+    <% catalogos.forEach(function (cat) { %>
+      <section class="dash-panel eq-panel revelar" id="<%= cat.tipo %>" aria-labelledby="titulo-<%= cat.tipo %>">
+        <header class="dash-panel__cabecera">
+          <h2 class="dash-panel__titulo" id="titulo-<%= cat.tipo %>"><%= cat.titulo %></h2>
+          <span class="eq-contador"><%= cat.elementos.length %></span>
+        </header>
+
+        <ul class="sm-catalogo">
+          <% cat.elementos.forEach(function (el) {
+               const usoTexto = el.usos.map(function (u) { return u.total + ' ' + u.etiqueta; }).join(', '); %>
+            <li class="sm-catalogo__fila">
+              <form action="/admin/catalogos/<%= cat.tipo %>/<%= el.id %>" method="POST" class="sm-catalogo__form" novalidate data-sm-validar>
+                <div class="campo">
+                  <label class="solo-lectores" for="<%= cat.tipo %>-<%= el.id %>-nombre">Nombre</label>
+                  <input type="text" id="<%= cat.tipo %>-<%= el.id %>-nombre" name="nombre" value="<%= el.nombre %>" maxlength="50" required
+                         <%= el.protegido && cat.tipo !== 'modalidades' ? 'readonly' : '' %> />
+                  <small class="campo__error"></small>
+                </div>
+                <% if (cat.tipo === 'modalidades') { %>
+                  <div class="campo">
+                    <label class="solo-lectores" for="<%= cat.tipo %>-<%= el.id %>-jugadores">Jugadores</label>
+                    <input type="number" id="<%= cat.tipo %>-<%= el.id %>-jugadores" name="jugadores" value="<%= el.cantidad_de_jugadores %>" min="1" max="30" required
+                           <%= el.protegido ? 'readonly' : '' %> title="Jugadores por equipo" />
+                    <small class="campo__error"></small>
+                  </div>
+                <% } %>
+                <% if (cat.tipo === 'niveles') { %>
+                  <div class="campo">
+                    <label class="solo-lectores" for="<%= cat.tipo %>-<%= el.id %>-min">Puntaje mínimo</label>
+                    <input type="number" id="<%= cat.tipo %>-<%= el.id %>-min" name="min" value="<%= el.puntaje_min %>" min="0" required title="Puntaje mínimo" />
+                    <small class="campo__error"></small>
+                  </div>
+                  <div class="campo">
+                    <label class="solo-lectores" for="<%= cat.tipo %>-<%= el.id %>-max">Puntaje máximo</label>
+                    <input type="number" id="<%= cat.tipo %>-<%= el.id %>-max" name="max" value="<%= el.puntaje_max %>" min="0" required title="Puntaje máximo" />
+                    <small class="campo__error"></small>
+                  </div>
+                <% } %>
+                <button type="submit" class="btn btn--contorno btn--chico">Guardar</button>
+              </form>
+              <span class="sm-catalogo__uso">
+                <% if (el.protegido) { %><span class="sm-rol" title="La aplicación lo usa por su nombre">Protegido</span><% } %>
+                <%= usoTexto ? 'En uso: ' + usoTexto : 'Sin uso' %>
+              </span>
+              <%# En uso o protegido: no se ofrece eliminar (el servidor también lo impide) %>
+              <% if (!el.protegido && !usoTexto) { %>
+                <form action="/admin/catalogos/<%= cat.tipo %>/<%= el.id %>/eliminar" method="POST"
+                      data-confirmar="Se eliminará del catálogo."
+                      data-confirmar-titulo="¿Eliminar <%= el.nombre %>?" data-confirmar-boton="Eliminar">
+                  <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Eliminar</button>
+                </form>
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+
+        <!-- Agregar -->
+        <form action="/admin/catalogos/<%= cat.tipo %>" method="POST" class="sm-catalogo__form sm-catalogo__nuevo" novalidate data-sm-validar>
+          <div class="campo">
+            <label for="<%= cat.tipo %>-nuevo-nombre">Nueva <%= cat.singular %></label>
+            <input type="text" id="<%= cat.tipo %>-nuevo-nombre" name="nombre" maxlength="50" required placeholder="Nombre"
+                   data-mensaje="Escribe el nombre." />
+            <small class="campo__error"></small>
+          </div>
+          <% if (cat.tipo === 'modalidades') { %>
+            <div class="campo">
+              <label for="<%= cat.tipo %>-nuevo-jugadores">Jugadores por equipo</label>
+              <input type="number" id="<%= cat.tipo %>-nuevo-jugadores" name="jugadores" min="1" max="30" required placeholder="Ej. 8" data-mensaje="Indica cuántos jugadores." />
+              <small class="campo__error"></small>
+            </div>
+          <% } %>
+          <% if (cat.tipo === 'niveles') { %>
+            <div class="campo">
+              <label for="<%= cat.tipo %>-nuevo-min">Puntaje mínimo</label>
+              <input type="number" id="<%= cat.tipo %>-nuevo-min" name="min" min="0" required data-mensaje="Indica el mínimo." />
+              <small class="campo__error"></small>
+            </div>
+            <div class="campo">
+              <label for="<%= cat.tipo %>-nuevo-max">Puntaje máximo</label>
+              <input type="number" id="<%= cat.tipo %>-nuevo-max" name="max" min="0" required data-mensaje="Indica el máximo." />
+              <small class="campo__error"></small>
+            </div>
+          <% } %>
+          <button type="submit" class="btn btn--verde btn--chico">Agregar</button>
+        </form>
+      </section>
+    <% }) %>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: 'admin' }) %>
+
+<%- include('../partials/footer') %>

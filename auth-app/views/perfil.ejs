@@ -16,7 +16,7 @@
   </header>
 
   <div class="perfil__info">
-    <%- include('partials/perfil-resumen', { jugador, nota: 'Puedes ajustar tus estadísticas desde “Editar perfil”.' }) %>
+    <%- include('partials/perfil-resumen', { jugador, nota: 'Tus estadísticas cambian con las valoraciones de otros jugadores después de cada partido.' /* CORRECCIÓN: regla 8 */ }) %>
 
     <div class="perfil__acciones">
       <a class="btn btn--verde btn--grande" href="/perfil/editar">
@@ -37,6 +37,14 @@
     </div>
 
     <p class="perfil__estado" role="status" aria-live="polite" data-estado></p>
+
+    <!-- NUEVO: AR-012 / AR-009 / AR-010 — cuenta, contraseña y documentos, siempre a mano desde el perfil -->
+    <nav class="sm-perfil-enlaces" aria-label="Mi cuenta">
+      <a href="/cuenta">Mi cuenta</a>
+      <a href="/cuenta/contrasena">Cambiar contraseña</a>
+      <a href="/terminos">Términos</a>
+      <a href="/privacidad">Privacidad</a>
+    </nav>
   </div>
 </section>
 

@@ -5,6 +5,7 @@ const jugadorModel = require('../models/jugadorModel');
 const equipoModel = require('../models/equipoModel');
 const { POSICIONES, ESTADISTICAS, calcularMedia, nombreEnCarta } = require('../config/perfilJugador');
 const { AVISOS_RESPUESTA_INVITACION, AVISOS_SALIDA } = require('./equipoController');
+const agendaController = require('./agendaController'); // NUEVO: IN-005
 
 // GET / → landing page pública.
 function landing(req, res) {
@@ -15,11 +16,12 @@ function landing(req, res) {
 }
 
 /**
- * Perfil del jugador para el dashboard (null si no es jugador).
+ * Perfil del jugador para el dashboard.
+ * CORRECCIÓN: regla 1 — también para el rol "equipo": el capitán es jugador de su equipo,
+ * así que completa su perfil (posiciones y carta) igual que todos.
  * Si la base de datos falla, el dashboard se muestra igual, sin el resumen.
  */
 async function leerPerfilJugador(usuario) {
-  if (usuario.rolInicio !== 'jugador') return null;
   return jugadorModel.obtenerPerfil(usuario.idAuth).catch((err) => {
     console.error('⚠️  No se pudo leer la carta para el dashboard:', err.message);
     return null;
@@ -99,6 +101,7 @@ async function dashboard(req, res, next) {
       leerInvitaciones(req.usuario),
     ]);
     if (perfil && !perfil.perfilCompleto) return res.redirect('/perfil-jugador');
+    const equipoInicio = await agendaController.datosEquipoInicio(req, misEquipos); // NUEVO: IN-005
 
     res.render('dashboard', {
       titulo: 'Mi panel',
@@ -107,6 +110,7 @@ async function dashboard(req, res, next) {
       miEquipo,
       misEquipos,
       invitaciones,
+      equipoInicio, // NUEVO: IN-005
       aviso: AVISOS_RESPUESTA_INVITACION[req.query.invitacion] || AVISOS_SALIDA[req.query.salida] || null,
     });
   } catch (err) {

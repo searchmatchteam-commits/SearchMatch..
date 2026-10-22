@@ -1,0 +1,66 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- AG-003 mis reservas (futuras primero, de la más próxima a la más lejana; canceladas se distinguen)
+     PA-003 cancelar: solo reservas propias, confirmadas y futuras (las de un partido se gestionan desde el partido). -->
+<%
+  const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+  const formatoDia = new Intl.DateTimeFormat('es-CL', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+%>
+<section class="eq">
+  <div class="contenedor sm-angosto">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: '/canchas' }) %>
+        <h1 class="eq-cabecera__titulo">Mis reservas</h1>
+        <p class="eq-cabecera__stats">Dónde y a qué hora tienes cancha.</p>
+      </div>
+      <div class="eq-cabecera__acciones">
+        <a class="btn btn--verde btn--grande" href="/canchas">Reservar otra cancha</a>
+      </div>
+    </header>
+
+    <% if (reservas.length === 0) { %>
+      <div class="dash-panel eq-panel sm-vacio">
+        <p class="sm-vacio__titulo">Aún no tienes reservas</p>
+        <p class="dash-panel__nota">Explora las canchas disponibles y reserva tu horario.</p>
+        <a class="btn btn--verde" href="/canchas">Explorar canchas</a>
+      </div>
+    <% } else { %>
+      <ul class="sm-tarjetas">
+        <% reservas.forEach(function (r) {
+             const cancelada = r.estado === 'cancelada'; %>
+          <li class="dash-panel sm-tarjeta <%= cancelada ? 'sm-tarjeta--inactiva sm-tarjeta--cancelada' : '' %>">
+            <header class="sm-tarjeta__cabecera">
+              <div>
+                <h2 class="sm-tarjeta__titulo"><a href="/canchas/<%= r.id_cancha %>"><%= r.cancha %></a></h2>
+                <p class="sm-tarjeta__meta"><%= r.recinto %></p>
+              </div>
+              <span class="sm-estado <%= cancelada ? 'sm-estado--inactivo' : r.futura ? 'sm-estado--activo' : 'sm-rol' %>">
+                <%= cancelada ? 'Cancelada' : r.futura ? 'Confirmada' : 'Pasada' %>
+              </span>
+            </header>
+            <p class="sm-tarjeta__linea"><%= formatoDia.format(new Date(r.fecha + 'T00:00:00Z')) %> · <%= r.inicio %>–<%= r.fin %><% if (r.costo !== null) { %> · <%= pesos.format(r.costo) %><% } %></p>
+            <% if (r.id_partido) { %><p class="sm-tarjeta__linea">Reserva de un partido · <a href="/partidos/<%= r.id_partido %>">Ver partido</a></p><% } %>
+            <% if (!cancelada && r.futura) { %>
+              <% if (r.id_partido) { %>
+                <p class="dash-panel__nota">Para liberarla, cancela o reprograma el partido.</p>
+              <% } else { %>
+                <form action="/reservas/<%= r.id %>/cancelar" method="POST" data-confirmar="El horario quedará libre para otros usuarios." data-confirmar-titulo="¿Cancelar la reserva de <%= r.cancha %>?" data-confirmar-boton="Cancelar reserva">
+                  <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Cancelar reserva</button>
+                </form>
+              <% } %>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: 'canchas' }) %>
+
+<%- include('../partials/footer') %>

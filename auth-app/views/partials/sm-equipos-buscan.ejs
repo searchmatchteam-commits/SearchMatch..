@@ -1,0 +1,22 @@
+<%
+  // PE-021 · "Equipos que buscan jugadores": activos con al menos una posición buscada. Uso:
+  //   include('partials/sm-equipos-buscan', { equiposQueBuscan })
+%>
+<% if (equiposQueBuscan.length > 0) { %>
+  <section class="dash-panel eq-panel" aria-labelledby="titulo-buscan">
+    <header class="dash-panel__cabecera">
+      <h2 class="dash-panel__titulo" id="titulo-buscan">Equipos que buscan jugadores</h2>
+      <span class="eq-contador"><%= equiposQueBuscan.length %></span>
+    </header>
+    <ul class="sm-filas">
+      <% equiposQueBuscan.forEach(function (e) { %>
+        <li class="sm-fila">
+          <a href="/equipos/<%= e.id %>"><%= e.nombre %></a>
+          <span>Busca: <strong class="texto-verde"><%= e.posiciones.join(', ') %></strong></span>
+          <span><%= e.nivel || 'Sin nivel' %><%= e.modalidad ? ' · ' + e.modalidad : '' %><%= e.comuna ? ' · ' + e.comuna : '' %></span>
+          <a class="sm-fila__accion btn btn--verde btn--chico" href="/equipos/<%= e.id %>#postular">Postular</a>
+        </li>
+      <% }) %>
+    </ul>
+  </section>
+<% } %>

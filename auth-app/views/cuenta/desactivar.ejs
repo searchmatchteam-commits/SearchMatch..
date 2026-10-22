@@ -1,0 +1,58 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- PE-020 desactivar la cuenta: advierte las consecuencias, exige confirmar y la contraseña.
+     Si capitanea equipos activos, primero debe desactivarlos (regla 4: ningún equipo queda sin capitán). -->
+<section class="eq">
+  <div class="contenedor sm-angosto">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: '/cuenta' }) %>
+        <h1 class="eq-cabecera__titulo">Desactivar mi cuenta</h1>
+      </div>
+    </header>
+
+    <div class="dash-panel eq-panel sm-peligro">
+      <h2 class="dash-panel__titulo">Qué pasará</h2>
+      <ul class="sm-lista-puntos">
+        <li>Se cerrará tu sesión y no podrás volver a entrar.</li>
+        <li>Dejarás de aparecer en planteles, perfiles y búsquedas.</li>
+        <li>No recibirás más notificaciones.</li>
+      </ul>
+
+      <% if (error) { %><div class="alerta alerta--error" role="alert"><%= error %></div><% } %>
+
+      <% if (equiposCapitan.length > 0) { %>
+        <p class="dash-panel__nota">Eres capitán de: <strong><%= equiposCapitan.map(function (e) { return e.nombre; }).join(', ') %></strong>. Antes de irte, desactiva esos equipos desde su ficha.</p>
+        <div class="sm-form__acciones">
+          <% equiposCapitan.forEach(function (e) { %><a class="btn btn--contorno" href="/equipos/<%= e.id %>#titulo-peligro">Ir a <%= e.nombre %></a><% }) %>
+        </div>
+      <% } else { %>
+        <form action="/cuenta/desactivar" method="POST" class="sm-form" novalidate data-sm-validar data-requiere-aceptar
+              data-confirmar="Tu cuenta quedará inactiva y se cerrará tu sesión." data-confirmar-titulo="¿Desactivar tu cuenta?" data-confirmar-boton="Desactivar">
+          <label class="sm-check">
+            <input type="checkbox" name="confirmo" value="si" data-casilla-aceptar />
+            <span>Entiendo las consecuencias y quiero desactivar mi cuenta.</span>
+          </label>
+          <div class="campo">
+            <label for="password_actual">Contraseña</label>
+            <div class="campo__control">
+              <input type="password" id="password_actual" name="password_actual" autocomplete="current-password" required data-mensaje="Escribe tu contraseña." />
+              <%- include('../partials/sm-ojo', { campo: 'password_actual' }) %>
+            </div>
+            <small class="campo__error"></small>
+          </div>
+          <div class="sm-form__acciones">
+            <button type="submit" class="btn btn--contorno sm-btn-peligro" data-boton-aceptar>Desactivar mi cuenta</button>
+            <a class="btn btn--verde" href="/cuenta">Cancelar</a>
+          </div>
+        </form>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/dock', { activo: 'perfil' }) %>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,101 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- Desafíos del equipo (desafioController.listar):
+     DE-012 recibidos (primero los pendientes; Aceptar/Rechazar solo al capitán, en el detalle)
+     DE-011 enviados (rival, mensaje, fechas, estado y filtro por estado). -->
+<%
+  const formatoFecha = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', dateStyle: 'medium' });
+  const nombresEstado = { pendiente: 'Pendiente', aceptado: 'Aceptado', rechazado: 'Rechazado', cancelado: 'Cancelado' };
+  const base = equipo ? `/desafios?equipo=${equipo.id}` : '/desafios';
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: '/mi-equipo' }) %>
+        <h1 class="eq-cabecera__titulo">Desafíos</h1>
+        <p class="eq-cabecera__stats"><%= equipo ? equipo.nombre : 'Sin equipo' %></p>
+      </div>
+      <% if (equipos.length > 1) { %>
+        <!-- Equipo a revisar (un jugador puede estar en varios) -->
+        <form method="GET" action="/desafios" class="sm-selector-equipo">
+          <input type="hidden" name="ver" value="<%= ver %>" />
+          <label class="solo-lectores" for="equipo">Equipo</label>
+          <select id="equipo" name="equipo" onchange="this.form.submit()">
+            <% equipos.forEach(function (e) { %>
+              <option value="<%= e.id %>" <%= equipo && e.id === equipo.id ? 'selected' : '' %>><%= e.nombre %><%= e.soyCapitan ? ' (capitán)' : '' %></option>
+            <% }) %>
+          </select>
+          <noscript><button type="submit" class="btn btn--contorno btn--chico">Ver</button></noscript>
+        </form>
+      <% } %>
+    </header>
+
+    <% if (!equipo) { %>
+      <div class="dash-panel eq-panel sm-vacio">
+        <p class="sm-vacio__titulo">Aún no perteneces a ningún equipo</p>
+        <p class="dash-panel__nota">Los desafíos son entre equipos: únete a uno o crea el tuyo.</p>
+        <a class="btn btn--verde" href="/equipos">Ir a Equipos</a>
+      </div>
+    <% } else { %>
+      <nav class="sm-pestanas" aria-label="Recibidos o enviados">
+        <a class="sm-pestanas__item <%= ver === 'recibidos' ? 'sm-pestanas__item--activa' : '' %>" href="<%= base %>&ver=recibidos">Recibidos</a>
+        <a class="sm-pestanas__item <%= ver === 'enviados' ? 'sm-pestanas__item--activa' : '' %>" href="<%= base %>&ver=enviados">Enviados</a>
+      </nav>
+
+      <% if (ver === 'enviados') { %>
+        <!-- DE-011: filtro por estado -->
+        <nav class="sm-pestanas sm-pestanas--chicas" aria-label="Filtrar por estado">
+          <a class="sm-pestanas__item <%= !estado ? 'sm-pestanas__item--activa' : '' %>" href="<%= base %>&ver=enviados">Todos</a>
+          <% estados.forEach(function (e) { %>
+            <a class="sm-pestanas__item <%= estado === e ? 'sm-pestanas__item--activa' : '' %>" href="<%= base %>&ver=enviados&estado=<%= e %>"><%= nombresEstado[e] %></a>
+          <% }) %>
+        </nav>
+      <% } %>
+
+      <% if (desafios.length === 0) { %>
+        <div class="dash-panel eq-panel sm-vacio">
+          <% if (ver === 'enviados') { %>
+            <p class="sm-vacio__titulo"><%= estado ? `No hay desafíos enviados en estado ${nombresEstado[estado].toLowerCase()}` : 'Tu equipo aún no envía desafíos' %></p>
+            <p class="dash-panel__nota">Busca rivales de tu modalidad y propónles un partido.</p>
+            <a class="btn btn--verde" href="/mi-equipo?equipo=<%= equipo.id %>#desafiar">Ver rivales recomendados</a>
+          <% } else { %>
+            <p class="sm-vacio__titulo">Tu equipo no ha recibido desafíos</p>
+            <p class="dash-panel__nota">Cuando otro equipo los desafíe, aparecerá aquí y te avisaremos.</p>
+            <a class="btn btn--contorno" href="/equipos">Explorar equipos</a>
+          <% } %>
+        </div>
+      <% } else { %>
+        <ul class="sm-tarjetas">
+          <% desafios.forEach(function (d) {
+               const rival = ver === 'enviados' ? d.desafiado : d.desafiante; %>
+            <li class="dash-panel sm-tarjeta">
+              <header class="sm-tarjeta__cabecera">
+                <div>
+                  <h2 class="sm-tarjeta__titulo"><a href="/desafios/<%= d.id %>"><%= ver === 'enviados' ? 'A' : 'De' %> <%= rival %></a></h2>
+                  <p class="sm-tarjeta__meta">
+                    Enviado el <%= formatoFecha.format(d.fecha_solicitud) %>
+                    <% if (d.fecha_respuesta) { %> · Respondido el <%= formatoFecha.format(d.fecha_respuesta) %><% } %>
+                  </p>
+                </div>
+                <span class="sm-estado sm-estado--<%= d.estado %>"><%= nombresEstado[d.estado] || d.estado %></span>
+              </header>
+              <p class="sm-tarjeta__linea"><%= d.mensaje ? `“${d.mensaje}”` : 'Sin mensaje.' %></p>
+              <a class="sm-tarjeta__enlace" href="/desafios/<%= d.id %>">
+                <%= ver === 'recibidos' && d.estado === 'pendiente' && equipo.soyCapitan ? 'Responder →' : 'Ver detalle →' %>
+              </a>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    <% } %>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: 'mis-equipos' }) %>
+
+<%- include('../partials/footer') %>

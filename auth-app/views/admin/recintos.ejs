@@ -1,0 +1,95 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- AD-011: panel de recintos y canchas (adminRecintosController.listar). Muestra activos e inactivos,
+     con búsqueda por nombre y filtros por comuna y estado. -->
+<%
+  const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Administración</span>
+        <h1 class="eq-cabecera__titulo">Recintos y canchas</h1>
+        <p class="eq-cabecera__stats">Registra recintos, sus canchas y sus horarios.</p>
+      </div>
+      <div class="eq-cabecera__acciones">
+        <a class="btn btn--verde btn--grande" href="/admin/recintos/nuevo"><span aria-hidden="true">+</span> Registrar recinto</a>
+      </div>
+    </header>
+
+    <%- include('../partials/admin-nav', { seccion }) %>
+
+    <% if (!hayRecintos) { %>
+      <div class="dash-panel eq-panel sm-vacio revelar">
+        <p class="sm-vacio__titulo">Aún no hay recintos registrados</p>
+        <p class="dash-panel__nota">Registra el primero para que los usuarios puedan encontrar canchas.</p>
+        <a class="btn btn--verde" href="/admin/recintos/nuevo">Registrar recinto</a>
+      </div>
+    <% } else { %>
+      <form class="dash-panel eq-panel sm-filtros" method="GET" action="/admin/recintos" role="search">
+        <div class="campo">
+          <label for="texto">Buscar por nombre</label>
+          <input type="search" id="texto" name="texto" value="<%= filtros.texto %>" placeholder="Ej. Complejo El Potrero" />
+        </div>
+        <%- include('../partials/sm-ubicacion', { regiones, idRegion: filtros.idRegion, idComuna: filtros.idComuna, obligatorio: false }) %>
+        <div class="campo">
+          <label for="estado">Estado</label>
+          <select id="estado" name="estado">
+            <option value="">Todos</option>
+            <option value="activos" <%= filtros.estado === 'activos' ? 'selected' : '' %>>Activos</option>
+            <option value="inactivos" <%= filtros.estado === 'inactivos' ? 'selected' : '' %>>Inactivos</option>
+          </select>
+        </div>
+        <div class="sm-form__acciones">
+          <button type="submit" class="btn btn--verde">Filtrar</button>
+          <% if (hayFiltros) { %><a class="btn btn--contorno" href="/admin/recintos">Limpiar filtros</a><% } %>
+        </div>
+      </form>
+
+      <% if (recintos.length === 0) { %>
+        <div class="dash-panel eq-panel sm-vacio">
+          <p class="sm-vacio__titulo">Ningún recinto coincide con la búsqueda</p>
+          <a class="btn btn--contorno" href="/admin/recintos">Limpiar filtros</a>
+        </div>
+      <% } else { %>
+        <ul class="sm-tarjetas">
+          <% recintos.forEach(function (recinto) { %>
+            <li class="dash-panel sm-tarjeta <%= recinto.activo ? '' : 'sm-tarjeta--inactiva' %>">
+              <header class="sm-tarjeta__cabecera">
+                <div>
+                  <h2 class="sm-tarjeta__titulo"><a href="/admin/recintos/<%= recinto.id %>"><%= recinto.nombre %></a></h2>
+                  <p class="sm-tarjeta__meta"><%= recinto.comuna %> · <%= recinto.region %> · <%= recinto.totalCanchas %> <%= recinto.totalCanchas === 1 ? 'cancha' : 'canchas' %></p>
+                </div>
+                <span class="sm-estado <%= recinto.activo ? 'sm-estado--activo' : 'sm-estado--inactivo' %>"><%= recinto.activo ? 'Activo' : 'Inactivo' %></span>
+              </header>
+              <% if (recinto.canchas.length === 0) { %>
+                <p class="dash-panel__nota">Sin canchas registradas.</p>
+              <% } else { %>
+                <ul class="sm-filas">
+                  <% recinto.canchas.forEach(function (cancha) { %>
+                    <li class="sm-fila">
+                      <a href="/admin/canchas/<%= cancha.id %>"><%= cancha.nombre %></a>
+                      <span><%= cancha.modalidad %> (<%= cancha.jugadores %> jugadores)</span>
+                      <span><%= pesos.format(cancha.precio) %> / hora</span>
+                      <span class="sm-estado <%= cancha.activo ? 'sm-estado--activo' : 'sm-estado--inactivo' %>"><%= cancha.activo ? 'Activa' : 'Inactiva' %></span>
+                    </li>
+                  <% }) %>
+                </ul>
+              <% } %>
+              <a class="sm-tarjeta__enlace" href="/admin/recintos/<%= recinto.id %>">Gestionar recinto →</a>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    <% } %>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: 'admin' }) %>
+
+<%- include('../partials/footer') %>

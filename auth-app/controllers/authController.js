@@ -8,8 +8,12 @@
 
 const userModel = require('../models/userModel');
 const { rutaDeInicio } = require('../middlewares/authMiddleware');
+const cuentaModel = require('../models/cuentaModel'); // NUEVO: AR-011
+const { TERMINOS, PRIVACIDAD } = require('../config/legal'); // NUEVO: AR-011
 
 const MSG_CORREO_REGISTRADO = 'Este correo ya está registrado. Inicia sesión o usa otro correo.';
+// CORRECCIÓN: regla 7 — mensaje para cuentas desactivadas (por el usuario o por un administrador).
+const MSG_CUENTA_DESACTIVADA = 'Tu cuenta está desactivada. Si crees que es un error, escríbenos.';
 
 // Mensajes en español para los códigos de error más comunes de Supabase Auth.
 const ERRORES_SUPABASE = {
@@ -69,6 +73,7 @@ function renderRegistroConError(req, res, status, mensaje) {
       correo: req.datosFormulario.correo,
       telefono: req.body.telefono || '',
       fecha_nacimiento: req.datosFormulario.fechaNacimiento,
+      acepto_terminos: req.body.acepto_terminos === 'si', // NUEVO: AR-011
     },
   });
 }
@@ -147,6 +152,11 @@ async function registrar(req, res, next) {
       throw err;
     }
 
+    // NUEVO: AR-011 — guarda la versión de términos y privacidad aceptada y la fecha.
+    // Si fallara, la cuenta igual se crea y se le pedirá aceptar al iniciar sesión.
+    await cuentaModel.guardarAceptacion(data.user.id, { terminos: TERMINOS.version, privacidad: PRIVACIDAD.version })
+      .catch((err) => console.error('⚠️  No se pudo guardar la aceptación de términos:', err.message));
+
     // 4a) Confirmación de correo desactivada: Supabase ya entregó la sesión
     //     y el cliente la guardó en las cookies.
     //     Cuenta nueva = aún sin rol → "¿Cómo quieres empezar?".
@@ -171,6 +181,8 @@ function mostrarLogin(req, res) {
     Enlace_invalido: 'El enlace de confirmación no es válido o ya expiró. Inicia sesión para recibir uno nuevo.',
     Debes_iniciar_sesion: 'Debes iniciar sesión para acceder a esa página.',
     Sesion_cerrada: 'Cerraste sesión correctamente.',
+    Cuenta_desactivada: MSG_CUENTA_DESACTIVADA, // CORRECCIÓN: regla 7
+    Contrasena_actualizada: 'Tu contraseña se actualizó. Inicia sesión con la nueva.', // NUEVO: AR-008
   };
 
   res.render('login', {
@@ -225,6 +237,19 @@ async function iniciarSesion(req, res, next) {
         pagina: 'auth',
         titulo: 'Iniciar sesión',
         errores: [traducirErrorSupabase(error)],
+        datos: { correo },
+        aviso: null,
+      });
+    }
+
+    // CORRECCIÓN: regla 7 — credenciales correctas pero cuenta inactiva: se cierra la sesión recién abierta.
+    const perfil = await userModel.findByAuthId(data.user.id);
+    if (perfil && perfil.activo === false) {
+      await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
+      return res.status(403).render('login', {
+        pagina: 'auth',
+        titulo: 'Iniciar sesión',
+        errores: [MSG_CUENTA_DESACTIVADA],
         datos: { correo },
         aviso: null,
       });

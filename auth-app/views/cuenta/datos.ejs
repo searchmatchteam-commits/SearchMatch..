@@ -1,0 +1,102 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- AR-012: datos de la cuenta (cuentaController.mostrarCuenta / guardarCuenta). Solo los ve su dueño.
+     Guardar exige la contraseña actual; salir sin guardar no cambia nada (se muestran los datos guardados). -->
+<section class="eq">
+  <div class="contenedor sm-angosto">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: '/perfil' }) %>
+        <h1 class="eq-cabecera__titulo">Mi cuenta</h1>
+        <p class="eq-cabecera__stats">Tus datos de acceso y de contacto. Ningún otro usuario los ve.</p>
+      </div>
+    </header>
+
+    <div class="dash-panel eq-panel revelar">
+      <header class="dash-panel__cabecera">
+        <h2 class="dash-panel__titulo">Datos de contacto</h2>
+      </header>
+
+      <% if (errores.length > 0) { %>
+        <div class="alerta alerta--error" role="alert">Revisa los campos marcados en rojo.</div>
+      <% } %>
+
+      <form action="/cuenta" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+        <div class="campo <%= erroresCampo.correo ? 'campo--error' : '' %>">
+          <label for="correo">Correo principal</label>
+          <input type="email" id="correo" name="correo" value="<%= datos.correo %>" maxlength="150" autocomplete="email"
+                 aria-describedby="correo-error correo-ayuda" required data-mensaje="El correo principal es obligatorio." />
+          <small class="campo__error" id="correo-error"><%= erroresCampo.correo || '' %></small>
+          <small class="campo__ayuda" id="correo-ayuda">Con este correo inicias sesión. Si lo cambias, te enviaremos un enlace para confirmarlo.</small>
+        </div>
+
+        <div class="campo <%= erroresCampo.correo_secundario ? 'campo--error' : '' %>">
+          <label for="correo_secundario">Correo secundario <span class="sm-opcional">(opcional)</span></label>
+          <input type="email" id="correo_secundario" name="correo_secundario" value="<%= datos.correoSecundario %>" maxlength="150"
+                 autocomplete="email" aria-describedby="correo_secundario-error correo_secundario-ayuda" />
+          <small class="campo__error" id="correo_secundario-error"><%= erroresCampo.correo_secundario || '' %></small>
+          <small class="campo__ayuda" id="correo_secundario-ayuda">Sirve para recuperar tu cuenta. Debe ser distinto del principal.</small>
+        </div>
+
+        <div class="campo <%= erroresCampo.telefono ? 'campo--error' : '' %>">
+          <label for="telefono">Teléfono (WhatsApp)</label>
+          <input type="tel" id="telefono" name="telefono" value="<%= datos.telefono %>" inputmode="tel" autocomplete="tel"
+                 placeholder="+56 9 1234 5678" data-telefono-cl aria-describedby="telefono-error" required
+                 data-mensaje="El teléfono es obligatorio." />
+          <small class="campo__error" id="telefono-error"><%= erroresCampo.telefono || '' %></small>
+        </div>
+
+        <div class="campo <%= erroresCampo.password_actual ? 'campo--error' : '' %>">
+          <label for="password_actual">Contraseña actual</label>
+          <div class="campo__control">
+            <input type="password" id="password_actual" name="password_actual" autocomplete="current-password"
+                   aria-describedby="password_actual-error" required data-mensaje="Escribe tu contraseña actual para guardar." />
+            <%- include('../partials/sm-ojo', { campo: 'password_actual' }) %>
+          </div>
+          <small class="campo__error" id="password_actual-error"><%= erroresCampo.password_actual || '' %></small>
+        </div>
+
+        <div class="sm-form__acciones">
+          <button type="submit" class="btn btn--verde btn--grande">Guardar cambios</button>
+          <a class="btn btn--contorno btn--grande" href="/perfil">Salir sin guardar</a>
+        </div>
+      </form>
+    </div>
+
+    <div class="dash-panel eq-panel revelar">
+      <header class="dash-panel__cabecera">
+        <h2 class="dash-panel__titulo">Seguridad y documentos</h2>
+      </header>
+      <ul class="sm-lista-docs">
+        <li>
+          <a href="/cuenta/contrasena">Cambiar contraseña</a>
+          <span>Necesitarás tu contraseña actual.</span>
+        </li>
+        <li>
+          <a href="/solicitudes">Mis solicitudes a equipos</a>
+          <span>Revisa su estado o cancela las pendientes.</span>
+        </li>
+        <li>
+          <a href="/cuenta/desactivar">Desactivar mi cuenta</a>
+          <span>Dejarás de aparecer en la plataforma. Te pediremos tu contraseña.</span>
+        </li>
+        <li>
+          <a href="/terminos"><%= legal.terminos.titulo %></a>
+          <span>Aceptaste la versión <%= guardados.terminosVersion || '—' %><% if (guardados.aceptadoEn) { %> el <%= new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', dateStyle: 'long' }).format(guardados.aceptadoEn) %><% } %> · vigente <%= legal.terminos.version %></span>
+        </li>
+        <li>
+          <a href="/privacidad"><%= legal.privacidad.titulo %></a>
+          <span>Aceptaste la versión <%= guardados.privacidadVersion || '—' %> · vigente <%= legal.privacidad.version %></span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: 'perfil' }) %>
+
+<%- include('../partials/footer') %>

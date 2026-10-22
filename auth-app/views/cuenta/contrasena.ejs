@@ -1,0 +1,49 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- AR-009: cambiar la contraseña indicando la actual (cuentaController.cambiarPassword). -->
+<section class="eq">
+  <div class="contenedor sm-angosto">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: '/cuenta' }) %>
+        <h1 class="eq-cabecera__titulo">Cambiar contraseña</h1>
+        <p class="eq-cabecera__stats">Mínimo 8 caracteres, combinando letras y números, y distinta de la actual.</p>
+      </div>
+    </header>
+
+    <div class="dash-panel eq-panel revelar">
+      <% if (errores.length > 0) { %>
+        <div class="alerta alerta--error" role="alert">Revisa los campos marcados en rojo.</div>
+      <% } %>
+
+      <form action="/cuenta/contrasena" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+        <% [
+             ['password_actual', 'Contraseña actual', 'current-password', 'Escribe tu contraseña actual.'],
+             ['password', 'Contraseña nueva', 'new-password', 'Escribe la contraseña nueva.'],
+             ['confirmar_password', 'Confirmar contraseña nueva', 'new-password', 'Confirma la contraseña nueva.'],
+           ].forEach(function ([nombre, etiqueta, auto, mensaje]) { %>
+          <div class="campo <%= erroresCampo[nombre] ? 'campo--error' : '' %>">
+            <label for="<%= nombre %>"><%= etiqueta %></label>
+            <div class="campo__control">
+              <input type="password" id="<%= nombre %>" name="<%= nombre %>" autocomplete="<%= auto %>"
+                     aria-describedby="<%= nombre %>-error" required data-mensaje="<%= mensaje %>" />
+              <%- include('../partials/sm-ojo', { campo: nombre }) %>
+            </div>
+            <small class="campo__error" id="<%= nombre %>-error"><%= erroresCampo[nombre] || '' %></small>
+          </div>
+        <% }) %>
+
+        <div class="sm-form__acciones">
+          <button type="submit" class="btn btn--verde btn--grande">Cambiar contraseña</button>
+          <a class="btn btn--contorno btn--grande" href="/cuenta">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/dock', { activo: 'perfil' }) %>
+
+<%- include('../partials/footer') %>

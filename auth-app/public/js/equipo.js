@@ -32,6 +32,7 @@ const TEXTOS_BOTON = {
   pendiente: 'Solicitud enviada ✓',
   miembro: 'Ya eres parte',
   inexistente: 'No disponible',
+  invitado: 'Te invitaron ✓', // CORRECCIÓN: regla 6 (el equipo ya lo invitó: acepta desde el panel)
 };
 
 /** Minúsculas y sin tildes, para que "maipu" encuentre "Maipú". */

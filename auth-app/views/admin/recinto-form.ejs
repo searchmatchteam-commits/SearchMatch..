@@ -1,0 +1,88 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- AD-001 registrar / AD-008 editar un recinto (adminRecintosController). Mismo formulario:
+     con "recinto" edita (parte con lo guardado); sin él, registra. "Cancelar" no guarda nada. -->
+<%
+  const accion = recinto ? `/admin/recintos/${recinto.id}/editar` : '/admin/recintos';
+  const volverA = recinto ? `/admin/recintos/${recinto.id}` : '/admin/recintos';
+  const campos = [
+    { nombre: 'nombre', etiqueta: 'Nombre del recinto', valor: datos.nombre, max: 150, ejemplo: 'Ej. Complejo Deportivo El Potrero' },
+    { nombre: 'telefono', etiqueta: 'Teléfono de contacto', valor: datos.telefonoIngresado, ejemplo: 'Ej. +56 2 2345 6789', tipo: 'tel' },
+  ];
+%>
+<section class="eq">
+  <div class="contenedor sm-angosto">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: volverA }) %>
+        <h1 class="eq-cabecera__titulo"><%= recinto ? 'Editar recinto' : 'Registrar recinto' %></h1>
+        <p class="eq-cabecera__stats"><%= recinto ? recinto.nombre : 'Queda activo al guardarlo. Después podrás agregarle canchas.' %></p>
+      </div>
+    </header>
+
+    <div class="dash-panel eq-panel revelar">
+      <% if (errores.length > 0) { %>
+        <div class="alerta alerta--error" role="alert">Revisa los campos marcados en rojo.</div>
+      <% } %>
+
+      <form action="<%= accion %>" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+        <% campos.forEach(function (c) { %>
+          <div class="campo <%= erroresCampo[c.nombre] ? 'campo--error' : '' %>">
+            <label for="<%= c.nombre %>"><%= c.etiqueta %></label>
+            <input type="<%= c.tipo || 'text' %>" id="<%= c.nombre %>" name="<%= c.nombre %>" value="<%= c.valor || '' %>"
+                   placeholder="<%= c.ejemplo %>" <%= c.max ? `maxlength=${c.max}` : '' %> required aria-describedby="<%= c.nombre %>-error" />
+            <small class="campo__error" id="<%= c.nombre %>-error"><%= erroresCampo[c.nombre] || '' %></small>
+          </div>
+        <% }) %>
+
+        <h2 class="sm-subtitulo">Dirección</h2>
+        <%- include('../partials/sm-ubicacion', { regiones, idRegion: datos.idRegion, idComuna: datos.idComuna, erroresCampo, obligatorio: true }) %>
+
+        <div class="formulario__fila">
+          <div class="campo <%= erroresCampo.calle ? 'campo--error' : '' %>">
+            <label for="calle">Calle</label>
+            <input type="text" id="calle" name="calle" value="<%= datos.calle || '' %>" maxlength="150" placeholder="Ej. Av. Pajaritos" required aria-describedby="calle-error" />
+            <small class="campo__error" id="calle-error"><%= erroresCampo.calle || '' %></small>
+          </div>
+          <div class="campo <%= erroresCampo.numero ? 'campo--error' : '' %>">
+            <label for="numero">Número</label>
+            <input type="text" id="numero" name="numero" value="<%= datos.numero || '' %>" maxlength="20" placeholder="Ej. 2450 o S/N" required aria-describedby="numero-error" />
+            <small class="campo__error" id="numero-error"><%= erroresCampo.numero || '' %></small>
+          </div>
+        </div>
+
+        <div class="campo <%= erroresCampo.referencias ? 'campo--error' : '' %>">
+          <label for="referencias">Referencias <span class="sm-opcional">(opcional)</span></label>
+          <input type="text" id="referencias" name="referencias" value="<%= datos.referencias || '' %>" maxlength="255" placeholder="Ej. Frente a la plaza, entrada por el estacionamiento" aria-describedby="referencias-error" />
+          <small class="campo__error" id="referencias-error"><%= erroresCampo.referencias || '' %></small>
+        </div>
+
+        <h2 class="sm-subtitulo">Ubicación en el mapa</h2>
+        <div class="formulario__fila">
+          <div class="campo <%= erroresCampo.latitud ? 'campo--error' : '' %>">
+            <label for="latitud">Latitud</label>
+            <input type="text" inputmode="decimal" id="latitud" name="latitud" value="<%= datos.latitudIngresada ?? '' %>" placeholder="Ej. -33.5112" required aria-describedby="latitud-error coordenadas-ayuda" />
+            <small class="campo__error" id="latitud-error"><%= erroresCampo.latitud || '' %></small>
+          </div>
+          <div class="campo <%= erroresCampo.longitud ? 'campo--error' : '' %>">
+            <label for="longitud">Longitud</label>
+            <input type="text" inputmode="decimal" id="longitud" name="longitud" value="<%= datos.longitudIngresada ?? '' %>" placeholder="Ej. -70.7579" required aria-describedby="longitud-error coordenadas-ayuda" />
+            <small class="campo__error" id="longitud-error"><%= erroresCampo.longitud || '' %></small>
+          </div>
+        </div>
+        <small class="campo__ayuda" id="coordenadas-ayuda">En Google Maps, haz clic derecho sobre el recinto y copia las coordenadas. Deben estar dentro de Chile.</small>
+
+        <div class="sm-form__acciones">
+          <button type="submit" class="btn btn--verde btn--grande"><%= recinto ? 'Guardar cambios' : 'Registrar recinto' %></button>
+          <a class="btn btn--contorno btn--grande" href="<%= volverA %>">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/dock', { activo: 'admin' }) %>
+
+<%- include('../partials/footer') %>

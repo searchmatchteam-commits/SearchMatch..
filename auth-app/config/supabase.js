@@ -69,4 +69,14 @@ const supabaseAdmin = SUPABASE_SERVICE_ROLE_KEY
     })
   : null;
 
-module.exports = { crearClienteServidor, supabaseAdmin };
+/**
+ * NUEVO: AR-009 / AR-012 — cliente de Supabase sin cookies ni sesión guardada, solo para
+ * comprobar la contraseña actual de alguien sin tocar la sesión de la petición.
+ */
+function crearClienteTemporal() {
+  return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+}
+
+module.exports = { crearClienteServidor, supabaseAdmin, crearClienteTemporal }; // NUEVO: crearClienteTemporal

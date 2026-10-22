@@ -1,0 +1,53 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- PE-011 / PE-004: las solicitudes de unión que envió el jugador, con estado y fechas.
+     Las pendientes se pueden cancelar (con confirmación); después se puede volver a postular. -->
+<%
+  const formatoFecha = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', dateStyle: 'medium' });
+  const nombres = { pendiente: 'Pendiente', aceptada: 'Aceptada', rechazada: 'Rechazada', cancelada: 'Cancelada' };
+%>
+<section class="eq">
+  <div class="contenedor sm-angosto">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: '/equipos' }) %>
+        <h1 class="eq-cabecera__titulo">Mis solicitudes</h1>
+        <p class="eq-cabecera__stats">Equipos a los que pediste unirte.</p>
+      </div>
+    </header>
+
+    <% if (solicitudes.length === 0) { %>
+      <div class="dash-panel eq-panel sm-vacio">
+        <p class="sm-vacio__titulo">Aún no has enviado solicitudes</p>
+        <a class="btn btn--verde" href="/equipos">Buscar equipos</a>
+      </div>
+    <% } else { %>
+      <ul class="dash-panel eq-panel sm-filas">
+        <% solicitudes.forEach(function (s) { %>
+          <li class="sm-fila">
+            <span class="sm-fila__principal">
+              <a href="/equipos/<%= s.id_equipo %>"><strong><%= s.equipo %></strong></a>
+              <small>Enviada el <%= formatoFecha.format(s.fecha_solicitud) %><%= s.fecha_respuesta ? ' · ' + (s.estado === 'cancelada' ? 'Cancelada' : 'Respondida') + ' el ' + formatoFecha.format(s.fecha_respuesta) : '' %></small>
+            </span>
+            <span class="sm-estado sm-estado--<%= s.estado %>"><%= nombres[s.estado] || s.estado %></span>
+            <% if (s.estado === 'pendiente') { %>
+              <span class="sm-fila__accion">
+                <form action="/solicitudes/<%= s.id %>/cancelar" method="POST" data-confirmar="El capitán de <%= s.equipo %> ya no la verá. Podrás volver a postular después." data-confirmar-titulo="¿Cancelar la solicitud?" data-confirmar-boton="Cancelar solicitud">
+                  <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Cancelar</button>
+                </form>
+              </span>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: 'equipos' }) %>
+
+<%- include('../partials/footer') %>

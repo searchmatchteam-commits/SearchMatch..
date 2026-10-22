@@ -1,0 +1,97 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- Ficha de una cancha (canchasController.ficha):
+     DE-003 datos y teléfono del recinto · DE-006 horario semanal (días sin horario = cerrado)
+     y los próximos días con los bloques ocupados por reservas confirmadas.
+     Refleja al instante los cambios de horario del administrador (se lee de la base en cada visita). -->
+<%
+  const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: '/canchas' }) %>
+        <h1 class="eq-cabecera__titulo"><%= cancha.nombre %></h1>
+        <p class="eq-cabecera__stats"><%= cancha.recinto %> · <%= cancha.comuna %>, <%= cancha.region %></p>
+      </div>
+      <div class="eq-cabecera__acciones">
+        <span class="sm-precio sm-precio--grande"><%= pesos.format(cancha.precio) %><small>/hora</small></span>
+        <a class="btn btn--verde btn--grande" href="/canchas/<%= cancha.id %>/reservar">Reservar</a><%# PA-002 %>
+      </div>
+    </header>
+
+    <div class="sm-columnas">
+      <div class="dash-panel eq-panel revelar">
+        <header class="dash-panel__cabecera">
+          <h2 class="dash-panel__titulo">Datos de la cancha</h2>
+        </header>
+        <dl class="sm-datos">
+          <div><dt>Modalidad</dt><dd><%= cancha.modalidad %> · <%= cancha.jugadores %> jugadores por equipo</dd></div>
+          <div><dt>Recinto</dt><dd><%= cancha.recinto %></dd></div>
+          <div><dt>Dirección</dt><dd><%= cancha.direccion %>, <%= cancha.comuna %><% if (cancha.referencias) { %><br><small><%= cancha.referencias %></small><% } %></dd></div>
+          <div><dt>Teléfono del recinto</dt><dd>
+            <% if (cancha.telefono) { %><a href="tel:<%= cancha.telefono %>"><%= cancha.telefono %></a><% } else { %>—<% } %>
+          </dd></div>
+          <% if (cancha.latitud !== null && cancha.longitud !== null) { %>
+            <div><dt>Cómo llegar</dt><dd>
+              <a href="https://www.openstreetmap.org/?mlat=<%= cancha.latitud %>&mlon=<%= cancha.longitud %>#map=17/<%= cancha.latitud %>/<%= cancha.longitud %>" target="_blank" rel="noopener">Ver en el mapa</a>
+            </dd></div>
+          <% } %>
+        </dl>
+      </div>
+
+      <!-- DE-006: horario semanal -->
+      <div class="dash-panel eq-panel revelar">
+        <header class="dash-panel__cabecera">
+          <h2 class="dash-panel__titulo">Horario de la semana</h2>
+        </header>
+        <ul class="sm-horario">
+          <% horario.forEach(function (dia) { %>
+            <li class="sm-horario__dia <%= dia.bloques.length === 0 ? 'sm-horario__dia--cerrado' : '' %>">
+              <span class="sm-horario__nombre"><%= dia.nombre %></span>
+              <% if (dia.bloques.length === 0) { %>
+                <span class="sm-horario__cerrado">Cerrado</span>
+              <% } else { %>
+                <span class="sm-horario__bloques">
+                  <% dia.bloques.forEach(function (b) { %><span class="sm-bloque"><%= b.apertura %>–<%= b.cierre %></span><% }) %>
+                </span>
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+      </div>
+    </div>
+
+    <!-- DE-006: próximos 7 días con los horarios ocupados por reservas confirmadas -->
+    <div class="dash-panel eq-panel revelar">
+      <header class="dash-panel__cabecera">
+        <h2 class="dash-panel__titulo">Próximos 7 días</h2>
+      </header>
+      <ul class="sm-agenda">
+        <% dias.forEach(function (d) { %>
+          <li class="sm-agenda__dia <%= d.abierto.length === 0 ? 'sm-agenda__dia--cerrado' : '' %>">
+            <span class="sm-agenda__fecha"><%= d.etiqueta %></span>
+            <% if (d.abierto.length === 0) { %>
+              <span class="sm-horario__cerrado">Cerrado</span>
+            <% } else { %>
+              <span class="sm-agenda__detalle">
+                Abierto <%= d.abierto.map(function (b) { return b.apertura + '–' + b.cierre; }).join(', ') %>
+                <% d.ocupados.forEach(function (o) { %>
+                  <span class="sm-bloque sm-bloque--ocupado">Ocupado <%= o.inicio %>–<%= o.fin %></span>
+                <% }) %>
+                <% if (d.ocupados.length === 0) { %><span class="sm-bloque sm-bloque--libre">Sin reservas</span><% } %>
+              </span>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/dock', { activo: 'canchas' }) %>
+
+<%- include('../partials/footer') %>
