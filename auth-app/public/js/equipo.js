@@ -1,6 +1,7 @@
 // public/js/equipo.js
 // Directorio de equipos (views/equipos.ejs):
-//  1) Buscador: filtra las tarjetas por nombre o comuna mientras se escribe.
+//  1) Buscador: filtra las tarjetas (data-busqueda) mientras se escribe. Lo usan el directorio
+//     (nombre o comuna) y el modal "Invitar jugador" del panel (nombre o posición).
 //  2) "Solicitar unirme": abre un modal para el mensaje al capitán, envía la solicitud con fetch
 //     (sin recargar) y deja el botón deshabilitado como "Solicitud enviada ✓" para no mandarla dos veces.
 // Panel /mi-equipo (views/equipo-panel.ejs): el plantel y las solicitudes llegan del servidor;
@@ -8,8 +9,11 @@
 //  4) Desafíos: "Desafiar a otro equipo" abre la lista de rivales; "Enviar Desafío" abre un
 //     modal (fecha, hora y mensaje opcionales) y lo envía con fetch, sin recargar.
 //  5) Cancha táctica (solo el capitán): las cartas se arrastran (o se mueven con las flechas) y
-//     cada posición se guarda al soltar.
+//     cada posición se guarda al soltar. La "X" de cada carta saca al jugador (confirmarAccion + fetch):
+//     la carta desaparece sin recargar.
 //  6) Escudo (solo el capitán): la imagen se reduce a LADO_ESCUDO px en el navegador y se sube.
+//  7) "Invitar jugador +" (solo el capitán): abre el modal con todos los jugadores (con buscador, ver 1);
+//     "Invitar" se envía con fetch y el botón queda gris como "Invitación Enviada".
 
 // (dashboard.js, cargado en la misma página, ya declara DURACION_AVISO_MS)
 const DURACION_EXITO_MS = 3200;
@@ -57,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (buscador) {
     const tarjetas = [...document.querySelectorAll('[data-busqueda]')];
     const sinResultados = document.querySelector('[data-sin-resultados]');
+    const total = document.querySelector('[data-total-resultados]'); // pie del modal "Invitar jugador"
     buscador.addEventListener('input', () => {
       const texto = normalizar(buscador.value);
       let visibles = 0;
@@ -66,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (coincide) visibles += 1;
       });
       sinResultados.hidden = visibles > 0;
+      if (total) total.textContent = visibles;
     });
   }
 
@@ -237,6 +243,65 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ---------- 7) Invitar jugador ----------
+  const modalInvitar = document.querySelector('[data-modal-invitar]');
+  if (modalInvitar) {
+    function cerrarInvitar() {
+      modalInvitar.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    // Degradados de la lista: arriba si ya se bajó, abajo si quedan jugadores (también al filtrar)
+    const marco = modalInvitar.querySelector('[data-marco-invitar]');
+    const cuerpo = modalInvitar.querySelector('[data-cuerpo-invitar]');
+    function marcarScroll() {
+      marco.classList.toggle('eq-invitar__marco--arriba', cuerpo.scrollTop > 4);
+      marco.classList.toggle('eq-invitar__marco--abajo', cuerpo.scrollTop + cuerpo.clientHeight < cuerpo.scrollHeight - 4);
+    }
+    cuerpo.addEventListener('scroll', marcarScroll, { passive: true });
+    modalInvitar.querySelector('[data-buscar-equipo]')?.addEventListener('input', marcarScroll);
+
+    document.querySelector('[data-abrir-invitar]')?.addEventListener('click', () => {
+      modalInvitar.hidden = false;
+      marcarScroll();
+      document.body.style.overflow = 'hidden'; // la página no se desplaza detrás del modal
+      (modalInvitar.querySelector('[data-buscar-equipo]') || modalInvitar.querySelector('[data-cerrar-modal]')).focus();
+    });
+
+    // Cerrar: botón Cerrar, clic fuera de la caja o tecla Escape
+    modalInvitar.querySelector('[data-cerrar-modal]').addEventListener('click', cerrarInvitar);
+    modalInvitar.addEventListener('click', (evento) => { if (evento.target === modalInvitar) cerrarInvitar(); });
+    document.addEventListener('keydown', (evento) => { if (evento.key === 'Escape' && !modalInvitar.hidden) cerrarInvitar(); });
+
+    modalInvitar.querySelectorAll('form[data-invitar]').forEach((formulario) => {
+      formulario.addEventListener('submit', async (evento) => {
+        evento.preventDefault();
+        const boton = formulario.querySelector('button');
+        if (boton.disabled) return;
+        boton.disabled = true;
+
+        try {
+          const respuesta = await fetch(formulario.action, { method: 'POST', headers: { Accept: 'application/json' } });
+          const datos = await respuesta.json().catch(() => ({}));
+          if (!respuesta.ok || !datos.resultado) throw new Error('No se pudo enviar la invitación. Inténtalo de nuevo.');
+
+          // Enviada (o ya estaba): el botón queda gris y deshabilitado
+          if (datos.resultado === 'enviada' || datos.resultado === 'ya-invitado') {
+            boton.textContent = 'Invitación Enviada';
+            boton.classList.remove('btn--verde');
+          } else {
+            boton.disabled = false;
+          }
+          if (datos.mensaje) mostrarAviso(datos.mensaje);
+        } catch (err) {
+          console.error('No se pudo enviar la invitación:', err);
+          boton.disabled = false;
+          mostrarAviso(err.message);
+        }
+      });
+    });
+  }
+
   // ---------- 5) Cancha táctica ----------
   const cancha = document.querySelector('[data-cancha-editable]');
   if (cancha) {
@@ -323,6 +388,44 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+
+  // "X": sacar del plantel. Su pointerdown no llega a la carta (no empieza un arrastre).
+  document.querySelectorAll('form[data-sacar]').forEach((formulario) => {
+    const boton = formulario.querySelector('button');
+    boton.addEventListener('pointerdown', (evento) => evento.stopPropagation());
+    boton.addEventListener('keydown', (evento) => evento.stopPropagation()); // las flechas no mueven la carta
+
+    formulario.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      if (boton.disabled) return;
+      const confirmado = await confirmarAccion({
+        titulo: 'Sacar jugador',
+        texto: `¿Estás seguro de que quieres sacar a ${formulario.dataset.nombre} del equipo?`,
+        confirmar: 'Sacar del equipo',
+      });
+      if (!confirmado) return;
+      const ficha = formulario.closest('.cancha__jugador');
+      boton.disabled = true;
+      ficha.classList.add('cancha__jugador--saliendo'); // cargando: la carta se atenúa
+
+      try {
+        const respuesta = await fetch(formulario.action, { method: 'POST', headers: { Accept: 'application/json' } });
+        const datos = await respuesta.json().catch(() => ({}));
+        if (!respuesta.ok || !datos.ok) throw new Error(datos.mensaje || 'No se pudo sacar al jugador. Inténtalo de nuevo.');
+
+        ficha.remove();
+        const total = document.querySelector('[data-total-plantel]');
+        const quedan = document.querySelectorAll('.cancha__jugador').length;
+        if (total) total.textContent = `${quedan} ${quedan === 1 ? 'Jugador' : 'Jugadores'}`;
+        mostrarAviso(datos.mensaje);
+      } catch (err) {
+        console.error('No se pudo sacar al jugador:', err);
+        boton.disabled = false;
+        ficha.classList.remove('cancha__jugador--saliendo');
+        mostrarAviso(err.message);
+      }
+    });
+  });
 
   // ---------- 6) Escudo ----------
   const inputEscudo = document.querySelector('[data-escudo-input]');

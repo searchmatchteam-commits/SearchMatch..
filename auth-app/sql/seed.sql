@@ -699,3 +699,39 @@ ALTER TABLE equipo
 ALTER TABLE equipo_jugador
     ADD COLUMN IF NOT EXISTS pos_x NUMERIC(5, 2) CHECK (pos_x BETWEEN 0 AND 100),
     ADD COLUMN IF NOT EXISTS pos_y NUMERIC(5, 2) CHECK (pos_y BETWEEN 0 AND 100);
+
+
+-- ============================================================
+-- AB) INVITACIONES DEL CAPITÁN A JUGADORES (modal "Invitar jugador +" de /mi-equipo)
+-- ============================================================
+-- Re-ejecutable: solo CREA una tabla nueva.
+-- Vincula el equipo que invita (id_equipo) con el jugador invitado (id_jugador).
+-- Un jugador puede estar en varios equipos: se puede invitar a cualquiera que no
+-- esté ya en este plantel. UNIQUE: cada equipo invita una sola vez a cada jugador.
+
+CREATE TABLE IF NOT EXISTS invitacion_equipo (
+    id                  SERIAL PRIMARY KEY,
+    id_equipo           INT NOT NULL,
+    id_jugador          INT NOT NULL,
+    id_estado_solicitud INT NOT NULL,
+    fecha_invitacion    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    fecha_respuesta     TIMESTAMPTZ,
+
+    CONSTRAINT fk_invitacion_equipo
+        FOREIGN KEY (id_equipo)
+        REFERENCES equipo(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_invitacion_jugador
+        FOREIGN KEY (id_jugador)
+        REFERENCES jugador(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_invitacion_estado
+        FOREIGN KEY (id_estado_solicitud)
+        REFERENCES estado_solicitud(id),
+
+    UNIQUE (id_equipo, id_jugador)
+);
+
+ALTER TABLE invitacion_equipo ENABLE ROW LEVEL SECURITY;

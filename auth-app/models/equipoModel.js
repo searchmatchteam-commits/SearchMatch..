@@ -1,9 +1,10 @@
 // models/equipoModel.js
 // Equipos: tabla "equipo" (nombre, zona, correo, modalidad, nivel y usuario creador),
 // el plantel en "equipo_jugador" (rol "capitan" o "integrante" de rol_equipo, con el
-// nombre y la posición desde "jugador"), las solicitudes en "solicitud_union_equipo"
-// y los desafíos entre equipos en "desafio" (estados en "estado_desafio").
-// Requiere las secciones W, Z (mensaje de la solicitud) y AA (escudo y posiciones en la cancha) de sql/seed.sql. Todas las consultas son parametrizadas.
+// nombre y la posición desde "jugador"), las solicitudes en "solicitud_union_equipo",
+// los desafíos entre equipos en "desafio" (estados en "estado_desafio") y las invitaciones
+// del capitán en "invitacion_equipo".
+// Requiere las secciones W, Z (mensaje de la solicitud), AA (escudo y posiciones en la cancha) y AB (invitaciones) de sql/seed.sql. Todas las consultas son parametrizadas.
 
 const { pool } = require('../config/db');
 const { NIVELES, POSICIONES, ESTADISTICAS } = require('../config/perfilJugador');
@@ -625,6 +626,226 @@ async function solicitarUnion(authId, idEquipo, mensaje) {
   }
 }
 
+/**
+ * Jugadores para el modal "Invitar jugador +": TODOS los jugadores con cuenta activa (con o sin
+ * equipo: un jugador puede estar en varios), menos los que ya están en este plantel.
+ * Cada uno trae los equipos en que juega (equipo_jugador + equipo) y si tiene una invitación pendiente de este equipo.
+ * @param {number} idEquipo - El equipo del capitán.
+ * @returns {Promise<Array<{id, nombre, posicion, stats: {ritmo, ...}|null, fotoVersion: number|null,
+ *          equipos: string[], invitado: boolean}>>}
+ */
+async function listarJugadoresParaInvitar(idEquipo) {
+  const columnasStats = ESTADISTICAS.map(({ columna }) => `j.${columna}`).join(', ');
+  const { rows } = await pool.query(
+    `SELECT j.id, coalesce(nullif(j.apodo, ''), trim(concat_ws(' ', j.nombre_apodo, j.apellido))) AS nombre,
+            j.foto_actualizada, ${columnasStats},
+            (SELECT p.nombre
+               FROM jugador_posicion jp
+               JOIN posicion p ON p.id = jp.id_posicion
+              WHERE jp.id_jugador = j.id
+              ORDER BY jp.id
+              LIMIT 1) AS posicion,
+            ARRAY(SELECT e.nombre
+                    FROM equipo_jugador ej
+                    JOIN equipo e ON e.id = ej.id_equipo AND e.activo
+                   WHERE ej.id_jugador = j.id
+                   ORDER BY ej.id) AS equipos,
+            EXISTS (SELECT 1 FROM invitacion_equipo i JOIN estado_solicitud es ON es.id = i.id_estado_solicitud
+                     WHERE i.id_equipo = $1 AND i.id_jugador = j.id AND lower(es.nombre) = $2) AS invitado
+       FROM jugador j
+       JOIN usuario u ON u.id = j.id_usuario AND u.activo
+      WHERE NOT EXISTS (SELECT 1 FROM equipo_jugador ej WHERE ej.id_equipo = $1 AND ej.id_jugador = j.id)
+      ORDER BY nombre`,
+    [idEquipo, ESTADO_PENDIENTE]
+  );
+  return rows.map((fila) => ({
+    id: fila.id,
+    nombre: fila.nombre || 'Jugador',
+    posicion: etiquetaPosicion(fila.posicion) || 'Sin posición',
+    stats: ESTADISTICAS.every(({ columna }) => fila[columna] !== null)
+      ? Object.fromEntries(ESTADISTICAS.map(({ clave, columna }) => [clave, fila[columna]]))
+      : null,
+    fotoVersion: fila.foto_actualizada ? fila.foto_actualizada.getTime() : null,
+    equipos: fila.equipos,
+    invitado: fila.invitado,
+  }));
+}
+
+/**
+ * El capitán invita a un jugador: guarda en invitacion_equipo el equipo ($2) y el jugador ($3)
+ * como "pendiente". Solo el que creó el equipo; UNIQUE (id_equipo, id_jugador) evita repetirla.
+ * Si ya la había respondido (la rechazó, o la aceptó y después salió o lo sacaron), vuelve a "pendiente".
+ * @param {string} authId - UUID de auth.users (el capitán).
+ * @returns {Promise<'enviada'|'ya-invitado'|'miembro'|'sin-permiso'|'inexistente'>}
+ */
+async function invitarJugador(authId, idEquipo, idJugador) {
+  const { rows } = await pool.query(
+    `SELECT EXISTS (SELECT 1 FROM equipo e JOIN usuario u ON u.id = e.id_usuario_creador
+                     WHERE e.id = $2 AND e.activo AND u.auth_id = $1) AS soy_capitan,
+            EXISTS (SELECT 1 FROM jugador WHERE id = $3) AS existe,
+            EXISTS (SELECT 1 FROM equipo_jugador WHERE id_equipo = $2 AND id_jugador = $3) AS miembro`,
+    [authId, idEquipo, idJugador]
+  );
+  const { soy_capitan: soyCapitan, existe, miembro } = rows[0];
+  if (!soyCapitan) return 'sin-permiso';
+  if (!existe) return 'inexistente';
+  if (miembro) return 'miembro';
+
+  const estado = await pool.query('SELECT id FROM estado_solicitud WHERE lower(nombre) = $1', [ESTADO_PENDIENTE]);
+  if (estado.rowCount === 0) throw new Error("No existe el estado 'pendiente' en la tabla estado_solicitud.");
+  const { rowCount } = await pool.query(
+    `INSERT INTO invitacion_equipo (id_equipo, id_jugador, id_estado_solicitud) VALUES ($1, $2, $3)
+     ON CONFLICT (id_equipo, id_jugador) DO UPDATE
+       SET id_estado_solicitud = EXCLUDED.id_estado_solicitud, fecha_invitacion = now(), fecha_respuesta = NULL
+     WHERE invitacion_equipo.id_estado_solicitud <> EXCLUDED.id_estado_solicitud`,
+    [idEquipo, idJugador, estado.rows[0].id]
+  );
+  return rowCount > 0 ? 'enviada' : 'ya-invitado';
+}
+
+/**
+ * Invitaciones pendientes que recibió el jugador de la cuenta (panel "Invitaciones" del dashboard),
+ * de la más nueva a la más antigua, con el equipo que invita y su capitán.
+ * @param {string} authId - UUID de auth.users.
+ * @returns {Promise<Array<{id, fecha: Date, equipo: {id, nombre, detalle, escudo}, capitan: string|null}>>}
+ *          id es el de la invitación.
+ */
+async function listarMisInvitaciones(authId) {
+  const { rows } = await pool.query(
+    `SELECT i.id, i.fecha_invitacion, e.id AS id_equipo, e.nombre, e.zona, e.escudo_actualizado,
+            m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
+            (SELECT trim(concat_ws(' ', jc.nombre_apodo, jc.apellido))
+               FROM jugador jc
+              WHERE jc.id_usuario = e.id_usuario_creador) AS capitan
+       FROM usuario u
+       JOIN jugador j ON j.id_usuario = u.id
+       JOIN invitacion_equipo i ON i.id_jugador = j.id
+       JOIN estado_solicitud es ON es.id = i.id_estado_solicitud
+       JOIN equipo e ON e.id = i.id_equipo AND e.activo
+       LEFT JOIN modalidad m ON m.id = e.id_modalidad
+       LEFT JOIN nivel n ON n.id = e.id_nivel
+      WHERE u.auth_id = $1 AND lower(es.nombre) = $2
+      ORDER BY i.fecha_invitacion DESC, i.id DESC`,
+    [authId, ESTADO_PENDIENTE]
+  );
+  return rows.map((fila) => ({
+    id: fila.id,
+    fecha: fila.fecha_invitacion,
+    equipo: { id: fila.id_equipo, nombre: fila.nombre, detalle: detalleEquipo(fila), escudo: urlEscudo({ ...fila, id: fila.id_equipo }) },
+    capitan: fila.capitan,
+  }));
+}
+
+/**
+ * El jugador acepta o rechaza una invitación, en UNA transacción:
+ *  1) Bloquea la invitación y comprueba que siga pendiente, que sea para el jugador
+ *     de esta cuenta (nadie más puede responderla) y que el equipo siga activo.
+ *  2) La marca como aceptada o rechazada, con la fecha de respuesta.
+ *  3) Si la acepta, lo suma al plantel con el rol "integrante" y da por aceptada la
+ *     solicitud pendiente que él mismo hubiera enviado a ese equipo (así no le queda al capitán).
+ * @param {string} authId - UUID de auth.users (el jugador invitado).
+ * @param {number} idInvitacion
+ * @param {boolean} aceptar
+ * @returns {Promise<'aceptada'|'rechazada'|'inexistente'>}
+ */
+async function responderInvitacion(authId, idInvitacion, aceptar) {
+  const cliente = await pool.connect();
+  try {
+    await cliente.query('BEGIN');
+
+    // 1) Invitación pendiente para el jugador de esta cuenta
+    const invitacion = await cliente.query(
+      `SELECT i.id_jugador, i.id_equipo
+         FROM invitacion_equipo i
+         JOIN estado_solicitud es ON es.id = i.id_estado_solicitud
+         JOIN jugador j ON j.id = i.id_jugador
+         JOIN usuario u ON u.id = j.id_usuario
+         JOIN equipo e ON e.id = i.id_equipo AND e.activo
+        WHERE i.id = $1 AND u.auth_id = $2 AND lower(es.nombre) = $3
+          FOR UPDATE OF i`,
+      [idInvitacion, authId, ESTADO_PENDIENTE]
+    );
+    if (invitacion.rowCount === 0) {
+      await cliente.query('ROLLBACK');
+      return 'inexistente';
+    }
+    const { id_jugador: idJugador, id_equipo: idEquipo } = invitacion.rows[0];
+
+    // 2) Nuevo estado
+    const resultado = aceptar ? ESTADO_ACEPTADA : ESTADO_RECHAZADA;
+    const estado = await cliente.query('SELECT id FROM estado_solicitud WHERE lower(nombre) = $1', [resultado]);
+    if (estado.rowCount === 0) throw new Error(`No existe el estado '${resultado}' en la tabla estado_solicitud.`);
+    await cliente.query(
+      'UPDATE invitacion_equipo SET id_estado_solicitud = $2, fecha_respuesta = now() WHERE id = $1',
+      [idInvitacion, estado.rows[0].id]
+    );
+
+    // 3) Al plantel como integrante (si ya estaba, no se duplica: UNIQUE (id_jugador, id_equipo))
+    if (aceptar) {
+      const rol = await cliente.query('SELECT id FROM rol_equipo WHERE lower(nombre) = $1', [ROL_INTEGRANTE]);
+      if (rol.rowCount === 0) throw new Error(`No existe el rol '${ROL_INTEGRANTE}' en la tabla rol_equipo.`);
+      await cliente.query(
+        `INSERT INTO equipo_jugador (id_jugador, id_equipo, id_rol_equipo) VALUES ($1, $2, $3)
+         ON CONFLICT (id_jugador, id_equipo) DO NOTHING`,
+        [idJugador, idEquipo, rol.rows[0].id]
+      );
+      await cliente.query(
+        `UPDATE solicitud_union_equipo s
+            SET id_estado_solicitud = $3, fecha_respuesta = now()
+           FROM estado_solicitud es
+          WHERE es.id = s.id_estado_solicitud AND lower(es.nombre) = $4
+            AND s.id_jugador = $1 AND s.id_equipo = $2`,
+        [idJugador, idEquipo, estado.rows[0].id, ESTADO_PENDIENTE]
+      );
+    }
+
+    await cliente.query('COMMIT');
+    return resultado;
+  } catch (err) {
+    await cliente.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    cliente.release();
+  }
+}
+
+/**
+ * El capitán saca a un jugador del plantel: borra su fila de equipo_jugador
+ * (WHERE id_equipo AND id_jugador). Solo el que creó el equipo, y nunca a sí mismo.
+ * @param {string} authId - UUID de auth.users (el capitán).
+ * @returns {Promise<boolean>} false si el equipo no es suyo, el jugador no está o es el propio capitán.
+ */
+async function sacarJugador(authId, idEquipo, idJugador) {
+  const { rowCount } = await pool.query(
+    `DELETE FROM equipo_jugador ej
+      USING equipo e, usuario u, jugador j
+      WHERE ej.id_equipo = $2 AND ej.id_jugador = $3
+        AND e.id = ej.id_equipo AND e.activo
+        AND u.id = e.id_usuario_creador AND u.auth_id = $1
+        AND j.id = ej.id_jugador AND j.id_usuario <> e.id_usuario_creador`,
+    [authId, idEquipo, idJugador]
+  );
+  return rowCount > 0;
+}
+
+/**
+ * El jugador de la cuenta sale de un equipo: borra su fila de equipo_jugador
+ * (WHERE id_equipo AND id_jugador). El que creó el equipo no puede salir: el equipo quedaría sin capitán.
+ * @param {string} authId - UUID de auth.users.
+ * @returns {Promise<boolean>} false si no estaba en ese equipo o es su capitán.
+ */
+async function salirDeEquipo(authId, idEquipo) {
+  const { rowCount } = await pool.query(
+    `DELETE FROM equipo_jugador ej
+      USING jugador j, usuario u, equipo e
+      WHERE ej.id_equipo = $2 AND ej.id_jugador = j.id
+        AND j.id_usuario = u.id AND u.auth_id = $1
+        AND e.id = ej.id_equipo AND e.id_usuario_creador <> u.id`,
+    [authId, idEquipo]
+  );
+  return rowCount > 0;
+}
+
 module.exports = {
   obtenerEquipoDeCapitan,
   obtenerMiEquipo,
@@ -642,4 +863,10 @@ module.exports = {
   crearEquipo,
   listarEquipos,
   solicitarUnion,
+  listarJugadoresParaInvitar,
+  invitarJugador,
+  listarMisInvitaciones,
+  responderInvitacion,
+  sacarJugador,
+  salirDeEquipo,
 };

@@ -724,9 +724,11 @@ svg {
   --brillo-x: 50%;
   --brillo-y: 20%;
   --brillo-op: 0;
+  --px: 0;                   /* paralaje de los datos, de -1 a 1 (main.js) */
+  --py: 0;
   width: min(calc(100% - 24px), 288px);   /* nunca toca los bordes de la tarjeta */
   transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
-  transition: transform 0.6s var(--curva);
+  transition: transform 0.6s var(--curva), filter 0.3s ease;
   filter:
     drop-shadow(0 0 16px color-mix(in srgb, var(--carta-color) 38%, transparent))
     drop-shadow(0 22px 28px rgba(0, 0, 0, 0.6));
@@ -734,7 +736,7 @@ svg {
 
 /* Mientras el mouse la mueve, la carta responde casi al instante */
 .carta-jugador.inclinando {
-  transition: transform 0.08s linear;
+  transition: transform 0.1s ease-out, filter 0.3s ease;
 }
 
 .carta-jugador--bronce { --carta-color: #d08c52; }
@@ -872,11 +874,13 @@ svg {
   letter-spacing: 0.1em;
 }
 
-/* Reflejo de luz que sigue al cursor */
+/* Reflejo de luz que sigue al cursor: blanco al centro con un halo verde (holográfico) */
 .carta-jugador__brillo {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at var(--brillo-x) var(--brillo-y), rgba(255, 255, 255, 0.2), transparent 50%);
+  background:
+    radial-gradient(circle at var(--brillo-x) var(--brillo-y), rgba(255, 255, 255, 0.22), transparent 38%),
+    radial-gradient(circle at var(--brillo-x) var(--brillo-y), rgba(57, 255, 20, 0.12), transparent 65%);
   mix-blend-mode: screen;
   opacity: var(--brillo-op);
   transition: opacity 0.3s ease;
@@ -2781,6 +2785,42 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
     drop-shadow(0 26px 34px rgba(0, 0, 0, 0.65));
 }
 
+/* Carta grande (perfil, editor, solicitud): flota en reposo; al pasar el mouse se detiene donde va
+   (sin saltos) y el resplandor crece. La flotación usa "translate", que se suma al "transform" del tilt. */
+.carta-jugador--perfil:not(.carta-jugador--mini) {
+  animation: flotar-carta 5s ease-in-out infinite;
+}
+
+.perfil__escenario:hover .carta-jugador--perfil {
+  animation-play-state: paused;
+}
+
+.carta-jugador--perfil.inclinando {
+  filter:
+    drop-shadow(0 0 26px rgba(57, 255, 20, 0.7))
+    drop-shadow(0 34px 40px rgba(0, 0, 0, 0.7));
+}
+
+@keyframes flotar-carta {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -10px; }
+}
+
+/* Datos que "flotan": se corren hasta 5px hacia el cursor (paralaje). translateZ no serviría aquí:
+   el drop-shadow de la carta y el clip-path del cuerpo aplanan el 3D. */
+.carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cabecera,
+.carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__nombre,
+.carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__stats {
+  translate: calc(var(--px) * 5px) calc(var(--py) * 5px);
+  transition: translate 0.6s var(--curva);
+}
+
+.carta-jugador--perfil.inclinando .carta-jugador__cabecera,
+.carta-jugador--perfil.inclinando .carta-jugador__nombre,
+.carta-jugador--perfil.inclinando .carta-jugador__stats {
+  transition: translate 0.1s ease-out;
+}
+
 .carta-jugador--perfil .carta-jugador__marco {
   position: relative;
   aspect-ratio: 320 / 460;
@@ -3062,6 +3102,11 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   .perfil__cabecera {
     text-align: left;
   }
+}
+
+/* Botón "Volver" en su propia línea, sobre "SEARCH MATCH · PERFIL" */
+.perfil__volver {
+  margin-bottom: 18px;
 }
 
 .perfil__titulo {
@@ -3509,6 +3554,142 @@ html.js .bento__tarjeta.revelar.visible:hover {
   .logo__texto {
     display: none;
   }
+}
+
+/* ---------- Barra de scroll oscura (.scroll-oscuro en cualquier contenedor con scroll) ---------- */
+/* Pulgar gris redondeado que se ilumina en verde neón; riel transparente y redondeado.
+   Chrome/Edge/Safari usan ::-webkit-scrollbar (permite el hover); Firefox, scrollbar-color. */
+.scroll-oscuro::-webkit-scrollbar {
+  width: 12px;
+}
+
+.scroll-oscuro::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: transparent;
+}
+
+.scroll-oscuro::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #3a3a3a;
+  border: 2px solid transparent; /* pulgar visible de 8px, con aire a los lados */
+  background-clip: padding-box;
+}
+
+.scroll-oscuro::-webkit-scrollbar-thumb:hover,
+.scroll-oscuro::-webkit-scrollbar-thumb:active {
+  background-color: #4ade80;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .scroll-oscuro {
+    scrollbar-width: thin;
+    scrollbar-color: #3a3a3a transparent;
+  }
+}
+
+/* ---------- Confirmación (confirmarAccion en main.js) ---------- */
+.confirmar {
+  position: fixed;
+  inset: 0;
+  z-index: 200; /* sobre los demás modales (100), el dock y los avisos */
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.7);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: confirmar-fondo 0.15s ease-out;
+}
+
+.confirmar__caja {
+  width: 100%;
+  max-width: 380px;
+  padding: 22px;
+  border-radius: 18px;
+  background: #121212;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  animation: confirmar-caja 0.2s var(--curva);
+}
+
+.confirmar__titulo {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.confirmar__texto {
+  margin: 8px 0 20px;
+  font-size: 0.92rem;
+  color: var(--texto-suave);
+  overflow-wrap: anywhere;
+}
+
+.confirmar__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Acción que no se deshace: rojo */
+.confirmar__si {
+  color: #fff;
+  background: #d93c3c;
+  border: 1px solid #d93c3c;
+}
+
+.confirmar__si:hover,
+.confirmar__si:focus-visible {
+  background: #e54848;
+  border-color: #e54848;
+  box-shadow: 0 0 18px rgba(229, 72, 72, 0.35);
+}
+
+@keyframes confirmar-fondo {
+  from { opacity: 0; }
+}
+
+@keyframes confirmar-caja {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+}
+
+/* ---------- Botón "Volver" (partials/boton-volver) ---------- */
+.boton-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 8px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--texto);
+  text-decoration: none;
+  background: #121212;
+  border: 1px solid #2e2e2e;
+  transition: border-color 0.25s var(--curva), box-shadow 0.25s var(--curva);
+}
+
+.boton-volver__flecha {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: color 0.25s var(--curva), transform 0.25s var(--curva);
+}
+
+.boton-volver:hover,
+.boton-volver:focus-visible {
+  color: var(--texto);
+  border-color: #4ade80;
+  box-shadow: 0 0 12px rgba(74, 222, 128, 0.25);
+}
+
+.boton-volver:hover .boton-volver__flecha,
+.boton-volver:focus-visible .boton-volver__flecha {
+  color: #4ade80;
+  transform: translateX(-2px);
 }
 
 /* Usuarios que prefieren menos movimiento: sin desplazamientos ni animaciones */

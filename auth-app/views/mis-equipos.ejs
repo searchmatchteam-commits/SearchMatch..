@@ -8,6 +8,7 @@
   <div class="contenedor">
     <header class="eq-cabecera revelar">
       <div class="eq-cabecera__texto">
+        <%- include('partials/boton-volver') %>
         <h1 class="eq-cabecera__titulo">Mis equipos</h1>
         <p class="eq-cabecera__stats">Toca un equipo para ver su plantel</p>
       </div>
@@ -22,10 +23,13 @@
     </header>
 
     <div class="dash-panel eq-panel revelar">
-      <%- include('partials/mis-equipos', { misEquipos }) %>
+      <%- include('partials/mis-equipos', { misEquipos, volver: '/mis-equipos' }) %>
     </div>
   </div>
 </section>
+
+<!-- Aviso tras salir de un equipo (equipo.js lo esconde) -->
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
 
 <%- include('partials/dock', { activo: 'mis-equipos' }) %>
 

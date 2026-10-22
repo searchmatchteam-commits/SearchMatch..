@@ -3,9 +3,62 @@
 //  1) Animaciones de aparición al hacer scroll (IntersectionObserver).
 //  2) Formato del teléfono chileno mientras se escribe (+56 9 XXXX XXXX).
 //  3) Tarjetas bento: glow y borde que siguen al cursor.
-//  4) Carta de jugador: inclinación 3D con reflejo de luz.
+//  4) Carta de jugador: inclinación 3D con reflejo de luz y paralaje de los datos (la flotación en reposo es CSS).
 //  5) Timeline "Cómo funciona": línea que se rellena con el scroll.
+//  6) Botón "Volver" (partials/boton-volver): vuelve atrás si se llegó desde otra página del sitio.
+//  7) confirmarAccion(): modal de confirmación con el estilo del sitio (en vez de window.confirm).
+//     Lo usan equipo.js ("sacar" del plantel) y dashboard.js ("Salir del equipo"); main.js carga antes.
 // La validación de login/registro está en auth.js (y la real, en el servidor).
+
+/* ---------- 7) Confirmación ---------- */
+/**
+ * Pregunta antes de una acción que no se deshace, en un modal propio (estilos .confirmar en style.css).
+ * Cancelar, Escape o clic fuera de la caja responden false. El foco parte en "Cancelar".
+ * @param {{titulo: string, texto: string, confirmar?: string}} opciones - Se escriben como texto, no como HTML.
+ * @returns {Promise<boolean>}
+ */
+function confirmarAccion({ titulo, texto, confirmar = 'Confirmar' }) {
+  return new Promise((resolver) => {
+    const fondo = document.createElement('div');
+    fondo.className = 'confirmar';
+    fondo.innerHTML = `
+      <div class="confirmar__caja" role="alertdialog" aria-modal="true" aria-labelledby="confirmar-titulo" aria-describedby="confirmar-texto">
+        <h2 class="confirmar__titulo" id="confirmar-titulo"></h2>
+        <p class="confirmar__texto" id="confirmar-texto"></p>
+        <div class="confirmar__acciones">
+          <button type="button" class="btn btn--contorno btn--chico" data-confirmar-no>Cancelar</button>
+          <button type="button" class="btn btn--chico confirmar__si" data-confirmar-si></button>
+        </div>
+      </div>`;
+    fondo.querySelector('.confirmar__titulo').textContent = titulo;
+    fondo.querySelector('.confirmar__texto').textContent = texto;
+    fondo.querySelector('[data-confirmar-si]').textContent = confirmar;
+    const botones = [...fondo.querySelectorAll('button')];
+    const anterior = document.activeElement;
+
+    function cerrar(respuesta) {
+      fondo.remove();
+      document.removeEventListener('keydown', teclas);
+      if (anterior && anterior.focus) anterior.focus();
+      resolver(respuesta);
+    }
+    function teclas(evento) {
+      if (evento.key === 'Escape') cerrar(false);
+      // Tab no sale del modal: va y viene entre los dos botones
+      if (evento.key === 'Tab') {
+        evento.preventDefault();
+        botones[(botones.indexOf(document.activeElement) + 1) % botones.length].focus();
+      }
+    }
+
+    fondo.addEventListener('click', (evento) => { if (evento.target === fondo) cerrar(false); });
+    fondo.querySelector('[data-confirmar-no]').addEventListener('click', () => cerrar(false));
+    fondo.querySelector('[data-confirmar-si]').addEventListener('click', () => cerrar(true));
+    document.addEventListener('keydown', teclas);
+    document.body.append(fondo);
+    botones[0].focus();
+  });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -80,6 +133,9 @@ document.addEventListener('DOMContentLoaded', () => {
         carta.style.setProperty('--brillo-x', `${x * 100}%`);
         carta.style.setProperty('--brillo-y', `${y * 100}%`);
         carta.style.setProperty('--brillo-op', '1');
+        // Paralaje: los datos se corren hacia el cursor (de -1 a 1), como si flotaran sobre la carta
+        carta.style.setProperty('--px', ((x - 0.5) * 2).toFixed(3));
+        carta.style.setProperty('--py', ((y - 0.5) * 2).toFixed(3));
       });
 
       zona.addEventListener('pointerleave', () => {
@@ -87,9 +143,24 @@ document.addEventListener('DOMContentLoaded', () => {
         carta.style.setProperty('--rx', '0deg');
         carta.style.setProperty('--ry', '0deg');
         carta.style.setProperty('--brillo-op', '0');
+        carta.style.setProperty('--px', '0');
+        carta.style.setProperty('--py', '0');
       });
     });
   }
+
+  /* ---------- 6) Botón "Volver" ---------- */
+  // Sin página anterior del sitio (enlace directo o pestaña nueva) sigue el href: la página de respaldo.
+  // (data-boton-volver y no data-volver: ese lo usan los wizards para ir al paso anterior)
+  document.querySelectorAll('[data-boton-volver]').forEach((boton) => {
+    boton.addEventListener('click', (evento) => {
+      const vieneDelSitio = document.referrer && new URL(document.referrer).origin === window.location.origin;
+      if (vieneDelSitio && window.history.length > 1) {
+        evento.preventDefault();
+        window.history.back();
+      }
+    });
+  });
 
   /* ---------- 5) Timeline que se rellena con el scroll ---------- */
   const timeline = document.querySelector('[data-timeline]');

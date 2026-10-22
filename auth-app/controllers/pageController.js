@@ -4,6 +4,7 @@
 const jugadorModel = require('../models/jugadorModel');
 const equipoModel = require('../models/equipoModel');
 const { POSICIONES, ESTADISTICAS, calcularMedia, nombreEnCarta } = require('../config/perfilJugador');
+const { AVISOS_RESPUESTA_INVITACION, AVISOS_SALIDA } = require('./equipoController');
 
 // GET / → landing page pública.
 function landing(req, res) {
@@ -52,6 +53,18 @@ async function leerMisEquipos(usuario) {
   });
 }
 
+/**
+ * Invitaciones pendientes que recibió la cuenta (panel "Invitaciones" del dashboard).
+ * Si la base falla (o falta la sección AB de sql/seed.sql) el panel no aparece y el resto sigue.
+ * @returns {Promise<Array<{id, fecha, equipo: {id, nombre, detalle, escudo}, capitan}>>}
+ */
+async function leerInvitaciones(usuario) {
+  return equipoModel.listarMisInvitaciones(usuario.idAuth).catch((err) => {
+    console.error('⚠️  No se pudieron leer las invitaciones para el dashboard:', err.message);
+    return [];
+  });
+}
+
 /** Resumen de la carta para el saludo del dashboard (solo jugadores con perfil completo). */
 function resumenCarta(perfil) {
   if (!perfil || !perfil.perfilCompleto || !perfil.stats) return null;
@@ -79,10 +92,11 @@ function torneos(req, res) {
 // Onboarding obligatorio: el jugador sin perfil completo va primero al wizard.
 async function dashboard(req, res, next) {
   try {
-    const [perfil, miEquipo, misEquipos] = await Promise.all([
+    const [perfil, miEquipo, misEquipos, invitaciones] = await Promise.all([
       leerPerfilJugador(req.usuario),
       leerMiEquipo(req.usuario),
       leerMisEquipos(req.usuario),
+      leerInvitaciones(req.usuario),
     ]);
     if (perfil && !perfil.perfilCompleto) return res.redirect('/perfil-jugador');
 
@@ -92,6 +106,8 @@ async function dashboard(req, res, next) {
       carta: resumenCarta(perfil),
       miEquipo,
       misEquipos,
+      invitaciones,
+      aviso: AVISOS_RESPUESTA_INVITACION[req.query.invitacion] || AVISOS_SALIDA[req.query.salida] || null,
     });
   } catch (err) {
     next(err);

@@ -391,6 +391,66 @@
   box-shadow: 0 0 10px rgba(var(--verde-rgb), 0.6);
 }
 
+/* "X" para sacar al jugador del plantel: esquina superior izquierda (la "C" va a la derecha).
+   Discreta hasta pasar el mouse por la carta; recibe clics aunque el resto de la carta no (ver arriba). */
+.cancha__sacar {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  z-index: 2;
+}
+
+.cancha--editable .cancha__jugador .cancha__sacar,
+.cancha--editable .cancha__jugador .cancha__sacar * {
+  pointer-events: auto;
+}
+
+.cancha__sacar-boton {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #ff6b6b;
+  background: #1a0d0d;
+  border: 1px solid rgba(255, 107, 107, 0.45);
+  opacity: 0.55;
+  transition: opacity 0.2s, background-color 0.2s, transform 0.2s;
+}
+
+.cancha__sacar-boton svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.cancha__jugador:hover .cancha__sacar-boton,
+.cancha__jugador:focus-within .cancha__sacar-boton {
+  opacity: 1;
+}
+
+.cancha__sacar-boton:hover,
+.cancha__sacar-boton:focus-visible {
+  color: #fff;
+  background: #d93c3c;
+  transform: scale(1.1);
+}
+
+.cancha__sacar-boton:disabled {
+  cursor: progress;
+}
+
+/* Mientras el servidor responde, la carta se atenúa */
+.cancha__jugador--saliendo {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 /* ---------- Directorio de equipos (/equipos) ---------- */
 .eq-cabecera__acciones {
   display: flex;
@@ -624,6 +684,399 @@
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+/* ---------- Modal "Invitar jugador" ---------- */
+/* Tarjetas tipo "manager": 1 columna en celular, 2 desde 768px.
+   Vidrio: la página se desenfoca detrás y la caja es casi negra y semitransparente. */
+.modal--vidrio {
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* Columna: cabecera, lista (la única que hace scroll) y pie */
+.modal__caja--ancha {
+  display: flex;
+  flex-direction: column;
+  max-width: 820px;
+  overflow: hidden;
+  padding: 0;
+  background: rgba(10, 10, 10, 0.9);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.eq-invitar__cabecera {
+  flex: none;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Marco de la lista: lleva los degradados de arriba y abajo (no tapan la barra de scroll) */
+.eq-invitar__marco {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.eq-invitar__marco::before,
+.eq-invitar__marco::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 22px; /* deja libre la barra */
+  z-index: 1;
+  height: 40px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.eq-invitar__marco::before {
+  top: 0;
+  background: linear-gradient(to bottom, #0b0b0b, transparent);
+}
+
+.eq-invitar__marco::after {
+  bottom: 0;
+  background: linear-gradient(to top, #0b0b0b, transparent);
+}
+
+.eq-invitar__marco--arriba::before,
+.eq-invitar__marco--abajo::after {
+  opacity: 1;
+}
+
+/* Lista con scroll: padding a la derecha para que las tarjetas no choquen con la barra,
+   y la barra separada del borde del modal */
+.eq-invitar__cuerpo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 8px 6px 8px 0;
+  padding: 10px 12px 10px 24px;
+}
+
+.eq-invitar__cabecera .modal__texto {
+  margin-bottom: 14px;
+}
+
+/* Buscador: fondo oscuro y borde que se ilumina en verde al enfocarlo */
+.eq-buscador--chico {
+  border-radius: 12px;
+  background: #0d0d0d;
+  border-color: #2a2a2a;
+}
+
+.eq-buscador--chico:focus-within {
+  border-color: rgba(var(--verde-rgb), 0.6);
+  box-shadow: 0 0 0 3px rgba(var(--verde-rgb), 0.12), 0 0 18px rgba(var(--verde-rgb), 0.15);
+}
+
+.eq-buscador--chico:focus-within .eq-buscador__icono {
+  stroke: var(--verde);
+}
+
+.eq-buscador--chico .eq-buscador__input {
+  padding: 11px 0;
+  font-size: 0.9rem;
+}
+
+.eq-invitables {
+  list-style: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.eq-invitable {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
+  border: 1px solid #262626;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.eq-invitable:hover {
+  border-color: #3a3a3a;
+  transform: translateY(-2px);
+}
+
+/* OVR mayor a 70: borde verde más brillante */
+.eq-invitable--destacado {
+  border-color: rgba(var(--verde-rgb), 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 0 20px rgba(var(--verde-rgb), 0.06);
+}
+
+.eq-invitable--destacado:hover {
+  border-color: rgba(var(--verde-rgb), 0.6);
+}
+
+.eq-invitable[hidden] {
+  display: none;
+}
+
+/* Arriba: avatar + nombre a la izquierda, OVR a la derecha */
+.eq-invitable__cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.eq-avatar--chico {
+  overflow: hidden;
+  width: 46px;
+  height: 46px;
+  font-size: 1.05rem;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.4);
+}
+
+.eq-avatar--chico img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.eq-invitable__datos {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+
+.eq-invitable__nombre {
+  overflow: hidden;
+  font-size: 1rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eq-invitable__linea {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.eq-invitable__linea .eq-posicion {
+  font-size: 0.78rem;
+}
+
+.eq-posicion--vacia {
+  color: #5f665f;
+  font-style: italic;
+}
+
+/* OVR en un círculo: blanco con media normal, verde neón con brillo si es alta (> 75) */
+.eq-ovr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #232323, #111);
+  border: 2px solid #333;
+}
+
+.eq-ovr__numero {
+  font-family: var(--fuente-titulo);
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #f2f5f2;
+  font-variant-numeric: tabular-nums;
+}
+
+.eq-ovr__sigla {
+  margin-top: 2px;
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--texto-suave);
+}
+
+.eq-ovr--alto {
+  background: radial-gradient(circle at 50% 35%, rgba(var(--verde-rgb), 0.22), rgba(13, 92, 5, 0.25) 70%);
+  border-color: rgba(var(--verde-rgb), 0.7);
+  box-shadow: 0 0 16px rgba(var(--verde-rgb), 0.35), inset 0 0 10px rgba(var(--verde-rgb), 0.2);
+}
+
+.eq-ovr--alto .eq-ovr__numero {
+  color: var(--verde);
+  text-shadow: 0 0 10px rgba(var(--verde-rgb), 0.8);
+}
+
+.eq-ovr--alto .eq-ovr__sigla {
+  color: rgba(var(--verde-rgb), 0.8);
+}
+
+/* Sin estadísticas: el círculo queda apagado */
+.eq-ovr--vacio {
+  border-style: dashed;
+  border-color: #2e2e2e;
+}
+
+.eq-ovr--vacio .eq-ovr__numero {
+  color: #555;
+}
+
+/* Situación del jugador: agente libre (verde) o en qué equipo(s) juega (gris azulado) */
+.eq-etiqueta {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eq-etiqueta--libre {
+  color: #4ade80;
+  background: rgba(20, 83, 45, 0.45);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.eq-etiqueta--equipo {
+  color: #cbd5e1;
+  background: rgba(51, 65, 85, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+/* Barras de estadísticas (1-99): --valor llena la barra en verde neón */
+.eq-barras {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 18px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.eq-barra {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+}
+
+.eq-barra dt {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--texto-suave);
+}
+
+.eq-barra dd {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eq-barra dd::before {
+  content: '';
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.eq-barra__relleno {
+  position: absolute;
+  left: 0;
+  width: calc((100% - 30px) * var(--valor) / 99);
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(var(--verde-rgb), 0.6), var(--verde));
+  box-shadow: 0 0 6px rgba(var(--verde-rgb), 0.5);
+}
+
+.eq-barra__numero {
+  width: 22px;
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sin estadísticas: barras grises y "—" apagado */
+.eq-barras--vacias dt,
+.eq-barras--vacias .eq-barra__numero {
+  color: #4a4a4a;
+}
+
+/* Botón píldora chico "+ Invitar", en la esquina inferior derecha */
+.eq-invitable__pie {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+}
+
+.eq-invitar {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.eq-invitar__icono {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+}
+
+.eq-invitar:disabled {
+  color: var(--texto-suave);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--vidrio-borde);
+  box-shadow: none;
+  cursor: default;
+}
+
+/* Pie: total de resultados y "Cerrar" */
+.eq-invitar__pie {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.eq-invitar__total {
+  font-size: 0.82rem;
+  color: var(--texto-suave);
+}
+
+.eq-invitar__total strong {
+  color: var(--texto);
+}
+
+@media (min-width: 768px) {
+  .eq-invitables {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* ---------- Responsive ---------- */

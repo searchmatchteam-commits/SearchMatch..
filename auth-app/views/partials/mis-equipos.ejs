@@ -1,10 +1,11 @@
 <%
   // Lista de "Mis equipos" (dashboard y /mis-equipos). Uso:
-  //   include('partials/mis-equipos', { misEquipos })
+  //   include('partials/mis-equipos', { misEquipos, volver: '/dashboard' })
   // (Desde un partial, include busca junto a este archivo: por eso el escudo va sin 'partials/'.)
   // misEquipos: [{ id, nombre, detalle, soyCapitan, plantel: [{ nombre, posicion, capitan }] }],
   // o null si no se pudo leer. Cada equipo se despliega con su plantel (<details>, sin JS);
-  // en los que creó la cuenta (soyCapitan) aparece "Administrar" al lado.
+  // en los que creó la cuenta (soyCapitan) aparece "Administrar" al lado; en el resto, "Salir del equipo"
+  // (dashboard.js pide confirmación). volver: a qué página regresa después de salir.
 %>
   <% if (misEquipos === null) { %>
     <p class="dash-panel__nota">No pudimos cargar tus equipos. Vuelve a intentarlo en unos minutos.</p>
@@ -46,6 +47,11 @@
 
           <% if (equipo.soyCapitan) { %>
             <a class="dash-equipo__admin" data-ripple href="/mi-equipo?equipo=<%= equipo.id %>">Administrar</a>
+          <% } else { %>
+            <form class="dash-equipo__salir" action="/equipos/<%= equipo.id %>/salir" method="POST" data-salir data-nombre="<%= equipo.nombre %>">
+              <input type="hidden" name="volver" value="<%= locals.volver || '/dashboard' %>">
+              <button type="submit" class="dash-equipo__salir-boton">Salir del equipo</button>
+            </form>
           <% } %>
         </li>
       <% }) %>

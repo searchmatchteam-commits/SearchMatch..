@@ -10,6 +10,10 @@
 //  - POST /equipos/:id/plantel/:idJugador/posicion → el capitán deja la carta de un jugador en la cancha.
 //  - GET/POST /equipos/:id/escudo → el escudo del equipo (lo sube el capitán desde /mi-equipo).
 //  - POST /mi-equipo/desafios/:id → el capitán desafía a otro equipo (JSON si viene de fetch).
+//  - POST /equipos/:id/invitaciones/:idJugador → el capitán invita a un jugador (modal "Invitar jugador +").
+//  - POST /invitaciones/:id/(aceptar|rechazar) → el jugador responde una invitación (panel del dashboard).
+//  - POST /equipos/:id/plantel/:idJugador/sacar → el capitán saca a un jugador del plantel (JSON si viene de fetch).
+//  - POST /equipos/:id/salir → el jugador sale de un equipo ("Mis equipos" del dashboard y /mis-equipos).
 //  - GET /mis-equipos → los equipos de la cuenta con su plantel ("Administrar" en los que creó).
 //  - GET /equipos → directorio de equipos con buscador, "Solicitar unirme" y "+ Crear equipo".
 //  - POST /equipos/:id/unirme → guarda la solicitud y su mensaje en solicitud_union_equipo (JSON si viene de fetch).
@@ -49,6 +53,37 @@ const AVISOS_DESAFIO = {
   inexistente: 'Ese equipo ya no está disponible.',
 };
 
+// Avisos tras "Enviar Invitación" (?invitacion=... o JSON): solo textos fijos.
+const AVISOS_INVITACION = {
+  enviada: '¡Invitación enviada! El jugador la verá pronto.',
+  'ya-invitado': 'Ya invitaste a ese jugador.',
+  miembro: 'Ese jugador ya es parte de tu plantel.',
+  'sin-permiso': 'Solo el capitán que creó el equipo puede invitar jugadores.',
+  inexistente: 'Ese jugador ya no está disponible.',
+};
+
+// Etiquetas de las posiciones del catálogo: cualquier otra cosa se muestra como "Sin posición" en gris.
+const POSICIONES_ETIQUETAS = Object.values(POSICIONES).map(({ etiqueta }) => etiqueta);
+
+// Avisos del dashboard tras responder una invitación (?invitacion=...): solo textos fijos.
+const AVISOS_RESPUESTA_INVITACION = {
+  aceptada: '¡Bienvenido! Ya eres parte del plantel.',
+  rechazada: 'Invitación rechazada.',
+  inexistente: 'Esa invitación ya fue respondida o ya no está disponible.',
+};
+
+// Avisos al sacar a un jugador (panel) o al salir de un equipo (?salida=...): solo textos fijos.
+const AVISOS_SACAR = {
+  sacado: 'El jugador ya no es parte del plantel.',
+  'no-permitido': 'No puedes sacar a ese jugador.',
+};
+const AVISOS_SALIDA = {
+  saliste: 'Saliste del equipo.',
+  'no-permitido': 'No puedes salir de ese equipo (si eres su capitán, el equipo quedaría sin capitán).',
+};
+// Después de salir se vuelve a la página desde donde se pidió (solo estas)
+const VOLVER_TRAS_SALIR = ['/dashboard', '/mis-equipos'];
+
 // Cancha táctica (views/equipo-panel.ejs): altura (% del alto) de cada línea, de arriba (ataque) hacia abajo.
 // Sin posición guardada, la carta va a la altura de su línea y las de una misma línea se reparten a lo ancho.
 const ALTURA_LINEA = { delantero: 12, mediocampista: 32, sinPosicion: 51, defensa: 70, arquero: 88 };
@@ -81,6 +116,36 @@ function plantelEnCancha(plantel) {
       },
     };
   });
+}
+
+// Modal "Invitar jugador +": desde qué media la tarjeta lleva borde destacado y el OVR brilla en neón.
+const MEDIA_DESTACADA = 70;
+const MEDIA_ALTA = 75;
+
+/**
+ * Tarjeta del modal "Invitar jugador +": media, barras de stats y la etiqueta con su situación
+ * ("Agente Libre", "Juega en <equipo>" o "Multi-equipo" si está en varios).
+ * Sin estadísticas (perfil incompleto) la media es '—' y las barras quedan en gris con '—'.
+ */
+function jugadorInvitable(jugador) {
+  const { equipos } = jugador;
+  const media = jugador.stats ? calcularMedia(jugador.stats) : null;
+  return {
+    id: jugador.id,
+    nombre: jugador.nombre,
+    posicion: jugador.posicion,
+    sinPosicion: !POSICIONES_ETIQUETAS.includes(jugador.posicion),
+    invitado: jugador.invitado,
+    media: media ?? '—',
+    destacado: media !== null && media > MEDIA_DESTACADA,
+    mediaAlta: media !== null && media > MEDIA_ALTA,
+    tieneStats: Boolean(jugador.stats),
+    estadisticas: ESTADISTICAS.map(({ clave, sigla }) => ({ sigla, valor: (jugador.stats && Number(jugador.stats[clave])) || 0 })),
+    foto: jugador.fotoVersion ? `/jugadores/${jugador.id}/foto?v=${jugador.fotoVersion}` : null,
+    etiqueta: equipos.length === 0 ? 'Agente Libre' : equipos.length === 1 ? `Juega en ${equipos[0]}` : 'Multi-equipo',
+    libre: equipos.length === 0,
+    equipos,
+  };
 }
 
 // Código de PostgreSQL para "la columna no existe".
@@ -163,10 +228,11 @@ async function panel(req, res, next) {
     // Sin equipo: el rol "equipo" lo crea; el jugador busca uno al que unirse.
     if (!equipo) return res.redirect(req.usuario.rolInicio === 'equipo' ? '/crear-equipo' : '/equipos');
 
-    const [plantel, solicitudes, rivales] = await Promise.all([
+    const [plantel, solicitudes, rivales, invitables] = await Promise.all([
       equipoModel.listarPlantel(equipo.id),
       equipo.soyCapitan ? equipoModel.listarSolicitudesPendientes(equipo.id) : [],
       equipo.soyCapitan ? equipoModel.listarRivales(equipo.id) : [],
+      equipo.soyCapitan ? equipoModel.listarJugadoresParaInvitar(equipo.id) : [],
     ]);
     return res.render('equipo-panel', {
       titulo: 'Mi equipo',
@@ -176,7 +242,9 @@ async function panel(req, res, next) {
       capitan: plantel.find((jugador) => jugador.capitan) || null,
       solicitudes,
       rivales,
-      aviso: AVISOS_PANEL[req.query.aviso] || AVISOS_DESAFIO[req.query.desafio] || null,
+      invitables: invitables.map(jugadorInvitable),
+      aviso: AVISOS_PANEL[req.query.aviso] || AVISOS_DESAFIO[req.query.desafio] || AVISOS_INVITACION[req.query.invitacion]
+        || AVISOS_SACAR[req.query.sacar] || null,
     });
   } catch (err) {
     return pasarError(err, next);
@@ -197,6 +265,7 @@ async function misEquipos(req, res, next) {
       pagina: 'equipo',
       misEquipos: equipos,
       puedeCrear: !equipoCreado, // cada cuenta crea un solo equipo
+      aviso: AVISOS_SALIDA[req.query.salida] || null,
     });
   } catch (err) {
     return pasarError(err, next);
@@ -413,6 +482,74 @@ async function desafiar(req, res, next) {
   }
 }
 
+// ---------------------------------------------------------------
+// POST /equipos/:id/invitaciones/:idJugador → el capitán invita a un jugador (el modelo
+// comprueba que el equipo sea suyo). JSON desde equipo.js; sin JavaScript vuelve al panel.
+// ---------------------------------------------------------------
+async function invitar(req, res, next) {
+  const idEquipo = idDeParametro(req.params.id);
+  const idJugador = idDeParametro(req.params.idJugador);
+  const quiereJson = req.accepts(['html', 'json']) === 'json';
+  try {
+    const resultado = idEquipo && idJugador
+      ? await equipoModel.invitarJugador(req.usuario.idAuth, idEquipo, idJugador)
+      : 'inexistente';
+    if (quiereJson) return res.json({ resultado, mensaje: AVISOS_INVITACION[resultado] });
+    return res.redirect(`/mi-equipo?invitacion=${resultado}`);
+  } catch (err) {
+    return pasarError(err, next);
+  }
+}
+
+// ---------------------------------------------------------------
+// POST /invitaciones/:id/:accion → el jugador acepta o rechaza (el modelo comprueba
+// que la invitación sea para el jugador de esta cuenta). Vuelve al dashboard con el aviso.
+// ---------------------------------------------------------------
+async function responderInvitacion(req, res, next) {
+  const idInvitacion = idDeParametro(req.params.id);
+  const { accion } = req.params;
+  try {
+    const resultado = idInvitacion && (accion === 'aceptar' || accion === 'rechazar')
+      ? await equipoModel.responderInvitacion(req.usuario.idAuth, idInvitacion, accion === 'aceptar')
+      : 'inexistente';
+    return res.redirect(`/dashboard?invitacion=${resultado}`);
+  } catch (err) {
+    return pasarError(err, next);
+  }
+}
+
+// ---------------------------------------------------------------
+// POST /equipos/:id/plantel/:idJugador/sacar → el capitán saca a un jugador (el modelo comprueba
+// que el equipo sea suyo y que no sea él mismo). JSON desde equipo.js; sin JavaScript vuelve al panel.
+// ---------------------------------------------------------------
+async function sacar(req, res, next) {
+  const idEquipo = idDeParametro(req.params.id);
+  const idJugador = idDeParametro(req.params.idJugador);
+  const quiereJson = req.accepts(['html', 'json']) === 'json';
+  try {
+    const sacado = Boolean(idEquipo && idJugador && (await equipoModel.sacarJugador(req.usuario.idAuth, idEquipo, idJugador)));
+    const resultado = sacado ? 'sacado' : 'no-permitido';
+    if (quiereJson) return res.status(sacado ? 200 : 403).json({ ok: sacado, mensaje: AVISOS_SACAR[resultado] });
+    return res.redirect(`/mi-equipo?equipo=${idEquipo || ''}&sacar=${resultado}`);
+  } catch (err) {
+    return pasarError(err, next);
+  }
+}
+
+// ---------------------------------------------------------------
+// POST /equipos/:id/salir → el jugador sale del equipo y vuelve a la página desde donde lo pidió
+// ---------------------------------------------------------------
+async function salir(req, res, next) {
+  const idEquipo = idDeParametro(req.params.id);
+  const volver = VOLVER_TRAS_SALIR.includes(req.body.volver) ? req.body.volver : '/dashboard';
+  try {
+    const salio = Boolean(idEquipo && (await equipoModel.salirDeEquipo(req.usuario.idAuth, idEquipo)));
+    return res.redirect(`${volver}?salida=${salio ? 'saliste' : 'no-permitido'}`);
+  } catch (err) {
+    return pasarError(err, next);
+  }
+}
+
 module.exports = {
   mostrarCrear,
   crear,
@@ -428,4 +565,10 @@ module.exports = {
   subirEscudo,
   servirEscudo,
   desafiar,
+  invitar,
+  responderInvitacion,
+  sacar,
+  salir,
+  AVISOS_RESPUESTA_INVITACION,
+  AVISOS_SALIDA,
 };
