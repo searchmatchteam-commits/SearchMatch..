@@ -133,7 +133,8 @@
 .sm-vacio__titulo { font-weight: 800; font-size: 1.05rem; }
 
 /* ---------- Filtros ---------- */
-.sm-filtros { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+/* .dash-panel.sm-filtros: más específico que .dash-panel (dashboard.css se carga después y lo deja en flex) */
+.sm-filtros, .dash-panel.sm-filtros { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .sm-filtros .formulario__fila { margin: 0; }
 
 /* ---------- Tarjetas y filas (listados) ---------- */
@@ -219,15 +220,17 @@
 
 /* ---------- Mapa de canchas (DE-003) ---------- */
 .sm-mapa { width: 100%; height: 460px; border-radius: var(--radio-chico); overflow: hidden; border: 1px solid var(--borde-fuerte); }
+.sm-mapa--ficha { height: 300px; }
+.sm-acciones-canchas { align-items: center; }
 .sm-mapa .leaflet-popup-content { color: #111; font-family: var(--fuente); }
 .sm-mapa .leaflet-popup-content ul { margin: 6px 0 0; padding-left: 16px; }
 .sm-mapa .leaflet-popup-content p { margin: 4px 0; }
 
 /* ---------- Pantallas más anchas ---------- */
 @media (min-width: 760px) {
-  .sm-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
+  .dash-panel.sm-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
   .sm-filtros .formulario__fila { grid-column: 1 / -1; }
-  .sm-filtros--linea { grid-template-columns: minmax(0, 1fr) auto; }
+  .dash-panel.sm-filtros--linea { grid-template-columns: minmax(0, 1fr) auto; }
   .sm-tarjetas--grilla { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sm-columnas { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
   .sm-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -261,7 +264,7 @@
 }
 
 /* ---------- Notificaciones (NT-002) ---------- */
-.sm-notificaciones { list-style: none; gap: 0; padding: 6px 0; }
+.dash-panel.sm-notificaciones { list-style: none; gap: 0; padding: 6px 0; }
 .sm-notificacion + .sm-notificacion { border-top: 1px solid var(--borde); }
 .sm-notificacion__enlace { display: flex; gap: 12px; align-items: flex-start; padding: 14px 22px; color: var(--texto-suave); }
 .sm-notificacion__enlace:hover { background: rgba(255, 255, 255, 0.03); color: var(--texto); }
