@@ -3574,13 +3574,13 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 .editor__rango::-webkit-slider-runnable-track {
   height: 8px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #1fae0a, var(--verde)) 0 / var(--relleno) 100% no-repeat, #2a2a2a;
+  background: linear-gradient(#4ade80, #4ade80) 0 / var(--relleno) 100% no-repeat, #333;
 }
 
 .editor__rango::-moz-range-track {
   height: 8px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #1fae0a, var(--verde)) 0 / var(--relleno) 100% no-repeat, #2a2a2a;
+  background: linear-gradient(#4ade80, #4ade80) 0 / var(--relleno) 100% no-repeat, #333;
 }
 
 .editor__rango::-webkit-slider-thumb {
@@ -3589,8 +3589,8 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   margin-top: -6px;
   border: 3px solid #0b0b0b;
   border-radius: 50%;
-  background: var(--verde);
-  box-shadow: 0 0 10px rgba(57, 255, 20, 0.6);
+  background: #4ade80;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.6);
   -webkit-appearance: none;
   appearance: none;
   transition: transform 0.15s var(--curva);
@@ -3601,8 +3601,8 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   height: 14px;
   border: 3px solid #0b0b0b;
   border-radius: 50%;
-  background: var(--verde);
-  box-shadow: 0 0 10px rgba(57, 255, 20, 0.6);
+  background: #4ade80;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.6);
 }
 
 .editor__rango:active::-webkit-slider-thumb {
@@ -3610,7 +3610,7 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 }
 
 .editor__rango:focus-visible {
-  outline: 2px solid var(--verde);
+  outline: 2px solid #4ade80;
   outline-offset: 4px;
   border-radius: 999px;
 }

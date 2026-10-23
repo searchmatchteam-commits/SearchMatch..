@@ -282,11 +282,17 @@ function validarPerfilJugador(req, res, next) {
  * Las estadísticas inválidas quedan en null para que el editor re-pinte lo que había.
  */
 function validarEdicionPerfil(req, res, next) {
-  // CORRECCIÓN: regla 8 — las estadísticas ya no llegan del formulario (las cambia solo el sistema);
-  // cualquier stat_* que alguien envíe a mano se ignora.
   const { datos, paso2, paso3 } = revisarDatosPerfil(req.body);
-  req.datosFormulario = datos;
-  req.erroresPerfil = { errores: [...paso2, ...paso3] };
+  const erroresStats = [];
+  const stats = {};
+
+  ESTADISTICAS.forEach(({ clave, nombre }) => {
+    stats[clave] = enteroEnRango(req.body[`stat_${clave}`], STAT_RANGO);
+    if (stats[clave] === null) erroresStats.push(`${nombre} debe estar entre ${STAT_RANGO.min} y ${STAT_RANGO.max}.`);
+  });
+
+  req.datosFormulario = { ...datos, stats };
+  req.erroresPerfil = { errores: [...paso2, ...paso3, ...erroresStats] };
   return next();
 }
 

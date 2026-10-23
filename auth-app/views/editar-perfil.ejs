@@ -112,20 +112,21 @@
           Media actual: <strong class="texto-verde" data-editor-media><%= jugador.media %></strong> · promedio de las 6 estadísticas.
         </p>
 
-        <!-- CORRECCIÓN: regla 8 — solo lectura (antes eran deslizadores editables): cambian con las
-             valoraciones de otros jugadores después de los partidos. Mismas barras que /perfil. -->
-        <ul class="barras">
+        <!-- Deslizadores editables (1–99): editar-perfil.js actualiza el número, la carta y la media en vivo.
+             Se guardan con "Guardar cambios" (POST /perfil/editar). -->
+        <ul class="editor__stats">
           <% jugador.estadisticas.forEach(function (s) { %>
-            <li class="barras__item">
-              <span class="barras__sigla" title="<%= s.nombre %>"><%= s.sigla %></span>
-              <span class="barras__track" role="meter" aria-label="<%= s.nombre %>" aria-valuemin="0" aria-valuemax="99" aria-valuenow="<%= s.valor %>">
-                <span class="barras__relleno" style="--valor: <%= s.valor %>"></span>
-                <span class="barras__valor"><%= s.valor %></span>
-              </span>
+            <li class="editor__stat">
+              <label class="editor__stat-nombre" for="stat_<%= s.clave %>">
+                <span class="barras__sigla"><%= s.sigla %></span> <%= s.nombre %>
+              </label>
+              <input class="editor__rango" type="range" id="stat_<%= s.clave %>" name="stat_<%= s.clave %>"
+                     min="<%= rangos.STAT.min %>" max="<%= rangos.STAT.max %>" step="1" value="<%= s.valor %>"
+                     style="--valor: <%= s.valor %>" data-editor-stat="<%= s.clave %>" />
+              <output class="barras__valor" for="stat_<%= s.clave %>" data-editor-valor="<%= s.clave %>"><%= s.valor %></output>
             </li>
           <% }) %>
         </ul>
-        <p class="perfil__nota">Tus estadísticas cambian con las valoraciones de otros jugadores después de cada partido.</p>
       </fieldset>
 
       <div class="perfil__acciones">
