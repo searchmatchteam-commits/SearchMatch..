@@ -213,14 +213,10 @@ function jugadorParaVista(perfil, foto) {
 
 // ---------------------------------------------------------------
 // GET /perfil → carta de jugador + resumen
-//   Si la cuenta capitanea un equipo, arriba van las pestañas "Mi carta" / "Mi equipo".
 // ---------------------------------------------------------------
 async function mostrarPerfil(req, res, next) {
   try {
-    const [perfil, equiposComoCapitan] = await Promise.all([
-      leerPerfil(req),
-      equipoModel.contarEquiposDeCapitan(req.usuario.idAuth),
-    ]);
+    const perfil = await leerPerfil(req);
     if (!perfil || !perfil.perfilCompleto || !perfil.stats) {
       return res.redirect('/perfil-jugador');
     }
@@ -229,7 +225,6 @@ async function mostrarPerfil(req, res, next) {
       titulo: 'Tu carta de jugador',
       pagina: 'perfil',
       jugador: jugadorParaVista(perfil, urlFoto(perfil)),
-      esCapitan: equiposComoCapitan > 0,
     });
   } catch (err) {
     return next(err);
@@ -409,4 +404,5 @@ module.exports = {
   servirFotoJugador,
   jugadorParaVista,
   detectarTipoImagen,
+  leerEscudo,
 };

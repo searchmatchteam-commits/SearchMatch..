@@ -2,8 +2,8 @@
 
 <%- include('partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- Mis equipos: los equipos de la cuenta (equipoModel.listarMisEquiposConPlantel). Al tocar uno se
-     despliega su plantel; en los que creó (es su capitán) aparece "Administrar" al lado. -->
+<!-- Mis equipos: los equipos de la cuenta (equipoModel.listarMisEquiposConPlantel) en una grilla de tarjetas.
+     En los que creó (es su capitán): "Administrar equipo"; en el resto: "Ver detalles" y "Salir". -->
 <section class="eq">
   <div class="contenedor">
     <header class="eq-cabecera revelar">
@@ -26,9 +26,87 @@
       </div>
     </header>
 
-    <div class="dash-panel eq-panel revelar">
-      <%- include('partials/mis-equipos', { misEquipos, volver: '/mis-equipos' }) %>
-    </div>
+    <%
+      // "Fútbol 7 y 11" con los tipos de fútbol del equipo (mismo texto que models/equipoModel.js)
+      function textoModalidades(lista) {
+        const n = (lista || []).map(function (m) { return m.jugadores; }).sort(function (a, b) { return a - b; });
+        if (n.length === 0) return 'Sin tipo de fútbol';
+        if (n.length === 1) return 'Fútbol ' + n[0];
+        return 'Fútbol ' + n.slice(0, -1).join(', ') + ' y ' + n[n.length - 1];
+      }
+    %>
+    <% if (misEquipos === null) { %>
+      <div class="dash-panel eq-panel"><p class="dash-panel__nota">No pudimos cargar tus equipos. Vuelve a intentarlo en unos minutos.</p></div>
+    <% } else if (misEquipos.length === 0) { %>
+      <div class="dash-panel eq-panel">
+        <div class="dash-vacio">
+          <p class="dash-vacio__texto">Aún no estás en ningún equipo. Busca uno y envía tu solicitud para unirte.</p>
+          <a class="dash-btn-vidrio" data-ripple href="/equipos">Buscar equipos</a>
+        </div>
+      </div>
+    <% } else { %>
+      <!-- Una tarjeta por equipo: escudo y rol, nombre, comuna · tipos de fútbol · jugadores, el plantel
+           (desplegable) y la acción principal. "Salir del equipo" va arriba a la derecha (dashboard.js confirma). -->
+      <ul class="eq-mis-grilla">
+        <% misEquipos.forEach(function (equipo) { const total = equipo.plantel.length; %>
+          <li class="eq-mis">
+            <div class="eq-mis__arriba">
+              <span class="eq-mis__escudo" aria-hidden="true"><%- include('partials/escudo-equipo', { equipo }) %></span>
+              <span class="eq-mis__rol <%= equipo.soyCapitan ? 'eq-mis__rol--capitan' : '' %>"><%= equipo.soyCapitan ? 'Capitán' : 'Jugador' %></span>
+              <% if (!equipo.soyCapitan) { %>
+                <form class="eq-mis__salir" action="/equipos/<%= equipo.id %>/salir" method="POST" data-salir data-nombre="<%= equipo.nombre %>">
+                  <input type="hidden" name="volver" value="/mis-equipos">
+                  <button type="submit" class="eq-mis__salir-boton">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
+                    Salir
+                  </button>
+                </form>
+              <% } %>
+            </div>
+
+            <h2 class="eq-mis__nombre" title="<%= equipo.nombre %>"><%= equipo.nombre %></h2>
+
+            <ul class="eq-mis__datos">
+              <li>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+                <%= equipo.zona || 'Sin comuna' %>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7l4 3-1.5 4.5h-5L8 10z" /></svg>
+                <%= textoModalidades(equipo.modalidades) %>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><circle cx="17" cy="9" r="2.4" /><path d="M16 14.2a4.5 4.5 0 0 1 5 4.8" /></svg>
+                <%= total %> <%= total === 1 ? 'jugador' : 'jugadores' %>
+              </li>
+            </ul>
+
+            <details class="eq-mis__plantel">
+              <summary>Ver plantel</summary>
+              <% if (total === 0) { %>
+                <p class="dash-panel__nota">Este equipo todavía no tiene jugadores en su plantel.</p>
+              <% } else { %>
+                <ul class="dash-plantel">
+                  <% equipo.plantel.forEach(function (jugador) { %>
+                    <li class="dash-plantel__jugador">
+                      <span class="dash-plantel__nombre"><%= jugador.nombre %></span>
+                      <% if (jugador.capitan) { %><span class="dash-etiqueta">Capitán</span><% } %>
+                      <span class="dash-plantel__posicion"><%= jugador.posicion %></span>
+                    </li>
+                  <% }) %>
+                </ul>
+              <% } %>
+            </details>
+
+            <% if (equipo.soyCapitan) { %>
+              <a class="btn btn--verde eq-mis__accion" data-ripple="claro" href="/mi-equipo?equipo=<%= equipo.id %>">Administrar equipo</a>
+            <% } else { %>
+              <a class="btn btn--contorno eq-mis__accion" href="/equipos/<%= equipo.id %>">Ver detalles</a>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
 
     <%# NUEVO: PE-017 — equipos desactivados que creó la cuenta (se reactivan desde su ficha) %>
     <% if ((locals.equiposInactivos || []).length > 0) { %>

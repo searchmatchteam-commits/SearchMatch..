@@ -1,0 +1,55 @@
+<%- include('partials/header') %>
+
+<%- include('partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- Mi equipo (capitán con varios equipos o con ninguno): los equipos que creó la cuenta
+     (equipoController.panel). "Administrar" abre el panel de ese equipo en /mi-equipo?equipo=<id>. -->
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('partials/boton-volver') %>
+        <h1 class="eq-cabecera__titulo">Mis equipos</h1>
+        <p class="eq-cabecera__stats">
+          <%= equipos.length === 0 ? 'Aún no creas ningún equipo' : `Eres capitán de ${equipos.length} equipos: elige cuál administrar` %>
+        </p>
+      </div>
+    </header>
+
+    <%- include('partials/pestanas-capitan', { activa: 'equipo', clase: 'eq-vista' }) %>
+
+    <div class="dash-panel eq-panel revelar">
+      <% if (equipos.length === 0) { %>
+        <div class="dash-vacio">
+          <p class="dash-vacio__texto">Crea tu equipo para recibir jugadores, armar la alineación y desafiar a otros equipos.</p>
+          <a class="btn btn--verde btn--grande" data-ripple="claro" href="/crear-equipo">
+            <span aria-hidden="true">+</span> Crear mi primer equipo
+          </a>
+        </div>
+      <% } else { %>
+        <ul class="dash-equipos">
+          <% equipos.forEach(function (equipo) { %>
+            <li class="dash-equipo">
+              <div class="dash-equipo__detalle">
+                <div class="dash-equipo__resumen dash-equipo__resumen--fija">
+                  <span class="dash-equipo__escudo" aria-hidden="true"><%- include('partials/escudo-equipo', { equipo }) %></span>
+                  <span class="dash-equipo__texto">
+                    <span class="dash-equipo__nombre"><%= equipo.nombre %></span>
+                    <span class="dash-equipo__meta"><%= equipo.detalle || 'Sin datos' %></span>
+                  </span>
+                </div>
+              </div>
+              <a class="dash-equipo__admin" data-ripple href="/mi-equipo?equipo=<%= equipo.id %>">Administrar</a>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('partials/dock', { activo: 'perfil' }) %>
+
+<%- include('partials/footer') %>

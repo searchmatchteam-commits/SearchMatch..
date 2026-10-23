@@ -1688,3 +1688,199 @@ button.cancha__vacio:focus-visible {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* ---------- Mis equipos (/mis-equipos): grilla de tarjetas ---------- */
+.eq-mis-grilla {
+  list-style: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 8px;
+}
+
+/* Fondo oscuro con las rayas diagonales de la carta de jugador */
+.eq-mis {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 22px;
+  border-radius: var(--radio);
+  border: 1px solid var(--vidrio-borde);
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 7px),
+    linear-gradient(160deg, #1a1d1a, #121212 60%);
+  transition: transform 0.3s var(--curva), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.eq-mis:hover,
+.eq-mis:focus-within {
+  transform: translateY(-4px);
+  border-color: var(--verde);
+  box-shadow: 0 0 0 1px rgba(var(--verde-rgb), 0.25), 0 16px 40px rgba(var(--verde-rgb), 0.12);
+}
+
+.eq-mis__arriba {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.eq-mis__escudo {
+  overflow: hidden;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  font-family: var(--fuente-titulo);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--verde);
+  background: var(--verde-tenue);
+  border: 1px solid var(--verde-borde);
+  box-shadow: 0 0 24px rgba(var(--verde-rgb), 0.12);
+}
+
+/* Etiqueta de rol: verde neón (capitán) o gris (jugador) */
+.eq-mis__rol {
+  align-self: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  border: 1px solid var(--borde-fuerte);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.eq-mis__rol--capitan {
+  color: var(--verde);
+  border-color: var(--verde-borde);
+  background: var(--verde-tenue);
+  box-shadow: 0 0 14px rgba(var(--verde-rgb), 0.2);
+}
+
+/* "Salir": discreto, arriba a la derecha; rojo al pasar el mouse */
+.eq-mis__salir {
+  margin-left: auto;
+}
+
+.eq-mis__salir-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--texto-suave);
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.eq-mis__salir-boton:hover,
+.eq-mis__salir-boton:focus-visible {
+  color: var(--error);
+  background: rgba(255, 107, 107, 0.08);
+}
+
+.eq-mis__salir-boton:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.eq-mis__salir-boton svg,
+.eq-mis__datos svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.eq-mis__nombre {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--fuente-titulo);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--texto);
+}
+
+.eq-mis__datos {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--texto-suave);
+}
+
+.eq-mis__datos li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eq-mis__datos svg {
+  stroke: var(--verde);
+}
+
+.eq-mis__plantel summary {
+  width: fit-content;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.eq-mis__plantel summary:hover {
+  color: var(--verde);
+}
+
+.eq-mis__plantel[open] summary {
+  margin-bottom: 10px;
+}
+
+/* La acción principal ocupa todo el ancho, siempre al fondo de la tarjeta */
+.eq-mis__accion {
+  width: 100%;
+  margin-top: auto;
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .eq-mis-grilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .eq-mis-grilla {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eq-mis {
+    transition: none;
+  }
+
+  .eq-mis:hover,
+  .eq-mis:focus-within {
+    transform: none;
+  }
+}
