@@ -20,7 +20,8 @@
 
     <!-- data-validar: auth.js valida en el navegador y muestra el estado "cargando".
          La validación real sigue en el servidor (middlewares/validators.js). -->
-    <form action="/registro" method="POST" class="formulario" data-validar="registro" novalidate>
+    <form action="/registro" method="POST" class="formulario" data-validar="registro" novalidate
+          data-requiere-aceptar><%# NUEVO: AR-011 (sm-formularios.js habilita "Crear cuenta" solo con la casilla) %>
       <div class="formulario__fila">
         <div class="campo">
           <label for="nombre">Nombre</label>
@@ -132,7 +133,7 @@
               type="password"
               id="password"
               name="password"
-              placeholder="Mínimo 8 caracteres"
+              placeholder="8+ caracteres, letras y números"<%# CORRECCIÓN: contraseña segura %>
               autocomplete="new-password"
               minlength="8"
               aria-describedby="password-error"
@@ -171,7 +172,20 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn--verde btn--bloque btn--grande auth-btn" data-ripple="claro" data-texto-cargando="CREANDO CUENTA...">
+      <!-- NUEVO: AR-010 / AR-011 — aceptación obligatoria. Los documentos se abren en otra pestaña
+           para no perder lo ya escrito en el formulario. -->
+      <div class="campo sm-check-campo">
+        <label class="sm-check">
+          <input type="checkbox" name="acepto_terminos" value="si" <%= datos.acepto_terminos ? 'checked' : '' %> data-casilla-aceptar />
+          <span>Tengo 18 años o más y acepto los
+            <a href="/terminos" target="_blank" rel="noopener">términos y condiciones</a> y la
+            <a href="/privacidad" target="_blank" rel="noopener">política de privacidad</a>.</span>
+        </label>
+        <small class="campo__ayuda" data-aviso-aceptar>La aceptación es obligatoria para crear la cuenta.</small>
+      </div>
+
+      <button type="submit" class="btn btn--verde btn--bloque btn--grande auth-btn" data-ripple="claro" data-texto-cargando="CREANDO CUENTA..."
+              data-boton-aceptar><%# NUEVO: AR-011 %>
         <span class="auth-btn__halo" aria-hidden="true"></span>
         <span class="btn__spinner" aria-hidden="true"></span>
         <span class="btn__texto">CREAR CUENTA</span>

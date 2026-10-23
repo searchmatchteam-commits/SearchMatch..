@@ -1,0 +1,38 @@
+<%
+  // Listas Región y Comuna: la de comunas muestra solo las de la región elegida (sm-formularios.js).
+  // Uso:
+  //   include('partials/sm-ubicacion', { regiones, idRegion, idComuna, erroresCampo, obligatorio: true })
+  //   obligatorio: false → agrega "Todas" (filtros); true → exige elegir (formularios).
+  // Sin JavaScript se ven todas las comunas agrupadas por región y el servidor valida que coincidan.
+  const errores = locals.erroresCampo || {};
+  const obligatorio = Boolean(locals.obligatorio);
+  const textoVacio = obligatorio ? 'Elige' : 'Todas';
+%>
+<div class="formulario__fila">
+  <div class="campo <%= errores.id_region ? 'campo--error' : '' %>">
+    <label for="id_region">Región</label>
+    <select id="id_region" name="id_region" data-sm-region="id_comuna" <%= obligatorio ? 'required' : '' %>
+            data-mensaje="Elige la región." aria-describedby="id_region-error">
+      <option value=""><%= textoVacio %><%= obligatorio ? ' la región' : ' las regiones' %></option>
+      <% regiones.forEach(function (region) { %>
+        <option value="<%= region.id %>" <%= String(idRegion) === String(region.id) ? 'selected' : '' %>><%= region.nombre %></option>
+      <% }) %>
+    </select>
+    <small class="campo__error" id="id_region-error"><%= errores.id_region || '' %></small>
+  </div>
+  <div class="campo <%= errores.id_comuna ? 'campo--error' : '' %>">
+    <label for="id_comuna">Comuna</label>
+    <select id="id_comuna" name="id_comuna" <%= obligatorio ? 'required' : '' %> data-mensaje="Elige la comuna."
+            aria-describedby="id_comuna-error">
+      <option value=""><%= textoVacio %><%= obligatorio ? ' la comuna' : ' las comunas' %></option>
+      <% regiones.forEach(function (region) { %>
+        <optgroup label="<%= region.nombre %>" data-region="<%= region.id %>">
+          <% region.comunas.forEach(function (comuna) { %>
+            <option value="<%= comuna.id %>" <%= String(idComuna) === String(comuna.id) ? 'selected' : '' %>><%= comuna.nombre %></option>
+          <% }) %>
+        </optgroup>
+      <% }) %>
+    </select>
+    <small class="campo__error" id="id_comuna-error"><%= errores.id_comuna || '' %></small>
+  </div>
+</div>

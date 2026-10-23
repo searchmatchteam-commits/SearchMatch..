@@ -1,0 +1,111 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- Detalle de un recinto (adminRecintosController.detalle): datos, canchas y formulario de cancha nueva.
+     AD-004/AD-005: desactivar o activar (con confirmación; solo se muestra la opción que corresponde).
+     AD-002: registrar canchas solo si el recinto está activo. -->
+<%
+  const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+  const advertenciaReservas = recinto.reservasFuturas > 0
+    ? ` Atención: sus canchas tienen ${recinto.reservasFuturas} ${recinto.reservasFuturas === 1 ? 'reserva confirmada futura' : 'reservas confirmadas futuras'}.`
+    : '';
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: '/admin/recintos' }) %>
+        <span class="sm-estado <%= recinto.activo ? 'sm-estado--activo' : 'sm-estado--inactivo' %>"><%= recinto.activo ? 'Activo' : 'Inactivo' %></span>
+        <h1 class="eq-cabecera__titulo"><%= recinto.nombre %></h1>
+        <p class="eq-cabecera__stats"><%= recinto.calle %> <%= recinto.numero %>, <%= recinto.comuna %> · <%= recinto.region %></p>
+      </div>
+      <div class="eq-cabecera__acciones">
+        <a class="btn btn--contorno btn--grande" href="/admin/recintos/<%= recinto.id %>/editar">Editar</a>
+        <% if (recinto.activo) { %>
+          <form action="/admin/recintos/<%= recinto.id %>/desactivar" method="POST"
+                data-confirmar="Sus canchas dejarán de mostrarse a los usuarios y no se podrán reservar mientras esté inactivo.<%= advertenciaReservas %>"
+                data-confirmar-titulo="¿Desactivar <%= recinto.nombre %>?" data-confirmar-boton="Desactivar">
+            <button type="submit" class="btn btn--contorno btn--grande sm-btn-peligro">Desactivar</button>
+          </form>
+        <% } else { %>
+          <form action="/admin/recintos/<%= recinto.id %>/activar" method="POST"
+                data-confirmar="Sus canchas activas volverán a mostrarse a los usuarios. Las canchas inactivas seguirán ocultas."
+                data-confirmar-titulo="¿Activar <%= recinto.nombre %>?" data-confirmar-boton="Activar">
+            <button type="submit" class="btn btn--verde btn--grande">Activar</button>
+          </form>
+        <% } %>
+      </div>
+    </header>
+
+    <%- include('../partials/admin-nav', { seccion }) %>
+
+    <% if (!recinto.activo) { %>
+      <p class="sm-aviso-limite" role="note">Este recinto está inactivo: ninguna de sus canchas se muestra a los usuarios.</p>
+    <% } %>
+
+    <div class="sm-columnas">
+      <div class="dash-panel eq-panel revelar">
+        <header class="dash-panel__cabecera">
+          <h2 class="dash-panel__titulo">Canchas</h2>
+          <span class="eq-contador"><%= canchas.length %></span>
+        </header>
+        <% if (canchas.length === 0) { %>
+          <p class="dash-panel__nota">Este recinto aún no tiene canchas. Agrega la primera con el formulario.</p>
+        <% } else { %>
+          <ul class="sm-filas">
+            <% canchas.forEach(function (cancha) { %>
+              <li class="sm-fila">
+                <a href="/admin/canchas/<%= cancha.id %>"><%= cancha.nombre %></a>
+                <span><%= cancha.modalidad %> (<%= cancha.jugadores %> jugadores)</span>
+                <span><%= pesos.format(cancha.precio) %> / hora</span>
+                <span><%= cancha.bloques === 0 ? 'Sin horario' : cancha.bloques + (cancha.bloques === 1 ? ' bloque' : ' bloques') %></span>
+                <span class="sm-estado <%= cancha.activo ? 'sm-estado--activo' : 'sm-estado--inactivo' %>"><%= cancha.activo ? 'Activa' : 'Inactiva' %></span>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </div>
+
+      <div class="dash-panel eq-panel revelar" id="nueva-cancha">
+        <header class="dash-panel__cabecera">
+          <h2 class="dash-panel__titulo">Agregar cancha</h2>
+        </header>
+        <% if (!recinto.activo) { %>
+          <p class="dash-panel__nota">Activa el recinto para poder agregarle canchas.</p>
+        <% } else { %>
+          <% if (errores.length > 0) { %>
+            <div class="alerta alerta--error" role="alert"><%= errores[0] %></div>
+          <% } %>
+          <form action="/admin/recintos/<%= recinto.id %>/canchas#nueva-cancha" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+            <%- include('../partials/sm-cancha-campos', { datos: datosCancha, erroresCampo, modalidades }) %>
+            <div class="sm-form__acciones">
+              <button type="submit" class="btn btn--verde">Agregar cancha</button>
+            </div>
+          </form>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="dash-panel eq-panel revelar">
+      <header class="dash-panel__cabecera">
+        <h2 class="dash-panel__titulo">Contacto y ubicación</h2>
+      </header>
+      <dl class="sm-datos">
+        <div><dt>Teléfono</dt><dd><%= recinto.telefono || '—' %></dd></div>
+        <div><dt>Referencias</dt><dd><%= recinto.referencias || '—' %></dd></div>
+        <div><dt>Coordenadas</dt><dd>
+          <% if (recinto.latitud !== null && recinto.longitud !== null) { %>
+            <a href="https://www.openstreetmap.org/?mlat=<%= recinto.latitud %>&mlon=<%= recinto.longitud %>#map=17/<%= recinto.latitud %>/<%= recinto.longitud %>" target="_blank" rel="noopener"><%= recinto.latitud %>, <%= recinto.longitud %></a>
+          <% } else { %>—<% } %>
+        </dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: 'admin' }) %>
+
+<%- include('../partials/footer') %>

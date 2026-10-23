@@ -596,6 +596,37 @@
   max-width: 28rem;
 }
 
+/* ---------- Invitaciones de capitanes ---------- */
+.dash-invitaciones {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dash-invitacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 14px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--vidrio-borde);
+}
+
+.dash-invitacion__texto {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-invitacion__acciones {
+  display: flex;
+  gap: 8px;
+}
+
 /* ---------- Tu carta: silueta + físico y estadísticas ---------- */
 .dash-panel--carta {
   overflow: hidden;
@@ -648,7 +679,7 @@ html.js .vc:not(.vc--listo) .vc__dinamico {
 
 .vc__regla text {
   fill: #b7c4b7;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.5px;
   text-anchor: end;
@@ -687,6 +718,14 @@ html.js .vc:not(.vc--listo) .vc__dinamico {
 
 .vc__peso {
   dominant-baseline: central;
+}
+
+/* Guía punteada de la cintura a la etiqueta del peso */
+.vc__peso-guia {
+  stroke: #39ff14;
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  opacity: 0.6;
 }
 
 /* ---------- Altura y peso (sobre las barras) ---------- */
@@ -928,6 +967,33 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   padding: 0 14px 14px;
 }
 
+/* "Salir del equipo": gris discreto que se vuelve rojo al pasar el mouse */
+.dash-equipo__salir-boton {
+  min-height: 66px;          /* misma altura que la fila del equipo */
+  padding: 0 16px;
+  border-radius: 16px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--texto-suave);
+  background: transparent;
+  border: 1px solid var(--vidrio-borde);
+  transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+}
+
+.dash-equipo__salir-boton:hover,
+.dash-equipo__salir-boton:focus-visible {
+  color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.45);
+  background: rgba(255, 107, 107, 0.06);
+}
+
+.dash-equipo__salir-boton:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
 /* Celular: "Administrar" pasa debajo del equipo, a todo el ancho */
 @media (max-width: 559px) {
   .dash-equipo {
@@ -937,6 +1003,11 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
 
   .dash-equipo__admin {
     justify-content: center;
+    min-height: 44px;
+  }
+
+  .dash-equipo__salir-boton {
+    width: 100%;
     min-height: 44px;
   }
 }
@@ -1165,13 +1236,125 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   box-shadow: 0 0 8px 2px rgba(var(--verde-rgb), 0.6);
 }
 
+/* ---------- Calendario (solo la vista del mes, sin eventos) ---------- */
+.dash-panel--calendario {
+  background: #121212;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dash-panel--calendario .dash-panel__titulo::first-letter {
+  text-transform: uppercase;
+}
+
+.sm-cal__flechas {
+  display: flex;
+  gap: 6px;
+}
+
+.sm-cal__flecha {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #1a1a1a;
+  color: var(--texto);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sm-cal__flecha svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sm-cal__flecha:hover,
+.sm-cal__flecha:focus-visible {
+  color: var(--verde);
+  border-color: var(--verde-borde);
+  box-shadow: 0 0 12px rgba(var(--verde-rgb), 0.3);
+}
+
+.sm-cal__semana,
+.sm-cal__dias {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  text-align: center;
+}
+
+.sm-cal__semana {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.sm-cal__dia {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--texto);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.sm-cal__dia:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sm-cal__dia:focus-visible {
+  outline: 2px solid var(--verde-borde);
+  outline-offset: 1px;
+}
+
+/* Día elegido: anillo verde (hoy mantiene su relleno verde) */
+.sm-cal__dia[aria-pressed="true"] {
+  border-color: var(--verde);
+  background: rgba(var(--verde-rgb), 0.12);
+  color: var(--verde);
+  font-weight: 800;
+}
+
+.sm-cal__dia--hoy,
+.sm-cal__dia--hoy:hover,
+.sm-cal__dia--hoy[aria-pressed="true"] {
+  background: var(--verde);
+  color: var(--sobre-verde);
+  font-weight: 800;
+  box-shadow: 0 0 14px rgba(var(--verde-rgb), 0.55);
+}
+
+/* Hoy elegido: anillo blanco para que se note sobre el verde */
+.sm-cal__dia--hoy[aria-pressed="true"] {
+  border-color: #fff;
+}
+
 /* ---------- Responsive ---------- */
 @media (min-width: 760px) {
   .dash-paneles__grid {
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
   }
 
-  .dash-panel--equipos {
+  .dash-panel--equipos,
+  .dash-panel--invitaciones {
     grid-column: 1 / -1;
   }
 

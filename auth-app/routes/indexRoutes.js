@@ -52,11 +52,18 @@ router.post('/mi-equipo/solicitudes/:id/:accion', requireAuth, requireRol, equip
 router.get('/mi-equipo/solicitudes/:id', requireAuth, requireRol, equipoController.verSolicitud);
 router.get('/mi-equipo/solicitudes/:id/foto', requireAuth, requireRol, equipoController.fotoSolicitud);
 router.post('/mi-equipo/desafios/:id', requireAuth, requireRol, validarDesafio, equipoController.desafiar);
+// Modal "Invitar jugador +": solo el capitán que creó el equipo (lo comprueba el modelo).
+router.post('/equipos/:id/invitaciones/:idJugador', requireAuth, requireRol, equipoController.invitar);
+// Panel "Invitaciones" del dashboard: el jugador invitado acepta o rechaza (lo comprueba el modelo).
+router.post('/invitaciones/:id/:accion', requireAuth, requireRol, equipoController.responderInvitacion);
 router.get('/mis-equipos', requireAuth, requireRol, equipoController.misEquipos);
 router.get('/equipos', requireAuth, requireRol, equipoController.directorio);
 router.post('/equipos/:id/unirme', requireAuth, requireRol, validarSolicitudUnion, equipoController.unirse);
 // Cancha táctica y escudo: solo el capitán que creó el equipo (lo comprueba el modelo).
 router.post('/equipos/:id/plantel/:idJugador/posicion', requireAuth, requireRol, equipoController.guardarPosicion);
+// Salida del plantel: el capitán saca a un jugador; el jugador sale de un equipo (no si es su capitán).
+router.post('/equipos/:id/plantel/:idJugador/sacar', requireAuth, requireRol, equipoController.sacar);
+router.post('/equipos/:id/salir', requireAuth, requireRol, equipoController.salir);
 router.get('/equipos/:id/escudo', requireAuth, equipoController.servirEscudo);
 router.post('/equipos/:id/escudo', requireAuth, requireRol, subirImagen, equipoController.subirEscudo);
 // Dirección antigua del paso de equipo (enlaces o marcadores guardados).

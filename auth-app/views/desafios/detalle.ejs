@@ -1,0 +1,82 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- DE-014 detalle de un desafío (desafioController.detalle): ambos equipos con su nivel, mensaje, fechas y estado.
+     DE-009/DE-010 Aceptar y Rechazar (capitán del desafiado) · DE-013 Cancelar (capitán del desafiante)
+     Programar partido (PA-001) si está aceptado y sin partido · acceso al partido si ya existe. -->
+<%
+  const formatoFecha = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', dateStyle: 'long', timeStyle: 'short' });
+  const nombresEstado = { pendiente: 'Pendiente', aceptado: 'Aceptado', rechazado: 'Rechazado', cancelado: 'Cancelado' };
+%>
+<section class="eq">
+  <div class="contenedor sm-angosto">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: '/desafios' }) %>
+        <span class="sm-estado sm-estado--<%= desafio.estado %>"><%= nombresEstado[desafio.estado] %></span>
+        <h1 class="eq-cabecera__titulo"><%= desafio.desafiante %> <span class="texto-verde">vs</span> <%= desafio.desafiado %></h1>
+        <p class="eq-cabecera__stats"><%= desafio.modalidad %> · <%= desafio.jugadores %> jugadores por equipo</p>
+      </div>
+    </header>
+
+    <div class="dash-panel eq-panel revelar">
+      <div class="sm-versus">
+        <a class="sm-versus__equipo" href="/equipos/<%= desafio.id_equipo_desafiante %>">
+          <small>Desafiante</small>
+          <strong><%= desafio.desafiante %></strong>
+          <span><%= desafio.nivel_desafiante || 'Sin nivel' %></span>
+        </a>
+        <span class="sm-versus__vs" aria-hidden="true">VS</span>
+        <a class="sm-versus__equipo" href="/equipos/<%= desafio.id_equipo_desafiado %>">
+          <small>Desafiado</small>
+          <strong><%= desafio.desafiado %></strong>
+          <span><%= desafio.nivel_desafiado || 'Sin nivel' %></span>
+        </a>
+      </div>
+      <dl class="sm-datos">
+        <div><dt>Mensaje</dt><dd><%= desafio.mensaje || 'Sin mensaje.' %></dd></div>
+        <div><dt>Enviado</dt><dd><%= formatoFecha.format(desafio.fecha_solicitud) %></dd></div>
+        <div><dt>Respondido</dt><dd><%= desafio.fecha_respuesta ? formatoFecha.format(desafio.fecha_respuesta) : '—' %></dd></div>
+        <div><dt>Estado</dt><dd><%= nombresEstado[desafio.estado] %></dd></div>
+      </dl>
+
+      <div class="sm-form__acciones">
+        <% if (puedeResponder) { %>
+          <form action="/desafios/<%= desafio.id %>/aceptar" method="POST"
+                data-confirmar="Confirmarás que quieren jugar contra <%= desafio.desafiante %>. Después podrán programar el partido."
+                data-confirmar-titulo="¿Aceptar el desafío?" data-confirmar-boton="Aceptar">
+            <button type="submit" class="btn btn--verde btn--grande">Aceptar</button>
+          </form>
+          <form action="/desafios/<%= desafio.id %>/rechazar" method="POST"
+                data-confirmar="<%= desafio.desafiante %> será notificado. Podrán volver a desafiarse más adelante."
+                data-confirmar-titulo="¿Rechazar el desafío?" data-confirmar-boton="Rechazar">
+            <button type="submit" class="btn btn--contorno btn--grande sm-btn-peligro">Rechazar</button>
+          </form>
+        <% } %>
+        <% if (puedeCancelar) { %>
+          <form action="/desafios/<%= desafio.id %>/cancelar" method="POST"
+                data-confirmar="El desafío quedará cancelado y <%= desafio.desafiado %> será notificado. Podrás desafiarlos de nuevo después."
+                data-confirmar-titulo="¿Cancelar el desafío?" data-confirmar-boton="Cancelar desafío">
+            <button type="submit" class="btn btn--contorno btn--grande sm-btn-peligro">Cancelar desafío</button>
+          </form>
+        <% } %>
+        <% if (puedeProgramar) { %>
+          <a class="btn btn--verde btn--grande" href="/partidos/programar/<%= desafio.id %>">Programar partido</a>
+        <% } %>
+        <% if (desafio.id_partido) { %>
+          <a class="btn btn--contorno btn--grande" href="/partidos/<%= desafio.id_partido %>">Ver el partido</a>
+        <% } %>
+      </div>
+      <% if (desafio.estado === 'pendiente' && !puedeResponder && !puedeCancelar) { %>
+        <p class="dash-panel__nota">Esperando la respuesta del capitán de <%= desafio.desafiado %>.</p>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: 'mis-equipos' }) %>
+
+<%- include('../partials/footer') %>

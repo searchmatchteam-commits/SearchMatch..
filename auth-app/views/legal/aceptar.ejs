@@ -1,0 +1,50 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- AR-011: aparece al iniciar sesión cuando hay una versión nueva de los términos o de la privacidad.
+     Mientras no se acepte, terminosMiddleware.exigirTerminos trae aquí desde cualquier módulo interno. -->
+<section class="eq">
+  <div class="contenedor sm-legal">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Actualización</span>
+        <h1 class="eq-cabecera__titulo">Actualizamos nuestros términos</h1>
+        <p class="eq-cabecera__stats">Léelos y acéptalos para seguir usando SearchMatch.</p>
+      </div>
+    </header>
+
+    <div class="dash-panel eq-panel revelar">
+      <ul class="sm-lista-docs">
+        <li>
+          <a href="/terminos" target="_blank" rel="noopener"><%= terminos.titulo %></a>
+          <span>Versión <%= terminos.version %> · <%= terminos.fecha %></span>
+        </li>
+        <li>
+          <a href="/privacidad" target="_blank" rel="noopener"><%= privacidad.titulo %></a>
+          <span>Versión <%= privacidad.version %> · <%= privacidad.fecha %></span>
+        </li>
+      </ul>
+
+      <% if (error) { %>
+        <div class="alerta alerta--error" role="alert"><%= error %></div>
+      <% } %>
+
+      <form action="/aceptar-terminos" method="POST" class="sm-form" data-requiere-aceptar>
+        <label class="sm-check">
+          <input type="checkbox" name="acepto" value="si" data-casilla-aceptar />
+          <span>Leí y acepto los <strong>términos y condiciones</strong> y la <strong>política de privacidad</strong>.</span>
+        </label>
+        <div class="sm-form__acciones">
+          <button type="submit" class="btn btn--verde btn--grande" data-boton-aceptar>Aceptar y continuar</button>
+        </div>
+      </form>
+
+      <form action="/logout" method="POST" class="sm-form__secundaria">
+        <button type="submit" class="sm-enlace">No acepto, cerrar sesión</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

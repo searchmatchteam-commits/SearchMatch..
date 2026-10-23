@@ -1,0 +1,127 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- Canchas (canchasController.listar):
+     DE-002 buscar por nombre de cancha o recinto · DE-003 alternar lista y mapa
+     DE-004 filtrar por región y comuna · DE-005 filtrar por modalidad (combinables).
+     Los filtros viajan en la URL (GET): funcionan sin JavaScript y se pueden compartir. -->
+<%
+  const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver') %>
+        <h1 class="eq-cabecera__titulo">Canchas</h1>
+        <p class="eq-cabecera__stats">Encuentra dónde jugar según ubicación, tarifa y modalidad.</p>
+      </div>
+      <div class="eq-cabecera__acciones sm-acciones-canchas">
+        <% if (hayCanchas) { %>
+          <!-- DE-003: alternar vista (enlaces: conservan los filtros) -->
+          <nav class="sm-pestanas" aria-label="Tipo de vista">
+            <a class="sm-pestanas__item <%= filtros.vista === 'mapa' ? 'sm-pestanas__item--activa' : '' %>" href="<%= urlMapa %>" <%- filtros.vista === 'mapa' ? 'aria-current="page"' : '' %>>Mapa</a>
+            <a class="sm-pestanas__item <%= filtros.vista === 'lista' ? 'sm-pestanas__item--activa' : '' %>" href="<%= urlLista %>" <%- filtros.vista === 'lista' ? 'aria-current="page"' : '' %>>Lista</a>
+          </nav>
+        <% } %>
+        <a class="btn btn--contorno btn--grande" href="/reservas">Mis reservas</a><%# AG-003 %>
+      </div>
+    </header>
+
+    <% if (!hayCanchas) { %>
+      <!-- DE-003: estado vacío cuando no hay ninguna cancha activa en la plataforma -->
+      <div class="dash-panel eq-panel sm-vacio revelar">
+        <p class="sm-vacio__titulo">Aún no hay canchas disponibles</p>
+        <p class="dash-panel__nota">Estamos sumando recintos deportivos. Mientras tanto, arma tu equipo y busca rivales.</p>
+        <% if (usuario.esAdmin) { %>
+          <a class="btn btn--verde" href="/admin/recintos/nuevo">Registrar un recinto</a>
+        <% } else { %>
+          <a class="btn btn--verde" href="/equipos">Ver equipos</a>
+        <% } %>
+      </div>
+    <% } else { %>
+      <form class="dash-panel eq-panel sm-filtros" method="GET" action="/canchas" role="search">
+        <input type="hidden" name="vista" value="<%= filtros.vista %>" />
+        <div class="campo <%= filtros.terminoCorto ? 'campo--error' : '' %>">
+          <label for="texto">Buscar por nombre de cancha o recinto</label>
+          <input type="search" id="texto" name="texto" value="<%= filtros.textoIngresado %>" maxlength="100"
+                 placeholder="Ej. El Potrero" aria-describedby="texto-error" />
+          <small class="campo__error" id="texto-error"><%= filtros.terminoCorto ? `Escribe al menos ${largoMinimo} letras para buscar por nombre.` : '' %></small>
+        </div>
+        <%- include('../partials/sm-ubicacion', { regiones, idRegion: filtros.idRegion, idComuna: filtros.idComuna, obligatorio: false }) %>
+        <div class="campo">
+          <label for="id_modalidad">Modalidad</label>
+          <select id="id_modalidad" name="id_modalidad">
+            <option value="">Todas las modalidades</option>
+            <% modalidades.forEach(function (m) { %>
+              <option value="<%= m.id %>" <%= String(filtros.idModalidad) === String(m.id) ? 'selected' : '' %>><%= m.nombre %> (<%= m.jugadores %> jugadores)</option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="sm-form__acciones">
+          <button type="submit" class="btn btn--verde">Buscar</button>
+          <% if (hayFiltros) { %><a class="btn btn--contorno" href="/canchas?vista=<%= filtros.vista %>">Limpiar filtros</a><% } %>
+        </div>
+      </form>
+
+      <% if (canchas.length === 0) { %>
+        <!-- DE-002 / DE-004 / DE-005: sin resultados, con sugerencia y opción de limpiar -->
+        <div class="dash-panel eq-panel sm-vacio">
+          <p class="sm-vacio__titulo">No encontramos canchas con esos filtros</p>
+          <p class="dash-panel__nota">
+            <% if (filtros.texto) { %>Revisa cómo escribiste "<%= filtros.texto %>" o prueba con el nombre del recinto. <% } %>
+            También puedes elegir solo la región o quitar la modalidad para ver más opciones.
+          </p>
+          <a class="btn btn--contorno" href="/canchas?vista=<%= filtros.vista %>">Limpiar filtros</a>
+        </div>
+      <% } else { %>
+        <% if (filtros.vista === 'mapa') { %>
+          <!-- DE-003: mapa con un marcador por recinto (Leaflet + OpenStreetMap, ver canchas-mapa.js); la lista va debajo -->
+          <div class="dash-panel eq-panel">
+            <p class="dash-panel__nota"><%= recintosMapa.length %> <%= recintosMapa.length === 1 ? 'recinto' : 'recintos' %> en el mapa · toca un marcador para ver sus canchas</p>
+            <div class="sm-mapa" id="mapa-canchas" role="region" aria-label="Mapa de recintos con canchas"></div>
+            <noscript><p class="dash-panel__nota">El mapa necesita JavaScript. Usa la vista de lista.</p></noscript>
+          </div>
+          <script type="application/json" id="datos-mapa"><%- JSON.stringify(recintosMapa).replace(/</g, '\\u003c') %></script>
+        <% } %>
+        <!-- DE-003: lista -->
+        <p class="sm-resultados"><%= canchas.length %> <%= canchas.length === 1 ? 'cancha encontrada' : 'canchas encontradas' %></p>
+        <ul class="sm-tarjetas sm-tarjetas--grilla">
+          <% canchas.forEach(function (c) { %>
+            <li class="dash-panel sm-tarjeta">
+              <header class="sm-tarjeta__cabecera">
+                <div>
+                  <h2 class="sm-tarjeta__titulo"><a href="/canchas/<%= c.id %>"><%= c.nombre %></a></h2>
+                  <p class="sm-tarjeta__meta"><%= c.recinto %></p>
+                </div>
+                <span class="sm-precio"><%= pesos.format(c.precio) %><small>/hora</small></span>
+              </header>
+              <p class="sm-tarjeta__linea"><%= c.direccion %>, <%= c.comuna %></p>
+              <p class="sm-tarjeta__linea"><span class="sm-rol"><%= c.modalidad %> · <%= c.jugadores %> jugadores</span></p>
+              <a class="sm-tarjeta__enlace" href="/canchas/<%= c.id %>">Ver ficha y horarios →</a>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    <% } %>
+  </div>
+</section>
+
+<% if (hayCanchas && filtros.vista === 'mapa' && canchas.length > 0) { %>
+  <!-- Leaflet (librería de mapas, aprobada para DE-003) solo en esta página -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+  <!-- Agrupación de pines (plugin oficial de Leaflet): con cientos de recintos solo se dibujan los grupos visibles -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+        integrity="sha256-YU3qCpj/P06tdPBJGPax0bm6Q1wltfwjsho5TR4+TYc=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"
+          integrity="sha256-Hk4dIpcqOSb0hZjgyvFOP+cEmDXUKKNE/tT542ZbNQg=" crossorigin="" defer></script>
+  <script src="/js/canchas-mapa.js?v=<%= versionAssets %>" defer></script>
+<% } %>
+
+<%- include('../partials/dock', { activo: 'canchas' }) %>
+
+<%- include('../partials/footer') %>

@@ -154,6 +154,35 @@
             <small class="campo__error" id="nivel-error"></small>
           </div>
 
+          <%# CORRECCIÓN: regla 11 — región y comuna de la lista (para filtrar y recomendar rivales por ubicación).
+              crear-equipo.js muestra solo las comunas de la región elegida; sin JS se ven todas agrupadas. %>
+          <div class="formulario__fila">
+            <div class="campo">
+              <label for="id_region">Región</label>
+              <select id="id_region" name="id_region" data-select-region aria-describedby="id_region-error">
+                <option value="">Elige la región</option>
+                <% (locals.regiones || []).forEach(function (region) { %>
+                  <option value="<%= region.id %>" <%= String(datos.idRegion) === String(region.id) ? 'selected' : '' %>><%= region.nombre %></option>
+                <% }) %>
+              </select>
+              <small class="campo__error" id="id_region-error"></small>
+            </div>
+            <div class="campo">
+              <label for="id_comuna">Comuna</label>
+              <select id="id_comuna" name="id_comuna" data-select-comuna aria-describedby="id_comuna-error" required>
+                <option value="">Elige la comuna</option>
+                <% (locals.regiones || []).forEach(function (region) { %>
+                  <optgroup label="<%= region.nombre %>" data-region="<%= region.id %>">
+                    <% region.comunas.forEach(function (comuna) { %>
+                      <option value="<%= comuna.id %>" <%= String(datos.idComuna) === String(comuna.id) ? 'selected' : '' %>><%= comuna.nombre %></option>
+                    <% }) %>
+                  </optgroup>
+                <% }) %>
+              </select>
+              <small class="campo__error" id="id_comuna-error"></small>
+            </div>
+          </div>
+
           <div class="campo">
             <label for="zona">Zona habitual de juego</label>
             <div class="campo__control">
@@ -162,7 +191,7 @@
                      autocomplete="address-level2" maxlength="100" aria-describedby="zona-error zona-ayuda" required />
             </div>
             <small class="campo__error" id="zona-error"></small>
-            <small class="campo__ayuda" id="zona-ayuda">Usamos esta zona para sugerirte rivales cercanos.</small>
+            <small class="campo__ayuda" id="zona-ayuda">El sector o la cancha donde suelen jugar. Los rivales cercanos se buscan por la comuna.</small><%# CORRECCIÓN: regla 11 %>
           </div>
 
           <div class="grupo-opciones" role="radiogroup" aria-labelledby="modalidad-label" aria-describedby="modalidad-error" data-grupo="modalidad">

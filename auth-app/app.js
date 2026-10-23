@@ -14,6 +14,15 @@ const { probarConexion } = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const indexRoutes = require('./routes/indexRoutes');
 const { cargarSesion } = require('./middlewares/authMiddleware');
+const cuentaRoutes = require('./routes/cuentaRoutes'); // NUEVO: Fase 1 (AR-008..AR-012)
+const adminRoutes = require('./routes/adminRoutes'); // NUEVO: Fase 2 (AR-004, AD-001..AD-014)
+const canchasRoutes = require('./routes/canchasRoutes'); // NUEVO: Fase 3 (DE-002..DE-006)
+const { exigirTerminos } = require('./middlewares/terminosMiddleware'); // NUEVO: AR-011
+const notificacionRoutes = require('./routes/notificacionRoutes'); // NUEVO: Fase 4 (NT-002..NT-004)
+const desafioRoutes = require('./routes/desafioRoutes'); // NUEVO: Fase 5 (DE-009..DE-014)
+const equipoFichaRoutes = require('./routes/equipoFichaRoutes'); // NUEVO: Fase 6 (PE-008..PE-021, AD-013)
+const partidoRoutes = require('./routes/partidoRoutes'); // NUEVO: Fase 7 (PA, AG, IN-005)
+const { contadorSinLeer } = require('./controllers/notificacionController'); // NUEVO: NT-003 (campana)
 const { noEncontrado, manejarErrores } = require('./middlewares/errorHandler');
 
 const app = express();
@@ -54,11 +63,24 @@ app.use(cookieParser());
 // res.locals.usuario (disponible en TODAS las vistas).
 app.use(cargarSesion);
 
+// NUEVO: AR-011 — sin aceptar la versión vigente de los términos, los módulos internos quedan bloqueados.
+app.use(exigirTerminos);
+
+// NUEVO: NT-003 — cuántas notificaciones sin leer hay (la campana de la barra superior).
+app.use(contadorSinLeer);
+
 // ---------------------------------------------------------------
 // 3) Rutas (solo definen caminos y llaman a controladores)
 // ---------------------------------------------------------------
 app.use('/', indexRoutes);      // landing y /dashboard
 app.use('/', authRoutes);       // /login, /registro, /logout
+app.use('/', cuentaRoutes);     // NUEVO: /terminos, /privacidad, /aceptar-terminos, /recuperar, /cuenta
+app.use('/admin', adminRoutes); // NUEVO: módulo de administración (todo pasa por requireAdmin)
+app.use('/canchas', canchasRoutes); // NUEVO: buscar, explorar y ver canchas
+app.use('/notificaciones', notificacionRoutes); // NUEVO: bandeja de notificaciones
+app.use('/desafios', desafioRoutes); // NUEVO: responder y consultar desafíos
+app.use('/', equipoFichaRoutes); // NUEVO: ficha pública, comentarios, posiciones, desactivar
+app.use('/', partidoRoutes); // NUEVO: reservas, partidos y agenda
 
 // ---------------------------------------------------------------
 // 4) Middlewares de errores: SIEMPRE al final, después de las rutas

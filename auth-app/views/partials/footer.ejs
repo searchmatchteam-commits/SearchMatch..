@@ -9,18 +9,28 @@
           <a href="/dashboard">Mi panel</a>
           <span aria-hidden="true">·</span>
           <a href="/perfil/editar">Editar mi perfil</a>
+          <!-- NUEVO: AR-012 — datos de la cuenta y contraseña -->
+          <span aria-hidden="true">·</span>
+          <a href="/cuenta">Mi cuenta</a>
         <% } else { %>
           <span aria-hidden="true">·</span>
           <a href="/login">Iniciar sesión</a>
           <span aria-hidden="true">·</span>
           <a href="/registro">Registrarse</a>
         <% } %>
+        <!-- NUEVO: AR-010 — los documentos se leen sin sesión desde cualquier página -->
+        <span aria-hidden="true">·</span>
+        <a href="/terminos">Términos</a>
+        <span aria-hidden="true">·</span>
+        <a href="/privacidad">Privacidad</a>
       </nav>
       <p class="pie__copy">&copy; <%= new Date().getFullYear() %> SearchMatch · Fútbol amateur en Chile</p>
     </div>
   </footer>
 
   <script src="/js/main.js?v=<%= versionAssets %>" defer></script>
+  <!-- NUEVO: validación, confirmaciones y región/comuna de los formularios nuevos -->
+  <script src="/js/sm-formularios.js?v=<%= versionAssets %>" defer></script>
   <% if (locals.pagina === 'dashboard' || locals.pagina === 'auth' || locals.pagina === 'equipo') { %>
     <!-- Ripple y cursor de luz del sistema "cyber-sport" -->
     <script src="/js/cyber.js?v=<%= versionAssets %>" defer></script>
@@ -58,6 +68,8 @@
   <% if (locals.pagina === 'dashboard') { %>
     <!-- Silueta a escala del panel "Tu carta" -->
     <script src="/js/visualizador-corporal.js?v=<%= versionAssets %>" defer></script>
+    <!-- Calendario del mes (solo la vista, todavía sin eventos) -->
+    <script src="/js/calendario.js?v=<%= versionAssets %>" defer></script>
   <% } %>
   <% if (locals.pagina === 'equipo') { %>
     <!-- Panel del capitán: solicitudes y plantel (datos de prueba) -->

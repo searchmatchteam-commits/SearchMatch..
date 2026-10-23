@@ -8,6 +8,7 @@
   <div class="contenedor">
     <header class="eq-cabecera revelar">
       <div class="eq-cabecera__texto">
+        <%- include('partials/boton-volver') %>
         <h1 class="eq-cabecera__titulo">Mis equipos</h1>
         <p class="eq-cabecera__stats">Toca un equipo para ver su plantel</p>
       </div>
@@ -18,14 +19,34 @@
             <span aria-hidden="true">+</span> Crear equipo
           </a>
         <% } %>
+        <%# CORRECCIÓN: regla 5 — si no puede crear más equipos, se explica el límite (antes solo se ocultaba el botón) %>
+        <% if (locals.avisoLimite) { %>
+          <p class="sm-aviso-limite" role="note"><%= avisoLimite %></p>
+        <% } %>
       </div>
     </header>
 
     <div class="dash-panel eq-panel revelar">
-      <%- include('partials/mis-equipos', { misEquipos }) %>
+      <%- include('partials/mis-equipos', { misEquipos, volver: '/mis-equipos' }) %>
     </div>
+
+    <%# NUEVO: PE-017 — equipos desactivados que creó la cuenta (se reactivan desde su ficha) %>
+    <% if ((locals.equiposInactivos || []).length > 0) { %>
+      <div class="dash-panel eq-panel">
+        <h2 class="dash-panel__titulo">Equipos desactivados</h2>
+        <ul class="sm-filas">
+          <% equiposInactivos.forEach(function (e) { %>
+            <li class="sm-fila"><strong><%= e.nombre %></strong><span><%= e.puntaje_nivel %> pts</span>
+              <a class="sm-fila__accion" href="/equipos/<%= e.id %>">Ver y reactivar →</a></li>
+          <% }) %>
+        </ul>
+      </div>
+    <% } %>
   </div>
 </section>
+
+<!-- Aviso tras salir de un equipo (equipo.js lo esconde) -->
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
 
 <%- include('partials/dock', { activo: 'mis-equipos' }) %>
 

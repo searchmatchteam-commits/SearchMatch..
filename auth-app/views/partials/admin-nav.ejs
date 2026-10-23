@@ -1,0 +1,14 @@
+<%
+  // Pestañas del módulo de administración. Uso: include('partials/admin-nav', { seccion: 'recintos' })
+  const pestanas = [
+    { clave: 'recintos', texto: 'Recintos y canchas', href: '/admin/recintos' },
+    { clave: 'cuentas', texto: 'Cuentas', href: '/admin/cuentas' },
+    { clave: 'catalogos', texto: 'Catálogos', href: '/admin/catalogos' },
+  ];
+%>
+<nav class="sm-pestanas" aria-label="Secciones de administración">
+  <% pestanas.forEach(function (p) { %>
+    <a class="sm-pestanas__item <%= p.clave === seccion ? 'sm-pestanas__item--activa' : '' %>" href="<%= p.href %>"
+       <%- p.clave === seccion ? 'aria-current="page"' : '' %>><%= p.texto %></a>
+  <% }) %>
+</nav>

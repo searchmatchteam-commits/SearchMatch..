@@ -1,0 +1,18 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- Cancha inexistente, inactiva o de un recinto inactivo (AD-004 / AD-006: no se muestra a los usuarios). -->
+<section class="eq">
+  <div class="contenedor sm-angosto">
+    <div class="dash-panel eq-panel sm-vacio">
+      <p class="sm-vacio__titulo">Esta cancha no está disponible</p>
+      <p class="dash-panel__nota">Puede que ya no exista o que esté temporalmente fuera de servicio.</p>
+      <a class="btn btn--verde" href="/canchas">Ver otras canchas</a>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/dock', { activo: 'canchas' }) %>
+
+<%- include('../partials/footer') %>

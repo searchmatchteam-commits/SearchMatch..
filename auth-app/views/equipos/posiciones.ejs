@@ -1,0 +1,38 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- PE-021 posiciones que busca el equipo (solo el capitán): el equipo aparece en "Equipos que buscan jugadores"
+     del directorio con "Busca: ..." y su nivel. Sin posiciones marcadas, deja de aparecer. -->
+<section class="eq">
+  <div class="contenedor sm-angosto">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: `/equipos/${equipo.id}` }) %>
+        <h1 class="eq-cabecera__titulo">Posiciones que buscamos</h1>
+        <p class="eq-cabecera__stats"><%= equipo.nombre %></p>
+      </div>
+    </header>
+
+    <form class="dash-panel eq-panel sm-form" action="/equipos/<%= equipo.id %>/posiciones" method="POST">
+      <p class="dash-panel__nota">Marca una o más posiciones. Los jugadores las verán en el directorio y podrán postular.</p>
+      <div class="sm-chequeos">
+        <% posiciones.forEach(function (p) { %>
+          <label class="sm-check sm-chequeo">
+            <input type="checkbox" name="posicion" value="<%= p.id %>" <%= p.buscada ? 'checked' : '' %> />
+            <span><%= p.nombre %></span>
+          </label>
+        <% }) %>
+      </div>
+      <div class="sm-form__acciones">
+        <button type="submit" class="btn btn--verde">Guardar</button>
+        <a class="btn btn--contorno" href="/equipos/<%= equipo.id %>">Cancelar</a>
+      </div>
+      <p class="campo__ayuda">Si desmarcas todas, tu equipo deja de aparecer como "buscando jugadores".</p>
+    </form>
+  </div>
+</section>
+
+<%- include('../partials/dock', { activo: 'mis-equipos' }) %>
+
+<%- include('../partials/footer') %>

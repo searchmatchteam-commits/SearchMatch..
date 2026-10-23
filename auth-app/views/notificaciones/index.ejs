@@ -1,0 +1,64 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- NT-002 bandeja (de la más reciente a la más antigua, primero las no leídas) · filtro por tipo
+     NT-003 marcar todas como leídas · NT-004 al abrir una se marca leída y lleva a su elemento. -->
+<%
+  const formatoFecha = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', dateStyle: 'medium', timeStyle: 'short' });
+  const sinLeer = notificaciones.filter(function (n) { return !n.leida; }).length;
+%>
+<section class="eq">
+  <div class="contenedor sm-angosto">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver') %>
+        <h1 class="eq-cabecera__titulo">Notificaciones</h1>
+        <p class="eq-cabecera__stats"><%= sinLeer === 0 ? 'Estás al día.' : `${sinLeer} sin leer` %></p>
+      </div>
+      <% if (sinLeer > 0) { %>
+        <div class="eq-cabecera__acciones">
+          <form action="/notificaciones/leidas" method="POST">
+            <button type="submit" class="btn btn--contorno btn--grande">Marcar todas como leídas</button>
+          </form>
+        </div>
+      <% } %>
+    </header>
+
+    <!-- Filtro por tipo (enlaces: funciona sin JavaScript) -->
+    <nav class="sm-pestanas" aria-label="Filtrar por tipo">
+      <a class="sm-pestanas__item <%= !tipo ? 'sm-pestanas__item--activa' : '' %>" href="/notificaciones">Todas</a>
+      <% Object.entries(tipos).forEach(function ([clave, texto]) { %>
+        <a class="sm-pestanas__item <%= tipo === clave ? 'sm-pestanas__item--activa' : '' %>" href="/notificaciones?tipo=<%= clave %>"><%= texto %></a>
+      <% }) %>
+    </nav>
+
+    <% if (notificaciones.length === 0) { %>
+      <div class="dash-panel eq-panel sm-vacio">
+        <p class="sm-vacio__titulo"><%= tipo ? 'No tienes notificaciones de este tipo' : 'Aún no tienes notificaciones' %></p>
+        <p class="dash-panel__nota">Aquí verás solicitudes, desafíos, partidos, reservas y comentarios que te involucran.</p>
+        <a class="btn btn--contorno" href="<%= tipo ? '/notificaciones' : '/equipos' %>"><%= tipo ? 'Ver todas' : 'Explorar equipos' %></a>
+      </div>
+    <% } else { %>
+      <ul class="dash-panel eq-panel sm-notificaciones">
+        <% notificaciones.forEach(function (n) { %>
+          <li class="sm-notificacion <%= n.leida ? '' : 'sm-notificacion--nueva' %>">
+            <a class="sm-notificacion__enlace" href="/notificaciones/<%= n.id %>/abrir">
+              <span class="sm-notificacion__punto" aria-hidden="true"></span>
+              <span class="sm-notificacion__texto">
+                <span class="sm-notificacion__mensaje"><%= n.mensaje %></span>
+                <small><span class="sm-rol"><%= n.tipoTexto %></span> · <%= formatoFecha.format(n.fecha) %><%= n.leida ? '' : ' · Nueva' %></small>
+              </span>
+            </a>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: '' }) %>
+
+<%- include('../partials/footer') %>

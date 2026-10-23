@@ -58,6 +58,10 @@ const REGLAS = {
     if (formulario.dataset.validar === 'registro' && valor.length < LONGITUD_MINIMA_PASSWORD) {
       return `La contraseña debe tener al menos ${LONGITUD_MINIMA_PASSWORD} caracteres.`;
     }
+    // CORRECCIÓN: contraseña segura (misma regla que errorPasswordSegura en validators.js)
+    if (formulario.dataset.validar === 'registro' && (!/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(valor) || !/\d/.test(valor))) {
+      return 'La contraseña debe combinar letras y números.';
+    }
     return null;
   },
 

@@ -212,18 +212,18 @@ async function guardarEditor(req, res, next) {
     if (!perfil || !perfil.perfilCompleto || !perfil.stats) return res.redirect('/perfil-jugador');
 
     if (errores.length > 0) {
-      // Lo inválido llega como null: altura y peso se re-pintan como los escribió y
-      // las estadísticas vuelven a su valor guardado.
-      const stats = Object.fromEntries(ESTADISTICAS.map(({ clave }) => [clave, datos.stats[clave] ?? perfil.stats[clave]]));
+      // Lo inválido llega como null: altura y peso se re-pintan como los escribió.
+      // CORRECCIÓN: regla 8 — las estadísticas son siempre las guardadas.
       return renderEditor(res, {
         status: 400,
         perfil,
         errores,
-        datos: { ...datos, altura: req.body.altura || '', peso: req.body.peso || '', stats },
+        datos: { ...datos, altura: req.body.altura || '', peso: req.body.peso || '', stats: perfil.stats },
       });
     }
 
-    await jugadorModel.actualizarPerfil(perfil.id, datos, datos.stats);
+    // CORRECCIÓN: regla 8 — se guardan las estadísticas que ya tenía, no las del formulario.
+    await jugadorModel.actualizarPerfil(perfil.id, datos, perfil.stats);
     return res.redirect('/perfil');
   } catch (err) {
     return next(err);

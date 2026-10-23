@@ -1,0 +1,80 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<!-- AD-012: buscar cuentas por correo o nombre y desactivarlas o reactivarlas (adminCuentasController).
+     El administrador no ve la opción de desactivar su propia cuenta (y el servidor también lo impide). -->
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Administración</span>
+        <h1 class="eq-cabecera__titulo">Cuentas de usuario</h1>
+        <p class="eq-cabecera__stats">Desactiva las cuentas que incumplan los términos y condiciones.</p>
+      </div>
+    </header>
+
+    <%- include('../partials/admin-nav', { seccion }) %>
+
+    <form class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/cuentas" role="search">
+      <div class="campo">
+        <label for="texto">Buscar por correo o nombre</label>
+        <input type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. juan@correo.cl o Juan Pérez" />
+      </div>
+      <div class="sm-form__acciones">
+        <button type="submit" class="btn btn--verde">Buscar</button>
+        <% if (texto) { %><a class="btn btn--contorno" href="/admin/cuentas">Ver todas</a><% } %>
+      </div>
+    </form>
+
+    <% if (cuentas.length === 0) { %>
+      <div class="dash-panel eq-panel sm-vacio">
+        <p class="sm-vacio__titulo">No hay cuentas que coincidan con "<%= texto %>"</p>
+        <p class="dash-panel__nota">Prueba con otra parte del correo o del nombre.</p>
+        <a class="btn btn--contorno" href="/admin/cuentas">Ver todas</a>
+      </div>
+    <% } else { %>
+      <div class="dash-panel eq-panel">
+        <ul class="sm-filas sm-filas--cuentas">
+          <% cuentas.forEach(function (c) {
+               const esPropia = c.authId === miAuthId;
+               const avisoCapitan = c.equiposCapitan > 0 ? ` Es capitán de ${c.equiposCapitan} ${c.equiposCapitan === 1 ? 'equipo activo' : 'equipos activos'}: su equipo quedará sin un capitán que pueda entrar.` : ''; %>
+            <li class="sm-fila <%= c.activo ? '' : 'sm-fila--inactiva' %>">
+              <span class="sm-fila__principal">
+                <strong><%= c.nombre %></strong><% if (c.apodo) { %> <span class="sm-opcional">“<%= c.apodo %>”</span><% } %>
+                <small><%= c.correo %></small>
+              </span>
+              <span class="sm-rol"><%= c.rol %></span>
+              <span class="sm-estado <%= c.activo ? 'sm-estado--activo' : 'sm-estado--inactivo' %>"><%= c.activo ? 'Activa' : 'Inactiva' %></span>
+              <span class="sm-fila__accion">
+                <% if (esPropia) { %>
+                  <span class="sm-opcional">Tu cuenta</span>
+                <% } else if (c.activo) { %>
+                  <form action="/admin/cuentas/<%= c.id %>/desactivar" method="POST"
+                        data-confirmar="Perderá el acceso de inmediato (se cierra su sesión) y no podrá volver a entrar hasta que la reactives.<%= avisoCapitan %>"
+                        data-confirmar-titulo="¿Desactivar la cuenta de <%= c.correo %>?" data-confirmar-boton="Desactivar">
+                    <input type="hidden" name="texto" value="<%= texto %>" />
+                    <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Desactivar</button>
+                  </form>
+                <% } else { %>
+                  <form action="/admin/cuentas/<%= c.id %>/activar" method="POST"
+                        data-confirmar="Podrá volver a iniciar sesión con su contraseña." data-confirmar-titulo="¿Reactivar la cuenta de <%= c.correo %>?" data-confirmar-boton="Reactivar">
+                    <input type="hidden" name="texto" value="<%= texto %>" />
+                    <button type="submit" class="btn btn--verde btn--chico">Reactivar</button>
+                  </form>
+                <% } %>
+              </span>
+            </li>
+          <% }) %>
+        </ul>
+        <% if (cuentas.length === 50) { %><p class="dash-panel__nota">Se muestran las primeras 50: afina la búsqueda para ver otras.</p><% } %>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: 'admin' }) %>
+
+<%- include('../partials/footer') %>

@@ -24,6 +24,7 @@ const REGLAS_EQUIPO = {
   },
   2: {
     nivel: (v) => (v ? null : 'Elige el nivel de juego del equipo.'),
+    id_comuna: (v) => (v ? null : 'Elige la región y la comuna de tu equipo.'), // CORRECCIÓN: regla 11
     zona: (v) => (v ? null : 'Escribe la zona habitual de juego.'),
     modalidad: (v) => (v ? null : 'Elige el tipo de fútbol.'),
   },
@@ -124,6 +125,38 @@ document.addEventListener('DOMContentLoaded', () => {
       caja.replaceChildren(imagen);
     });
   });
+
+  /* ---------- CORRECCIÓN: regla 11 — Región y comuna ---------- */
+  // Solo se ven las comunas de la región elegida (cada <optgroup> lleva data-region).
+  const selectRegion = formulario.querySelector('[data-select-region]');
+  const selectComuna = formulario.querySelector('[data-select-comuna]');
+  if (selectRegion && selectComuna) {
+    const grupos = Array.from(selectComuna.querySelectorAll('optgroup'));
+
+    function filtrarComunas() {
+      const region = selectRegion.value;
+      grupos.forEach((grupo) => {
+        const visible = grupo.dataset.region === region;
+        grupo.hidden = !visible;
+        grupo.disabled = !visible;
+      });
+      // Si la comuna marcada no es de esta región, se limpia
+      const marcada = selectComuna.selectedOptions[0];
+      if (marcada && marcada.parentElement.tagName === 'OPTGROUP' && marcada.parentElement.disabled) selectComuna.value = '';
+      selectComuna.disabled = !region;
+    }
+
+    selectRegion.addEventListener('change', filtrarComunas);
+    filtrarComunas();
+
+    // La zona parte con el nombre de la comuna si el capitán aún no escribió una
+    selectComuna.addEventListener('change', () => {
+      const zona = formulario.elements.zona;
+      const opcion = selectComuna.selectedOptions[0];
+      if (zona && !zona.value.trim() && selectComuna.value) zona.value = opcion.textContent.trim();
+      marcarError('id_comuna', null);
+    });
+  }
 
   /* ---------- Navegación ---------- */
 

@@ -23,7 +23,12 @@ const BARRAS_NIVEL = {
   avanzado: 3,
 };
 
+// CORRECCIÓN: regla 5 — cuántos equipos activos puede crear (capitanear) una misma cuenta.
+// Es el único lugar donde se define: el asistente, /equipos y /mis-equipos lo leen de aquí.
+const MAX_EQUIPOS_COMO_CAPITAN = 1;
+
 module.exports = {
+  MAX_EQUIPOS_COMO_CAPITAN, // CORRECCIÓN: regla 5
   MODALIDADES,
   DETALLE_NIVEL,
   BARRAS_NIVEL,
