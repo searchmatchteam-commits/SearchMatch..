@@ -284,12 +284,21 @@ function validarEdicionPerfil(req, res, next) {
  * req.erroresEquipo = { errores: [...], paso } (paso = el primero con error),
  * para que equipoController vuelva a pintar el wizard en ese paso.
  */
+/**
+ * Tipos de fútbol marcados (casillas name="modalidad": llega un valor o una lista).
+ * @returns {number[]} Cantidades de jugadores válidas (5, 7, 11), sin repetir y de menor a mayor.
+ */
+function leerModalidades(valor) {
+  const lista = Array.isArray(valor) ? valor : [valor];
+  return [...new Set(lista.map(Number))].filter((n) => MODALIDADES[n]).sort((a, b) => a - b);
+}
+
 function validarEquipo(req, res, next) {
   const nombre = (req.body.nombre_equipo || '').trim();
   const correo = (req.body.correo_contacto || '').trim().toLowerCase();
   const nivel = req.body.nivel || '';
   const zona = (req.body.zona || '').trim();
-  const jugadores = Number(req.body.modalidad);
+  const modalidades = leerModalidades(req.body.modalidad);
 
   const paso1 = [];
   const paso2 = [];
@@ -305,7 +314,7 @@ function validarEquipo(req, res, next) {
   if (!zona) paso2.push('Escribe la zona habitual de juego.');
   else if (zona.length > LONGITUD_MAXIMA_ZONA) paso2.push(`La zona no puede superar los ${LONGITUD_MAXIMA_ZONA} caracteres.`);
 
-  if (!MODALIDADES[jugadores]) paso2.push('Elige el tipo de fútbol.');
+  if (modalidades.length === 0) paso2.push('Elige al menos un tipo de fútbol.');
 
   // CORRECCIÓN: regla 11 — comuna de la lista (para filtrar y recomendar rivales por ubicación).
   // Que exista la revisa equipoController.crear con ubicacionModel.obtenerComuna.
@@ -314,7 +323,7 @@ function validarEquipo(req, res, next) {
   if (!comunaValida) paso2.push('Elige la región y la comuna de tu equipo.');
 
   req.datosFormulario = {
-    nombre, correo, nivel, zona, jugadores: MODALIDADES[jugadores] ? jugadores : null,
+    nombre, correo, nivel, zona, modalidades,
     idComuna: comunaValida ? idComuna : null, // CORRECCIÓN: regla 11
     idRegion: Number(req.body.id_region) || null, // CORRECCIÓN: regla 11 (solo para re-pintar el formulario)
   };
@@ -395,6 +404,7 @@ module.exports = {
   validarPerfilJugador,
   validarEdicionPerfil,
   validarEquipo,
+  leerModalidades,
   validarDesafio,
   validarSolicitudUnion,
   errorPasswordSegura, // CORRECCIÓN: contraseña segura (la reutilizan AR-008 y AR-009)

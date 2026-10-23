@@ -7,7 +7,9 @@
 //    (el botón "Administrar" de "Mis equipos" en el dashboard).
 //  - POST /mi-equipo/solicitudes/:id/(aceptar|rechazar) → el capitán responde una solicitud.
 //  - GET /mi-equipo/solicitudes/:id (y /foto) → el capitán ve el perfil y el mensaje de quien pidió unirse.
-//  - POST /equipos/:id/plantel/:idJugador/posicion → el capitán deja la carta de un jugador en la cancha.
+//  - POST /equipos/:id/alineacion → el capitán guarda la formación y quién juega en cada puesto de una
+//    de sus modalidades (JSON, equipo.js).
+//  - POST /equipos/:id/modalidades → el capitán cambia los tipos de fútbol que juega el equipo.
 //  - GET/POST /equipos/:id/escudo → el escudo del equipo (lo sube el capitán desde /mi-equipo).
 //  - POST /mi-equipo/desafios/:id → el capitán desafía a otro equipo (JSON si viene de fetch).
 //  - POST /equipos/:id/invitaciones/:idJugador → el capitán invita a un jugador (modal "Invitar jugador +").
@@ -24,9 +26,11 @@
 const equipoModel = require('../models/equipoModel');
 const jugadorModel = require('../models/jugadorModel');
 const { jugadorParaVista, detectarTipoImagen } = require('./jugadorController');
-const { LONGITUD_MAXIMA_MENSAJE_SOLICITUD } = require('../middlewares/validators');
+const { LONGITUD_MAXIMA_MENSAJE_SOLICITUD, leerModalidades } = require('../middlewares/validators');
 const { NIVELES, POSICIONES, ESTADISTICAS, calcularMedia } = require('../config/perfilJugador');
-const { MODALIDADES, DETALLE_NIVEL, BARRAS_NIVEL, MAX_EQUIPOS_COMO_CAPITAN } = require('../config/equipo'); // CORRECCIÓN: regla 5
+const {
+  MODALIDADES, FORMACIONES, puestosDeFormacion, DETALLE_NIVEL, BARRAS_NIVEL, MAX_EQUIPOS_COMO_CAPITAN, // CORRECCIÓN: regla 5
+} = require('../config/equipo');
 const ubicacionModel = require('../models/ubicacionModel'); // CORRECCIÓN: regla 11
 const avisosEquipo = require('./avisosEquipo');
 const equipoFichaModel = require('../models/equipoFichaModel'); // NUEVO: PE-021 / PE-017 // NUEVO: NT-001 (notificaciones de solicitudes, invitaciones y desafíos)
@@ -56,6 +60,15 @@ const AVISOS_PANEL = {
   aceptada: 'Solicitud aceptada: el jugador ya es parte de tu plantel.',
   rechazada: 'Solicitud rechazada.',
   inexistente: 'Esa solicitud ya fue respondida o no es de tu equipo.',
+  modalidades: 'Tipos de fútbol actualizados: arma la alineación de cada uno.',
+  'sin-modalidad': 'Tu equipo debe jugar al menos un tipo de fútbol.',
+  'sin-permiso': 'Solo el capitán que creó el equipo puede cambiar sus tipos de fútbol.',
+};
+
+// Respuestas al guardar la alineación (JSON para equipo.js): solo textos fijos.
+const AVISOS_ALINEACION = {
+  'sin-permiso': 'Solo el capitán que creó el equipo puede armar la alineación.',
+  invalida: 'La alineación no es válida: recarga la página e inténtalo de nuevo.',
 };
 
 // Avisos tras "Enviar Desafío" (?desafio=... o JSON): solo textos fijos.
@@ -64,7 +77,7 @@ const AVISOS_DESAFIO = {
   pendiente: 'Ya hay un desafío pendiente con ese equipo.',
   'sin-equipo': 'Solo el capitán que creó el equipo puede enviar desafíos.',
   inexistente: 'Ese equipo ya no está disponible.',
-  modalidad: 'Solo puedes desafiar a equipos de tu misma modalidad.', // CORRECCIÓN: regla 12
+  modalidad: 'Solo puedes desafiar en una modalidad que jueguen los dos equipos.', // CORRECCIÓN: regla 12
 };
 
 // Avisos tras "Enviar Invitación" (?invitacion=... o JSON): solo textos fijos.
@@ -99,38 +112,59 @@ const AVISOS_SALIDA = {
 // Después de salir se vuelve a la página desde donde se pidió (solo estas)
 const VOLVER_TRAS_SALIR = ['/dashboard', '/mis-equipos'];
 
-// Cancha táctica (views/equipo-panel.ejs): altura (% del alto) de cada línea, de arriba (ataque) hacia abajo.
-// Sin posición guardada, la carta va a la altura de su línea y las de una misma línea se reparten a lo ancho.
-const ALTURA_LINEA = { delantero: 12, mediocampista: 32, sinPosicion: 51, defensa: 70, arquero: 88 };
+/** Lo que dibuja la carta mini de un jugador (partials/carta-jugador con mini). */
+function cartaDeJugador(jugador) {
+  const posicion = POSICIONES[jugador.clavePosicion];
+  return {
+    nombre: jugador.nombreCarta,
+    media: jugador.stats ? calcularMedia(jugador.stats) : '—',
+    posicion: { sigla: posicion ? posicion.sigla : '—' },
+    estadisticas: ESTADISTICAS.map(({ clave, sigla }) => ({ sigla, valor: jugador.stats ? jugador.stats[clave] : '—' })),
+    foto: jugador.fotoVersion ? `/jugadores/${jugador.id}/foto?v=${jugador.fotoVersion}` : null,
+  };
+}
 
 /**
- * El plantel con lo que dibuja la cancha: la carta de cada jugador (partials/carta-jugador con mini)
- * y su posición en % (la que dejó el capitán o la automática según su línea).
+ * Alineación de una modalidad (views/equipo-panel.ejs): un puesto por jugador de la modalidad, ubicado según
+ * la formación, con su titular (o vacío), y el resto del plantel en el banco de suplentes.
+ * Si el capitán aún no guardó ninguna para esa modalidad, se propone una: cada uno en un puesto de su línea
+ * y los que sobran en los puestos libres de campo (al arco solo va un arquero).
+ * @param {Array} plantel - De equipoModel.listarPlantel (puestos de cada jugador por modalidad).
+ * @param {{jugadores: number, formacion: string}} modalidad - Una de equipo.modalidades.
  */
-function plantelEnCancha(plantel) {
-  const porLinea = {};
+function alineacionEnCancha(plantel, { jugadores, formacion }) {
+  const puestos = puestosDeFormacion(formacion);
+  const ocupantes = puestos.map(() => null);
+  const puestoDe = (jugador) => jugador.puestos[jugadores] ?? null;
   plantel.forEach((jugador) => {
-    const linea = jugador.clavePosicion || 'sinPosicion';
-    (porLinea[linea] = porLinea[linea] || []).push(jugador);
+    const puesto = puestoDe(jugador);
+    if (puesto !== null && puesto < puestos.length && !ocupantes[puesto]) ocupantes[puesto] = jugador;
   });
-  return plantel.map((jugador) => {
-    const linea = jugador.clavePosicion || 'sinPosicion';
-    const companeros = porLinea[linea];
-    const automaticaX = ((companeros.indexOf(jugador) + 1) / (companeros.length + 1)) * 100;
-    const posicion = POSICIONES[jugador.clavePosicion];
-    return {
-      ...jugador,
-      x: jugador.posX ?? +automaticaX.toFixed(2),
-      y: jugador.posY ?? ALTURA_LINEA[linea],
-      carta: {
-        nombre: jugador.nombreCarta,
-        media: jugador.stats ? calcularMedia(jugador.stats) : '—',
-        posicion: { sigla: posicion ? posicion.sigla : '—' },
-        estadisticas: ESTADISTICAS.map(({ clave, sigla }) => ({ sigla, valor: jugador.stats ? jugador.stats[clave] : '—' })),
-        foto: jugador.fotoVersion ? `/jugadores/${jugador.id}/foto?v=${jugador.fotoVersion}` : null,
-      },
+
+  if (!plantel.some((jugador) => puestoDe(jugador) !== null)) {
+    const ubicar = (jugador, admite) => {
+      const libre = puestos.find((puesto) => !ocupantes[puesto.indice] && admite(puesto));
+      if (libre) ocupantes[libre.indice] = jugador;
     };
-  });
+    plantel.forEach((jugador) => ubicar(jugador, (puesto) => puesto.linea === jugador.clavePosicion));
+    plantel
+      .filter((jugador) => !ocupantes.includes(jugador))
+      .sort((a, b) => (a.clavePosicion === 'arquero') - (b.clavePosicion === 'arquero')) // arqueros de campo, al final
+      .forEach((jugador) => ubicar(jugador, (puesto) => puesto.linea !== 'arquero'));
+  }
+
+  const conCarta = (jugador) => ({ ...jugador, carta: cartaDeJugador(jugador) });
+  return {
+    jugadores,
+    nombre: MODALIDADES[jugadores],
+    formacion,
+    formaciones: FORMACIONES[jugadores] || [],
+    // Puestos de cada formación de la modalidad: equipo.js los usa al cambiar de formación sin recargar
+    puestosPorFormacion: Object.fromEntries((FORMACIONES[jugadores] || []).map((f) => [f, puestosDeFormacion(f)])),
+    puestos: puestos.map((puesto, i) => ({ ...puesto, jugador: ocupantes[i] && conCarta(ocupantes[i]) })),
+    suplentes: plantel.filter((jugador) => !ocupantes.includes(jugador)).map(conCarta),
+    titulares: ocupantes.filter(Boolean).length,
+  };
 }
 
 // Modal "Invitar jugador +": desde qué media la tarjeta lleva borde destacado y el OVR brilla en neón.
@@ -169,7 +203,8 @@ const COLUMNA_INEXISTENTE = '42703';
 /** Pasa el error al manejador general; si faltan las columnas de la sección W, deja una pista clara en la consola. */
 function pasarError(err, next) {
   if (err.code === COLUMNA_INEXISTENTE) {
-    console.error('⚠️  Faltan columnas de la tabla equipo: ejecuta la sección W de sql/seed.sql en Supabase.');
+    console.error('⚠️  Faltan columnas de equipo o equipo_jugador: ejecuta la sección W de sql/seed.sql y '
+      + 'node scripts/ejecutar-sql.js sql/nuevas_tablas.sql (formación y alineación, F8-1).');
   }
   return next(err);
 }
@@ -265,7 +300,13 @@ async function panel(req, res, next) {
       titulo: 'Mi equipo',
       pagina: 'equipo',
       equipo,
-      plantel: plantelEnCancha(plantel),
+      plantel,
+      // Una alineación por cada tipo de fútbol que juega el equipo (pestañas en la vista);
+      // ?modalidad= elige la pestaña abierta (si no la juega, la primera)
+      alineaciones: equipo.modalidades.map((modalidad) => alineacionEnCancha(plantel, modalidad)),
+      modalidadActiva: (equipo.modalidades.find((m) => m.jugadores === Number(req.query.modalidad))
+        || equipo.modalidades[0] || {}).jugadores,
+      MODALIDADES,
       capitan: plantel.find((jugador) => jugador.capitan) || null,
       solicitudes,
       rivales,
@@ -377,29 +418,49 @@ function idDeParametro(valor) {
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-/** Coordenada en % (0 a 100) con dos decimales, o null si no es válida. */
-function porcentaje(valor) {
-  const numero = Number(valor);
-  return valor !== undefined && valor !== '' && Number.isFinite(numero) && numero >= 0 && numero <= 100
-    ? Math.round(numero * 100) / 100
-    : null;
+/**
+ * Titulares que envía equipo.js: ids separados por coma, uno por puesto ('' = puesto vacío).
+ * @returns {Array<number|null>|null} null si algún id no es válido.
+ */
+function leerTitulares(valor) {
+  if (typeof valor !== 'string') return null;
+  const titulares = valor.split(',').map((id) => (id === '' ? null : idDeParametro(id) || NaN));
+  return titulares.some(Number.isNaN) ? null : titulares;
 }
 
 // ---------------------------------------------------------------
-// POST /equipos/:id/plantel/:idJugador/posicion → x, y en % (lo envía equipo.js al soltar una carta)
+// POST /equipos/:id/alineacion → modalidad, formación y titulares (lo envía equipo.js tras cada cambio en la cancha)
 // ---------------------------------------------------------------
-async function guardarPosicion(req, res, next) {
+async function guardarAlineacion(req, res, next) {
   const idEquipo = idDeParametro(req.params.id);
-  const idJugador = idDeParametro(req.params.idJugador);
-  const x = porcentaje(req.body.x);
-  const y = porcentaje(req.body.y);
+  const jugadores = Number(req.body.modalidad);
+  const formacion = typeof req.body.formacion === 'string' ? req.body.formacion : '';
+  const titulares = leerTitulares(req.body.titulares);
   try {
-    if (!idEquipo || !idJugador || x === null || y === null) {
-      return res.status(400).json({ ok: false, mensaje: 'Posición no válida.' });
+    if (!idEquipo || !MODALIDADES[jugadores] || !titulares) {
+      return res.status(400).json({ ok: false, mensaje: AVISOS_ALINEACION.invalida });
     }
-    const guardada = await equipoModel.guardarPosicionEnCancha(req.usuario.idAuth, idEquipo, idJugador, x, y);
-    if (!guardada) return res.status(403).json({ ok: false, mensaje: 'Solo el capitán que creó el equipo puede mover las cartas.' });
+    const resultado = await equipoModel.guardarAlineacion(req.usuario.idAuth, idEquipo, jugadores, formacion, titulares);
+    if (resultado !== 'guardada') {
+      return res.status(resultado === 'sin-permiso' ? 403 : 400).json({ ok: false, mensaje: AVISOS_ALINEACION[resultado] });
+    }
     return res.json({ ok: true });
+  } catch (err) {
+    return pasarError(err, next);
+  }
+}
+
+// ---------------------------------------------------------------
+// POST /equipos/:id/modalidades → el capitán marca los tipos de fútbol que juega y vuelve al panel
+// ---------------------------------------------------------------
+async function actualizarModalidades(req, res, next) {
+  const idEquipo = idDeParametro(req.params.id);
+  const modalidades = leerModalidades(req.body.modalidad);
+  try {
+    if (!idEquipo) return res.redirect('/mi-equipo');
+    if (modalidades.length === 0) return res.redirect(`/mi-equipo?equipo=${idEquipo}&aviso=sin-modalidad`);
+    const resultado = await equipoModel.actualizarModalidades(req.usuario.idAuth, idEquipo, modalidades);
+    return res.redirect(`/mi-equipo?equipo=${idEquipo}&aviso=${resultado === 'actualizadas' ? 'modalidades' : 'sin-permiso'}`);
   } catch (err) {
     return pasarError(err, next);
   }
@@ -506,7 +567,8 @@ async function desafiar(req, res, next) {
       return res.redirect('/mi-equipo');
     }
     const resultado = Number.isInteger(idRival) && idRival > 0
-      ? await equipoModel.enviarDesafio(req.usuario.idAuth, idRival, req.datosDesafio.mensaje)
+      ? await equipoModel.enviarDesafio(req.usuario.idAuth, idRival, req.datosDesafio.mensaje,
+        MODALIDADES[Number(req.body.modalidad)] ? Number(req.body.modalidad) : null)
       : 'inexistente';
     if (resultado === 'enviado') await avisosEquipo.desafioEnviado(req.usuario, idRival); // NUEVO: NT-001 / DE-008
     if (quiereJson) return res.json({ resultado, mensaje: AVISOS_DESAFIO[resultado] });
@@ -597,7 +659,8 @@ module.exports = {
   responder,
   verSolicitud,
   fotoSolicitud,
-  guardarPosicion,
+  guardarAlineacion,
+  actualizarModalidades,
   subirEscudo,
   servirEscudo,
   desafiar,

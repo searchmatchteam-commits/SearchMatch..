@@ -59,8 +59,9 @@ router.post('/invitaciones/:id/:accion', requireAuth, requireRol, equipoControll
 router.get('/mis-equipos', requireAuth, requireRol, equipoController.misEquipos);
 router.get('/equipos', requireAuth, requireRol, equipoController.directorio);
 router.post('/equipos/:id/unirme', requireAuth, requireRol, validarSolicitudUnion, equipoController.unirse);
-// Cancha táctica y escudo: solo el capitán que creó el equipo (lo comprueba el modelo).
-router.post('/equipos/:id/plantel/:idJugador/posicion', requireAuth, requireRol, equipoController.guardarPosicion);
+// Alineación, tipos de fútbol y escudo: solo el capitán que creó el equipo (lo comprueba el modelo).
+router.post('/equipos/:id/alineacion', requireAuth, requireRol, equipoController.guardarAlineacion);
+router.post('/equipos/:id/modalidades', requireAuth, requireRol, equipoController.actualizarModalidades);
 // Salida del plantel: el capitán saca a un jugador; el jugador sale de un equipo (no si es su capitán).
 router.post('/equipos/:id/plantel/:idJugador/sacar', requireAuth, requireRol, equipoController.sacar);
 router.post('/equipos/:id/salir', requireAuth, requireRol, equipoController.salir);

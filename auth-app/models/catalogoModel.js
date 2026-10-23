@@ -19,6 +19,8 @@ const CATALOGOS = {
     singular: 'modalidad',
     usos: [
       { tabla: 'equipo', columna: 'id_modalidad', etiqueta: 'equipos' },
+      { tabla: 'equipo_modalidad', columna: 'id_modalidad', etiqueta: 'equipos que la juegan' }, // F8-2: varias por equipo
+      { tabla: 'desafio', columna: 'id_modalidad', etiqueta: 'desafíos' },
       { tabla: 'cancha', columna: 'id_modalidad', etiqueta: 'canchas' },
       { tabla: 'partido', columna: 'id_modalidad', etiqueta: 'partidos' },
     ],

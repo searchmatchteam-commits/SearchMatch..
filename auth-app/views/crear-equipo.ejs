@@ -4,10 +4,17 @@
   const pasos = ['Crea tu equipo', 'Configura tu equipo', 'Confirmación'];
   const iconoEscudo = '<path d="M12 3l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6z" />';
   const iconoCheck = '<path d="M5 12.5l4.2 4.2L19 7" />';
+  // "Fútbol 7 y 11" (mismo texto que models/equipoModel.js y crear-equipo.js)
+  function textoModalidades(lista) {
+    const n = (lista || []).slice().sort(function (a, b) { return a - b; });
+    if (n.length === 0) return '';
+    if (n.length === 1) return catalogos.MODALIDADES[n[0]];
+    return 'Fútbol ' + n.slice(0, -1).join(', ') + ' y ' + n[n.length - 1];
+  }
   // Vista previa "Así te verán los rivales" con lo que ya se sabe del equipo
   const vista = creado || {
     nombre: datos.nombre,
-    detalle: [catalogos.MODALIDADES[datos.jugadores], catalogos.NIVELES[datos.nivel]].filter(Boolean).join(' · '),
+    detalle: [textoModalidades(datos.modalidades), catalogos.NIVELES[datos.nivel]].filter(Boolean).join(' · '),
   };
 %>
 
@@ -194,15 +201,16 @@
             <small class="campo__ayuda" id="zona-ayuda">El sector o la cancha donde suelen jugar. Los rivales cercanos se buscan por la comuna.</small><%# CORRECCIÓN: regla 11 %>
           </div>
 
-          <div class="grupo-opciones" role="radiogroup" aria-labelledby="modalidad-label" aria-describedby="modalidad-error" data-grupo="modalidad">
+          <%# Tipos de fútbol: se pueden marcar varios (equipo_modalidad). La formación se elige después, en /mi-equipo. %>
+          <div class="grupo-opciones" role="group" aria-labelledby="modalidad-label" aria-describedby="modalidad-error modalidad-ayuda" data-grupo="modalidad">
             <span class="ceq-fila-label">
-              <span class="grupo-opciones__label" id="modalidad-label">Tipo de fútbol</span>
-              <span class="ceq-chip">Aproximado</span>
+              <span class="grupo-opciones__label" id="modalidad-label">Tipos de fútbol</span>
+              <span class="ceq-chip">Puedes elegir varios</span>
             </span>
             <div class="opciones opciones--3 ceq-modalidades">
               <% Object.keys(catalogos.MODALIDADES).forEach(function (jugadores) { %>
                 <label class="opcion opcion--modalidad">
-                  <input class="opcion__radio" type="radio" name="modalidad" value="<%= jugadores %>" <%= String(datos.jugadores) === jugadores ? 'checked' : '' %>
+                  <input class="opcion__radio" type="checkbox" name="modalidad" value="<%= jugadores %>" <%= (datos.modalidades || []).includes(Number(jugadores)) ? 'checked' : '' %>
                          data-texto="<%= catalogos.MODALIDADES[jugadores] %>" />
                   <span class="ceq-marca" aria-hidden="true"><svg viewBox="0 0 24 24"><%- iconoCheck %></svg></span>
                   <span class="ceq-numero"><%= jugadores %></span>
@@ -211,7 +219,9 @@
               <% }) %>
             </div>
             <small class="campo__error" id="modalidad-error"></small>
+            <small class="campo__ayuda" id="modalidad-ayuda">La formación y la alineación de cada uno las armas después en tu panel.</small>
           </div>
+
 
           <div class="ceq-activo">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg>

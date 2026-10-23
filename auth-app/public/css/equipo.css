@@ -1,7 +1,7 @@
 /* public/css/equipo.css
    Panel del capitán (/mi-equipo) y directorio de equipos (/equipos). Se carga después de cyber.css y dashboard.css:
    reutiliza sus tokens, los paneles de vidrio (.dash-panel), el aviso flotante y el dock.
-   Secciones: encabezado · contador y tarjetas · solicitudes · cancha y fichas del plantel · directorio · responsive. */
+   Secciones: encabezado · contador y tarjetas · solicitudes · cancha, alineación y banco · directorio · responsive. */
 
 .eq {
   padding: 40px 0 24px;
@@ -216,12 +216,12 @@
   color: var(--texto-suave);
 }
 
-/* ---------- Plantel actual: cancha táctica ---------- */
+/* ---------- Plantel actual: cancha con la alineación ---------- */
 /* La cancha es un div con relación 4:5; las líneas son divs con borde en posición absoluta
-   y los jugadores van encima, en cuatro franjas (delanteros arriba, arquero abajo). */
+   y encima van los puestos de la formación (delanteros arriba, arquero abajo). */
 .cancha {
   --linea: rgba(var(--verde-rgb), 0.3);
-  /* Las fichas se miden con el ancho de la cancha (cqi): 4 por línea caben incluso en celular */
+  /* Los puestos se miden con el ancho de la cancha (cqi): 5 por línea caben incluso en celular */
   container-type: inline-size;
   position: relative;
   width: 100%;
@@ -304,74 +304,196 @@
   bottom: -2px;
 }
 
-/* "Faltan jugadores": sutil, en la mitad de la cancha */
-.cancha__aviso {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: rgba(var(--verde-rgb), 0.55);
-  background: rgba(0, 0, 0, 0.55);
-  pointer-events: none;
+/* ---------- Alineación: tipo de fútbol, formación y titulares ---------- */
+.eq-alineacion__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  margin-bottom: 6px;
 }
 
-/* Cartas del plantel: cada una centrada en su --x / --y (% de la cancha) */
-.cancha__jugadores {
+.eq-alineacion__campo {
+  flex: 1 1 150px;
+  max-width: 220px;
+  margin: 0;
+}
+
+.eq-alineacion__campo label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.eq-alineacion__campo select {
+  padding: 10px 12px;
+}
+
+/* Modalidad y formación para quien no es capitán */
+.eq-alineacion__dato {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid rgba(var(--verde-rgb), 0.35);
+  background: rgba(var(--verde-rgb), 0.06);
+}
+
+/* "Titulares 7/11": ámbar mientras falten, verde con la alineación completa */
+.eq-alineacion__titulares {
+  margin-left: auto;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+  border: 1px solid rgba(255, 196, 0, 0.4);
+  background: rgba(255, 196, 0, 0.07);
+}
+
+.eq-alineacion__titulares strong {
+  color: #ffc400;
+  font-variant-numeric: tabular-nums;
+}
+
+.eq-alineacion__titulares--completa {
+  border-color: rgba(var(--verde-rgb), 0.45);
+  background: rgba(var(--verde-rgb), 0.07);
+}
+
+.eq-alineacion__titulares--completa strong {
+  color: var(--verde);
+}
+
+/* Puestos de la formación: cada uno centrado en su --x / --y (% de la cancha).
+   Al cambiar de formación se deslizan a su nuevo lugar. */
+.cancha__puestos {
   position: absolute;
   inset: 0;
+  margin: 0;
+  padding: 0;
   list-style: none;
 }
 
-.cancha__jugador {
+.cancha__puesto {
   position: absolute;
   left: calc(var(--x) * 1%);
   top: calc(var(--y) * 1%);
   z-index: 1;
-  width: clamp(50px, 15cqi, 80px);   /* 5 filas de cartas caben a lo alto */
+  width: clamp(48px, 14.5cqi, 78px);   /* 5 por línea y 5 líneas caben (Fútbol 11) */
   transform: translate(-50%, -50%);
+  transition: left 0.35s var(--curva), top 0.35s var(--curva);
+}
+
+/* Puesto libre: silueta punteada con la sigla de su línea (POR, DEF, MED, DEL) */
+.cancha__vacio {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 320 / 460;
+  padding: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: rgba(var(--verde-rgb), 0.6);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1.5px dashed rgba(var(--verde-rgb), 0.35);
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s, transform 0.2s var(--curva);
+}
+
+button.cancha__vacio {
+  cursor: pointer;
+}
+
+.cancha__puesto[data-linea="arquero"] .cancha__vacio {
+  border-color: rgba(255, 196, 0, 0.45);
+  color: rgba(255, 196, 0, 0.75);
+}
+
+.cancha__puesto:has(.eq-ficha) .cancha__vacio {
+  display: none;
+}
+
+button.cancha__vacio:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 3px;
+}
+
+/* Con una carta elegida (o arrastrándola), los puestos libres invitan a soltarla */
+.eq-alineacion--eligiendo .cancha__vacio {
+  border-style: solid;
+  border-color: rgba(var(--verde-rgb), 0.7);
+  background: rgba(var(--verde-rgb), 0.08);
+}
+
+.cancha__puesto.eq-destino .cancha__vacio {
+  color: var(--verde);
+  background: rgba(var(--verde-rgb), 0.18);
+  transform: scale(1.08);
+}
+
+/* ---------- Cartas de la alineación (en la cancha y en el banco) ---------- */
+.eq-ficha {
+  position: relative;
+  width: 100%;
   border-radius: 10px;
 }
 
 /* La carta mini: sin tilt y con una sombra más liviana (puede haber 11 o más) */
-.cancha .carta-jugador--perfil {
+.eq-ficha .carta-jugador--perfil {
   width: 100%;
   filter: drop-shadow(0 0 5px rgba(57, 255, 20, 0.35)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
-  transition: transform 0.2s var(--curva);
+  transition: transform 0.2s var(--curva), filter 0.2s;
 }
 
-/* El capitán arrastra: la carta entera recibe el puntero (la foto no se arrastra sola) */
-.cancha--editable .cancha__jugador {
+/* El capitán la mueve: la carta entera recibe el puntero (la foto no se arrastra sola) */
+.eq-ficha[data-ficha] {
   cursor: grab;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
 }
 
-.cancha--editable .cancha__jugador * {
+.eq-ficha[data-ficha] * {
   pointer-events: none;
 }
 
-.cancha__jugador.arrastrando {
-  z-index: 10;
+.eq-ficha[data-ficha]:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 3px;
+}
+
+/* Elegida (tocar y luego tocar el destino) o bajo otra carta que se suelta encima (intercambio) */
+.eq-ficha--elegida .carta-jugador,
+.eq-destino > .eq-ficha .carta-jugador {
+  transform: scale(1.08);
+  filter: drop-shadow(0 0 10px rgba(57, 255, 20, 0.75)) drop-shadow(0 10px 14px rgba(0, 0, 0, 0.7));
+}
+
+.eq-ficha--elegida {
+  z-index: 5;
+}
+
+/* Mientras se arrastra: la original queda tenue y una copia sigue al puntero */
+.eq-ficha--origen {
+  opacity: 0.35;
+}
+
+.eq-ficha--fantasma {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  pointer-events: none;
   cursor: grabbing;
 }
 
-.cancha__jugador.arrastrando .carta-jugador {
-  transform: scale(1.08);
-  filter: drop-shadow(0 0 10px rgba(57, 255, 20, 0.6)) drop-shadow(0 14px 18px rgba(0, 0, 0, 0.7));
-}
-
-.cancha__jugador:focus-visible {
-  z-index: 10;
-  outline: 2px solid var(--verde);
-  outline-offset: 3px;
+.eq-ficha--fantasma .carta-jugador {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 12px rgba(57, 255, 20, 0.6)) drop-shadow(0 16px 20px rgba(0, 0, 0, 0.7));
 }
 
 /* "C" de capitán, en la esquina de la carta */
@@ -400,8 +522,8 @@
   z-index: 2;
 }
 
-.cancha--editable .cancha__jugador .cancha__sacar,
-.cancha--editable .cancha__jugador .cancha__sacar * {
+.eq-ficha[data-ficha] .cancha__sacar,
+.eq-ficha[data-ficha] .cancha__sacar * {
   pointer-events: auto;
 }
 
@@ -429,8 +551,8 @@
   stroke-linecap: round;
 }
 
-.cancha__jugador:hover .cancha__sacar-boton,
-.cancha__jugador:focus-within .cancha__sacar-boton {
+.eq-ficha:hover .cancha__sacar-boton,
+.eq-ficha:focus-within .cancha__sacar-boton {
   opacity: 1;
 }
 
@@ -446,9 +568,207 @@
 }
 
 /* Mientras el servidor responde, la carta se atenúa */
-.cancha__jugador--saliendo {
+.eq-ficha--saliendo {
   opacity: 0.4;
   pointer-events: none;
+}
+
+/* ---------- Tipos de fútbol del equipo y pestañas de alineación ---------- */
+.eq-tipos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.eq-tipos__titulo {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.eq-tipos__opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1 1 auto;
+}
+
+/* Cada tipo es una píldora con su casilla; marcada, en verde */
+.eq-tipos__opcion {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.eq-tipos__opcion input {
+  accent-color: var(--verde);
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.eq-tipos__opcion:has(input:checked) {
+  color: var(--verde);
+  border-color: rgba(var(--verde-rgb), 0.5);
+  background: rgba(var(--verde-rgb), 0.08);
+}
+
+.eq-tipos__opcion:has(input:focus-visible) {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+
+.eq-pestanas {
+  margin-bottom: 14px;
+}
+
+/* ---------- Desafiar: filtro por modalidad y modalidades de cada rival ---------- */
+.eq-filtro-modalidad {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 14px;
+}
+
+.eq-filtro-modalidad[hidden],
+.eq-rivales .eq-club[hidden],
+.modal__campo[hidden] {
+  display: none;
+}
+
+.eq-filtro-modalidad__opcion {
+  padding: 7px 14px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--texto-suave);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.eq-filtro-modalidad__opcion span {
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+.eq-filtro-modalidad__opcion:hover {
+  color: var(--texto);
+  border-color: rgba(var(--verde-rgb), 0.35);
+}
+
+.eq-filtro-modalidad__opcion--activa,
+.eq-filtro-modalidad__opcion--activa:hover {
+  color: var(--sobre-verde);
+  background: var(--verde);
+  border-color: var(--verde);
+}
+
+.eq-modalidades {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* "F7", "F11": en gris las que no jugamos, en verde las que tenemos en común */
+.eq-modalidad {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--texto-suave);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.eq-modalidad--comun {
+  color: var(--verde);
+  border-color: rgba(var(--verde-rgb), 0.5);
+  background: rgba(var(--verde-rgb), 0.08);
+}
+
+/* ---------- Banco de suplentes ---------- */
+.eq-banco {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 520px;
+  width: 100%;
+  margin: 18px auto 0;
+}
+
+.eq-banco__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 34px;
+}
+
+.eq-banco__titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* .btn trae su propio display: sin esto el atributo hidden no lo ocultaría */
+.eq-banco__mandar[hidden] {
+  display: none;
+}
+
+.eq-banco__lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 12px;
+  min-height: 96px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.eq-banco__lista .eq-ficha {
+  width: 62px;
+}
+
+.eq-alineacion--eligiendo .eq-banco__lista,
+.eq-banco__lista.eq-destino {
+  border-color: rgba(var(--verde-rgb), 0.45);
+  background: rgba(var(--verde-rgb), 0.05);
+}
+
+.eq-banco__vacio {
+  margin: -4px 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cancha__puesto,
+  .cancha__vacio,
+  .eq-ficha .carta-jugador--perfil {
+    transition: none;
+  }
 }
 
 /* ---------- Directorio de equipos (/equipos) ---------- */
@@ -650,6 +970,7 @@
 }
 
 .modal__campo input,
+.modal__campo select,
 .modal__campo textarea {
   width: 100%;
   padding: 11px 12px;
@@ -665,6 +986,7 @@
 }
 
 .modal__campo input:focus,
+.modal__campo select:focus,
 .modal__campo textarea:focus {
   outline: none;
   border-color: var(--verde-borde);
