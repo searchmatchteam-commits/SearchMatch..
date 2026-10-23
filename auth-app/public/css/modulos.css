@@ -219,12 +219,115 @@
 .sm-catalogo__nuevo > .btn { align-self: flex-end; margin-bottom: 2px; }
 
 /* ---------- Mapa de canchas (DE-003) ---------- */
-.sm-mapa { width: 100%; height: 460px; border-radius: var(--radio-chico); overflow: hidden; border: 1px solid var(--borde-fuerte); }
+.sm-mapa {
+  width: 100%; height: 460px; border-radius: var(--radio-chico); overflow: hidden;
+  border: 1px solid var(--borde-fuerte); background: #0a0a0a;
+}
 .sm-mapa--ficha { height: 300px; }
 .sm-acciones-canchas { align-items: center; }
-.sm-mapa .leaflet-popup-content { color: #111; font-family: var(--fuente); }
-.sm-mapa .leaflet-popup-content ul { margin: 6px 0 0; padding-left: 16px; }
+
+/* Modo oscuro de los tiles de OSM (solo la capa de tiles: pines y globos no se invierten) */
+.sm-mapa .leaflet-tile-pane { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
+
+/* Pin verde neón con brillo */
+.sm-pin { background: none; border: none; }
+.sm-pin svg { display: block; overflow: visible; filter: drop-shadow(0 0 6px rgba(var(--verde-rgb, 57, 255, 20), 0.85)); }
+.sm-pin path { fill: var(--verde); stroke: #0a0a0a; stroke-width: 1.5; }
+.sm-pin circle { fill: #0a0a0a; }
+
+/* Controles de zoom oscuros */
+.sm-mapa .leaflet-bar { border: 1px solid var(--borde-fuerte); border-radius: 10px; overflow: hidden; box-shadow: none; }
+.sm-mapa .leaflet-bar a { background: #1a1a1a; color: #fff; border-bottom-color: var(--borde); transition: color 0.2s, background 0.2s, box-shadow 0.2s; }
+.sm-mapa .leaflet-bar a:hover { background: #1a1a1a; color: var(--verde); box-shadow: inset 0 0 12px rgba(var(--verde-rgb, 57, 255, 20), 0.35); }
+.sm-mapa .leaflet-bar a.leaflet-disabled { color: #555; box-shadow: none; }
+
+/* Grupos de pines (leaflet.markercluster) */
+.sm-grupo { background: none; border: none; }
+.sm-grupo span {
+  display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%;
+  background: rgba(var(--verde-rgb, 57, 255, 20), 0.3); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  border: 2px solid var(--verde); color: #fff; font-weight: 800; font-size: 0.85rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 14px rgba(var(--verde-rgb, 57, 255, 20), 0.55), inset 0 0 10px rgba(var(--verde-rgb, 57, 255, 20), 0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.sm-grupo--grande span { font-size: 0.95rem; }
+.sm-grupo:hover span { transform: scale(1.08); box-shadow: 0 0 22px rgba(var(--verde-rgb, 57, 255, 20), 0.85); }
+
+/* Fondo de Leaflet oscuro (leaflet.css lo deja gris claro y se ve mientras cargan los tiles) */
+.sm-mapa.leaflet-container { background: #0a0a0a; }
+
+/* Mapa expandido: capa hija de <body> con el mapa centrado (grande, pero no pantalla completa) */
+.sm-mapa-modal {
+  position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.sm-mapa-modal[hidden] { display: none; }
+.sm-mapa.sm-mapa--expandido {
+  width: min(90vw, 72rem); height: 85vh; flex: none;
+  border-radius: 18px; border-color: var(--verde-borde); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+}
+.sm-sin-scroll { overflow: hidden; }
+.sm-mapa .leaflet-bar a.sm-expandir { display: grid; place-items: center; }
+
+/* Botón "mi ubicación" */
+.sm-mapa .leaflet-bar a.sm-ubicar { display: grid; place-items: center; color: var(--verde); }
+.sm-mapa .leaflet-bar a.sm-ubicar:hover { filter: drop-shadow(0 0 6px rgba(var(--verde-rgb, 57, 255, 20), 0.8)); }
+.sm-ubicar--cargando svg { animation: sm-girar 1s linear infinite; }
+@keyframes sm-girar { to { transform: rotate(360deg); } }
+
+/* Punto del usuario con pulso */
+.sm-yo { background: none; border: none; }
+.sm-yo span {
+  position: relative; display: block; width: 18px; height: 18px; border-radius: 50%;
+  background: #3b82f6; border: 3px solid #fff; box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+}
+.sm-yo span::after {
+  content: ""; position: absolute; inset: -3px; border-radius: 50%;
+  background: rgba(59, 130, 246, 0.45); animation: sm-pulso 2s ease-out infinite;
+}
+@keyframes sm-pulso { from { transform: scale(1); opacity: 1; } to { transform: scale(3.2); opacity: 0; } }
+
+/* Aviso breve sobre el mapa (errores de ubicación) */
+.sm-mapa__aviso {
+  position: absolute; z-index: 1000; left: 50%; bottom: 28px; transform: translateX(-50%);
+  max-width: calc(100% - 32px); padding: 10px 14px; border-radius: 10px;
+  background: #1a1a1a; color: var(--texto); border: 1px solid var(--borde-fuerte);
+  font-size: 0.85rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sm-yo span::after, .sm-ubicar--cargando svg { animation: none; }
+}
+
+/* Globos y atribución oscuros */
+.sm-mapa .leaflet-popup-content-wrapper,
+.sm-mapa .leaflet-popup-tip { background: #1a1a1a; color: var(--texto); border: 1px solid var(--borde-fuerte); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+.sm-mapa .leaflet-popup-content { color: var(--texto); font-family: var(--fuente); }
+.sm-mapa .leaflet-popup-content a { color: var(--verde); }
+.sm-mapa a.leaflet-popup-close-button { color: var(--texto-suave); }
+.sm-mapa .leaflet-control-attribution { background: rgba(10, 10, 10, 0.75); color: var(--texto-suave); }
+.sm-mapa .leaflet-control-attribution a { color: var(--texto-suave); }
 .sm-mapa .leaflet-popup-content p { margin: 4px 0; }
+
+/* Globo de un recinto: una fila de arriendo por cancha */
+.sm-globo { display: grid; gap: 8px; min-width: 220px; }
+.sm-globo__titulo { font-size: 1rem; }
+.sm-mapa .leaflet-popup-content .sm-globo__direccion { margin: 0 0 2px; color: var(--texto-suave); font-size: 0.8rem; }
+.sm-mapa .leaflet-popup-content a.sm-globo__cancha {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 8px 10px; border-radius: 10px; border: 1px solid var(--borde); color: var(--texto);
+  background: rgba(255, 255, 255, 0.03); transition: border-color 0.2s, background 0.2s;
+}
+.sm-mapa .leaflet-popup-content a.sm-globo__cancha:hover { border-color: var(--verde-borde); background: var(--verde-tenue); }
+.sm-globo__datos { display: grid; gap: 1px; }
+.sm-globo__nombre { font-weight: 700; font-size: 0.85rem; }
+.sm-globo__modalidad { color: var(--texto-suave); font-size: 0.75rem; }
+.sm-globo__precio { color: var(--verde); font-weight: 800; font-size: 1.15rem; white-space: nowrap; }
+.sm-globo__precio small { color: var(--texto-suave); font-weight: 600; font-size: 0.7rem; margin-left: 2px; }
+.sm-globo__consultar {
+  padding: 6px 10px; border-radius: 999px; white-space: nowrap;
+  background: var(--verde); color: var(--sobre-verde); font-weight: 700; font-size: 0.75rem;
+}
 
 /* ---------- Pantallas más anchas ---------- */
 @media (min-width: 760px) {

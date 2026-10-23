@@ -68,6 +68,8 @@
   <% if (locals.pagina === 'dashboard') { %>
     <!-- Silueta a escala del panel "Tu carta" -->
     <script src="/js/visualizador-corporal.js?v=<%= versionAssets %>" defer></script>
+    <!-- Calendario del mes (solo la vista, todavía sin eventos) -->
+    <script src="/js/calendario.js?v=<%= versionAssets %>" defer></script>
   <% } %>
   <% if (locals.pagina === 'equipo') { %>
     <!-- Panel del capitán: solicitudes y plantel (datos de prueba) -->
