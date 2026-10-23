@@ -1,8 +1,9 @@
 // controllers/jugadorController.js
 // Perfil del jugador:
-//  - GET/POST /perfil-jugador → wizard de 4 pasos (tipo de cuenta, datos personales,
-//    perfil deportivo y confirmación). Solo crea el perfil: es el onboarding obligatorio
+//  - GET/POST /perfil-jugador → wizard (tipo de cuenta, datos personales, perfil deportivo, rol,
+//    [crear equipo, solo capitán] y confirmación). Solo crea el perfil: es el onboarding obligatorio
 //    (/dashboard manda aquí al jugador sin perfil completo). Con el perfil listo → /perfil/editar.
+//    Jugador → /dashboard. Capitán → además crea su equipo (con escudo) y entra a /mi-equipo.
 //  - GET /perfil → la carta de jugador y el resumen de datos y estadísticas.
 //  - GET/POST /perfil/editar → editor: datos, perfil deportivo, estadísticas y foto.
 //  - GET /perfil/foto, POST /perfil/foto y POST /perfil/foto/eliminar → la foto de la carta.
@@ -10,9 +11,13 @@
 // el acceso a datos en models/jugadorModel.js.
 
 const jugadorModel = require('../models/jugadorModel');
+const equipoModel = require('../models/equipoModel');
+const ubicacionModel = require('../models/ubicacionModel');
+const userModel = require('../models/userModel');
 const { calcularEdad, ALTURA_CM, PESO_KG } = require('../middlewares/validators');
 const {
   POSICIONES,
+  NIVELES,
   ESTADISTICAS,
   STAT_RANGO,
   sortearEstadisticas,
@@ -20,6 +25,11 @@ const {
   nombreEnCarta,
   urlFoto,
 } = require('../config/perfilJugador');
+const { MODALIDADES, DETALLE_NIVEL, BARRAS_NIVEL, MAX_EQUIPOS_COMO_CAPITAN } = require('../config/equipo');
+
+// Escudo del paso "Crear equipo": wizard.js lo reduce y lo manda como data URL en el campo "escudo".
+const REGEX_ESCUDO = /^data:image\/(?:png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/;
+const ESCUDO_MAXIMO_BYTES = 512 * 1024;
 
 /**
  * Lee el perfil del usuario de la sesión. Si faltan las columnas de las
@@ -47,16 +57,35 @@ async function leerPerfilObligatorio(req) {
   return perfil;
 }
 
-function renderWizard(res, { status = 200, datos, errores = [], paso = 2 }) {
+async function renderWizard(req, res, { status = 200, datos, errores = [], paso = 2 }) {
+  // Paso "Crear equipo": regiones y comunas, y si la cuenta aún puede ser capitán de un equipo nuevo.
+  const [regiones, equiposComoCapitan] = await Promise.all([
+    ubicacionModel.listarRegionesConComunas(),
+    equipoModel.contarEquiposDeCapitan(req.usuario.idAuth),
+  ]);
   return res.status(status).render('perfil-jugador', {
     titulo: 'Crea tu perfil',
     pagina: 'wizard',
     datos,
     errores,
     paso,
-    catalogos: { POSICIONES },
+    regiones,
+    puedeSerCapitan: equiposComoCapitan < MAX_EQUIPOS_COMO_CAPITAN,
+    catalogos: { POSICIONES, NIVELES, MODALIDADES, DETALLE_NIVEL, BARRAS_NIVEL },
     rangos: { ALTURA_CM, PESO_KG },
   });
+}
+
+/**
+ * Escudo enviado por el wizard (data URL en PNG, JPEG o WebP), comprobado por sus primeros bytes.
+ * @returns {{datos: Buffer, tipo: string}|null} null si no viene o no es una imagen válida.
+ */
+function leerEscudo(valor) {
+  const coincidencia = REGEX_ESCUDO.exec(String(valor || ''));
+  if (!coincidencia) return null;
+  const datos = Buffer.from(coincidencia[1], 'base64');
+  const tipo = detectarTipoImagen(datos);
+  return tipo && datos.length <= ESCUDO_MAXIMO_BYTES ? { datos, tipo } : null;
 }
 
 // ---------------------------------------------------------------
@@ -67,13 +96,15 @@ async function mostrarWizard(req, res, next) {
     const perfil = await leerPerfilObligatorio(req);
     if (perfil.perfilCompleto) return res.redirect('/perfil/editar');
 
-    return renderWizard(res, {
+    return await renderWizard(req, res, {
       datos: {
         apodo: perfil.apodo,
         fechaNacimiento: perfil.fechaNacimiento,
         altura: perfil.altura ? Math.round(perfil.altura) : '',
         peso: perfil.peso ? Math.round(perfil.peso) : '',
         posiciones: perfil.posiciones,
+        rol: null,
+        equipo: null,
       },
     });
   } catch (err) {
@@ -83,27 +114,73 @@ async function mostrarWizard(req, res, next) {
 
 // ---------------------------------------------------------------
 // POST /perfil-jugador → guardar y entrar al panel
+//   jugador → /dashboard · capitán → crea su equipo y entra a /mi-equipo
 // ---------------------------------------------------------------
 async function guardarWizard(req, res, next) {
   const datos = req.datosFormulario;
-  const { errores, paso } = req.erroresPerfil;
+  const errores = [...req.erroresPerfil.errores];
+  // Paso al que se vuelve: el primero con error (Infinity = ninguno todavía)
+  let pasoConError = errores.length > 0 ? req.erroresPerfil.paso : Infinity;
 
   try {
     const perfil = await leerPerfilObligatorio(req);
     if (perfil.perfilCompleto) return res.redirect('/perfil/editar');
 
+    // Capitán: la comuna debe existir (de ella sale la zona) y la cuenta no puede pasar el límite de equipos.
+    let comuna = null;
+    if (datos.equipo) {
+      comuna = datos.equipo.idComuna ? await ubicacionModel.obtenerComuna(datos.equipo.idComuna) : null;
+      if (datos.equipo.idComuna && !comuna) {
+        errores.push('La comuna elegida no es válida.');
+        pasoConError = Math.min(pasoConError, 5);
+      }
+      if ((await equipoModel.contarEquiposDeCapitan(req.usuario.idAuth)) >= MAX_EQUIPOS_COMO_CAPITAN) {
+        errores.push('Ya eres capitán de un equipo: continúa como jugador.');
+        pasoConError = Math.min(pasoConError, 4);
+      }
+    }
+
     if (errores.length > 0) {
       // Altura y peso inválidos llegan como null: se re-pinta lo que escribió el usuario.
-      return renderWizard(res, {
+      // El escudo vuelve tal cual (data URL) para no tener que elegirlo otra vez.
+      return await renderWizard(req, res, {
         status: 400,
         errores,
-        paso,
-        datos: { ...datos, altura: req.body.altura || '', peso: req.body.peso || '' },
+        paso: pasoConError,
+        datos: {
+          ...datos,
+          altura: req.body.altura || '',
+          peso: req.body.peso || '',
+          escudo: leerEscudo(req.body.escudo) ? req.body.escudo : '',
+        },
       });
     }
 
     await jugadorModel.guardarPerfil(perfil.id, datos, sortearEstadisticas());
-    return res.redirect('/dashboard');
+    if (!datos.equipo) return res.redirect('/dashboard');
+
+    // El rol "equipo" hace que el panel y el menú sean los del capitán (ROLES_INICIO).
+    const { error } = await userModel.guardarRolInicio(req.supabase, 'equipo');
+    if (error) console.error('⚠️  No se pudo guardar el rol de capitán:', error.code, error.message);
+
+    try {
+      const equipo = await equipoModel.crearEquipo(req.usuario.idAuth, {
+        ...datos.equipo,
+        correo: req.usuario.correo,
+        zona: comuna.nombre,
+      });
+      const escudo = leerEscudo(req.body.escudo);
+      if (escudo) {
+        await equipoModel.guardarEscudo(req.usuario.idAuth, equipo.id, escudo.datos, escudo.tipo).catch((err) => {
+          console.error('⚠️  No se pudo guardar el escudo del equipo nuevo:', err.message);
+        });
+      }
+    } catch (err) {
+      // El perfil ya quedó guardado: el equipo se puede crear desde su propio formulario.
+      console.error('⚠️  No se pudo crear el equipo desde el wizard:', err.message);
+      return res.redirect('/crear-equipo');
+    }
+    return res.redirect('/mi-equipo');
   } catch (err) {
     return next(err);
   }
@@ -136,10 +213,14 @@ function jugadorParaVista(perfil, foto) {
 
 // ---------------------------------------------------------------
 // GET /perfil → carta de jugador + resumen
+//   Si la cuenta capitanea un equipo, arriba van las pestañas "Mi carta" / "Mi equipo".
 // ---------------------------------------------------------------
 async function mostrarPerfil(req, res, next) {
   try {
-    const perfil = await leerPerfil(req);
+    const [perfil, equiposComoCapitan] = await Promise.all([
+      leerPerfil(req),
+      equipoModel.contarEquiposDeCapitan(req.usuario.idAuth),
+    ]);
     if (!perfil || !perfil.perfilCompleto || !perfil.stats) {
       return res.redirect('/perfil-jugador');
     }
@@ -148,6 +229,7 @@ async function mostrarPerfil(req, res, next) {
       titulo: 'Tu carta de jugador',
       pagina: 'perfil',
       jugador: jugadorParaVista(perfil, urlFoto(perfil)),
+      esCapitan: equiposComoCapitan > 0,
     });
   } catch (err) {
     return next(err);

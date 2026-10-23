@@ -1,0 +1,20 @@
+<%
+  // Alternar entre la carta del capitán y su equipo (solo cuentas que capitanean un equipo). Uso:
+  //   include('partials/pestanas-capitan', { activa: 'carta' })   → en /perfil
+  //   include('partials/pestanas-capitan', { activa: 'equipo' })  → en /mi-equipo
+  // Son enlaces: cada vista tiene su propia URL (se puede compartir, recargar y usar "Atrás") y funciona sin JS.
+  const pestanasCapitan = [
+    { clave: 'carta', texto: 'Mi carta', href: '/perfil',
+      icono: '<rect x="5" y="3" width="14" height="18" rx="2.5" /><circle cx="12" cy="10" r="2.8" /><path d="M8 17a4 4 0 0 1 8 0" />' },
+    { clave: 'equipo', texto: 'Mi equipo', href: '/mi-equipo',
+      icono: '<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.4-7.5 9.5-4.3-1.1-7.5-4.9-7.5-9.5V6z" />' },
+  ];
+%>
+<nav class="sm-pestanas sm-pestanas--vista" aria-label="Vista del capitán">
+  <% pestanasCapitan.forEach(function (p) { const actual = p.clave === activa; %>
+    <a class="sm-pestanas__item <%= actual ? 'sm-pestanas__item--activa' : '' %>" href="<%= p.href %>" <%- actual ? 'aria-current="page"' : '' %>>
+      <svg class="sm-pestanas__icono" viewBox="0 0 24 24" aria-hidden="true"><%- p.icono %></svg>
+      <%= p.texto %>
+    </a>
+  <% }) %>
+</nav>

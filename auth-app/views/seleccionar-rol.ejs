@@ -1,75 +1,24 @@
 <%- include('partials/header') %>
 
-<section class="rol">
+<section class="rol rol--continuar">
   <header class="rol__cabecera">
     <span class="rol__eyebrow">SEARCH MATCH · REGISTRO</span>
-    <h1 class="rol__titulo">¿Cómo quieres empezar?</h1>
-    <p class="rol__subtitulo">Elige cómo vas a usar Search Match. Podrás cambiarlo más adelante.</p>
+    <h1 class="rol__titulo">Estás a un paso de jugar</h1>
+    <p class="rol__subtitulo">A continuación te pediremos tus datos básicos para crear tu perfil.</p>
   </header>
 
-  <!-- Las tarjetas son radios: funcionan con teclado y sin JS.
-       rol.js solo actualiza el texto del botón según la elección. -->
+  <!-- Por ahora no se elige rol: todos parten como jugador (rol oculto) y siguen a sus datos (/perfil-jugador).
+       Se sigue guardando con POST porque requireRol pide un rol para entrar al resto de la app.
+       rol.js solo muestra "Cargando..." y evita el doble envío. -->
   <form action="/select-role" method="POST" class="rol__formulario" data-seleccion-rol>
-    <fieldset class="rol__opciones">
-      <legend class="solo-lectores">Tipo de cuenta</legend>
-
-      <label class="rol-tarjeta">
-        <input class="rol-tarjeta__radio" type="radio" name="rol" value="jugador" <%= rolElegido === 'jugador' ? 'checked' : '' %> />
-        <span class="rol-tarjeta__check" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" /></svg>
-        </span>
-
-        <span class="rol-tarjeta__icono" aria-hidden="true">
-          <!-- Camiseta -->
-          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">
-            <path d="M17 6h14l11 7-5 9-5-3v23H16V19l-5 3-5-9z" />
-            <path d="M19 6c0 3 2.2 5 5 5s5-2 5-5" />
-            <path d="M21 25h6M24 22v10" stroke-linecap="round" />
-          </svg>
-        </span>
-
-        <span class="rol-tarjeta__titulo">Soy jugador</span>
-        <span class="rol-tarjeta__texto">Crea tu perfil, obtén tu carta de jugador y súmate a partidos cerca de ti.</span>
-
-        <ul class="rol-tarjeta__lista">
-          <li>Carta de jugador con tu nivel y posición</li>
-          <li>Únete a partidos y equipos de tu comuna</li>
-          <li>Recibe invitaciones y desafíos</li>
-        </ul>
-      </label>
-
-      <label class="rol-tarjeta">
-        <input class="rol-tarjeta__radio" type="radio" name="rol" value="equipo" <%= rolElegido === 'equipo' ? 'checked' : '' %> />
-        <span class="rol-tarjeta__check" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" /></svg>
-        </span>
-
-        <span class="rol-tarjeta__icono rol-tarjeta__icono--escudo" aria-hidden="true">
-          <!-- Escudo con la palabra CAPITÁN -->
-          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">
-            <path d="M24 4l16 6v12c0 10.5-6.8 18.6-16 22-9.2-3.4-16-11.5-16-22V10z" />
-            <path d="M24 13l2.4 4.8 5.3.8-3.8 3.7.9 5.2-4.8-2.5-4.8 2.5.9-5.2-3.8-3.7 5.3-.8z" fill="currentColor" stroke="none" />
-          </svg>
-          <span class="rol-tarjeta__capitan">CAPITÁN</span>
-        </span>
-
-        <span class="rol-tarjeta__titulo">Soy equipo</span>
-        <span class="rol-tarjeta__texto">Registra tu escuadra, organiza partidos y desafía a otros equipos.</span>
-
-        <ul class="rol-tarjeta__lista">
-          <li>Gestiona tu plantel como capitán</li>
-          <li>Reserva canchas y agenda partidos</li>
-          <li>Desafía equipos de tu nivel</li>
-        </ul>
-      </label>
-    </fieldset>
+    <input type="hidden" name="rol" value="jugador" />
 
     <% if (errores && errores.length > 0) { %>
       <div class="alerta alerta--error rol__alerta" role="alert"><%= errores[0] %></div>
     <% } %>
 
-    <button type="submit" class="btn btn--grande rol__boton" data-boton-rol>
-      <span class="btn__texto">Continuar</span>
+    <button type="submit" class="btn btn--verde rol__boton" data-boton-rol>
+      <span class="btn__texto">Siguiente: Mis datos</span>
       <span aria-hidden="true">→</span>
     </button>
   </form>

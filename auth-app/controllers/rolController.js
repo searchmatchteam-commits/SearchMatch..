@@ -1,6 +1,7 @@
 // controllers/rolController.js
-// Onboarding: pantalla "¿Cómo quieres empezar?" (jugador o equipo).
-// El rol elegido se guarda en user_metadata.rol_inicio de Supabase Auth
+// Onboarding: pantalla de bienvenida al registro. Por ahora no se elige rol en pantalla:
+// el formulario envía "jugador" y lleva a sus datos (/perfil-jugador). "equipo" se sigue aceptando.
+// El rol se guarda en user_metadata.rol_inicio de Supabase Auth
 // (userModel.guardarRolInicio), así que viaja con la sesión en cualquier dispositivo.
 
 const userModel = require('../models/userModel');
@@ -8,7 +9,7 @@ const { ROLES_INICIO } = require('../middlewares/authMiddleware');
 
 function renderSeleccion(res, { status = 200, rolElegido = null, errores = [] } = {}) {
   return res.status(status).render('seleccionar-rol', {
-    titulo: '¿Cómo quieres empezar?',
+    titulo: 'Completa tu registro',
     pagina: 'rol',
     rolElegido,
     errores,
@@ -16,7 +17,7 @@ function renderSeleccion(res, { status = 200, rolElegido = null, errores = [] } 
 }
 
 // ---------------------------------------------------------------
-// GET /select-role → tarjetas jugador / equipo
+// GET /select-role → bienvenida + botón "Siguiente: Mis datos"
 // ---------------------------------------------------------------
 function mostrarSeleccion(req, res) {
   // Si ya eligió antes, su rol viene marcado (puede cambiarlo).

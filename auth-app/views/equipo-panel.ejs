@@ -28,6 +28,7 @@
       <div class="eq-cabecera__texto">
         <%- include('partials/boton-volver') %>
         <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span><%= equipo.soyCapitan ? 'Panel del capitán' : 'Mi equipo' %></span>
+        <% if (equipo.soyCapitan) { %><%- include('partials/pestanas-capitan', { activa: 'equipo' }) %><% } %>
         <h1 class="eq-cabecera__titulo">Mi Equipo: <span class="texto-verde"><%= equipo.nombre %></span></h1>
         <ul class="eq-cabecera__datos">
           <li>Comuna: <strong><%= equipo.zona || 'Sin definir' %></strong></li>

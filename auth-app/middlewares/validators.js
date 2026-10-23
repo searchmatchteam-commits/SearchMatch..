@@ -247,18 +247,30 @@ function revisarDatosPerfil(body) {
   return { datos: { apodo, fechaNacimiento, altura, peso, posiciones }, paso2, paso3 };
 }
 
+// Roles del paso 4 del wizard de jugador: "capitan" agrega el paso 5 (crear equipo).
+const ROLES_WIZARD = ['jugador', 'capitan'];
+
 /**
- * Valida el wizard de PERFIL DE JUGADOR (pasos 2 y 3).
- * No corta la petición: deja los datos limpios en req.datosFormulario y los
+ * Valida el wizard de PERFIL DE JUGADOR (pasos 2 a 5).
+ *  2 datos personales · 3 perfil deportivo · 4 rol (jugador o capitán) · 5 crear equipo (solo capitán).
+ * No corta la petición: deja los datos limpios en req.datosFormulario (con .rol y .equipo) y los
  * errores en req.erroresPerfil = { errores: [...], paso } (paso = el primero con error),
  * para que jugadorController vuelva a pintar el wizard en ese paso.
  */
 function validarPerfilJugador(req, res, next) {
   const { datos, paso2, paso3 } = revisarDatosPerfil(req.body);
-  req.datosFormulario = datos;
+  const rol = ROLES_WIZARD.includes(req.body.rol) ? req.body.rol : null;
+  const paso4 = rol ? [] : ['Elige si te registras como jugador o como capitán.'];
+  // El correo y la zona del equipo los completa jugadorController (correo de la cuenta y nombre de la comuna).
+  const equipo = rol === 'capitan' ? revisarDatosEquipo(req.body, { conContacto: false }) : null;
+  const paso5 = equipo ? [...equipo.paso1, ...equipo.paso2] : [];
+
+  req.datosFormulario = { ...datos, rol, equipo: equipo ? equipo.datos : null };
+  const porPaso = [[2, paso2], [3, paso3], [4, paso4], [5, paso5]];
+  const primero = porPaso.find(([, errores]) => errores.length > 0);
   req.erroresPerfil = {
-    errores: [...paso2, ...paso3],
-    paso: paso2.length > 0 ? 2 : 3,
+    errores: porPaso.flatMap(([, errores]) => errores),
+    paso: primero ? primero[0] : 2,
   };
   return next();
 }
@@ -293,12 +305,19 @@ function leerModalidades(valor) {
   return [...new Set(lista.map(Number))].filter((n) => MODALIDADES[n]).sort((a, b) => a - b);
 }
 
-function validarEquipo(req, res, next) {
-  const nombre = (req.body.nombre_equipo || '').trim();
-  const correo = (req.body.correo_contacto || '').trim().toLowerCase();
-  const nivel = req.body.nivel || '';
-  const zona = (req.body.zona || '').trim();
-  const modalidades = leerModalidades(req.body.modalidad);
+/**
+ * Limpia y valida los datos de un equipo nuevo (los comparten /crear-equipo y el paso "Crear equipo"
+ * del wizard de jugador). Con conContacto: false no se piden correo ni zona (el wizard los completa
+ * con el correo de la cuenta y el nombre de la comuna).
+ * @returns {{ datos: object, paso1: string[], paso2: string[] }}
+ *          paso1 = identidad (nombre y correo), paso2 = configuración (nivel, zona, comuna, tipos de fútbol).
+ */
+function revisarDatosEquipo(body, { conContacto = true } = {}) {
+  const nombre = (body.nombre_equipo || '').trim();
+  const correo = (body.correo_contacto || '').trim().toLowerCase();
+  const nivel = body.nivel || '';
+  const zona = (body.zona || '').trim();
+  const modalidades = leerModalidades(body.modalidad);
 
   const paso1 = [];
   const paso2 = [];
@@ -306,27 +325,40 @@ function validarEquipo(req, res, next) {
   if (!nombre) paso1.push('El nombre de la escuadra es obligatorio.');
   else if (nombre.length > LONGITUD_MAXIMA_NOMBRE) paso1.push(`El nombre no puede superar los ${LONGITUD_MAXIMA_NOMBRE} caracteres.`);
 
-  if (!correo) paso1.push('El correo de contacto es obligatorio.');
-  else if (!REGEX_CORREO.test(correo) || correo.length > LONGITUD_MAXIMA_CORREO) paso1.push('El formato del correo no es válido.');
+  if (conContacto) {
+    if (!correo) paso1.push('El correo de contacto es obligatorio.');
+    else if (!REGEX_CORREO.test(correo) || correo.length > LONGITUD_MAXIMA_CORREO) paso1.push('El formato del correo no es válido.');
+  }
 
   if (!NIVELES[nivel]) paso2.push('Elige el nivel de juego del equipo.');
 
-  if (!zona) paso2.push('Escribe la zona habitual de juego.');
-  else if (zona.length > LONGITUD_MAXIMA_ZONA) paso2.push(`La zona no puede superar los ${LONGITUD_MAXIMA_ZONA} caracteres.`);
+  if (conContacto) {
+    if (!zona) paso2.push('Escribe la zona habitual de juego.');
+    else if (zona.length > LONGITUD_MAXIMA_ZONA) paso2.push(`La zona no puede superar los ${LONGITUD_MAXIMA_ZONA} caracteres.`);
+  }
 
   if (modalidades.length === 0) paso2.push('Elige al menos un tipo de fútbol.');
 
   // CORRECCIÓN: regla 11 — comuna de la lista (para filtrar y recomendar rivales por ubicación).
-  // Que exista la revisa equipoController.crear con ubicacionModel.obtenerComuna.
-  const idComuna = Number(req.body.id_comuna);
+  // Que exista la revisa el controlador con ubicacionModel.obtenerComuna.
+  const idComuna = Number(body.id_comuna);
   const comunaValida = Number.isInteger(idComuna) && idComuna > 0;
   if (!comunaValida) paso2.push('Elige la región y la comuna de tu equipo.');
 
-  req.datosFormulario = {
-    nombre, correo, nivel, zona, modalidades,
-    idComuna: comunaValida ? idComuna : null, // CORRECCIÓN: regla 11
-    idRegion: Number(req.body.id_region) || null, // CORRECCIÓN: regla 11 (solo para re-pintar el formulario)
+  return {
+    datos: {
+      nombre, correo, nivel, zona, modalidades,
+      idComuna: comunaValida ? idComuna : null, // CORRECCIÓN: regla 11
+      idRegion: Number(body.id_region) || null, // CORRECCIÓN: regla 11 (solo para re-pintar el formulario)
+    },
+    paso1,
+    paso2,
   };
+}
+
+function validarEquipo(req, res, next) {
+  const { datos, paso1, paso2 } = revisarDatosEquipo(req.body);
+  req.datosFormulario = datos;
   req.erroresEquipo = {
     errores: [...paso1, ...paso2],
     paso: paso1.length > 0 ? 1 : 2,

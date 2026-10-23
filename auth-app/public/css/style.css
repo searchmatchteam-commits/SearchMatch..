@@ -1867,17 +1867,61 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   margin: 0 auto;
 }
 
-.rol__opciones {
-  border: 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
+/* Pantalla de bienvenida al registro: cabecera y botón centrados en la pantalla */
+.rol--continuar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100svh - 88px); /* alto visible menos la barra superior */
+  text-align: center;
 }
 
-@media (min-width: 700px) {
+.rol--continuar .rol__cabecera {
+  margin-bottom: 40px;
+}
+
+.rol__formulario {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  animation: aparecer 0.5s var(--curva) 80ms both;
+}
+
+.rol__alerta {
+  margin: 0 0 20px;
+  width: 100%;
+  max-width: 420px;
+}
+
+/* Botón principal: el mismo verde neón de "Cerrar sesión" (.btn--verde), en grande */
+.rol__boton {
+  width: 100%;
+  max-width: 360px;
+  padding: 18px 32px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  border-radius: 999px;
+  box-shadow: 0 0 28px rgba(57, 255, 20, 0.3);
+}
+
+.rol__boton[aria-busy="true"] {
+  cursor: progress;
+  opacity: 0.85;
+  transform: none;
+}
+
+/* ---------- Tarjetas de rol (paso 4 del wizard: jugador o capitán) ---------- */
+.rol__opciones {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 560px) {
   .rol__opciones {
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
   }
 }
 
@@ -1887,17 +1931,12 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 28px 24px;
+  padding: 24px 20px;
   background: #141414;
   border: 1.5px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radio);
   cursor: pointer;
-  animation: aparecer 0.5s var(--curva) both;
   transition: border-color 0.2s ease, box-shadow 0.25s ease, transform 0.2s var(--curva), background-color 0.2s ease;
-}
-
-.rol-tarjeta + .rol-tarjeta {
-  animation-delay: 80ms;
 }
 
 .rol-tarjeta:hover {
@@ -1921,6 +1960,21 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   background: #161a15;
   border-color: var(--verde);
   box-shadow: 0 0 0 1px var(--verde), 0 0 32px rgba(57, 255, 20, 0.18);
+}
+
+/* Capitán no disponible (la cuenta ya capitanea el máximo de equipos) */
+.rol-tarjeta--apagada {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.rol-tarjeta--apagada:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+  transform: none;
+}
+
+.grupo-opciones--error .rol-tarjeta {
+  border-color: rgba(255, 107, 107, 0.6);
 }
 
 .rol-tarjeta__check {
@@ -1961,45 +2015,44 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 .rol-tarjeta__icono {
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
-  margin-bottom: 6px;
-  border-radius: 16px;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 4px;
+  border-radius: 14px;
   color: var(--verde);
   background: var(--verde-tenue);
   border: 1px solid var(--verde-borde);
 }
 
 .rol-tarjeta__icono svg {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
 }
 
 /* Escudo con la etiqueta CAPITÁN debajo */
 .rol-tarjeta__icono--escudo {
   width: auto;
-  min-width: 64px;
+  min-width: 56px;
   height: auto;
-  padding: 10px 12px 8px;
+  padding: 8px 10px 6px;
   gap: 4px;
-  justify-self: start;
   align-self: flex-start;
 }
 
 .rol-tarjeta__icono--escudo svg {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
 }
 
 .rol-tarjeta__capitan {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 900;
   letter-spacing: 0.16em;
   line-height: 1;
 }
 
 .rol-tarjeta__titulo {
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 900;
   letter-spacing: -0.02em;
   line-height: 1.2;
@@ -2007,7 +2060,7 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 
 .rol-tarjeta__texto {
   color: var(--texto-suave);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .rol-tarjeta__lista {
@@ -2015,15 +2068,15 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 8px;
-  padding-top: 16px;
+  margin-top: 6px;
+  padding-top: 14px;
   border-top: 1px solid var(--borde);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
 
 .rol-tarjeta__lista li {
   position: relative;
-  padding-left: 26px;
+  padding-left: 24px;
 }
 
 /* Check verde de cada beneficio */
@@ -2032,43 +2085,95 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   position: absolute;
   left: 0;
   top: 0.3em;
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   background: var(--verde);
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.2 4.2L19 7'/%3E%3C/svg%3E") center / contain no-repeat;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.2 4.2L19 7'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
-.rol__alerta {
-  margin: 20px 0 0;
-}
-
-/* Botón: apagado (gris) sin elección, verde neón cuando hay un rol elegido */
-.rol__boton {
+/* ---------- Paso "Crear equipo" del wizard: escudo ---------- */
+.wizard-escudo {
   display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 18px;
+  background: #0b0b0b;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+}
+
+.wizard-escudo__vista {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  overflow: hidden;
+  border-radius: 16px;
+  color: var(--verde);
+  background: var(--verde-tenue);
+  border: 1px solid var(--verde-borde);
+}
+
+.wizard-escudo__vista svg {
+  width: 36px;
+  height: 36px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.wizard-escudo__vista img {
   width: 100%;
-  max-width: 420px;
-  margin: 28px auto 0;
-  background: #222;
-  color: #7b817b;
-  border-color: rgba(255, 255, 255, 0.06);
+  height: 100%;
+  object-fit: contain;
 }
 
-.rol__boton:disabled {
-  cursor: not-allowed;
-  transform: none;
+.wizard-escudo__texto {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
 }
 
-.rol__formulario:has(.rol-tarjeta__radio:checked) .rol__boton {
-  background: var(--verde);
-  color: var(--sobre-verde);
-  border-color: transparent;
-  box-shadow: 0 0 28px rgba(57, 255, 20, 0.3);
+.wizard-escudo__titulo {
+  font-weight: 800;
 }
 
-.rol__formulario:has(.rol-tarjeta__radio:checked) .rol__boton:hover {
-  background: var(--verde-hover);
-  transform: translateY(-2px);
+.wizard-escudo__boton {
+  cursor: pointer;
+}
+
+.wizard-escudo__boton:focus-within {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+
+/* Aviso para el modo sin JS (todos los pasos a la vista); con pasos se oculta */
+.wizard__form--pasos .wizard__solo-sin-js {
+  display: none;
+}
+
+/* Confirmación del capitán: los datos del equipo debajo de los del jugador */
+.resumen-equipo {
+  margin-top: 18px;
+}
+
+.resumen-equipo[hidden] {
+  display: none;
+}
+
+.resumen-equipo__titulo {
+  margin-bottom: 10px;
+  color: var(--verde);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 /* ---------- Botones extra (wizard y perfil) ---------- */
@@ -2314,11 +2419,13 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   scroll-margin-top: calc(var(--alto-navbar) + 16px);
 }
 
+/* --cantidad-pasos la pone la vista (y wizard.js cuando el capitán suma "Crear equipo"): la barra va
+   del centro del primer círculo al del último */
 .pasos__barra {
   position: absolute;
   top: 15px;
-  left: 12.5%;
-  right: 12.5%;
+  left: calc(50% / var(--cantidad-pasos, 4));
+  right: calc(50% / var(--cantidad-pasos, 4));
   height: 3px;
   border-radius: 3px;
   background: #2c2c2c;
@@ -2339,7 +2446,11 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   position: relative;
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(var(--cantidad-pasos, 4), 1fr);
+}
+
+.pasos__item[hidden] {
+  display: none;
 }
 
 .pasos__item {

@@ -130,6 +130,37 @@
 .sm-pestanas__item--activa { color: var(--sobre-verde); background: var(--verde); }
 .sm-pestanas__item--activa:hover { color: var(--sobre-verde); }
 
+/* Capitán: control segmentado "Mi carta" / "Mi equipo" (partials/pestanas-capitan.ejs) en /perfil y /mi-equipo.
+   Solo dos opciones cortas: no necesita desplazarse. Sin overflow (el de .sm-pestanas recortaba el brillo
+   de la opción activa y Windows dibujaba una barra de desplazamiento gris) y del ancho de su contenido. */
+.sm-pestanas--vista {
+  display: inline-flex; flex: none; gap: 4px; padding: 4px; margin: 10px 0 14px;
+  width: max-content; max-width: none; overflow: visible;
+  background: #0a0a0a; border: 1px solid #222222;
+}
+.sm-pestanas--vista .sm-pestanas__item {
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px;
+  font-size: 0.85rem; letter-spacing: 0.01em; color: #a3a3a3;
+  transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.25s ease;
+}
+.sm-pestanas--vista .sm-pestanas__item:hover { color: var(--texto); background: rgba(255, 255, 255, 0.05); }
+.sm-pestanas--vista .sm-pestanas__item--activa,
+.sm-pestanas--vista .sm-pestanas__item--activa:hover {
+  color: var(--sobre-verde); background: var(--verde); box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+}
+.sm-pestanas--vista .sm-pestanas__item:focus-visible { outline: 2px solid var(--verde); outline-offset: 2px; }
+/* El ícono usa el color del texto: gris tenue inactivo, negro sobre el verde activo */
+.sm-pestanas__icono {
+  width: 16px; height: 16px; flex: none; opacity: 0.75; transition: opacity 0.2s ease;
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.sm-pestanas__item:hover .sm-pestanas__icono,
+.sm-pestanas__item--activa .sm-pestanas__icono { opacity: 1; }
+/* Alineado a la izquierda con el chip y el título (la cabecera del equipo ya separa con gap) */
+.eq-cabecera__texto .sm-pestanas--vista { margin: 0; align-self: flex-start; }
+.perfil__cabecera .sm-pestanas--vista { display: flex; margin-inline: auto; } /* centrada como el texto en celulares */
+@media (min-width: 900px) { .perfil__cabecera .sm-pestanas--vista { margin-inline: 0; } }
+
 /* ---------- Estados vacíos ---------- */
 .sm-vacio { align-items: flex-start; }
 .sm-vacio__titulo { font-weight: 800; font-size: 1.05rem; }

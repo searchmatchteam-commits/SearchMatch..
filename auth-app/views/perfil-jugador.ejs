@@ -1,10 +1,23 @@
 <%- include('partials/header') %>
 <%
   // Pasos del wizard. El 1 (tipo de cuenta) ya se completó en /select-role.
-  const pasos = ['Tipo de cuenta', 'Datos personales', 'Perfil deportivo', 'Confirmación'];
+  // "Crear equipo" solo existe si en el paso 4 elige "Soy capitán" (wizard.js lo muestra u oculta).
+  const pasos = [
+    { numero: 1, nombre: 'Tipo de cuenta' },
+    { numero: 2, nombre: 'Datos personales' },
+    { numero: 3, nombre: 'Perfil deportivo' },
+    { numero: 4, nombre: 'Tu rol' },
+    { numero: 5, nombre: 'Crear equipo', soloCapitan: true },
+    { numero: 6, nombre: 'Confirmación' },
+  ];
+  const esCapitan = datos.rol === 'capitan';
+  const visibles = pasos.filter(function (p) { return esCapitan || !p.soloCapitan; });
+  const posicionActual = Math.max(0, visibles.findIndex(function (p) { return p.numero === paso; }));
+  const equipo = datos.equipo || {};
   // Altura de la marca en la mini cancha de cada posición (0 = arco rival, 32 = arco propio).
   const alturaPosicion = { arquero: 27, defensa: 21, mediocampista: 15, delantero: 7 };
   const hoy = new Date().toISOString().slice(0, 10);
+  const iconoEscudo = '<path d="M12 3l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6z" />';
 %>
 
 <section class="wizard">
@@ -44,18 +57,21 @@
 
   <!-- Lado derecho: el formulario -->
   <div class="wizard__panel">
-    <!-- Barra de progreso: wizard.js actualiza las clases y --progreso al cambiar de paso -->
-    <div class="pasos" data-pasos style="--progreso: <%= (paso - 1) / (pasos.length - 1) %>">
+    <!-- Barra de progreso: wizard.js actualiza las clases, la numeración, --progreso y --cantidad-pasos
+         al cambiar de paso o de rol (el capitán suma "Crear equipo") -->
+    <div class="pasos" data-pasos style="--progreso: <%= posicionActual / (visibles.length - 1) %>; --cantidad-pasos: <%= visibles.length %>">
       <div class="pasos__barra" aria-hidden="true"><span></span></div>
       <ol class="pasos__lista">
-        <% pasos.forEach(function (nombre, i) { const numero = i + 1; %>
-          <li class="pasos__item <%= numero < paso ? 'pasos__item--hecho' : numero === paso ? 'pasos__item--activo' : '' %>"
-              data-indicador="<%= numero %>" <%- numero === paso ? 'aria-current="step"' : '' %>>
+        <% pasos.forEach(function (p) {
+             const posicion = visibles.indexOf(p); %>
+          <li class="pasos__item <%= posicion === -1 ? '' : posicion < posicionActual ? 'pasos__item--hecho' : posicion === posicionActual ? 'pasos__item--activo' : '' %>"
+              data-indicador="<%= p.numero %>" <%- p.soloCapitan ? 'data-solo-capitan' : '' %> <%- posicion === -1 ? 'hidden' : '' %>
+              <%- p.numero === paso ? 'aria-current="step"' : '' %>>
             <span class="pasos__marca">
               <svg class="pasos__check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7" /></svg>
-              <span class="pasos__numero"><%= numero %></span>
+              <span class="pasos__numero"><%= posicion === -1 ? p.numero : posicion + 1 %></span>
             </span>
-            <span class="pasos__nombre"><%= nombre %></span>
+            <span class="pasos__nombre"><%= p.nombre %></span>
           </li>
         <% }) %>
       </ol>
@@ -132,8 +148,131 @@
         </div>
       </fieldset>
 
-      <!-- ============ PASO 4: CONFIRMACIÓN ============ -->
+      <!-- ============ PASO 4: ROL (jugador o capitán) ============ -->
+      <!-- Tarjetas = radios: funcionan con teclado y sin JS. Con JS, elegir una avanza al paso siguiente. -->
       <fieldset class="wizard__paso" data-paso="4">
+        <legend class="wizard__titulo">¿Cómo vas a jugar?</legend>
+        <p class="wizard__subtitulo">Elige tu rol. Como capitán crearás tu equipo en el siguiente paso.</p>
+
+        <div class="grupo-opciones" role="radiogroup" aria-labelledby="rol-label" aria-describedby="rol-error" data-grupo="rol">
+          <span class="solo-lectores" id="rol-label">Tu rol en Search Match</span>
+          <div class="rol__opciones">
+            <label class="rol-tarjeta">
+              <input class="rol-tarjeta__radio" type="radio" name="rol" value="jugador" <%= datos.rol === 'jugador' ? 'checked' : '' %> />
+              <span class="rol-tarjeta__check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" /></svg></span>
+              <span class="rol-tarjeta__icono" aria-hidden="true">
+                <!-- Camiseta -->
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">
+                  <path d="M17 6h14l11 7-5 9-5-3v23H16V19l-5 3-5-9z" />
+                  <path d="M19 6c0 3 2.2 5 5 5s5-2 5-5" />
+                  <path d="M21 25h6M24 22v10" stroke-linecap="round" />
+                </svg>
+              </span>
+              <span class="rol-tarjeta__titulo">Soy jugador</span>
+              <span class="rol-tarjeta__texto">Obtén tu carta y súmate a partidos y equipos cerca de ti.</span>
+              <ul class="rol-tarjeta__lista">
+                <li>Carta con tu nivel y posición</li>
+                <li>Únete a equipos de tu comuna</li>
+                <li>Recibe invitaciones y desafíos</li>
+              </ul>
+            </label>
+
+            <label class="rol-tarjeta <%= puedeSerCapitan ? '' : 'rol-tarjeta--apagada' %>">
+              <input class="rol-tarjeta__radio" type="radio" name="rol" value="capitan" <%= datos.rol === 'capitan' && puedeSerCapitan ? 'checked' : '' %> <%= puedeSerCapitan ? '' : 'disabled' %> />
+              <span class="rol-tarjeta__check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" /></svg></span>
+              <span class="rol-tarjeta__icono rol-tarjeta__icono--escudo" aria-hidden="true">
+                <!-- Escudo con la palabra CAPITÁN -->
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">
+                  <path d="M24 4l16 6v12c0 10.5-6.8 18.6-16 22-9.2-3.4-16-11.5-16-22V10z" />
+                  <path d="M24 13l2.4 4.8 5.3.8-3.8 3.7.9 5.2-4.8-2.5-4.8 2.5.9-5.2-3.8-3.7 5.3-.8z" fill="currentColor" stroke="none" />
+                </svg>
+                <span class="rol-tarjeta__capitan">CAPITÁN</span>
+              </span>
+              <span class="rol-tarjeta__titulo">Soy capitán</span>
+              <span class="rol-tarjeta__texto">
+                <%= puedeSerCapitan ? 'Crea tu equipo, organiza partidos y desafía a otros equipos.' : 'Ya eres capitán de un equipo: continúa como jugador.' %>
+              </span>
+              <ul class="rol-tarjeta__lista">
+                <li>Gestiona tu plantel</li>
+                <li>Reserva canchas y agenda partidos</li>
+                <li>Desafía equipos de tu nivel</li>
+              </ul>
+            </label>
+          </div>
+          <small class="campo__error" id="rol-error"></small>
+        </div>
+      </fieldset>
+
+      <!-- ============ PASO 5: CREAR EQUIPO (solo capitán) ============ -->
+      <fieldset class="wizard__paso" data-paso="5" data-solo-capitan>
+        <legend class="wizard__titulo">Crear equipo</legend>
+        <p class="wizard__subtitulo">Tu escuadra quedará lista para recibir jugadores y desafíos. <span class="wizard__solo-sin-js">Solo si elegiste "Soy capitán".</span></p>
+
+        <!-- Escudo opcional: wizard.js lo reduce y lo guarda como imagen en el campo oculto "escudo" -->
+        <div class="wizard-escudo">
+          <span class="wizard-escudo__vista" data-escudo-vista>
+            <% if (datos.escudo) { %>
+              <img src="<%= datos.escudo %>" alt="" />
+            <% } else { %>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><%- iconoEscudo %></svg>
+            <% } %>
+          </span>
+          <span class="wizard-escudo__texto">
+            <span class="wizard-escudo__titulo">Escudo del equipo</span>
+            <small class="campo__ayuda" id="escudo-ayuda">Opcional · JPG, PNG o WebP. También puedes subirlo después en tu panel.</small>
+            <label class="btn btn--oscuro btn--chico wizard-escudo__boton" data-escudo-boton hidden>
+              Subir escudo
+              <input type="file" accept="image/png,image/jpeg,image/webp" class="solo-lectores" aria-describedby="escudo-ayuda escudo-error" data-escudo-archivo />
+            </label>
+            <small class="campo__error" id="escudo-error" data-escudo-error></small>
+          </span>
+          <input type="hidden" name="escudo" value="<%= datos.escudo || '' %>" data-escudo-datos />
+        </div>
+
+        <div class="campo">
+          <label for="nombre_equipo">Nombre del equipo</label>
+          <input type="text" id="nombre_equipo" name="nombre_equipo" placeholder="Ej. Los Titanes F.C." value="<%= equipo.nombre || '' %>"
+                 autocomplete="off" maxlength="100" aria-describedby="nombre_equipo-error" required />
+          <small class="campo__error" id="nombre_equipo-error"></small>
+        </div>
+
+        <%- include('partials/sm-ubicacion', { regiones, idRegion: equipo.idRegion, idComuna: equipo.idComuna, obligatorio: true }) %>
+
+        <div class="grupo-opciones" role="radiogroup" aria-labelledby="nivel-label" aria-describedby="nivel-error" data-grupo="nivel">
+          <span class="grupo-opciones__label" id="nivel-label">Nivel de juego</span>
+          <div class="opciones opciones--3">
+            <% Object.entries(catalogos.NIVELES).forEach(function ([clave, nombre]) { %>
+              <label class="opcion opcion--nivel">
+                <input class="opcion__radio" type="radio" name="nivel" value="<%= clave %>" <%= equipo.nivel === clave ? 'checked' : '' %> />
+                <span class="opcion__barras" aria-hidden="true">
+                  <% for (let b = 1; b <= 3; b++) { %><span class="<%= b <= catalogos.BARRAS_NIVEL[clave] ? 'llena' : '' %>"></span><% } %>
+                </span>
+                <span class="opcion__nombre"><%= nombre %></span>
+                <span class="opcion__detalle"><%= catalogos.DETALLE_NIVEL[clave] %></span>
+              </label>
+            <% }) %>
+          </div>
+          <small class="campo__error" id="nivel-error"></small>
+        </div>
+
+        <div class="grupo-opciones" role="group" aria-labelledby="modalidad-label" aria-describedby="modalidad-ayuda modalidad-error" data-grupo="modalidad">
+          <span class="grupo-opciones__label" id="modalidad-label">Tipos de fútbol</span>
+          <small class="campo__ayuda" id="modalidad-ayuda">Puedes marcar varios.</small>
+          <div class="opciones opciones--3">
+            <% Object.entries(catalogos.MODALIDADES).forEach(function ([jugadores, nombre]) { %>
+              <label class="opcion">
+                <input class="opcion__radio" type="checkbox" name="modalidad" value="<%= jugadores %>" <%= (equipo.modalidades || []).includes(Number(jugadores)) ? 'checked' : '' %> />
+                <span class="opcion__sigla">F<%= jugadores %></span>
+                <span class="opcion__nombre"><%= nombre %></span>
+              </label>
+            <% }) %>
+          </div>
+          <small class="campo__error" id="modalidad-error"></small>
+        </div>
+      </fieldset>
+
+      <!-- ============ PASO 6: CONFIRMACIÓN ============ -->
+      <fieldset class="wizard__paso" data-paso="6">
         <legend class="wizard__titulo">Confirmación</legend>
         <p class="wizard__subtitulo">Revisa tus datos. Al confirmar generaremos tu carta con tus estadísticas iniciales.</p>
 
@@ -144,7 +283,19 @@
           <div><dt>Altura</dt><dd data-resumen="altura">—</dd></div>
           <div><dt>Peso</dt><dd data-resumen="peso">—</dd></div>
           <div><dt>Posiciones</dt><dd data-resumen="posicion">—</dd></div>
+          <div><dt>Rol</dt><dd data-resumen="rol">—</dd></div>
         </dl>
+
+        <!-- Solo capitán: el equipo que se creará al guardar -->
+        <div class="resumen-equipo" data-solo-capitan <%- esCapitan ? '' : 'hidden' %>>
+          <p class="resumen-equipo__titulo">Datos del equipo</p>
+          <dl class="resumen">
+            <div><dt>Nombre del equipo</dt><dd data-resumen="nombre_equipo">—</dd></div>
+            <div><dt>Comuna</dt><dd data-resumen="id_comuna">—</dd></div>
+            <div><dt>Nivel</dt><dd data-resumen="nivel">—</dd></div>
+            <div><dt>Tipos de fútbol</dt><dd data-resumen="modalidad">—</dd></div>
+          </dl>
+        </div>
       </fieldset>
 
       <!-- Errores del servidor o de wizard.js -->
@@ -160,7 +311,8 @@
           <span aria-hidden="true">←</span> Volver
         </a>
         <button type="submit" class="btn btn--verde btn--grande" data-continuar
-                data-texto-final="GUARDAR Y ENTRAR AL PANEL" data-texto-cargando="GUARDANDO...">
+                data-texto-final="GUARDAR Y ENTRAR AL PANEL" data-texto-final-capitan="CREAR EQUIPO Y ENTRAR AL PANEL"
+                data-texto-cargando="GUARDANDO...">
           <span class="btn__spinner" aria-hidden="true"></span>
           <span class="btn__texto">GUARDAR Y ENTRAR AL PANEL</span>
           <span class="btn__flecha" aria-hidden="true">→</span>
