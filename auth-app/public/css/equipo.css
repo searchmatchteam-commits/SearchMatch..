@@ -2096,9 +2096,10 @@ button.eq-mis__accion {
   opacity: 0.35;
 }
 
-/* Sin imagen: la inicial en una silueta de escudo metálica. La silueta va en los pseudo-elementos
-   (::after = borde neón, ::before = relleno) para que el drop-shadow del emblema siga su forma. */
+/* Silueta de escudo de club: ::after = borde neón, ::before = relleno oscuro y, encima, la inicial o la
+   imagen recortada con la misma forma. El drop-shadow va en el emblema (sin recorte), así sigue la silueta. */
 .eq-mis__emblema {
+  --silueta: polygon(50% 0%, 100% 10%, 95% 75%, 50% 100%, 5% 75%, 0% 10%);
   position: relative;
   display: grid;
   place-items: center;
@@ -2118,7 +2119,7 @@ button.eq-mis__accion {
 .eq-mis__emblema::after {
   content: "";
   position: absolute;
-  clip-path: polygon(50% 0, 100% 12%, 100% 55%, 50% 100%, 0 55%, 0 12%);
+  clip-path: var(--silueta);
 }
 
 .eq-mis__emblema::after {
@@ -2135,20 +2136,15 @@ button.eq-mis__accion {
     linear-gradient(180deg, #17361f, #07120a);
 }
 
-/* Con imagen: el escudo subido, sin recorte, emitiendo luz */
-.eq-mis__emblema--imagen {
-  width: 128px;
-  height: 128px;
-  padding: 0;
-}
-
-.eq-mis__emblema--imagen::before,
-.eq-mis__emblema--imagen::after {
-  display: none;
-}
-
+/* Con imagen: llena el escudo (cover) dentro del borde neón */
 .eq-mis__emblema--imagen .escudo-equipo__img {
+  position: absolute;
+  inset: 3px;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
   padding: 0;
+  object-fit: cover;
+  clip-path: var(--silueta);
 }
 
 .eq-mis--hero:hover .eq-mis__emblema {
