@@ -1108,13 +1108,26 @@ html[data-theme="light"] .ball-fallback {
   box-shadow: inset 0 0 0 2px var(--verde), inset -18px -22px 40px rgba(0, 0, 0, 0.6), 0 12px 24px rgba(17, 24, 39, 0.2);
 }
 
-/* Mis equipos: tarjetas claras con rayas suaves */
+/* Mis equipos: tarjetas claras con rayas suaves; el capitán mantiene su borde verde */
 html[data-theme="light"] .eq-mis {
+  border-color: #d1d5db;
   background:
-    repeating-linear-gradient(45deg, rgba(17, 24, 39, 0.03) 0 2px, transparent 2px 7px),
-    linear-gradient(160deg, #ffffff, #f3f4f6 60%);
+    repeating-linear-gradient(135deg, rgba(17, 24, 39, 0.03) 0 1px, transparent 1px 8px),
+    linear-gradient(135deg, #ffffff, #f3f4f6);
 }
 
-html[data-theme="light"] .eq-mis__rol {
-  background: #f3f4f6;
+html[data-theme="light"] .eq-mis--capitan {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.2), 0 8px 24px rgba(22, 163, 74, 0.15);
 }
+
+html[data-theme="light"] .eq-mis__nombre { color: var(--texto); }
+html[data-theme="light"] .eq-mis__rol { background: #f3f4f6; border-color: #d1d5db; color: #4b5563; }
+html[data-theme="light"] .eq-mis__rol--capitan { background: #dcfce7; border-color: #86efac; color: #15803d; }
+html[data-theme="light"] .eq-mis__escudo,
+html[data-theme="light"] .eq-mis__datos svg,
+html[data-theme="light"] .eq-mis__plantel[open] summary svg { color: #15803d; }
+html[data-theme="light"] .eq-mis__accion--principal { background: #16a34a; color: #fff; box-shadow: none; }
+html[data-theme="light"] .eq-mis__accion--principal:hover { background: #15803d; }
+html[data-theme="light"] .eq-mis__accion--secundaria { background: #fff; color: var(--texto); border-color: #d1d5db; }
+html[data-theme="light"] .eq-focos { display: none; }

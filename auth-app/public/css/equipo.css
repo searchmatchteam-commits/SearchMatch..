@@ -1689,97 +1689,177 @@ button.cancha__vacio:focus-visible {
   }
 }
 
-/* ---------- Mis equipos (/mis-equipos): grilla de tarjetas ---------- */
+/* ---------- Mis equipos (/mis-equipos) ---------- */
+/* Focos del estadio en las esquinas, encima de la cancha en perspectiva de fondo-cyber */
+.eq-focos {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.eq-focos__torre {
+  position: absolute;
+  top: 9vh;
+  width: 88px;
+  height: 62px;
+  border-radius: 8px;
+  /* Panel de lámparas: una grilla de puntos que brillan */
+  background:
+    radial-gradient(circle, rgba(220, 255, 220, 0.95) 0 2.2px, transparent 3px) 0 0 / 11px 11px,
+    rgba(var(--verde-rgb), 0.12);
+  box-shadow: 0 0 40px 12px rgba(var(--verde-rgb), 0.35), 0 0 160px 60px rgba(var(--verde-rgb), 0.12);
+  opacity: 0.85;
+}
+
+/* El haz de luz que baja hacia la cancha */
+.eq-focos__torre::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70vw;
+  height: 90vh;
+  background: radial-gradient(ellipse 50% 60% at 50% 0%, rgba(var(--verde-rgb), 0.09), transparent 70%);
+  transform-origin: 50% 0;
+}
+
+.eq-focos__torre--izq {
+  left: 6vw;
+  transform: rotate(-14deg);
+}
+
+.eq-focos__torre--izq::after {
+  transform: translateX(-50%) rotate(-28deg);
+}
+
+.eq-focos__torre--der {
+  right: 6vw;
+  transform: rotate(14deg);
+}
+
+.eq-focos__torre--der::after {
+  transform: translateX(-50%) rotate(28deg);
+}
+
+/* Foco lejano, más chico y tenue */
+.eq-focos__torre--lejos {
+  top: 26vh;
+  right: 22vw;
+  width: 46px;
+  height: 32px;
+  opacity: 0.5;
+}
+
+.eq-focos__torre--lejos::after {
+  display: none;
+}
+
 .eq-mis-grilla {
   list-style: none;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 24px;
-  margin-top: 8px;
+  gap: 16px;
+  max-width: 700px;
 }
 
-/* Fondo oscuro con las rayas diagonales de la carta de jugador */
+/* Tarjeta: negro con rayas diagonales (como la carta de jugador). El capitán brilla en verde. */
 .eq-mis {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   min-width: 0;
-  padding: 22px;
-  border-radius: var(--radio);
-  border: 1px solid var(--vidrio-borde);
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid #1f2937;
   background:
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 7px),
-    linear-gradient(160deg, #1a1d1a, #121212 60%);
-  transition: transform 0.3s var(--curva), border-color 0.3s ease, box-shadow 0.3s ease;
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 8px),
+    linear-gradient(135deg, #1a1a1a, #0a0a0a);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-.eq-mis:hover,
-.eq-mis:focus-within {
-  transform: translateY(-4px);
+.eq-mis:hover {
+  border-color: #3d423d;
+}
+
+.eq-mis--capitan {
   border-color: var(--verde);
-  box-shadow: 0 0 0 1px rgba(var(--verde-rgb), 0.25), 0 16px 40px rgba(var(--verde-rgb), 0.12);
+  background:
+    repeating-linear-gradient(135deg, rgba(var(--verde-rgb), 0.035) 0 1px, transparent 1px 8px),
+    radial-gradient(ellipse 90% 60% at 20% 0%, rgba(var(--verde-rgb), 0.1), transparent 70%),
+    linear-gradient(135deg, #1a1a1a, #0a0a0a);
+  box-shadow: 0 0 20px rgba(var(--verde-rgb), 0.3), inset 0 0 24px rgba(var(--verde-rgb), 0.06);
+}
+
+.eq-mis--capitan:hover {
+  border-color: var(--verde-hover);
+  box-shadow: 0 0 28px rgba(var(--verde-rgb), 0.45), inset 0 0 24px rgba(var(--verde-rgb), 0.08);
 }
 
 .eq-mis__arriba {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
 }
 
+/* Avatar: la imagen del escudo o la inicial */
 .eq-mis__escudo {
   overflow: hidden;
   flex: none;
   display: grid;
   place-items: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 18px;
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
   font-family: var(--fuente-titulo);
-  font-size: 2rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--verde);
-  background: var(--verde-tenue);
-  border: 1px solid var(--verde-borde);
-  box-shadow: 0 0 24px rgba(var(--verde-rgb), 0.12);
+  background: linear-gradient(160deg, rgba(var(--verde-rgb), 0.16), rgba(var(--verde-rgb), 0.04));
+  border: 1px solid rgba(var(--verde-rgb), 0.35);
 }
 
-/* Etiqueta de rol: verde neón (capitán) o gris (jugador) */
+.eq-mis--capitan .eq-mis__escudo {
+  box-shadow: 0 0 16px rgba(var(--verde-rgb), 0.25);
+}
+
+/* Píldora de rol: verde oscuro (capitán) o gris (jugador) */
 .eq-mis__rol {
-  align-self: center;
-  padding: 5px 12px;
+  padding: 4px 10px;
   border-radius: 999px;
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--texto-suave);
-  border: 1px solid var(--borde-fuerte);
-  background: rgba(255, 255, 255, 0.04);
+  color: #9ca3af;
+  border: 1px solid #3a3d3a;
+  background: #1f211f;
 }
 
 .eq-mis__rol--capitan {
   color: var(--verde);
-  border-color: var(--verde-borde);
-  background: var(--verde-tenue);
-  box-shadow: 0 0 14px rgba(var(--verde-rgb), 0.2);
+  border-color: rgba(var(--verde-rgb), 0.45);
+  background: rgba(var(--verde-rgb), 0.1);
 }
 
-/* "Salir": discreto, arriba a la derecha; rojo al pasar el mouse */
+/* "Salir": enlace discreto arriba a la derecha; rojo al pasar el mouse */
 .eq-mis__salir {
+  align-self: flex-start;
   margin-left: auto;
 }
 
 .eq-mis__salir-boton {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
+  gap: 5px;
+  padding: 4px 6px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 8px;
   font: inherit;
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.76rem;
+  font-weight: 600;
   color: var(--texto-suave);
   background: transparent;
   cursor: pointer;
@@ -1797,11 +1877,10 @@ button.cancha__vacio:focus-visible {
   opacity: 0.6;
 }
 
-.eq-mis__salir-boton svg,
-.eq-mis__datos svg {
+.eq-mis svg {
   flex: none;
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -1814,18 +1893,18 @@ button.cancha__vacio:focus-visible {
   white-space: nowrap;
   text-overflow: ellipsis;
   font-family: var(--fuente-titulo);
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 700;
   line-height: 1.15;
-  color: var(--texto);
+  color: #fff;
 }
 
 .eq-mis__datos {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 0.88rem;
+  gap: 7px;
+  font-size: 0.84rem;
   color: var(--texto-suave);
 }
 
@@ -1836,18 +1915,38 @@ button.cancha__vacio:focus-visible {
 }
 
 .eq-mis__datos svg {
-  stroke: var(--verde);
+  color: var(--verde);
 }
 
+/* "Ver plantel": la flecha gira al abrir */
 .eq-mis__plantel summary {
-  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
   font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--texto-suave);
+  font-weight: 600;
+  color: var(--texto);
   cursor: pointer;
 }
 
-.eq-mis__plantel summary:hover {
+.eq-mis__plantel summary::-webkit-details-marker {
+  display: none;
+}
+
+.eq-mis__plantel summary svg {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.2s ease;
+}
+
+.eq-mis__plantel[open] summary svg {
+  transform: rotate(90deg);
+  color: var(--verde);
+}
+
+.eq-mis__plantel summary:hover,
+.eq-mis__plantel summary:focus-visible {
   color: var(--verde);
 }
 
@@ -1855,11 +1954,102 @@ button.cancha__vacio:focus-visible {
   margin-bottom: 10px;
 }
 
-/* La acción principal ocupa todo el ancho, siempre al fondo de la tarjeta */
+/* Acción principal a todo el ancho, al fondo de la tarjeta */
 .eq-mis__accion {
-  width: 100%;
-  margin-top: auto;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  margin-top: auto;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.eq-mis__accion:hover {
+  text-decoration: none;
+}
+
+.eq-mis__accion:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 3px;
+}
+
+.eq-mis__accion--principal {
+  color: #000;
+  background: var(--verde);
+  box-shadow: 0 0 18px rgba(var(--verde-rgb), 0.35);
+}
+
+.eq-mis__accion--principal:hover {
+  background: var(--verde-hover);
+  box-shadow: 0 0 26px rgba(var(--verde-rgb), 0.5);
+}
+
+.eq-mis__accion--secundaria {
+  color: #fff;
+  background: #1a1a1a;
+  border: 1px solid #374151;
+}
+
+.eq-mis__accion--secundaria:hover {
+  border-color: #6b7280;
+}
+
+/* Directorio: "Solicitar unirme" es un formulario; ya enviada (o ya miembro) queda gris y sin brillo */
+.eq-mis__form {
+  margin-top: auto;
+}
+
+button.eq-mis__accion {
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.eq-mis__accion:disabled {
+  cursor: default;
+  color: var(--texto-suave);
+  background: #1a1a1a;
+  border: 1px solid #1f2937;
+  box-shadow: none;
+}
+
+/* "Ver ficha": enlace discreto arriba a la derecha (como "Salir" en Mis equipos) */
+.eq-mis__enlace {
+  align-self: flex-start;
+  margin-left: auto;
+  padding: 4px 6px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.eq-mis__enlace:hover,
+.eq-mis__enlace:focus-visible {
+  color: var(--verde);
+  text-decoration: none;
+}
+
+/* El buscador del directorio esconde las tarjetas con hidden (display: flex lo pisaría) */
+.eq-mis[hidden] {
+  display: none;
+}
+
+/* El directorio tiene muchos equipos: usa todo el ancho y 3 columnas en pantallas grandes */
+.eq-mis-grilla--directorio {
+  max-width: none;
+}
+
+@media (min-width: 1024px) {
+  .eq-mis-grilla--directorio {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (min-width: 768px) {
@@ -1868,19 +2058,22 @@ button.cancha__vacio:focus-visible {
   }
 }
 
-@media (min-width: 1024px) {
-  .eq-mis-grilla {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+/* En celular los focos se achican para no tapar el título */
+@media (max-width: 759px) {
+  .eq-focos__torre {
+    width: 54px;
+    height: 38px;
+    top: 4vh;
+  }
+
+  .eq-focos__torre--lejos {
+    display: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .eq-mis {
+  .eq-mis,
+  .eq-mis__plantel summary svg {
     transition: none;
-  }
-
-  .eq-mis:hover,
-  .eq-mis:focus-within {
-    transform: none;
   }
 }

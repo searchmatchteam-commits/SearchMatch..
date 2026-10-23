@@ -53,21 +53,47 @@
         <input class="eq-buscador__input" type="search" placeholder="Buscar por nombre o comuna" autocomplete="off" data-buscar-equipo>
       </label>
 
-      <ul class="eq-clubes">
-        <% equipos.forEach(function (equipo) { %>
-          <li class="eq-club" data-busqueda="<%= [equipo.nombre, equipo.zona].filter(Boolean).join(' ') %>">
-            <span class="eq-club__escudo" aria-hidden="true"><%- include('partials/escudo-equipo', { equipo }) %></span>
-            <span class="eq-club__texto">
-              <span class="eq-nombre"><%= equipo.nombre %></span>
-              <a class="sm-enlace-ficha" href="/equipos/<%= equipo.id %>">Ver ficha</a><%# NUEVO: PE-009 %>
-              <span class="eq-posicion">Comuna: <%= equipo.zona || 'Sin definir' %></span>
-              <span class="eq-posicion">Nivel: <%= equipo.nivel || 'Sin definir' %><% if (equipo.modalidad) { %> · <%= equipo.modalidad %><% } %></span>
-            </span>
-            <% if (equipo.relacion) { %>
-              <button type="button" class="btn eq-club__boton" disabled><%= estados[equipo.relacion] %></button>
+      <!-- Mismas tarjetas que Mis equipos (.eq-mis en equipo.css): el equipo del capitán brilla en verde -->
+      <ul class="eq-mis-grilla eq-mis-grilla--directorio">
+        <% equipos.forEach(function (equipo) { const capitan = equipo.relacion === 'capitan'; %>
+          <li class="eq-mis <%= capitan ? 'eq-mis--capitan' : '' %>" data-busqueda="<%= [equipo.nombre, equipo.zona].filter(Boolean).join(' ') %>">
+            <div class="eq-mis__arriba">
+              <span class="eq-mis__escudo" aria-hidden="true"><%- include('partials/escudo-equipo', { equipo }) %></span>
+              <% if (capitan) { %>
+                <span class="eq-mis__rol eq-mis__rol--capitan">Capitán</span>
+              <% } else if (equipo.relacion === 'miembro') { %>
+                <span class="eq-mis__rol">Jugador</span>
+              <% } %>
+              <a class="eq-mis__enlace" href="/equipos/<%= equipo.id %>">Ver ficha</a><%# NUEVO: PE-009 %>
+            </div>
+
+            <h2 class="eq-mis__nombre" title="<%= equipo.nombre %>"><%= equipo.nombre %></h2>
+
+            <ul class="eq-mis__datos">
+              <li>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+                <%= equipo.zona || 'Sin comuna' %>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7l4 3-1.5 4.5h-5L8 10z" /></svg>
+                <%= equipo.modalidad || 'Sin tipo de fútbol' %>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V14M10 20V9M16 20V4" /></svg>
+                <%= equipo.nivel || 'Nivel sin definir' %>
+              </li>
+            </ul>
+
+            <% if (capitan) { %>
+              <a class="eq-mis__accion eq-mis__accion--principal" href="/mi-equipo?equipo=<%= equipo.id %>">
+                Administrar equipo
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.4-7.5 9.5-4.3-1.1-7.5-4.9-7.5-9.5V6z" /><path d="M9 12l2 2 4-4" /></svg>
+              </a>
+            <% } else if (equipo.relacion) { %>
+              <button type="button" class="eq-mis__accion" disabled><%= estados[equipo.relacion] %></button>
             <% } else { %>
-              <form action="/equipos/<%= equipo.id %>/unirme" method="POST" data-unirme data-equipo="<%= equipo.nombre %>">
-                <button type="submit" class="btn btn--verde eq-club__boton">Solicitar unirme</button>
+              <form class="eq-mis__form" action="/equipos/<%= equipo.id %>/unirme" method="POST" data-unirme data-equipo="<%= equipo.nombre %>">
+                <button type="submit" class="eq-mis__accion eq-mis__accion--principal">Solicitar unirme</button>
               </form>
             <% } %>
           </li>

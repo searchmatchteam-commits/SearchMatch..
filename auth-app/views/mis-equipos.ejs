@@ -1,6 +1,12 @@
 <%- include('partials/header') %>
 
 <%- include('partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<!-- Focos del estadio sobre la cancha del fondo (equipo.css) -->
+<div class="eq-focos" aria-hidden="true">
+  <span class="eq-focos__torre eq-focos__torre--izq"></span>
+  <span class="eq-focos__torre eq-focos__torre--der"></span>
+  <span class="eq-focos__torre eq-focos__torre--lejos"></span>
+</div>
 
 <!-- Mis equipos: los equipos de la cuenta (equipoModel.listarMisEquiposConPlantel) en una grilla de tarjetas.
      En los que creó (es su capitán): "Administrar equipo"; en el resto: "Ver detalles" y "Salir". -->
@@ -49,7 +55,7 @@
            (desplegable) y la acción principal. "Salir del equipo" va arriba a la derecha (dashboard.js confirma). -->
       <ul class="eq-mis-grilla">
         <% misEquipos.forEach(function (equipo) { const total = equipo.plantel.length; %>
-          <li class="eq-mis">
+          <li class="eq-mis <%= equipo.soyCapitan ? 'eq-mis--capitan' : '' %>">
             <div class="eq-mis__arriba">
               <span class="eq-mis__escudo" aria-hidden="true"><%- include('partials/escudo-equipo', { equipo }) %></span>
               <span class="eq-mis__rol <%= equipo.soyCapitan ? 'eq-mis__rol--capitan' : '' %>"><%= equipo.soyCapitan ? 'Capitán' : 'Jugador' %></span>
@@ -82,7 +88,7 @@
             </ul>
 
             <details class="eq-mis__plantel">
-              <summary>Ver plantel</summary>
+              <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>Ver plantel</summary>
               <% if (total === 0) { %>
                 <p class="dash-panel__nota">Este equipo todavía no tiene jugadores en su plantel.</p>
               <% } else { %>
@@ -99,9 +105,12 @@
             </details>
 
             <% if (equipo.soyCapitan) { %>
-              <a class="btn btn--verde eq-mis__accion" data-ripple="claro" href="/mi-equipo?equipo=<%= equipo.id %>">Administrar equipo</a>
+              <a class="eq-mis__accion eq-mis__accion--principal" href="/mi-equipo?equipo=<%= equipo.id %>">
+                Administrar equipo
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.4-7.5 9.5-4.3-1.1-7.5-4.9-7.5-9.5V6z" /><path d="M9 12l2 2 4-4" /></svg>
+              </a>
             <% } else { %>
-              <a class="btn btn--contorno eq-mis__accion" href="/equipos/<%= equipo.id %>">Ver detalles</a>
+              <a class="eq-mis__accion eq-mis__accion--secundaria" href="/equipos/<%= equipo.id %>">Ver detalles</a>
             <% } %>
           </li>
         <% }) %>
