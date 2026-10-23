@@ -158,9 +158,11 @@
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
 }
 
-/* Chip "Panel del capitán": en celulares va arriba a la derecha en el flujo; desde 760px, fijo en la esquina */
+/* Chip "Panel del capitán": sobre el nombre, en el flujo (nunca debajo de los botones) */
 .eq-hero__chip {
-  align-self: flex-end;
+  align-self: flex-start;
+  padding: 5px 12px;
+  font-size: 0.7rem;
 }
 
 /* Escudo | nombre y datos | acciones (en celulares las acciones bajan a lo ancho) */
@@ -228,12 +230,18 @@
   grid-area: acciones;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 14px;
 }
 
 .eq-hero__acciones .btn {
   flex: 1 1 200px;
   justify-content: center;
+}
+
+/* Brillo neón corto: cabe en el padding de la tarjeta (el de .btn--verde:hover llega a ~40px y se salía) */
+.eq-hero__acciones .btn--verde,
+.eq-hero__acciones .btn--verde:hover {
+  box-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
 }
 
 /* Enlaces secundarios: texto pequeño con ícono, separados de la tarjeta por una línea */
@@ -276,12 +284,6 @@
     padding: 30px 32px 22px;
   }
 
-  .eq-hero__chip {
-    position: absolute;
-    top: 20px;
-    right: 22px;
-  }
-
   /* Acciones a la derecha del nombre, alineadas abajo con los datos */
   .eq-hero__identidad {
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -299,11 +301,6 @@
     height: 112px;
     border-radius: 26px;
     font-size: 2.8rem;
-  }
-
-  /* El nombre no se mete debajo del chip */
-  .eq-hero__titulo {
-    padding-right: 190px;
   }
 
   .eq-hero__texto {

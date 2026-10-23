@@ -13,11 +13,9 @@
     <%- include('partials/boton-volver') %>
 
     <!-- ============ ENCABEZADO DEL EQUIPO ============ -->
-    <!-- Una sola tarjeta: escudo + nombre + datos a la izquierda, chip arriba a la derecha,
+    <!-- Una sola tarjeta: escudo + chip, nombre y datos a la izquierda,
          las dos acciones principales del capitán y, debajo, enlaces secundarios de texto. -->
     <header class="eq-hero revelar">
-      <span class="dash-chip eq-hero__chip"><span class="badge__punto" aria-hidden="true"></span><%= equipo.soyCapitan ? 'Panel del capitán' : 'Mi equipo' %></span>
-
       <div class="eq-hero__identidad">
         <!-- Escudo: el capitán lo cambia aquí (equipo.js lo reduce y lo sube a POST /equipos/:id/escudo) -->
         <div class="eq-escudo eq-hero__escudo">
@@ -33,6 +31,8 @@
         </div>
 
         <div class="eq-hero__texto">
+          <!-- Chip en el flujo, sobre el nombre: antes iba fijo en la esquina y quedaba tapado por "Desafiar a otro equipo" -->
+          <span class="dash-chip eq-hero__chip"><span class="badge__punto" aria-hidden="true"></span><%= equipo.soyCapitan ? 'Panel del capitán' : 'Mi equipo' %></span>
           <h1 class="eq-hero__titulo" title="<%= equipo.nombre %>"><%= equipo.nombre %></h1>
           <ul class="eq-hero__datos">
             <li>Comuna: <strong><%= equipo.zona || 'Sin definir' %></strong></li>

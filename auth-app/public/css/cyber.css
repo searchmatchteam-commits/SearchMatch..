@@ -253,6 +253,12 @@ html.cursor-luz-activo .cursor-luz::before {
 }
 
 /* ---------- Ripple (cyber.js crea una .ripple dentro de .ripple-capa) ---------- */
+/* La capa se posiciona contra el propio botón: sin esto (p. ej. en .btn) se estiraba sobre la
+   tarjeta posicionada más cercana y la onda aparecía fuera del botón. */
+[data-ripple] {
+  position: relative;
+}
+
 .ripple-capa {
   position: absolute;
   inset: 0;
