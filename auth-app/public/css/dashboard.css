@@ -1146,7 +1146,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   left: 50%;
   bottom: calc(14px + env(safe-area-inset-bottom));
   z-index: 50;
-  width: min(calc(100% - 24px), 420px);   /* 6 ítems */
+  width: min(calc(100% - 24px), 480px);   /* 7 ítems (8 con Administración) */
   transform: translateX(-50%);
   padding: 5px;
   border-radius: 999px;

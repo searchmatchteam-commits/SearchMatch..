@@ -3,6 +3,7 @@
 //  1) Muestra un paso a la vez (1: identidad, 2: configuración) y actualiza la barra de progreso.
 //  2) Valida el paso actual antes de avanzar (mismas reglas que validarEquipo en el servidor).
 //  3) Vista previa en vivo: nombre, tipo de fútbol · nivel y escudo (el escudo no se envía).
+//  Los tipos de fútbol son casillas: se puede marcar más de uno (la vista previa dice "Fútbol 7 y 11").
 //  4) Al crear: revisa los dos pasos y pone el botón en "cargando".
 // Sin JS el formulario muestra los dos pasos juntos y funciona igual (valida el servidor).
 
@@ -26,7 +27,7 @@ const REGLAS_EQUIPO = {
     nivel: (v) => (v ? null : 'Elige el nivel de juego del equipo.'),
     id_comuna: (v) => (v ? null : 'Elige la región y la comuna de tu equipo.'), // CORRECCIÓN: regla 11
     zona: (v) => (v ? null : 'Escribe la zona habitual de juego.'),
-    modalidad: (v) => (v ? null : 'Elige el tipo de fútbol.'),
+    modalidad: (v) => (v ? null : 'Elige al menos un tipo de fútbol.'),
   },
 };
 
@@ -51,6 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function valorDe(nombre) {
     const elemento = formulario.elements[nombre];
+    // Casillas (tipos de fútbol): los valores marcados separados por coma ('' si ninguno)
+    if (elemento instanceof RadioNodeList && elemento[0].type === 'checkbox') {
+      return Array.from(elemento).filter((casilla) => casilla.checked).map((casilla) => casilla.value).join(',');
+    }
     // RadioNodeList.value es el valor del radio marcado ('' si ninguno).
     return elemento.value === undefined ? '' : elemento.value.trim();
   }
@@ -101,13 +106,20 @@ document.addEventListener('DOMContentLoaded', () => {
     return marcado.dataset.texto || marcado.closest('label').querySelector('.opcion__nombre').textContent.trim();
   }
 
+  /** 'Fútbol 7 y 11' con los tipos marcados (mismo texto que el servidor). */
+  function textoModalidades() {
+    const marcadas = valorDe('modalidad').split(',').filter(Boolean);
+    if (marcadas.length <= 1) return textoMarcado('modalidad');
+    return `Fútbol ${marcadas.slice(0, -1).join(', ')} y ${marcadas[marcadas.length - 1]}`;
+  }
+
   function actualizarVista() {
     const nombre = valorDe('nombre_equipo');
     document.querySelectorAll('[data-vista-nombre]').forEach((el) => {
       el.textContent = nombre || NOMBRE_VACIO;
       el.classList.toggle('ceq-identidad__nombre--vacio', !nombre);
     });
-    const detalle = [textoMarcado('modalidad'), textoMarcado('nivel')].filter(Boolean).join(' · ');
+    const detalle = [textoModalidades(), textoMarcado('nivel')].filter(Boolean).join(' · ');
     document.querySelector('[data-vista-detalle]').textContent = detalle || DETALLE_VACIO;
   }
 
@@ -243,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   formulario.addEventListener('change', (evento) => {
-    if (evento.target.type === 'radio') marcarError(evento.target.name, null);
+    if (evento.target.type === 'radio' || evento.target.type === 'checkbox') marcarError(evento.target.name, null);
     actualizarVista();
   });
 

@@ -5,7 +5,7 @@
 // Capitán = quien creó el equipo (equipo.id_usuario_creador). Todas las consultas son parametrizadas.
 
 const { pool } = require('../config/db');
-const { MAX_EQUIPOS_COMO_CAPITAN } = require('../config/equipo');
+const { MAX_EQUIPOS_COMO_CAPITAN, textoModalidades } = require('../config/equipo');
 const { ZONA_HORARIA } = require('../config/canchas');
 const desafioModel = require('./desafioModel');
 
@@ -20,7 +20,9 @@ async function obtenerFicha(idEquipo) {
   const { rows } = await pool.query(
     `SELECT e.id, e.nombre, e.activo, e.puntaje_nivel, e.escudo_actualizado, e.id_usuario_creador, e.id_modalidad,
             coalesce(c.nombre, e.zona) AS comuna, rg.nombre AS region,
-            m.nombre AS modalidad, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel
+            m.nombre AS modalidad, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
+            (SELECT array_agg(mm.cantidad_de_jugadores ORDER BY mm.cantidad_de_jugadores)
+               FROM equipo_modalidad em JOIN modalidad mm ON mm.id = em.id_modalidad WHERE em.id_equipo = e.id) AS modalidades
        FROM equipo e
        LEFT JOIN comunas c ON c.id = e.id_comuna
        LEFT JOIN region rg ON rg.id = c.id_region
@@ -32,12 +34,16 @@ async function obtenerFicha(idEquipo) {
   const fila = rows[0];
   if (!fila) return null;
   // GET /equipos/:id/escudo solo sirve escudos de equipos activos: el inactivo muestra su inicial.
-  return { ...fila, escudo: fila.activo && fila.escudo_actualizado ?`/equipos/${fila.id}/escudo?v=${fila.escudo_actualizado.getTime()}` : null };
+  // modalidad: todas las que juega ("Fútbol 7 y 11"); jugadores solo si juega una
+  const modalidades = fila.modalidades || [fila.jugadores];
+  return { ...fila, modalidad: textoModalidades(modalidades) || fila.modalidad, jugadores: modalidades.length === 1 ? fila.jugadores : null,
+    escudo: fila.activo && fila.escudo_actualizado ?`/equipos/${fila.id}/escudo?v=${fila.escudo_actualizado.getTime()}` : null };
 }
 
 /**
  * Qué puede hacer la cuenta en la ficha: su relación con el equipo, si ya postuló y
- * qué equipo suyo (activo, misma modalidad) podría desafiarlo.
+ * qué equipo suyo (activo, con alguna modalidad en común) podría desafiarlo y en cuáles (comunes).
+ * CORRECCIÓN: regla 12 — antes se exigía la misma modalidad principal.
  */
 async function relacionConFicha(authId, equipo) {
   const { rows } = await pool.query(
@@ -48,18 +54,34 @@ async function relacionConFicha(authId, equipo) {
                       JOIN estado_solicitud es ON es.id = s.id_estado_solicitud
                      WHERE s.id_equipo = $2 AND j.id_usuario = u.id AND lower(es.nombre) = 'pendiente') AS postulo,
             (SELECT e.id FROM equipo e WHERE e.id_usuario_creador = u.id AND e.activo AND e.id <> $2
-                AND e.id_modalidad = $3 ORDER BY e.id LIMIT 1) AS mi_equipo_para_desafiar,
+                AND EXISTS (SELECT 1 FROM equipo_modalidad mia JOIN equipo_modalidad suya
+                              ON suya.id_modalidad = mia.id_modalidad AND suya.id_equipo = $2
+                             WHERE mia.id_equipo = e.id)
+              ORDER BY e.id LIMIT 1) AS mi_equipo_para_desafiar,
             (SELECT e.id FROM equipo e WHERE e.id_usuario_creador = u.id AND e.activo AND e.id <> $2 ORDER BY e.id LIMIT 1) AS mi_equipo
        FROM usuario u WHERE u.auth_id = $1`,
-    [authId, equipo.id, equipo.id_modalidad]
+    [authId, equipo.id]
   );
   const fila = rows[0] || {};
+  // Modalidades en las que se puede jugar el desafío (las que tienen en común los dos equipos)
+  const comunes = fila.mi_equipo_para_desafiar
+    ? (await pool.query(
+      `SELECT m.cantidad_de_jugadores AS jugadores
+         FROM equipo_modalidad mia
+         JOIN equipo_modalidad suya ON suya.id_modalidad = mia.id_modalidad AND suya.id_equipo = $2
+         JOIN modalidad m ON m.id = mia.id_modalidad
+        WHERE mia.id_equipo = $1
+        ORDER BY m.cantidad_de_jugadores`,
+      [fila.mi_equipo_para_desafiar, equipo.id]
+    )).rows.map((m) => m.jugadores)
+    : [];
   const esCapitan = fila.id_usuario === equipo.id_usuario_creador;
   return {
     esCapitan,
     esIntegrante: esCapitan || Boolean(fila.integrante),
     postulo: Boolean(fila.postulo),
     idEquipoParaDesafiar: fila.mi_equipo_para_desafiar || null,
+    modalidadesParaDesafiar: comunes,
     tieneEquipoPropio: Boolean(fila.mi_equipo),
   };
 }
@@ -197,6 +219,8 @@ async function guardarPosicionesBuscadas(authId, idEquipo, idsPosiciones) {
 async function listarEquiposQueBuscan() {
   const { rows } = await pool.query(
     `SELECT e.id, e.nombre, n.nombre AS nivel, m.nombre AS modalidad, coalesce(c.nombre, e.zona) AS comuna,
+            (SELECT array_agg(mm.cantidad_de_jugadores ORDER BY mm.cantidad_de_jugadores)
+               FROM equipo_modalidad em JOIN modalidad mm ON mm.id = em.id_modalidad WHERE em.id_equipo = e.id) AS modalidades,
             array_agg(p.nombre ORDER BY p.id) AS posiciones
        FROM equipo e
        JOIN equipo_posicion_buscada b ON b.id_equipo = e.id
@@ -208,7 +232,7 @@ async function listarEquiposQueBuscan() {
       GROUP BY e.id, n.nombre, m.nombre, c.nombre
       ORDER BY e.nombre`
   );
-  return rows;
+  return rows.map((fila) => ({ ...fila, modalidad: textoModalidades(fila.modalidades) || fila.modalidad }));
 }
 
 /* =====================================================================
