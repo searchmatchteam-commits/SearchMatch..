@@ -135,7 +135,7 @@ async function guardarWizard(req, res, next) {
         pasoConError = Math.min(pasoConError, 5);
       }
       if ((await equipoModel.contarEquiposDeCapitan(req.usuario.idAuth)) >= MAX_EQUIPOS_COMO_CAPITAN) {
-        errores.push('Ya eres capitán de un equipo: continúa como jugador.');
+        errores.push(`Ya capitaneas ${MAX_EQUIPOS_COMO_CAPITAN === 1 ? 'un equipo' : `${MAX_EQUIPOS_COMO_CAPITAN} equipos`}: continúa como jugador.`);
         pasoConError = Math.min(pasoConError, 4);
       }
     }

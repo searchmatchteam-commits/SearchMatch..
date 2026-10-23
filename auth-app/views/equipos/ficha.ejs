@@ -83,7 +83,7 @@
       </form>
     <% } %>
     <% if (equipo.activo && relacion.idEquipoParaDesafiar && !desafioPendiente && !relacion.esIntegrante) { %>
-      <form class="dash-panel eq-panel sm-form" id="desafiar" action="/mi-equipo/desafios/<%= equipo.id %>" method="POST">
+      <form class="dash-panel eq-panel sm-form" id="desafiar" action="/mi-equipo/desafios/<%= equipo.id %>?equipo=<%= relacion.idEquipoParaDesafiar %>" method="POST">
         <h2 class="dash-panel__titulo">Desafiar a <%= equipo.nombre %></h2>
         <%# Modalidad del partido: una de las que juegan los dos equipos (equipoFichaModel.relacionConFicha) %>
         <% if (relacion.modalidadesParaDesafiar.length > 1) { %>

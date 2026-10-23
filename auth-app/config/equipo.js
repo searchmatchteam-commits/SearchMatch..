@@ -81,8 +81,9 @@ const BARRAS_NIVEL = {
 };
 
 // CORRECCIÓN: regla 5 — cuántos equipos activos puede crear (capitanear) una misma cuenta.
+// En el registro se crea el primero; los demás, desde el dashboard (/crear-equipo).
 // Es el único lugar donde se define: el asistente, /equipos y /mis-equipos lo leen de aquí.
-const MAX_EQUIPOS_COMO_CAPITAN = 1;
+const MAX_EQUIPOS_COMO_CAPITAN = 5;
 
 module.exports = {
   MAX_EQUIPOS_COMO_CAPITAN, // CORRECCIÓN: regla 5

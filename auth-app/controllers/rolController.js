@@ -33,6 +33,15 @@ async function guardarSeleccion(req, res, next) {
   if (!ROLES_INICIO[rol]) {
     return renderSeleccion(res, { status: 400, errores: ['Elige cómo quieres usar Search Match para continuar.'] });
   }
+  // Una cuenta de jugador no se cambia sola a capitán (el rol "equipo" habilita crear equipos).
+  // El capitán se elige en el registro (paso "Soy capitán" de /perfil-jugador).
+  if (req.usuario.rolInicio === 'jugador' && rol === 'equipo') {
+    return renderSeleccion(res, {
+      status: 403,
+      rolElegido: 'jugador',
+      errores: ['Tu cuenta es de jugador: no puede cambiarse a capitán.'],
+    });
+  }
 
   try {
     const { error } = await userModel.guardarRolInicio(req.supabase, rol);

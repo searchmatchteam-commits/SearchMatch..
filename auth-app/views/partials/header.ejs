@@ -37,6 +37,8 @@
     <!-- El perfil reutiliza el dock y el aviso flotante del dashboard -->
     <link rel="stylesheet" href="/css/dashboard.css?v=<%= versionAssets %>" />
   <% } %>
+  <!-- Modo claro: todas sus reglas van bajo html[data-theme="light"]; va al final para ganarle a las hojas de cada página -->
+  <link rel="stylesheet" href="/css/tema-claro.css?v=<%= versionAssets %>" />
   <% if (locals.pagina === 'landing' || locals.pagina === 'dashboard') { %>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <% } %>
@@ -47,11 +49,19 @@
   <% } %>
   <!-- Marca que hay JS (las animaciones de aparición solo se activan si existe) y decide el
        "modo liviano": sin efectos pesados cuando el navegador no tiene aceleración gráfica.
-       ?liviano=1 lo fuerza, ?liviano=0 lo desactiva (queda guardado); "sm-gpu" lo detecta cyber.js. -->
+       ?liviano=1 lo fuerza, ?liviano=0 lo desactiva (queda guardado); "sm-gpu" lo detecta cyber.js.
+       También aplica el tema guardado (localStorage "sm-tema": "light" | "dark") antes del primer pintado,
+       así el modo claro no parpadea en oscuro al cargar. El oscuro es el predeterminado. -->
   <script>
     (function () {
       var raiz = document.documentElement;
       raiz.classList.add('js');
+      try {
+        if (localStorage.getItem('sm-tema') === 'light') {
+          raiz.setAttribute('data-theme', 'light');
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#e5e7eb');
+        }
+      } catch (e) { /* sin localStorage: modo oscuro */ }
       try {
         var forzado = new URLSearchParams(location.search).get('liviano');
         if (forzado !== null) localStorage.setItem('sm-liviano', forzado === '0' ? 'no' : 'si');
@@ -80,6 +90,12 @@
       </a>
 
       <nav class="navbar__nav" aria-label="Cuenta">
+        <!-- Modo claro / oscuro (main.js). Se ve el ícono del modo al que se cambia: luna en claro, sol en oscuro -->
+        <button type="button" class="sm-icono-nav sm-tema" data-cambiar-tema aria-pressed="false"
+                title="Cambiar a modo claro" aria-label="Cambiar a modo claro">
+          <svg class="sm-tema__sol" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" /><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6" /></svg>
+          <svg class="sm-tema__luna" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" /></svg>
+        </button>
         <% if (usuario) { %>
           <!-- Usuario con sesión activa. Las páginas con dock ya llevan a Inicio desde la barra inferior -->
           <% if (!['dashboard', 'equipo', 'perfil'].includes(locals.pagina)) { %>

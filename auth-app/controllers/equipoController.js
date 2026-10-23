@@ -39,9 +39,28 @@ const equipoFichaModel = require('../models/equipoFichaModel'); // NUEVO: PE-021
 const AVISO_LIMITE_EQUIPOS = `Alcanzaste el límite de ${MAX_EQUIPOS_COMO_CAPITAN} `
   + `${MAX_EQUIPOS_COMO_CAPITAN === 1 ? 'equipo' : 'equipos'} como capitán. Para crear otro, primero desactiva uno.`;
 
-/** CORRECCIÓN: regla 5 — ¿la cuenta ya capitanea el máximo de equipos permitido? */
-async function alcanzoLimiteEquipos(authId) {
-  return (await equipoModel.contarEquiposDeCapitan(authId)) >= MAX_EQUIPOS_COMO_CAPITAN;
+// Aviso cuando una cuenta de jugador intenta crear un equipo (/crear-equipo → /equipos?aviso=solo-jugador).
+const AVISO_SOLO_JUGADOR = 'Tu cuenta es de jugador: crear equipos es solo para capitanes. Busca un equipo y únete.';
+
+/**
+ * ¿La cuenta puede crear un equipo nuevo?
+ *  - 'solo-jugador': se registró como jugador (rol_inicio 'jugador') y no capitanea ninguno. Crear
+ *    equipos es solo para capitanes: quien eligió "Soy capitán" en el registro (rol_inicio 'equipo')
+ *    o quien ya capitanea alguno (cuentas antiguas).
+ *  - 'limite': CORRECCIÓN: regla 5 — ya capitanea MAX_EQUIPOS_COMO_CAPITAN equipos activos.
+ *  - 'puede'
+ * @param {{ idAuth: string, rolInicio: string|null }} usuario - req.usuario
+ * @returns {Promise<'puede'|'limite'|'solo-jugador'>}
+ */
+async function estadoCreacionEquipo(usuario) {
+  const capitaneados = await equipoModel.contarEquiposDeCapitan(usuario.idAuth);
+  if (usuario.rolInicio !== 'equipo' && capitaneados === 0) return 'solo-jugador';
+  return capitaneados >= MAX_EQUIPOS_COMO_CAPITAN ? 'limite' : 'puede';
+}
+
+/** Adónde vuelve quien no puede crear un equipo: los jugadores, al directorio; los capitanes, a sus equipos con el aviso. */
+function rutaSinCreacion(estado) {
+  return estado === 'solo-jugador' ? '/equipos?aviso=solo-jugador' : '/mis-equipos?aviso=limite';
 }
 
 // Avisos del directorio (?aviso=... o JSON): solo textos fijos, nunca lo que llega en la URL.
@@ -229,7 +248,9 @@ function renderWizard(res, { status = 200, datos, errores = [], paso = 1, creado
 async function mostrarCrear(req, res, next) {
   try {
     // CORRECCIÓN: regla 5 — con el límite alcanzado se explica por qué (antes redirigía sin aviso).
-    if (await alcanzoLimiteEquipos(req.usuario.idAuth)) return res.redirect('/mis-equipos?aviso=limite');
+    // Las cuentas de jugador no crean equipos.
+    const estado = await estadoCreacionEquipo(req.usuario);
+    if (estado !== 'puede') return res.redirect(rutaSinCreacion(estado));
     const regiones = await ubicacionModel.listarRegionesConComunas(); // CORRECCIÓN: regla 11
     return renderWizard(res, { datos: { correo: req.usuario.correo }, regiones });
   } catch (err) {
@@ -245,8 +266,9 @@ async function crear(req, res, next) {
   const { errores, paso } = req.erroresEquipo;
 
   try {
-    // CORRECCIÓN: regla 5 — límite de equipos como capitán, con aviso.
-    if (await alcanzoLimiteEquipos(req.usuario.idAuth)) return res.redirect('/mis-equipos?aviso=limite');
+    // CORRECCIÓN: regla 5 — límite de equipos como capitán, con aviso. Las cuentas de jugador no crean equipos.
+    const estado = await estadoCreacionEquipo(req.usuario);
+    if (estado !== 'puede') return res.redirect(rutaSinCreacion(estado));
 
     // CORRECCIÓN: regla 11 — la comuna debe existir en la lista (no se confía en lo que llega del formulario).
     if (datos.idComuna && !(await ubicacionModel.obtenerComuna(datos.idComuna))) {
@@ -324,16 +346,16 @@ async function panel(req, res, next) {
 // ---------------------------------------------------------------
 async function misEquipos(req, res, next) {
   try {
-    const [equipos, limiteAlcanzado] = await Promise.all([
+    const [equipos, creacion] = await Promise.all([
       equipoModel.listarMisEquiposConPlantel(req.usuario.idAuth),
-      alcanzoLimiteEquipos(req.usuario.idAuth), // CORRECCIÓN: regla 5
+      estadoCreacionEquipo(req.usuario), // CORRECCIÓN: regla 5
     ]);
     return res.render('mis-equipos', {
       titulo: 'Mis equipos',
       pagina: 'equipo',
       misEquipos: equipos,
-      puedeCrear: !limiteAlcanzado, // CORRECCIÓN: regla 5 (MAX_EQUIPOS_COMO_CAPITAN)
-      avisoLimite: limiteAlcanzado ? AVISO_LIMITE_EQUIPOS : null, // CORRECCIÓN: regla 5
+      puedeCrear: creacion === 'puede', // CORRECCIÓN: regla 5 (MAX_EQUIPOS_COMO_CAPITAN); jugadores no
+      avisoLimite: creacion === 'limite' ? AVISO_LIMITE_EQUIPOS : null, // CORRECCIÓN: regla 5
       equiposInactivos: await equipoFichaModel.listarInactivosDeCapitan(req.usuario.idAuth), // NUEVO: PE-017
       aviso: AVISOS_SALIDA[req.query.salida] || (req.query.aviso === 'limite' ? AVISO_LIMITE_EQUIPOS : null),
     });
@@ -347,21 +369,21 @@ async function misEquipos(req, res, next) {
 // ---------------------------------------------------------------
 async function directorio(req, res, next) {
   try {
-    const [equipos, miEquipo, limiteAlcanzado] = await Promise.all([
+    const [equipos, miEquipo, creacion] = await Promise.all([
       equipoModel.listarEquipos(req.usuario.idAuth),
       equipoModel.obtenerMiEquipo(req.usuario.idAuth),
-      alcanzoLimiteEquipos(req.usuario.idAuth), // CORRECCIÓN: regla 5
+      estadoCreacionEquipo(req.usuario), // CORRECCIÓN: regla 5
     ]);
     return res.render('equipos', {
       titulo: 'Directorio de Equipos',
       pagina: 'equipo',
       equipos,
       tieneEquipo: Boolean(miEquipo),
-      puedeCrear: !limiteAlcanzado, // CORRECCIÓN: regla 5 (MAX_EQUIPOS_COMO_CAPITAN)
-      avisoLimite: limiteAlcanzado ? AVISO_LIMITE_EQUIPOS : null, // CORRECCIÓN: regla 5
+      puedeCrear: creacion === 'puede', // CORRECCIÓN: regla 5 (MAX_EQUIPOS_COMO_CAPITAN); jugadores no
+      avisoLimite: creacion === 'limite' ? AVISO_LIMITE_EQUIPOS : null, // CORRECCIÓN: regla 5
       equiposQueBuscan: await equipoFichaModel.listarEquiposQueBuscan(), // NUEVO: PE-021
       LONGITUD_MENSAJE: LONGITUD_MAXIMA_MENSAJE_SOLICITUD,
-      aviso: AVISOS_UNION[req.query.aviso] || null,
+      aviso: AVISOS_UNION[req.query.aviso] || (req.query.aviso === 'solo-jugador' ? AVISO_SOLO_JUGADOR : null),
     });
   } catch (err) {
     return pasarError(err, next);
@@ -557,22 +579,25 @@ async function fotoSolicitud(req, res, next) {
 // ---------------------------------------------------------------
 // POST /mi-equipo/desafios/:id → desafiar a otro equipo (validarDesafio deja el mensaje listo)
 // Desde equipo.js (fetch) responde JSON; sin JavaScript vuelve al panel con el aviso.
+// ?equipo= dice desde cuál de sus equipos desafía el capitán (sin él, el primero que creó).
 // ---------------------------------------------------------------
 async function desafiar(req, res, next) {
   const idRival = Number(req.params.id);
+  const idPropio = idDeParametro(req.query.equipo);
+  const panel = idPropio ? `/mi-equipo?equipo=${idPropio}&` : '/mi-equipo?';
   const quiereJson = req.accepts(['html', 'json']) === 'json';
   try {
     if (req.erroresDesafio.length > 0) {
       if (quiereJson) return res.status(400).json({ error: req.erroresDesafio.join(' ') });
-      return res.redirect('/mi-equipo');
+      return res.redirect(panel.slice(0, -1));
     }
     const resultado = Number.isInteger(idRival) && idRival > 0
       ? await equipoModel.enviarDesafio(req.usuario.idAuth, idRival, req.datosDesafio.mensaje,
-        MODALIDADES[Number(req.body.modalidad)] ? Number(req.body.modalidad) : null)
+        MODALIDADES[Number(req.body.modalidad)] ? Number(req.body.modalidad) : null, idPropio)
       : 'inexistente';
-    if (resultado === 'enviado') await avisosEquipo.desafioEnviado(req.usuario, idRival); // NUEVO: NT-001 / DE-008
+    if (resultado === 'enviado') await avisosEquipo.desafioEnviado(req.usuario, idRival, idPropio); // NUEVO: NT-001 / DE-008
     if (quiereJson) return res.json({ resultado, mensaje: AVISOS_DESAFIO[resultado] });
-    return res.redirect(`/mi-equipo?desafio=${resultado}`);
+    return res.redirect(`${panel}desafio=${resultado}`);
   } catch (err) {
     return pasarError(err, next);
   }

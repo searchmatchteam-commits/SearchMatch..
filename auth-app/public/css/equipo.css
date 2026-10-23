@@ -130,6 +130,258 @@
   stroke-linejoin: round;
 }
 
+/* ---------- Panel del capitán (/mi-equipo): tarjeta del equipo ---------- */
+/* Ancho máximo (~max-w-5xl) y aire de sobra al final para que el dock no tape el plantel */
+.eq--panel {
+  padding: 28px 0 120px;
+}
+
+.eq--panel .contenedor {
+  max-width: 1024px;
+  gap: 22px;
+}
+
+.eq--panel .contenedor > .boton-volver {
+  align-self: flex-start;
+  margin-bottom: -8px;
+}
+
+.eq-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 22px;
+  border-radius: var(--radio-panel, 22px);
+  background: #121212;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* Chip "Panel del capitán": en celulares va arriba a la derecha en el flujo; desde 760px, fijo en la esquina */
+.eq-hero__chip {
+  align-self: flex-end;
+}
+
+/* Escudo | nombre y datos | acciones (en celulares las acciones bajan a lo ancho) */
+.eq-hero__identidad {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "escudo texto"
+    "acciones acciones";
+  align-items: center;
+  gap: 18px 20px;
+}
+
+.eq-hero__escudo {
+  grid-area: escudo;
+}
+
+.eq-hero__escudo .eq-escudo__imagen {
+  width: 84px;
+  height: 84px;
+}
+
+.eq-hero__texto {
+  grid-area: texto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Nombre en una sola línea: si no cabe, "..." (el nombre completo queda en el title) */
+.eq-hero__titulo {
+  font-family: var(--fuente-titulo);
+  font-size: clamp(1.6rem, 5.5vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* "Comuna: X · Capitán: Y · Fútbol 7 · Intermedio" */
+.eq-hero__datos {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+}
+
+.eq-hero__datos li + li::before {
+  content: "·";
+  margin: 0 8px;
+  opacity: 0.6;
+}
+
+.eq-hero__datos strong {
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.eq-hero__acciones {
+  grid-area: acciones;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.eq-hero__acciones .btn {
+  flex: 1 1 200px;
+  justify-content: center;
+}
+
+/* Enlaces secundarios: texto pequeño con ícono, separados de la tarjeta por una línea */
+.eq-hero__enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.eq-hero__enlaces a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  transition: color 0.2s ease;
+}
+
+.eq-hero__enlaces a:hover,
+.eq-hero__enlaces a:focus-visible {
+  color: var(--verde);
+}
+
+.eq-hero__enlaces svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (min-width: 760px) {
+  .eq-hero {
+    padding: 30px 32px 22px;
+  }
+
+  .eq-hero__chip {
+    position: absolute;
+    top: 20px;
+    right: 22px;
+  }
+
+  /* Acciones a la derecha del nombre, alineadas abajo con los datos */
+  .eq-hero__identidad {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "escudo texto acciones";
+    align-items: end;
+    gap: 24px;
+  }
+
+  .eq-hero__escudo {
+    align-self: center;
+  }
+
+  .eq-hero__escudo .eq-escudo__imagen {
+    width: 112px;
+    height: 112px;
+    border-radius: 26px;
+    font-size: 2.8rem;
+  }
+
+  /* El nombre no se mete debajo del chip */
+  .eq-hero__titulo {
+    padding-right: 190px;
+  }
+
+  .eq-hero__texto {
+    align-self: center;
+  }
+
+  .eq-hero__acciones {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .eq-hero__acciones .btn {
+    flex: none;
+  }
+}
+
+/* Tablets: no caben tres columnas, las acciones bajan a lo ancho debajo del nombre */
+@media (min-width: 760px) and (max-width: 959px) {
+  .eq-hero__identidad {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "escudo texto"
+      "acciones acciones";
+  }
+
+  .eq-hero__acciones {
+    flex-direction: row;
+  }
+
+  .eq-hero__acciones .btn {
+    flex: 1 1 200px;
+  }
+}
+
+/* Pestañas "Mi carta" / "Mi equipo" subrayadas, encima de las solicitudes */
+.sm-pestanas--vista.eq-vista {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  margin: 6px 0 -6px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sm-pestanas--vista.eq-vista .sm-pestanas__item {
+  position: relative;
+  padding: 12px 18px;
+  border-radius: 0;
+  background: transparent;
+}
+
+.sm-pestanas--vista.eq-vista .sm-pestanas__item:hover {
+  background: transparent;
+}
+
+.sm-pestanas--vista.eq-vista .sm-pestanas__item--activa,
+.sm-pestanas--vista.eq-vista .sm-pestanas__item--activa:hover {
+  color: var(--verde);
+  background: transparent;
+  box-shadow: none;
+}
+
+.sm-pestanas--vista.eq-vista .sm-pestanas__item--activa::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--verde);
+  box-shadow: 0 0 10px rgba(var(--verde-rgb), 0.6);
+}
+
 /* ---------- Contador y tarjetas de jugador ---------- */
 .eq-contador {
   min-width: 30px;

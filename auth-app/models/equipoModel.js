@@ -48,7 +48,7 @@ function urlEscudo(fila) {
 }
 
 /**
- * Equipo activo que creó la cuenta (su capitán).
+ * Último equipo activo que creó la cuenta (su capitán): el de la confirmación de /crear-equipo/listo.
  * @param {string} authId - UUID de auth.users.
  * @returns {Promise<{id, nombre, zona, modalidad, nivel, detalle}|null>}
  */
@@ -61,7 +61,7 @@ async function obtenerEquipoDeCapitan(authId) {
        LEFT JOIN comunas cz ON cz.id = e.id_comuna -- CORRECCIÓN: regla 11 (se muestra la comuna; equipos antiguos, su zona)
        LEFT JOIN nivel n ON n.id = e.id_nivel
       WHERE u.auth_id = $1
-      ORDER BY e.id
+      ORDER BY e.id DESC
       LIMIT 1`,
     [authId]
   );
@@ -556,6 +556,8 @@ async function listarRivales(idEquipo) {
        LEFT JOIN comunas cz ON cz.id = e.id_comuna -- CORRECCIÓN: regla 11 (se muestra la comuna; equipos antiguos, su zona)
        LEFT JOIN nivel n ON n.id = e.id_nivel
       WHERE e.activo AND e.id <> $1
+        -- El capitán puede tener varios equipos: no se desafía a sí mismo
+        AND e.id_usuario_creador <> (SELECT id_usuario_creador FROM equipo WHERE id = $1)
         -- CORRECCIÓN: regla 12 — solo rivales que juegan al menos una modalidad del equipo del capitán
         AND EXISTS (SELECT 1 FROM equipo_modalidad r
                       JOIN equipo_modalidad propia ON propia.id_modalidad = r.id_modalidad AND propia.id_equipo = $1
@@ -578,8 +580,8 @@ async function listarRivales(idEquipo) {
 
 /**
  * El capitán desafía a otro equipo, en UNA transacción:
- *  1) Busca el equipo que capitanea (el que creó) y lo bloquea: dos clics
- *     seguidos no crean dos desafíos.
+ *  1) Busca el equipo desafiante (uno que él creó: el indicado o, sin indicar, el primero) y lo
+ *     bloquea: dos clics seguidos no crean dos desafíos.
  *  2) Comprueba que el rival exista, esté activo, que la modalidad elegida la jueguen los dos
  *     y que no haya ya un desafío pendiente entre ambos (en cualquier sentido).
  *  3) Inserta el desafío como "pendiente" en esa modalidad (fecha_solicitud la pone la base).
@@ -587,9 +589,10 @@ async function listarRivales(idEquipo) {
  * @param {number} idRival
  * @param {string|null} mensaje - Ya validado (fecha tentativa y/o mensaje).
  * @param {number|null} [jugadores] - Modalidad del desafío (5, 7 u 11); sin ella, la más chica que tengan en común.
+ * @param {number|null} [idEquipoPropio] - Equipo desafiante (el capitán puede tener varios); debe ser suyo.
  * @returns {Promise<'enviado'|'pendiente'|'sin-equipo'|'inexistente'|'modalidad'>}
  */
-async function enviarDesafio(authId, idRival, mensaje, jugadores = null) {
+async function enviarDesafio(authId, idRival, mensaje, jugadores = null, idEquipoPropio = null) {
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
@@ -599,11 +602,11 @@ async function enviarDesafio(authId, idRival, mensaje, jugadores = null) {
       `SELECT e.id
          FROM usuario u
          JOIN equipo e ON e.id_usuario_creador = u.id AND e.activo
-        WHERE u.auth_id = $1
+        WHERE u.auth_id = $1 AND ($2::int IS NULL OR e.id = $2)
         ORDER BY e.id
         LIMIT 1
           FOR UPDATE OF e`,
-      [authId]
+      [authId, idEquipoPropio]
     );
     let resultado;
     if (propio.rowCount === 0) {
@@ -612,7 +615,11 @@ async function enviarDesafio(authId, idRival, mensaje, jugadores = null) {
       const idEquipo = propio.rows[0].id;
 
       // 2) Rival válido y sin desafío pendiente entre ambos
-      const rival = await cliente.query('SELECT 1 FROM equipo WHERE id = $1 AND activo AND id <> $2', [idRival, idEquipo]);
+      const rival = await cliente.query(
+        `SELECT 1 FROM equipo WHERE id = $1 AND activo AND id <> $2
+            AND id_usuario_creador <> (SELECT id_usuario_creador FROM equipo WHERE id = $2)`,
+        [idRival, idEquipo]
+      );
       const estado = await cliente.query('SELECT id FROM estado_desafio WHERE lower(nombre) = $1', [ESTADO_DESAFIO_PENDIENTE]);
       if (estado.rowCount === 0) throw new Error("No existe el estado 'pendiente' en la tabla estado_desafio.");
 

@@ -398,6 +398,20 @@
   .navbar__nav { gap: 6px; }
   .navbar__nav .btn--chico { padding-left: 10px; padding-right: 10px; }
 }
+/* Con el botón de tema, el nombre de la marca no cabe junto a los íconos hasta 500px: queda solo el balón */
+@media (max-width: 500px) { .logo__texto { display: none; } }
+
+/* Botón modo claro / oscuro: se ve el ícono del modo al que se cambia (sol en oscuro, luna en claro) */
+.sm-tema {
+  padding: 0; background: transparent; cursor: pointer; font: inherit;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+.sm-tema:hover { background: var(--verde-tenue); }
+.sm-tema svg { transition: transform 0.45s var(--curva); }
+.sm-tema:hover svg { transform: rotate(-25deg) scale(1.08); }
+.sm-tema__luna { display: none; }
+html[data-theme="light"] .sm-tema__sol { display: none; }
+html[data-theme="light"] .sm-tema__luna { display: block; }
 
 /* ---------- Notificaciones (NT-002) ---------- */
 .dash-panel.sm-notificaciones { list-style: none; gap: 0; padding: 6px 0; }

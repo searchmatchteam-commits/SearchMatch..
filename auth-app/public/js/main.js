@@ -8,7 +8,55 @@
 //  6) Botón "Volver" (partials/boton-volver): vuelve atrás si se llegó desde otra página del sitio.
 //  7) confirmarAccion(): modal de confirmación con el estilo del sitio (en vez de window.confirm).
 //     Lo usan equipo.js ("sacar" del plantel) y dashboard.js ("Salir del equipo"); main.js carga antes.
+//  8) Modo claro / oscuro: botón [data-cambiar-tema] del navbar. Guarda la elección en localStorage
+//     ("sm-tema") y la aplica como html[data-theme="light"]; el oscuro es el predeterminado.
+//     El tema guardado se aplica antes del primer pintado (script del <head> en partials/header.ejs).
 // La validación de login/registro está en auth.js (y la real, en el servidor).
+
+const COLOR_BARRA = { light: '#e5e7eb', dark: '#0b0d0b' }; // <meta name="theme-color"> (barra del navegador en celulares)
+const DURACION_CAMBIO_TEMA = 350;
+
+/** Tema actual: 'light' | 'dark'. */
+function temaActual() {
+  return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+}
+
+/** Deja el botón del navbar al día: aria-pressed (modo claro activo) y el texto de la acción. */
+function pintarBotonTema(boton) {
+  const claro = temaActual() === 'light';
+  const texto = claro ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro';
+  boton.setAttribute('aria-pressed', String(claro));
+  boton.title = texto;
+  boton.setAttribute('aria-label', texto);
+}
+
+/** Cambia el tema con una transición de colores breve (solo durante el cambio, no en cada hover). */
+function aplicarTema(tema) {
+  const raiz = document.documentElement;
+  const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!sinMovimiento) {
+    raiz.classList.add('tema-transicion');
+    clearTimeout(aplicarTema.espera);
+    aplicarTema.espera = setTimeout(() => raiz.classList.remove('tema-transicion'), DURACION_CAMBIO_TEMA);
+  }
+  if (tema === 'light') raiz.setAttribute('data-theme', 'light');
+  else raiz.removeAttribute('data-theme');
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', COLOR_BARRA[tema]);
+  try {
+    localStorage.setItem('sm-tema', tema);
+  } catch (e) { /* sin localStorage: el tema dura hasta recargar */ }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-cambiar-tema]').forEach((boton) => {
+    pintarBotonTema(boton);
+    boton.addEventListener('click', () => {
+      aplicarTema(temaActual() === 'light' ? 'dark' : 'light');
+      pintarBotonTema(boton);
+    });
+  });
+});
 
 /* ---------- 7) Confirmación ---------- */
 /**

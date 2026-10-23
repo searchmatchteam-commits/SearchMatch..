@@ -2889,10 +2889,13 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
    La carta mantiene esa proporción, así el SVG escala sin deformarse; el cuerpo (los datos) se recorta
    con la misma silueta (#carta-escudo-recorte, en unidades relativas: sirve a cualquier ancho).
    El resplandor es drop-shadow en la carta: sigue el contorno del escudo (un box-shadow quedaría rectangular). */
+/* Brillo exterior: dos capas verdes (una ceñida e intensa, otra amplia y suave) para que la carta
+   "emita" luz, más la sombra negra que la despega del fondo. */
 .carta-jugador--perfil {
   width: min(100%, 340px);
   filter:
-    drop-shadow(0 0 16px rgba(57, 255, 20, 0.5))
+    drop-shadow(0 0 6px rgba(57, 255, 20, 0.55))
+    drop-shadow(0 0 22px rgba(57, 255, 20, 0.35))
     drop-shadow(0 26px 34px rgba(0, 0, 0, 0.65));
 }
 
@@ -2908,7 +2911,8 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 
 .carta-jugador--perfil.inclinando {
   filter:
-    drop-shadow(0 0 26px rgba(57, 255, 20, 0.7))
+    drop-shadow(0 0 8px rgba(57, 255, 20, 0.7))
+    drop-shadow(0 0 30px rgba(57, 255, 20, 0.45))
     drop-shadow(0 34px 40px rgba(0, 0, 0, 0.7));
 }
 
@@ -2972,26 +2976,39 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   background: linear-gradient(90deg, transparent, #39ff14, transparent);
 }
 
+/* Reflejo de luz fijo: un barrido blanco muy transparente desde la esquina superior izquierda y una
+   franja diagonal fina (el "lustre" de las cartas premium). Va encima de todo (::after pinta al final),
+   en modo screen para que solo aclare, y sin capturar el mouse (el botón "Subir foto" sigue funcionando). */
+.carta-jugador--perfil .carta-jugador__cuerpo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 18%, transparent 36%),
+    linear-gradient(115deg, transparent 52%, rgba(255, 255, 255, 0.05) 55%, transparent 59%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
 .carta-jugador--perfil .carta-jugador__cabecera {
   display: block;
 }
 
-/* Foto cuadrada sin borde: se desvanece en los cuatro bordes con un degradado suave (varias paradas,
-   para que no se note dónde empieza) y más largo abajo, donde se funde con el nombre.
-   La máscara va en la imagen y en ::before, no en el contenedor, para no desvanecer el botón "Subir foto". */
+/* Foto en un medallón redondo con anillo neón:
+   - la máscara circular (en la imagen y en ::before, no en el contenedor) elimina las esquinas del
+     cuadrado sin recortar el botón "Subir foto";
+   - ::before es el fondo del medallón con un halo verde detrás de la cabeza;
+   - ::after es el anillo: borde verde + brillo exterior (box-shadow) + sombra interior que lo hunde. */
 .carta-jugador--perfil .carta-jugador__foto {
-  --foto-borde:
-    linear-gradient(to right, transparent, rgba(0, 0, 0, 0.35) 7%, rgba(0, 0, 0, 0.75) 15%, #000 24%,
-      #000 76%, rgba(0, 0, 0, 0.75) 85%, rgba(0, 0, 0, 0.35) 93%, transparent),
-    linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.5) 6%, #000 16%,
-      #000 60%, rgba(0, 0, 0, 0.7) 75%, rgba(0, 0, 0, 0.3) 88%, transparent);
+  --foto-borde: radial-gradient(circle closest-side, #000 calc(100% - 1.5px), transparent);
   position: absolute;
-  left: calc(140 * var(--u));
-  top: calc(38 * var(--u));
-  width: calc(140 * var(--u));
-  height: calc(140 * var(--u));
+  left: calc(146 * var(--u));
+  top: calc(40 * var(--u));
+  width: calc(132 * var(--u));
+  height: calc(132 * var(--u));
+  overflow: visible;
   border: 0;
-  border-radius: 0;
+  border-radius: 50%;
   background: none;
   box-shadow: none;
 }
@@ -3000,19 +3017,46 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 35%, #2a2f2a, #0c0e0c 70%);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(57, 255, 20, 0.28), transparent 62%),
+    radial-gradient(circle at 50% 35%, #232823, #070807 75%);
+}
+
+.carta-jugador--perfil .carta-jugador__foto::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: calc(3 * var(--u)) solid #39ff14;
+  box-shadow:
+    0 0 calc(14 * var(--u)) rgba(57, 255, 20, 0.6),
+    inset 0 0 calc(12 * var(--u)) rgba(0, 0, 0, 0.75);
+  pointer-events: none;
 }
 
 .carta-jugador--perfil .carta-jugador__foto::before,
 .carta-jugador--perfil .carta-jugador__foto img {
   -webkit-mask-image: var(--foto-borde);
-  -webkit-mask-composite: source-in;
   mask-image: var(--foto-borde);
-  mask-composite: intersect;
+}
+
+/* "screen" funde con la carta todo lo oscuro de la foto (un fondo negro desaparece y un PNG transparente
+   queda limpio). Ojo: un fondo BLANCO no desaparece con screen ni lighten (blanco + cualquier cosa = blanco);
+   la máscara circular de arriba es la que quita el cuadrado. drop-shadow verde: halo alrededor de la silueta
+   cuando la foto tiene transparencia. */
+.carta-jugador--perfil .carta-jugador__foto img {
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 calc(8 * var(--u)) rgba(57, 255, 20, 0.55));
 }
 
 .carta-jugador--perfil .carta-jugador__foto > svg {
   position: relative;
+  filter: drop-shadow(0 0 calc(6 * var(--u)) rgba(57, 255, 20, 0.5));
+}
+
+/* El botón "Subir foto" encima del anillo */
+.carta-jugador--perfil .carta-jugador__subir {
+  z-index: 1;
 }
 
 /* Rating, posición, bandera y balón en columna centrada */
@@ -3025,12 +3069,18 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   text-align: center;
 }
 
+/* La media manda: grande, neón y con dos sombras — una dura y oscura desplazada (relieve que la
+   despega del fondo) y un resplandor verde alrededor. */
 .carta-jugador--perfil .carta-jugador__numero {
-  font-size: calc(68 * var(--u));
-  font-weight: 800;
-  line-height: 0.9;
-  letter-spacing: 0;
+  font-size: calc(80 * var(--u));
+  font-weight: 900;
+  line-height: 0.85;
+  letter-spacing: calc(-2 * var(--u));
   color: #39ff14;
+  text-shadow:
+    0 calc(3 * var(--u)) 0 #000,
+    0 calc(5 * var(--u)) calc(10 * var(--u)) rgba(0, 0, 0, 0.8),
+    0 0 calc(20 * var(--u)) rgba(57, 255, 20, 0.55);
 }
 
 .carta-jugador--perfil .carta-jugador__posicion {
@@ -3148,31 +3198,43 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   border: 0;
   text-align: center;
   text-transform: uppercase;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
   font-size: calc(46 * var(--u));
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: calc(5 * var(--u));
   line-height: 1;
   overflow-wrap: anywhere;
+  /* Texto con degradado blanco → gris claro (metálico). Con el relleno transparente text-shadow se vería
+     a través de las letras, así que la sombra dura va como drop-shadow. */
+  background: linear-gradient(180deg, #ffffff 30%, #c9d1c9 70%, #9aa59a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter:
+    drop-shadow(0 calc(2 * var(--u)) 0 #000)
+    drop-shadow(0 calc(4 * var(--u)) calc(8 * var(--u)) rgba(0, 0, 0, 0.8));
 }
 
+/* Stats en bloques: cada una con un fondo sutil y borde fino, el número grande y grueso */
 .carta-jugador--perfil .carta-jugador__stats {
   position: absolute;
   left: calc(56 * var(--u));
-  top: calc(268 * var(--u));
+  top: calc(266 * var(--u));
   width: calc(208 * var(--u));
   grid-template-rows: repeat(3, calc(34 * var(--u)));
-  column-gap: calc(20 * var(--u));
-  row-gap: calc(4 * var(--u));
+  column-gap: calc(10 * var(--u));
+  row-gap: calc(5 * var(--u));
   margin: 0;
 }
 
 .carta-jugador--perfil .carta-jugador__stats div {
   justify-content: center;
   align-items: baseline;
-  gap: calc(8 * var(--u));
+  gap: calc(7 * var(--u));
   height: calc(34 * var(--u));
   line-height: calc(34 * var(--u));
+  border-radius: calc(6 * var(--u));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
+  box-shadow: inset 0 0 0 1px rgba(57, 255, 20, 0.12);
 }
 
 .carta-jugador--perfil .carta-jugador__stats div:nth-child(n + 4) {
@@ -3181,15 +3243,18 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 }
 
 .carta-jugador--perfil .carta-jugador__stats dd {
-  font-size: calc(30 * var(--u));
-  font-weight: 800;
+  font-size: calc(32 * var(--u));
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 calc(2 * var(--u)) 0 rgba(0, 0, 0, 0.85);
 }
 
 .carta-jugador--perfil .carta-jugador__stats dt {
-  font-size: calc(16 * var(--u));
-  font-weight: 600;
+  font-size: calc(15 * var(--u));
+  font-weight: 700;
   letter-spacing: calc(1.5 * var(--u));
-  color: #b7c4b7;
+  color: #39ff14;
+  opacity: 0.85;
 }
 
 /* El botón "Subir foto" sigue con la fuente del sitio */

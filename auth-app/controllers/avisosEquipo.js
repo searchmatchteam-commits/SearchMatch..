@@ -48,9 +48,9 @@ function invitacionAceptada(idInvitacion) {
 }
 
 /** DE-008 · Un capitán desafió a otro equipo: avisa al capitán desafiado. */
-function desafioEnviado(usuario, idRival) {
+function desafioEnviado(usuario, idRival, idPropio = null) {
   return seguro(async () => {
-    const propio = await notificacionModel.equipoDeCapitan(usuario.idAuth);
+    const propio = await notificacionModel.equipoDeCapitan(usuario.idAuth, idPropio);
     await notificacionModel.notificarCapitan(idRival, 'desafio',
       `${propio ? propio.nombre : 'Un equipo'} desafió a tu equipo. Acepta o rechaza el desafío.`, `/desafios?equipo=${idRival}&ver=recibidos`);
   });

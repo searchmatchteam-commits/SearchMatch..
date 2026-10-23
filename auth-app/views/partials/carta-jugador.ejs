@@ -22,7 +22,9 @@
   <div class="carta-jugador carta-jugador--neon carta-jugador--perfil <%= mini ? 'carta-jugador--mini' : '' %> <%= jugador.foto ? 'carta-jugador--con-foto' : '' %>"
        <% if (!mini) { %>data-tilt data-carta="<%= JSON.stringify(datosCarta) %>"<% } %>>
     <div class="carta-jugador__marco">
-      <!-- Silueta de escudo (viewBox 320x460): fondo con degradado, rayas sutiles y borde doble.
+      <!-- Silueta de escudo (viewBox 320x460), por capas de abajo hacia arriba:
+           fondo en diagonal (#1A1A1A → #050505) · halo verde detrás de la foto · textura de carbono ·
+           sombra interior (da grosor) · borde doble con degradado.
            #carta-escudo-recorte recorta los datos con la misma forma (en unidades 0-1 del cuerpo). -->
       <svg class="carta-jugador__silueta" viewBox="0 0 320 460" aria-hidden="true">
         <defs>
@@ -30,21 +32,43 @@
             <stop offset="0" stop-color="#39ff14" />
             <stop offset="1" stop-color="#0d5c05" />
           </linearGradient>
-          <linearGradient id="carta-escudo-fondo" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#0f1a0f" />
-            <stop offset="0.55" stop-color="#080b08" />
-            <stop offset="1" stop-color="#030403" />
+          <!-- Fondo: degradado diagonal, más claro arriba a la izquierda (de donde "viene" la luz) -->
+          <linearGradient id="carta-escudo-fondo" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#1a1a1a" />
+            <stop offset="0.5" stop-color="#0c0d0c" />
+            <stop offset="1" stop-color="#050505" />
           </linearGradient>
-          <pattern id="carta-escudo-rayas" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-            <rect width="2" height="7" fill="rgba(255, 255, 255, 0.035)" />
+          <!-- Halo verde suave detrás de la foto: separa al jugador del fondo -->
+          <radialGradient id="carta-escudo-halo" cx="210" cy="104" r="130" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#39ff14" stop-opacity="0.22" />
+            <stop offset="0.55" stop-color="#39ff14" stop-opacity="0.05" />
+            <stop offset="1" stop-color="#39ff14" stop-opacity="0" />
+          </radialGradient>
+          <!-- Fibra de carbono: tablero de 3x3 girado 45°, cuadros claros y oscuros alternados a muy baja opacidad -->
+          <pattern id="carta-escudo-rayas" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <rect width="3" height="3" fill="rgba(255, 255, 255, 0.03)" />
+            <rect x="3" y="3" width="3" height="3" fill="rgba(255, 255, 255, 0.03)" />
+            <rect x="3" width="3" height="3" fill="rgba(0, 0, 0, 0.22)" />
+            <rect y="3" width="3" height="3" fill="rgba(0, 0, 0, 0.22)" />
           </pattern>
           <path id="carta-escudo-forma" d="M14 6 L2 24 L2 300 C2 372 72 424 160 452 C248 424 318 372 318 300 L318 24 L306 6 C262 6 214 22 160 22 C106 22 58 6 14 6 Z" />
           <clipPath id="carta-escudo-recorte" clipPathUnits="objectBoundingBox">
             <use href="#carta-escudo-forma" transform="scale(0.003125 0.002174)" />
           </clipPath>
+          <!-- Sombra interior: un trazo grueso y desenfocado sobre el contorno, recortado por dentro del escudo -->
+          <clipPath id="carta-escudo-dentro">
+            <use href="#carta-escudo-forma" />
+          </clipPath>
+          <filter id="carta-escudo-difuso" x="-10%" y="-10%" width="120%" height="120%">
+            <feGaussianBlur stdDeviation="7" />
+          </filter>
         </defs>
         <use href="#carta-escudo-forma" fill="url(#carta-escudo-fondo)" />
+        <use href="#carta-escudo-forma" fill="url(#carta-escudo-halo)" />
         <use href="#carta-escudo-forma" fill="url(#carta-escudo-rayas)" />
+        <g class="carta-jugador__grosor" clip-path="url(#carta-escudo-dentro)">
+          <use href="#carta-escudo-forma" fill="none" stroke="#000" stroke-opacity="0.85" stroke-width="22" filter="url(#carta-escudo-difuso)" />
+        </g>
         <use href="#carta-escudo-forma" fill="none" stroke="url(#carta-escudo-borde)" stroke-width="3.5" stroke-linejoin="round" />
         <use href="#carta-escudo-forma" fill="none" stroke="#39ff14" stroke-opacity="0.45" stroke-width="1"
              transform="translate(10.5 15.5) scale(0.934)" />

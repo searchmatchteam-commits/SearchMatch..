@@ -91,12 +91,15 @@ async function datosInvitacion(idInvitacion) {
   return rows[0] || null;
 }
 
-/** Equipo que capitanea la cuenta (el primero creado, activo) — para los mensajes de desafíos. */
-async function equipoDeCapitan(authId) {
+/**
+ * Equipo que capitanea la cuenta — para los mensajes de desafíos. Con idEquipo, ese (si es suyo);
+ * sin él, el primero creado y activo.
+ */
+async function equipoDeCapitan(authId, idEquipo = null) {
   const { rows } = await pool.query(
     `SELECT e.id, e.nombre FROM equipo e JOIN usuario u ON u.id = e.id_usuario_creador
-      WHERE u.auth_id = $1 AND e.activo ORDER BY e.id LIMIT 1`,
-    [authId]
+      WHERE u.auth_id = $1 AND e.activo AND ($2::int IS NULL OR e.id = $2) ORDER BY e.id LIMIT 1`,
+    [authId, idEquipo]
   );
   return rows[0] || null;
 }

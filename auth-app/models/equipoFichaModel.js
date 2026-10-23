@@ -54,6 +54,8 @@ async function relacionConFicha(authId, equipo) {
                       JOIN estado_solicitud es ON es.id = s.id_estado_solicitud
                      WHERE s.id_equipo = $2 AND j.id_usuario = u.id AND lower(es.nombre) = 'pendiente') AS postulo,
             (SELECT e.id FROM equipo e WHERE e.id_usuario_creador = u.id AND e.activo AND e.id <> $2
+                -- Un capitán con varios equipos no desafía a uno propio
+                AND u.id <> (SELECT x.id_usuario_creador FROM equipo x WHERE x.id = $2)
                 AND EXISTS (SELECT 1 FROM equipo_modalidad mia JOIN equipo_modalidad suya
                               ON suya.id_modalidad = mia.id_modalidad AND suya.id_equipo = $2
                              WHERE mia.id_equipo = e.id)

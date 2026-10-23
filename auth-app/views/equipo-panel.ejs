@@ -7,57 +7,79 @@
      ya muestra el plantel actualizado. "Enviar Desafío" abre un modal (equipo.js) y se envía sin recargar.
      "Invitar jugador +" abre un modal con TODOS los jugadores (con o sin equipo, menos los del plantel) y
      "Invitar" guarda en "invitacion_equipo" sin recargar (equipo.js). -->
-<section class="eq">
+<section class="eq eq--panel">
   <div class="contenedor">
 
+    <%- include('partials/boton-volver') %>
+
     <!-- ============ ENCABEZADO DEL EQUIPO ============ -->
-    <header class="eq-cabecera revelar">
-      <div class="eq-cabecera__identidad">
-      <!-- Escudo: el capitán lo cambia aquí (equipo.js lo reduce y lo sube a POST /equipos/:id/escudo) -->
-      <div class="eq-escudo">
-        <span class="eq-escudo__imagen" data-escudo-vista><%- include('partials/escudo-equipo', { equipo }) %></span>
+    <!-- Una sola tarjeta: escudo + nombre + datos a la izquierda, chip arriba a la derecha,
+         las dos acciones principales del capitán y, debajo, enlaces secundarios de texto. -->
+    <header class="eq-hero revelar">
+      <span class="dash-chip eq-hero__chip"><span class="badge__punto" aria-hidden="true"></span><%= equipo.soyCapitan ? 'Panel del capitán' : 'Mi equipo' %></span>
+
+      <div class="eq-hero__identidad">
+        <!-- Escudo: el capitán lo cambia aquí (equipo.js lo reduce y lo sube a POST /equipos/:id/escudo) -->
+        <div class="eq-escudo eq-hero__escudo">
+          <span class="eq-escudo__imagen" data-escudo-vista><%- include('partials/escudo-equipo', { equipo }) %></span>
+          <% if (equipo.soyCapitan) { %>
+            <label class="eq-escudo__cambiar">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
+              <span class="solo-lectores">Cambiar escudo</span>
+              <input type="file" class="solo-lectores" accept="image/jpeg,image/png,image/webp"
+                     data-escudo-input data-url="/equipos/<%= equipo.id %>/escudo" />
+            </label>
+          <% } %>
+        </div>
+
+        <div class="eq-hero__texto">
+          <h1 class="eq-hero__titulo" title="<%= equipo.nombre %>"><%= equipo.nombre %></h1>
+          <ul class="eq-hero__datos">
+            <li>Comuna: <strong><%= equipo.zona || 'Sin definir' %></strong></li>
+            <li>Capitán: <strong><%= capitan ? capitan.nombre : 'Sin capitán' %></strong></li>
+            <% if (equipo.detalle) { %><li><%= equipo.detalle %></li><% } %>
+          </ul>
+        </div>
+
         <% if (equipo.soyCapitan) { %>
-          <label class="eq-escudo__cambiar">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
-            <span class="solo-lectores">Cambiar escudo</span>
-            <input type="file" class="solo-lectores" accept="image/jpeg,image/png,image/webp"
-                   data-escudo-input data-url="/equipos/<%= equipo.id %>/escudo" />
-          </label>
+          <div class="eq-hero__acciones">
+            <!-- Abre la sección "Desafiar a otro equipo" (equipo.js); sin JS solo baja hasta ella -->
+            <a class="btn btn--verde btn--grande" href="#desafiar" data-ripple="claro" data-abrir-desafios>
+              <svg class="eq-cabecera__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2" /></svg>
+              Desafiar a otro equipo
+            </a>
+            <!-- Abre el modal "Invitar jugador" (equipo.js) -->
+            <button type="button" class="btn btn--contorno btn--grande" data-abrir-invitar>
+              Invitar jugador <span aria-hidden="true">+</span>
+            </button>
+          </div>
         <% } %>
       </div>
-      <div class="eq-cabecera__texto">
-        <%- include('partials/boton-volver') %>
-        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span><%= equipo.soyCapitan ? 'Panel del capitán' : 'Mi equipo' %></span>
-        <% if (equipo.soyCapitan) { %><%- include('partials/pestanas-capitan', { activa: 'equipo' }) %><% } %>
-        <h1 class="eq-cabecera__titulo">Mi Equipo: <span class="texto-verde"><%= equipo.nombre %></span></h1>
-        <ul class="eq-cabecera__datos">
-          <li>Comuna: <strong><%= equipo.zona || 'Sin definir' %></strong></li>
-          <li>Capitán: <strong><%= capitan ? capitan.nombre : 'Sin capitán' %></strong></li>
-        </ul>
-        <% if (equipo.detalle) { %><p class="eq-cabecera__stats"><%= equipo.detalle %></p><% } %>
-      </div>
-      </div>
-      <div class="eq-cabecera__acciones">
-        <!-- NUEVO: DE-011/DE-012 desafíos, PE-009 ficha pública y PE-021 posiciones buscadas (solo el capitán) -->
-        <a class="btn btn--contorno btn--grande" href="/desafios?equipo=<%= equipo.id %>">Desafíos</a>
-        <a class="btn btn--contorno btn--grande" href="/equipos/<%= equipo.id %>">Ficha pública</a>
-        <% if (equipo.soyCapitan) { %><a class="btn btn--contorno btn--grande" href="/equipos/<%= equipo.id %>/posiciones">Posiciones que buscamos</a><% } %>
+
+      <!-- Secundarias: DE-011/DE-012 desafíos, PE-009 ficha pública y PE-021 posiciones buscadas (solo el capitán) -->
+      <nav class="eq-hero__enlaces" aria-label="Más opciones del equipo">
+        <a href="/desafios?equipo=<%= equipo.id %>">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></svg>
+          Desafíos
+        </a>
+        <a href="/equipos/<%= equipo.id %>">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
+          Ficha pública
+        </a>
         <% if (equipo.soyCapitan) { %>
-          <!-- Abre la sección "Desafiar a otro equipo" (equipo.js); sin JS solo baja hasta ella -->
-          <a class="btn btn--verde btn--grande" href="#desafiar" data-ripple="claro" data-abrir-desafios>
-            <svg class="eq-cabecera__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2" /></svg>
-            Desafiar a otro equipo
+          <a href="/equipos/<%= equipo.id %>/posiciones">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3.5" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></svg>
+            Posiciones que buscamos
           </a>
-          <!-- Abre el modal "Invitar jugador" (equipo.js) -->
-          <button type="button" class="btn btn--contorno btn--grande" data-abrir-invitar>
-            Invitar jugador <span aria-hidden="true">+</span>
-          </button>
         <% } %>
-      </div>
+      </nav>
     </header>
 
     <!-- ============ SOLICITUDES PENDIENTES (solo el capitán) ============ -->
     <% if (equipo.soyCapitan) { %>
+      <!-- Pestañas "Mi carta" / "Mi equipo": justo encima del contenido del panel -->
+      <%- include('partials/pestanas-capitan', { activa: 'equipo', clase: 'eq-vista' }) %>
+
       <section class="dash-panel eq-panel revelar" aria-labelledby="eq-solicitudes-titulo">
         <div class="dash-panel__cabecera">
           <h2 class="dash-panel__titulo" id="eq-solicitudes-titulo">Solicitudes Pendientes</h2>
@@ -141,7 +163,7 @@
                 <% if (rival.desafio) { %>
                   <button type="button" class="btn eq-club__boton" disabled><%= estadosDesafio[rival.desafio] %></button>
                 <% } else { %>
-                  <form action="/mi-equipo/desafios/<%= rival.id %>" method="POST" data-desafiar data-rival="<%= rival.nombre %>"
+                  <form action="/mi-equipo/desafios/<%= rival.id %>?equipo=<%= equipo.id %>" method="POST" data-desafiar data-rival="<%= rival.nombre %>"
                         data-comunes="<%= rival.comunes.join(',') %>">
                     <button type="submit" class="btn btn--verde eq-club__boton">Enviar Desafío</button>
                   </form>
