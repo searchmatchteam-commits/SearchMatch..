@@ -5,10 +5,8 @@
 <!-- Canchas (canchasController.listar):
      DE-002 buscar por nombre de cancha o recinto · DE-003 alternar lista y mapa
      DE-004 filtrar por región y comuna · DE-005 filtrar por modalidad (combinables).
-     Los filtros viajan en la URL (GET): funcionan sin JavaScript y se pueden compartir. -->
-<%
-  const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
-%>
+     Los filtros viajan en la URL (GET): funcionan sin JavaScript y se pueden compartir.
+     Las tarjetas solo aparecen con filtros y se dibujan por lotes ("Cargar más canchas"). -->
 <section class="eq">
   <div class="contenedor">
     <header class="eq-cabecera revelar">
@@ -65,7 +63,23 @@
         </div>
       </form>
 
-      <% if (canchas.length === 0) { %>
+      <% if (filtros.vista === 'mapa' && canchas.length > 0) { %>
+        <!-- DE-003: mapa con un marcador por recinto (Leaflet + OpenStreetMap, ver canchas-mapa.js); la lista va debajo -->
+        <div class="dash-panel eq-panel">
+          <p class="dash-panel__nota"><%= recintosMapa.length %> <%= recintosMapa.length === 1 ? 'recinto' : 'recintos' %> en el mapa · toca un marcador para ver sus canchas</p>
+          <div class="sm-mapa" id="mapa-canchas" role="region" aria-label="Mapa de recintos con canchas"></div>
+          <noscript><p class="dash-panel__nota">El mapa necesita JavaScript. Usa la vista de lista.</p></noscript>
+        </div>
+        <script type="application/json" id="datos-mapa"><%- JSON.stringify(recintosMapa).replace(/</g, '\\u003c') %></script>
+      <% } %>
+
+      <% if (!hayFiltrosActivos) { %>
+        <!-- Sin filtros no se dibujan tarjetas: con más de mil canchas la página se volvía lenta -->
+        <div class="dash-panel eq-panel sm-vacio">
+          <p class="sm-vacio__titulo">Selecciona filtros para ver las canchas disponibles</p>
+          <p class="dash-panel__nota">Elige una región, comuna o modalidad, o busca por nombre.</p>
+        </div>
+      <% } else if (totalCanchas === 0) { %>
         <!-- DE-002 / DE-004 / DE-005: sin resultados, con sugerencia y opción de limpiar -->
         <div class="dash-panel eq-panel sm-vacio">
           <p class="sm-vacio__titulo">No encontramos canchas con esos filtros</p>
@@ -76,33 +90,20 @@
           <a class="btn btn--contorno" href="/canchas?vista=<%= filtros.vista %>">Limpiar filtros</a>
         </div>
       <% } else { %>
-        <% if (filtros.vista === 'mapa') { %>
-          <!-- DE-003: mapa con un marcador por recinto (Leaflet + OpenStreetMap, ver canchas-mapa.js); la lista va debajo -->
-          <div class="dash-panel eq-panel">
-            <p class="dash-panel__nota"><%= recintosMapa.length %> <%= recintosMapa.length === 1 ? 'recinto' : 'recintos' %> en el mapa · toca un marcador para ver sus canchas</p>
-            <div class="sm-mapa" id="mapa-canchas" role="region" aria-label="Mapa de recintos con canchas"></div>
-            <noscript><p class="dash-panel__nota">El mapa necesita JavaScript. Usa la vista de lista.</p></noscript>
-          </div>
-          <script type="application/json" id="datos-mapa"><%- JSON.stringify(recintosMapa).replace(/</g, '\\u003c') %></script>
-        <% } %>
-        <!-- DE-003: lista -->
-        <p class="sm-resultados"><%= canchas.length %> <%= canchas.length === 1 ? 'cancha encontrada' : 'canchas encontradas' %></p>
-        <ul class="sm-tarjetas sm-tarjetas--grilla">
-          <% canchas.forEach(function (c) { %>
-            <li class="dash-panel sm-tarjeta">
-              <header class="sm-tarjeta__cabecera">
-                <div>
-                  <h2 class="sm-tarjeta__titulo"><a href="/canchas/<%= c.id %>"><%= c.nombre %></a></h2>
-                  <p class="sm-tarjeta__meta"><%= c.recinto %></p>
-                </div>
-                <span class="sm-precio"><%= pesos.format(c.precio) %><small>/hora</small></span>
-              </header>
-              <p class="sm-tarjeta__linea"><%= c.direccion %>, <%= c.comuna %></p>
-              <p class="sm-tarjeta__linea"><span class="sm-rol"><%= c.modalidad %> · <%= c.jugadores %> jugadores</span></p>
-              <a class="sm-tarjeta__enlace" href="/canchas/<%= c.id %>">Ver ficha y horarios →</a>
-            </li>
-          <% }) %>
+        <!-- DE-003: lista por lotes. Solo existen en el DOM las tarjetas mostradas; "Cargar más" agrega el siguiente lote (canchas-lista.js) -->
+        <p class="sm-resultados" id="resultados-canchas" aria-live="polite">
+          <%= totalCanchas %> <%= totalCanchas === 1 ? 'cancha encontrada' : 'canchas encontradas' %><% if (visibles.length < totalCanchas) { %> · mostrando <span data-mostradas><%= visibles.length %></span><% } %>
+        </p>
+        <ul class="sm-tarjetas sm-tarjetas--grilla" id="lista-canchas">
+          <%- include('_tarjetas', { canchas: visibles, inicio: 0 }) %>
         </ul>
+        <% if (visibles.length < totalCanchas) { %>
+          <div class="sm-cargar-mas">
+            <a class="btn btn--contorno" id="cargar-mas-canchas" href="<%= urlMas %>"
+               data-total="<%= totalCanchas %>" data-lote="<%= porLote %>">Cargar más canchas</a>
+          </div>
+          <script src="/js/canchas-lista.js?v=<%= versionAssets %>" defer></script>
+        <% } %>
       <% } %>
     <% } %>
   </div>

@@ -69,6 +69,8 @@
   color: var(--texto-suave);
 }
 .sm-resultados { color: var(--texto-suave); font-size: 0.9rem; }
+.sm-cargar-mas { display: flex; justify-content: center; margin-top: 8px; }
+.sm-tarjeta:focus { outline: none; } /* foco por código al cargar más; no es un control */
 
 /* Documentos legales (AR-010) */
 .sm-documento { gap: 26px; line-height: 1.65; }

@@ -29,6 +29,9 @@ const PRECIO_HORA = { min: 1, max: 1000000 };
 // Búsqueda de canchas (DE-002): mínimo de letras para buscar por nombre.
 const LARGO_MINIMO_BUSQUEDA = 3;
 
+// Lista de canchas: tarjetas por lote ("Cargar más canchas"), para no dibujar más de mil de una vez.
+const CANCHAS_POR_LOTE = 12;
+
 // Días hacia adelante que muestra la disponibilidad con reservas ocupadas (DE-006).
 const DIAS_DISPONIBILIDAD = 7;
 
@@ -41,6 +44,7 @@ module.exports = {
   LIMITES_CHILE,
   PRECIO_HORA,
   LARGO_MINIMO_BUSQUEDA,
+  CANCHAS_POR_LOTE,
   DIAS_DISPONIBILIDAD,
   ZONA_HORARIA,
 };

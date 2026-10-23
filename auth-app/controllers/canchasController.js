@@ -8,7 +8,13 @@ const canchaModel = require('../models/canchaModel');
 const disponibilidadModel = require('../models/disponibilidadModel');
 const ubicacionModel = require('../models/ubicacionModel');
 const { idValido } = require('../middlewares/validadoresAdmin');
-const { DIAS_SEMANA, LARGO_MINIMO_BUSQUEDA, DIAS_DISPONIBILIDAD, ZONA_HORARIA } = require('../config/canchas');
+const { DIAS_SEMANA, LARGO_MINIMO_BUSQUEDA, CANCHAS_POR_LOTE, DIAS_DISPONIBILIDAD, ZONA_HORARIA } = require('../config/canchas');
+
+/** Entero >= 0 de la URL (desde / mostrar); cualquier otra cosa da 0. */
+function enteroNoNegativo(valor) {
+  const numero = Number.parseInt(valor, 10);
+  return Number.isInteger(numero) && numero > 0 ? numero : 0;
+}
 
 /** Filtros de la URL, limpios. La búsqueda por nombre se ignora si es muy corta (DE-002). */
 function leerFiltros(query) {
@@ -58,17 +64,45 @@ async function listar(req, res, next) {
       const region = regiones.find((r) => r.id === filtros.idRegion);
       if (!region || !region.comunas.some((c) => c.id === filtros.idComuna)) filtros.idComuna = null;
     }
-    const [canchas, hayCanchas] = await Promise.all([canchaModel.buscarCanchas(filtros), canchaModel.hayCanchasVisibles()]);
+    // Las tarjetas solo se dibujan con al menos un filtro aplicado (un texto muy corto no cuenta).
+    const hayFiltrosActivos = Boolean(filtros.texto || filtros.idRegion || filtros.idComuna || filtros.idModalidad);
+    // Sin filtros la lista no muestra tarjetas: solo el mapa necesita la búsqueda completa.
+    const buscar = hayFiltrosActivos || filtros.vista === 'mapa';
+    const [canchas, hayCanchas] = await Promise.all([
+      buscar ? canchaModel.buscarCanchas(filtros) : [],
+      canchaModel.hayCanchasVisibles(),
+    ]);
+
+    // "Cargar más canchas" con JavaScript: devuelve solo el siguiente lote de tarjetas (sin la página).
+    if (req.query.parcial === '1') {
+      const desde = enteroNoNegativo(req.query.desde);
+      const lote = hayFiltrosActivos ? canchas.slice(desde, desde + CANCHAS_POR_LOTE) : [];
+      return res.render('canchas/_tarjetas', { canchas: lote, inicio: desde });
+    }
+
     const parametros = new URLSearchParams();
     ['textoIngresado:texto', 'idRegion:id_region', 'idComuna:id_comuna', 'idModalidad:id_modalidad'].forEach((par) => {
       const [clave, nombre] = par.split(':');
       if (filtros[clave]) parametros.set(nombre, filtros[clave]);
     });
 
+    // Sin JavaScript, "Cargar más" recarga la página con ?mostrar=N (siempre en múltiplos del lote).
+    const mostrar = Math.max(CANCHAS_POR_LOTE, Math.ceil(enteroNoNegativo(req.query.mostrar) / CANCHAS_POR_LOTE) * CANCHAS_POR_LOTE);
+    const visibles = hayFiltrosActivos ? canchas.slice(0, mostrar) : [];
+    const parametrosMas = new URLSearchParams(parametros);
+    parametrosMas.set('vista', filtros.vista);
+    parametrosMas.set('mostrar', visibles.length + CANCHAS_POR_LOTE);
+
     return res.render('canchas/index', {
       titulo: 'Canchas',
       pagina: 'equipo',
       canchas,
+      visibles,
+      totalCanchas: canchas.length,
+      porLote: CANCHAS_POR_LOTE,
+      hayFiltrosActivos,
+      // El ancla #tarjeta-N deja la vista en la primera tarjeta nueva
+      urlMas: `/canchas?${parametrosMas.toString()}#tarjeta-${visibles.length + 1}`,
       hayCanchas,
       regiones,
       modalidades,
