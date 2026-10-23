@@ -187,6 +187,25 @@
       <p class="dash-panel__nota">Estamos preparando la búsqueda de partidos por comuna y horario.</p>
     </article>
 
+    <!-- Calendario: por ahora solo la vista del mes (sin eventos); lo arma public/js/calendario.js -->
+    <article class="dash-panel dash-panel--calendario revelar" data-calendario>
+      <header class="dash-panel__cabecera">
+        <h2 class="dash-panel__titulo" data-calendario-titulo aria-live="polite">Calendario</h2>
+        <div class="sm-cal__flechas">
+          <button type="button" class="sm-cal__flecha" data-calendario-mover="-1" aria-label="Mes anterior">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6" /></svg>
+          </button>
+          <button type="button" class="sm-cal__flecha" data-calendario-mover="1" aria-label="Mes siguiente">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+          </button>
+        </div>
+      </header>
+      <div class="sm-cal__semana" aria-hidden="true">
+        <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+      </div>
+      <div class="sm-cal__dias" data-calendario-dias></div>
+    </article>
+
     <!-- Mis equipos: cada equipo se despliega con su plantel; en los que creó, "Administrar" -->
     <article class="dash-panel dash-panel--equipos revelar">
       <header class="dash-panel__cabecera">
