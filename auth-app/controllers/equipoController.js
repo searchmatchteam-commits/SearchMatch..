@@ -279,6 +279,7 @@ async function crear(req, res, next) {
     if (errores.length > 0) {
       const regiones = await ubicacionModel.listarRegionesConComunas();
       // El escudo vuelve tal cual para no tener que elegirlo otra vez.
+      return renderWizard(res, { status: 400, datos: { ...datos, escudo: escudo ? req.body.escudo : '' }, errores, paso, regiones });
     }
 
     const equipo = await equipoModel.crearEquipo(req.usuario.idAuth, datos);
