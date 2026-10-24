@@ -25,7 +25,7 @@
 
 const equipoModel = require('../models/equipoModel');
 const jugadorModel = require('../models/jugadorModel');
-const { jugadorParaVista, detectarTipoImagen } = require('./jugadorController');
+const { jugadorParaVista, detectarTipoImagen, leerEscudo } = require('./jugadorController');
 const { LONGITUD_MAXIMA_MENSAJE_SOLICITUD, leerModalidades } = require('../middlewares/validators');
 const { NIVELES, POSICIONES, ESTADISTICAS, calcularMedia } = require('../config/perfilJugador');
 const {
@@ -274,12 +274,20 @@ async function crear(req, res, next) {
     if (datos.idComuna && !(await ubicacionModel.obtenerComuna(datos.idComuna))) {
       errores.push('La comuna elegida no es válida.');
     }
+    // Escudo opcional: crear-equipo.js lo reduce y lo manda como data URL en el campo "escudo".
+    const escudo = leerEscudo(req.body.escudo);
     if (errores.length > 0) {
       const regiones = await ubicacionModel.listarRegionesConComunas();
-      return renderWizard(res, { status: 400, datos, errores, paso, regiones });
+      // El escudo vuelve tal cual para no tener que elegirlo otra vez.
     }
 
-    await equipoModel.crearEquipo(req.usuario.idAuth, datos);
+    const equipo = await equipoModel.crearEquipo(req.usuario.idAuth, datos);
+    if (escudo) {
+      // El equipo ya quedó creado: sin escudo se ve la inicial y el capitán lo sube después en /mi-equipo.
+      await equipoModel.guardarEscudo(req.usuario.idAuth, equipo.id, escudo.datos, escudo.tipo).catch((err) => {
+        console.error('⚠️  No se pudo guardar el escudo del equipo nuevo:', err.message);
+      });
+    }
     return res.redirect('/crear-equipo/listo');
   } catch (err) {
     return pasarError(err, next);
@@ -306,22 +314,42 @@ async function panel(req, res, next) {
   const idElegido = Number(req.query.equipo);
   try {
     if (req.query.equipo !== undefined && !(Number.isInteger(idElegido) && idElegido > 0)) return res.redirect('/mi-equipo');
+
+    // Sin ?equipo=: el capitán con varios equipos (o el capitán sin ninguno) elige desde la lista;
+    // con uno solo, o si solo juega en equipos ajenos, entra directo al panel.
+    if (!idElegido) {
+      const capitaneados = (await equipoModel.listarMisEquipos(req.usuario.idAuth)).filter((e) => e.soyCapitan);
+      const capitanSinEquipo = capitaneados.length === 0 && req.usuario.rolInicio === 'equipo'
+        && !(await equipoModel.obtenerMiEquipo(req.usuario.idAuth));
+      if (capitaneados.length > 1 || capitanSinEquipo) {
+        return res.render('equipos-capitan', {
+          titulo: 'Mi equipo',
+          pagina: 'equipo',
+          equipos: capitaneados,
+          aviso: AVISOS_PANEL[req.query.aviso] || null,
+        });
+      }
+    }
+
     const equipo = await equipoModel.obtenerMiEquipo(req.usuario.idAuth, idElegido || null);
     // Pidió un equipo al que no pertenece: vuelve a su equipo principal
     if (!equipo && idElegido) return res.redirect('/mi-equipo');
-    // Sin equipo: el rol "equipo" lo crea; el jugador busca uno al que unirse.
-    if (!equipo) return res.redirect(req.usuario.rolInicio === 'equipo' ? '/crear-equipo' : '/equipos');
+    // Sin equipo (el capitán sin equipos ya vio la lista vacía): el jugador busca uno al que unirse.
+    if (!equipo) return res.redirect('/equipos');
 
-    const [plantel, solicitudes, rivales, invitables] = await Promise.all([
+    const [plantel, solicitudes, rivales, invitables, equiposCapitan] = await Promise.all([
       equipoModel.listarPlantel(equipo.id),
       equipo.soyCapitan ? equipoModel.listarSolicitudesPendientes(equipo.id) : [],
       equipo.soyCapitan ? equipoModel.listarRivales(equipo.id) : [],
       equipo.soyCapitan ? equipoModel.listarJugadoresParaInvitar(equipo.id) : [],
+      // Selector para pasar de un equipo a otro (solo si capitanea más de uno)
+      equipo.soyCapitan ? equipoModel.listarMisEquipos(req.usuario.idAuth).then((lista) => lista.filter((e) => e.soyCapitan)) : [],
     ]);
     return res.render('equipo-panel', {
       titulo: 'Mi equipo',
       pagina: 'equipo',
       equipo,
+      equiposCapitan,
       plantel,
       // Una alineación por cada tipo de fútbol que juega el equipo (pestañas en la vista);
       // ?modalidad= elige la pestaña abierta (si no la juega, la primera)
@@ -423,12 +451,14 @@ async function unirse(req, res, next) {
 async function responder(req, res, next) {
   const idSolicitud = Number(req.params.id);
   const { accion } = req.params;
+  // ?equipo= (lo ponen los formularios): vuelve al panel de ese equipo y no a la lista de equipos del capitán
+  const idEquipo = idDeParametro(req.query.equipo);
   try {
     const resultado = Number.isInteger(idSolicitud) && idSolicitud > 0 && (accion === 'aceptar' || accion === 'rechazar')
       ? await equipoModel.responderSolicitud(req.usuario.idAuth, idSolicitud, accion === 'aceptar')
       : 'inexistente';
     if (resultado !== 'inexistente') await avisosEquipo.solicitudRespondida(idSolicitud, resultado); // NUEVO: NT-001 / PE-005
-    return res.redirect(`/mi-equipo?aviso=${resultado}`);
+    return res.redirect(`/mi-equipo?${idEquipo ? `equipo=${idEquipo}&` : ''}aviso=${resultado}`);
   } catch (err) {
     return pasarError(err, next);
   }
@@ -617,7 +647,7 @@ async function invitar(req, res, next) {
       : 'inexistente';
     if (resultado === 'enviada') await avisosEquipo.invitacionEnviada(idEquipo, idJugador); // NUEVO: NT-001 / PE-022
     if (quiereJson) return res.json({ resultado, mensaje: AVISOS_INVITACION[resultado] });
-    return res.redirect(`/mi-equipo?invitacion=${resultado}`);
+    return res.redirect(`/mi-equipo?${idEquipo ? `equipo=${idEquipo}&` : ''}invitacion=${resultado}`);
   } catch (err) {
     return pasarError(err, next);
   }

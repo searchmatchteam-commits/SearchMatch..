@@ -872,6 +872,11 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Fila sin desplegable (lista de equipos del capitán en /mi-equipo) */
+.dash-equipo__resumen--fija {
+  cursor: default;
+}
+
 .dash-equipo__resumen::-webkit-details-marker {
   display: none;
 }

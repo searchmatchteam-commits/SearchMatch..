@@ -83,7 +83,7 @@
         <h1 class="wizard__titulo">¡Tu equipo está listo!</h1>
         <p class="wizard__subtitulo">Ya eres el capitán de <strong><%= creado.nombre %></strong>: los jugadores ya pueden encontrarlo y pedir unirse.</p>
         <div class="ceq-club ceq-club--grande">
-          <span class="ceq-escudo"><svg viewBox="0 0 24 24" aria-hidden="true"><%- iconoEscudo %></svg></span>
+          <span class="ceq-escudo"><% if (creado.escudo) { %><img src="<%= creado.escudo %>" alt="" /><% } else { %><svg viewBox="0 0 24 24" aria-hidden="true"><%- iconoEscudo %></svg><% } %></span>
           <span class="ceq-club__texto">
             <strong class="ceq-club__nombre"><%= creado.nombre %></strong>
             <span class="ceq-club__detalle"><%= creado.detalle %></span>
@@ -92,7 +92,7 @@
         </div>
         <div class="wizard__nav">
           <a class="btn btn--oscuro btn--grande" href="/equipos">Ver equipos</a>
-          <a class="btn btn--verde btn--grande" href="/mi-equipo">Entrar al panel <span aria-hidden="true">→</span></a>
+          <a class="btn btn--verde btn--grande" href="/mi-equipo?equipo=<%= creado.id %>">Entrar al panel <span aria-hidden="true">→</span></a>
         </div>
       </div>
     <% } else { %>
@@ -103,15 +103,17 @@
           <p class="wizard__subtitulo">Nombre, escudo, zona y nivel de tu escuadra.</p>
 
           <div class="ceq-identidad">
-            <span class="ceq-escudo ceq-escudo--grande" data-escudo><svg viewBox="0 0 24 24" aria-hidden="true"><%- iconoEscudo %></svg></span>
+            <span class="ceq-escudo ceq-escudo--grande" data-escudo><% if (datos.escudo) { %><img src="<%= datos.escudo %>" alt="" /><% } else { %><svg viewBox="0 0 24 24" aria-hidden="true"><%- iconoEscudo %></svg><% } %></span>
             <span class="ceq-identidad__texto">
               <span class="ceq-etiqueta">Identidad de club</span>
               <strong class="ceq-identidad__nombre <%= datos.nombre ? '' : 'ceq-identidad__nombre--vacio' %>" data-vista-nombre><%= datos.nombre || 'Nombre del Club' %></strong>
-              <!-- El escudo es solo una vista previa: el input no tiene name, así que no se envía -->
+              <!-- El archivo no se envía: crear-equipo.js lo reduce y lo guarda como data URL en el campo oculto "escudo" -->
               <label class="ceq-subir">
                 Subir escudo
-                <input type="file" accept="image/*" class="solo-lectores" data-subir-escudo />
+                <input type="file" accept="image/png,image/jpeg,image/webp" class="solo-lectores" data-subir-escudo />
               </label>
+              <small class="campo__error" data-escudo-error></small>
+              <input type="hidden" name="escudo" value="<%= datos.escudo || '' %>" data-escudo-datos />
             </span>
             <span class="ceq-capitan">Capitán</span>
           </div>

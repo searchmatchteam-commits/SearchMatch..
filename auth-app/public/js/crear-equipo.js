@@ -2,7 +2,7 @@
 // Wizard de equipo (form[data-wizard-equipo] en views/crear-equipo.ejs):
 //  1) Muestra un paso a la vez (1: identidad, 2: configuración) y actualiza la barra de progreso.
 //  2) Valida el paso actual antes de avanzar (mismas reglas que validarEquipo en el servidor).
-//  3) Vista previa en vivo: nombre, tipo de fútbol · nivel y escudo (el escudo no se envía).
+//  3) Vista previa en vivo: nombre, tipo de fútbol · nivel y escudo (reducido y enviado en el campo oculto "escudo").
 //  Los tipos de fútbol son casillas: se puede marcar más de uno (la vista previa dice "Fútbol 7 y 11").
 //  4) Al crear: revisa los dos pasos y pone el botón en "cargando".
 // Sin JS el formulario muestra los dos pasos juntos y funciona igual (valida el servidor).
@@ -12,6 +12,40 @@ const ULTIMO_PASO_EQUIPO = 2;
 const REGEX_CORREO_EQUIPO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const NOMBRE_VACIO = 'Nombre del Club';
 const DETALLE_VACIO = 'Tipo de fútbol · Nivel';
+// El formulario viaja como urlencoded (límite de 100 KB en el servidor): el escudo debe quedar bajo esto.
+const TIPOS_ESCUDO = ['image/png', 'image/jpeg', 'image/webp'];
+const LADOS_ESCUDO = [256, 192, 128];
+const LARGO_MAXIMO_ESCUDO = 80000;
+
+/** La imagen entera dentro de un cuadrado de "lado" px, como data URL (WebP si el navegador puede; si no, PNG). */
+function escudoComoDataUrl(imagen, lado) {
+  const escala = Math.min(1, lado / Math.max(imagen.naturalWidth, imagen.naturalHeight));
+  const ancho = Math.round(imagen.naturalWidth * escala);
+  const alto = Math.round(imagen.naturalHeight * escala);
+  const canvas = document.createElement('canvas');
+  canvas.width = lado;
+  canvas.height = lado;
+  canvas.getContext('2d').drawImage(imagen, (lado - ancho) / 2, (lado - alto) / 2, ancho, alto);
+  const webp = canvas.toDataURL('image/webp', 0.85);
+  return webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/png');
+}
+
+/** Reduce el archivo hasta que quepa en el formulario; null si no se logra. */
+async function reducirEscudo(archivo) {
+  const url = URL.createObjectURL(archivo);
+  try {
+    const imagen = new Image();
+    imagen.src = url;
+    await imagen.decode();
+    for (const lado of LADOS_ESCUDO) {
+      const datos = escudoComoDataUrl(imagen, lado);
+      if (datos.length <= LARGO_MAXIMO_ESCUDO) return datos;
+    }
+    return null;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
 
 // Reglas por paso. Cada una devuelve el mensaje de error o null.
 const REGLAS_EQUIPO = {
@@ -123,19 +157,40 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('[data-vista-detalle]').textContent = detalle || DETALLE_VACIO;
   }
 
-  // Escudo: solo se muestra aquí (el input no tiene name, así que no viaja con el formulario).
-  let urlEscudo = null;
-  formulario.querySelector('[data-subir-escudo]').addEventListener('change', (evento) => {
-    const archivo = evento.target.files[0];
-    if (!archivo || !archivo.type.startsWith('image/')) return;
-    if (urlEscudo) URL.revokeObjectURL(urlEscudo);
-    urlEscudo = URL.createObjectURL(archivo);
+  // Escudo: se reduce y viaja como data URL en el campo oculto "escudo" (el input de archivo no tiene name).
+  const datosEscudo = formulario.querySelector('[data-escudo-datos]');
+  const errorEscudo = formulario.querySelector('[data-escudo-error]');
+
+  function pintarEscudo(src) {
     document.querySelectorAll('[data-escudo]').forEach((caja) => {
       const imagen = document.createElement('img');
-      imagen.src = urlEscudo;
+      imagen.src = src;
       imagen.alt = '';
       caja.replaceChildren(imagen);
     });
+  }
+
+  // Si el servidor devolvió el formulario con errores, el escudo elegido sigue en el campo oculto.
+  if (datosEscudo.value) pintarEscudo(datosEscudo.value);
+
+  formulario.querySelector('[data-subir-escudo]').addEventListener('change', async (evento) => {
+    const archivo = evento.target.files[0];
+    evento.target.value = '';
+    errorEscudo.textContent = '';
+    if (!archivo) return;
+    if (!TIPOS_ESCUDO.includes(archivo.type)) {
+      errorEscudo.textContent = 'El escudo debe ser JPG, PNG o WebP.';
+      return;
+    }
+    try {
+      const datos = await reducirEscudo(archivo);
+      if (!datos) throw new Error('demasiado grande');
+      datosEscudo.value = datos;
+      pintarEscudo(datos);
+    } catch (err) {
+      console.error('No se pudo preparar el escudo:', err);
+      errorEscudo.textContent = 'No pudimos usar esa imagen: prueba con otra.';
+    }
   });
 
   /* ---------- CORRECCIÓN: regla 11 — Región y comuna ---------- */

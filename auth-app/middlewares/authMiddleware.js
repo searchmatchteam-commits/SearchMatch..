@@ -15,7 +15,7 @@ const { crearClienteServidor } = require('../config/supabase');
 // Roles de la pantalla "¿Cómo quieres empezar?" y el siguiente paso de cada uno.
 const ROLES_INICIO = {
   jugador: '/perfil-jugador',
-  equipo: '/mi-equipo', // sin equipo todavía → /crear-equipo
+  equipo: '/mi-equipo', // sin equipo todavía → lista vacía con "Crear mi primer equipo"
 };
 
 // Cookies de la versión anterior (tokens guardados a mano). Se borran si aparecen.
