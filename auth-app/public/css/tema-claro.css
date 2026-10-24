@@ -484,6 +484,7 @@ html[data-theme="light"] #carta-escudo-rayas rect { fill: rgba(17, 24, 39, 0.05)
 html[data-theme="light"] #carta-escudo-rayas rect:nth-child(n + 3) { fill: rgba(255, 255, 255, 0.35); }
 html[data-theme="light"] .carta-jugador__grosor use { stroke-opacity: 0.22; }
 html[data-theme="light"] .carta-jugador__silueta use[stroke="#39ff14"] { stroke: #15803d; }
+html[data-theme="light"] .carta-jugador__filos { stroke: #15803d; }
 
 /* Carta: sombra neutra que sigue la silueta, sin halo verde */
 html[data-theme="light"] .carta-jugador--perfil {

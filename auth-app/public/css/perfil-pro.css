@@ -1,0 +1,1015 @@
+/* public/css/perfil-pro.css
+   /perfil en clave "cyber-gamer" (body.perfil-pro; se carga después de style.css, dashboard.css y tema-claro.css).
+   Tipografía: la misma del dashboard. Space Grotesk 700 para el título (como "Benjamin" en el saludo)
+   y el botón principal (como "Buscar partido"); Inter para todo lo demás, con etiquetas en mayúsculas
+   y tracking amplio (como el chip "Sesión activa").
+   Secciones: tokens · fondo (malla + partículas + retícula) · composición · carta 3D por capas ·
+   caída elástica · paneles de cristal · radar · botón · dock · modo liviano / movimiento reducido · modo claro.
+
+   Forma (cresta angular) y tipografía de la carta viven en carta-jugador.ejs / style.css:
+   son las mismas en el editor, las solicitudes y el plantel. Aquí solo va la escena 3D.
+
+   Carta 3D: en style.css los datos de la carta solo se corren con "translate" (paralaje plano) porque el
+   drop-shadow de la carta y el clip-path del cuerpo aplanan el 3D. Aquí se quitan esos dos "aplanadores"
+   del camino carta → marco → cuerpo → capa, y cada capa sube con translateZ:
+     fondo (silueta SVG, 0) · foil (2px) · bandera (18px) · foto (30px) · stats (40px) · nombre/posición (46px) · media (56px).
+   El resplandor y el recorte con forma de escudo pasan a las hojas (la silueta, el foil, el lustre),
+   que sí pueden llevar filter / clip-path sin aplanar a nadie más. */
+
+/* ---------- Tokens ---------- */
+.perfil-pro {
+  --pp-abismo: #050505;
+  --pp-fondo: #0a0a0a;
+  --pp-neon: #39ff14;
+  --pp-neon-rgb: 57, 255, 20;
+  --pp-plata: #c4cbc6;
+  --pp-cristal: rgba(14, 18, 15, 0.52);
+  --pp-cristal-borde: rgba(255, 255, 255, 0.09);
+  --pp-cristal-neon: rgba(var(--pp-neon-rgb), 0.28);
+  --pp-texto: rgba(196, 203, 198, 0.72);
+  --pp-titulo: "Space Grotesk", "Inter", system-ui, sans-serif;   /* = --fuente-titulo de cyber.css */
+  --pp-resorte: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --auth-fondo: var(--pp-abismo);
+  background: var(--pp-abismo);
+}
+
+/* El resplandor genérico de style.css lo reemplaza la malla */
+.perfil-pro::before {
+  display: none;
+}
+
+/* ---------- Fondo: malla de color + partículas + retícula + grano ---------- */
+.pp-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: radial-gradient(ellipse 120% 90% at 50% 0%, #0b0f0c 0%, var(--pp-abismo) 60%);
+  pointer-events: none;
+}
+
+/* Mesh gradient: cuatro manchas grandes y muy desenfocadas que derivan despacio (solo transform: GPU) */
+.pp-fondo__malla {
+  position: absolute;
+  inset: -20%;
+  filter: blur(80px);
+  opacity: 0.9;
+}
+
+.pp-fondo__malla span {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.pp-fondo__malla span:nth-child(1) {
+  left: 4%;
+  top: 8%;
+  width: 46vmax;
+  height: 46vmax;
+  background: radial-gradient(circle, rgba(16, 122, 64, 0.55), transparent 65%);
+  animation: pp-deriva-a 26s ease-in-out infinite alternate;
+}
+
+.pp-fondo__malla span:nth-child(2) {
+  right: 2%;
+  top: 0;
+  width: 40vmax;
+  height: 40vmax;
+  background: radial-gradient(circle, rgba(52, 58, 54, 0.75), transparent 65%);
+  animation: pp-deriva-b 32s ease-in-out infinite alternate;
+}
+
+.pp-fondo__malla span:nth-child(3) {
+  right: 10%;
+  bottom: 0;
+  width: 50vmax;
+  height: 50vmax;
+  background: radial-gradient(circle, rgba(6, 95, 70, 0.5), transparent 65%);
+  animation: pp-deriva-c 29s ease-in-out infinite alternate;
+}
+
+.pp-fondo__malla span:nth-child(4) {
+  left: 20%;
+  bottom: 6%;
+  width: 34vmax;
+  height: 34vmax;
+  background: radial-gradient(circle, rgba(var(--pp-neon-rgb), 0.16), transparent 65%);
+  animation: pp-deriva-a 22s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes pp-deriva-a {
+  to { transform: translate(14vw, 10vh) scale(1.15); }
+}
+
+@keyframes pp-deriva-b {
+  to { transform: translate(-16vw, 18vh) scale(0.9); }
+}
+
+@keyframes pp-deriva-c {
+  to { transform: translate(-10vw, -14vh) scale(1.2); }
+}
+
+.pp-fondo__particulas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Retícula de suelo en perspectiva, desvanecida hacia arriba */
+.pp-fondo__reticula {
+  position: absolute;
+  left: -50%;
+  right: -50%;
+  bottom: -10%;
+  height: 60%;
+  background-image:
+    linear-gradient(rgba(var(--pp-neon-rgb), 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--pp-neon-rgb), 0.09) 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform: perspective(600px) rotateX(62deg);
+  transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 75%);
+  mask-image: linear-gradient(to top, #000 0%, transparent 75%);
+}
+
+/* Grano fino: rompe el banding de los degradados grandes */
+.pp-fondo__grano {
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- Composición asimétrica: carta 40% / datos 60% ---------- */
+@media (min-width: 900px) {
+  /* Contenedor angosto (max-w-4xl: 56rem en total, 32px de margen interior): carta de 300px + datos */
+  .perfil--pro {
+    max-width: 56rem;
+    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-areas: "carta cabecera" "carta info";
+    align-items: start;
+    gap: 14px 32px;
+    padding: 24px 32px 32px;
+  }
+
+  /* La carta queda centrada en vertical frente a la columna de datos y nunca baja hasta el dock */
+  .perfil--pro .perfil__carta {
+    align-self: center;
+    top: calc(var(--alto-navbar) + 24px);
+  }
+}
+
+/* Pantallas bajas (laptops de 768px): la carta sube al inicio de la columna para no quedar bajo el dock */
+@media (min-width: 900px) and (max-height: 860px) {
+  .perfil--pro .perfil__carta {
+    align-self: start;
+    top: calc(var(--alto-navbar) + 8px);
+  }
+
+  .perfil--pro .pp-heroe {
+    padding-top: 0;
+  }
+}
+
+.perfil--pro .perfil__info {
+  gap: 16px;
+}
+
+@media (min-width: 900px) {
+  .perfil--pro .perfil__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 18px;
+  }
+
+  .perfil--pro .perfil__cabecera > :not(.perfil__volver):not(.pp-eyebrow) {
+    flex-basis: 100%;
+  }
+
+  .perfil--pro .perfil__volver {
+    margin-bottom: 0;
+  }
+}
+
+.pp-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 24px;
+}
+
+.pp-acciones .perfil__acciones {
+  margin-top: 0;
+}
+
+.pp-acciones .pp-boton {
+  flex: none;
+  padding-left: 28px;
+  padding-right: 28px;
+}
+
+/* Botón, descarga/compartir y enlaces de cuenta en filas compactas */
+.perfil--pro .perfil__acciones {
+  margin-top: 2px;
+}
+
+.perfil--pro .perfil__estado {
+  min-height: 0;
+}
+
+.perfil--pro .perfil__estado:empty {
+  display: none;
+}
+
+.pp-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 15px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pp-neon);
+  background: rgba(var(--pp-neon-rgb), 0.06);
+  border: 1px solid rgba(var(--pp-neon-rgb), 0.22);
+}
+
+.pp-eyebrow__punto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pp-neon);
+  box-shadow: 0 0 10px var(--pp-neon);
+  animation: pp-latido 1.8s ease-in-out infinite;
+}
+
+@keyframes pp-latido {
+  50% { opacity: 0.35; transform: scale(0.7); }
+}
+
+.pp-titulo {
+  font-family: var(--pp-titulo);
+  font-weight: 700;
+  font-size: clamp(2.25rem, 3.4vw, 2.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  margin: 14px 0 6px;
+  padding-bottom: 0.08em;   /* que el degradado no corte los descendentes (j, g) */
+  background: linear-gradient(100deg, #ffffff 0%, #d9ffe2 35%, var(--pp-neon) 75%, #1fae0a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 28px rgba(var(--pp-neon-rgb), 0.25));
+}
+
+.perfil-pro .perfil__subtitulo {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--pp-texto);
+}
+
+/* ---------- El héroe: escenario, sombra de suelo ---------- */
+.pp-heroe {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  padding: 4px 0 30px;
+}
+
+/* Ancho explícito: centrado por justify-items, el envoltorio se encogería y la carta (ancho en %) quedaría en 0 */
+.pp-heroe__caida {
+  width: 100%;
+}
+
+.perfil-pro .perfil__escenario {
+  width: 100%;
+  padding: 12px 0;
+}
+
+/* Sombra verde en el "suelo": respira al revés que la flotación (carta arriba → sombra chica y tenue) */
+.pp-heroe__sombra {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: min(70%, 200px);
+  height: 26px;
+  margin-left: calc(min(70%, 200px) / -2);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(var(--pp-neon-rgb), 0.55), rgba(var(--pp-neon-rgb), 0.12) 45%, transparent 70%);
+  filter: blur(10px);
+  animation: pp-sombra 5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pp-sombra {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(0.78); opacity: 0.55; }
+}
+
+/* ---------- La carta 3D ---------- */
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) {
+  width: min(100%, 300px);
+  transform-style: preserve-3d;
+  transform: perspective(1100px) rotateX(var(--rx)) rotateY(var(--ry));
+  filter: none;   /* el filter aplanaría las capas: el resplandor va en la silueta */
+  transition: transform 0.7s var(--pp-resorte);
+}
+
+.perfil-pro .carta-jugador--perfil.inclinando {
+  filter: none;
+  transition: transform 0.12s ease-out;
+}
+
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__marco,
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cuerpo,
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cabecera,
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__media {
+  transform-style: preserve-3d;
+}
+
+/* Cuerpo: sin recorte ni overflow (ambos aplanan); las capas ya caen dentro del escudo */
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cuerpo {
+  clip-path: none;
+  overflow: visible;
+}
+
+/* Borde neón que respira: el resplandor sigue la silueta del escudo */
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__silueta {
+  animation: pp-respirar 3.8s ease-in-out infinite;
+}
+
+@keyframes pp-respirar {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 4px rgba(var(--pp-neon-rgb), 0.55))
+      drop-shadow(0 0 16px rgba(var(--pp-neon-rgb), 0.25));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 8px rgba(var(--pp-neon-rgb), 0.9))
+      drop-shadow(0 0 34px rgba(var(--pp-neon-rgb), 0.5));
+  }
+}
+
+/* Capas: el paralaje ahora es profundidad real, sin el "translate" plano de style.css */
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cabecera,
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__nombre,
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__stats {
+  translate: none;
+}
+
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__bandera { transform: translateZ(18px); }
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__marca { transform: translateZ(22px); }
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__foto { transform: translateZ(30px); }
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cuerpo::before { transform: translateZ(24px); }
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__stats { transform: translateZ(40px); }
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__posicion { transform: translateZ(46px); }
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__nombre { transform: translateZ(46px); }
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__numero {
+  display: block;
+  transform: translateZ(56px);
+}
+
+/* La tipografía de la carta es la de style.css */
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__posicion {
+  color: #fff;
+  text-shadow: 0 0 calc(10 * var(--u)) rgba(var(--pp-neon-rgb), 0.6);
+}
+
+/* Lustre fijo del cuerpo: ahora se recorta solo, con la silueta */
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cuerpo::after {
+  clip-path: url(#carta-escudo-recorte);
+  transform: translateZ(1px);
+}
+
+/* Foil holográfico: un destello blanco-verde que sigue al cursor + un barrido iridiscente en diagonal
+   que se desliza con --brillo-x. Siempre un poco visible (carta "premium" en reposo), intenso al inclinar. */
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__brillo {
+  clip-path: url(#carta-escudo-recorte);
+  transform: translateZ(2px);
+  opacity: calc(0.35 + var(--brillo-op) * 0.65);
+  background:
+    radial-gradient(circle at var(--brillo-x) var(--brillo-y), rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.08) 22%, transparent 42%),
+    radial-gradient(circle at var(--brillo-x) var(--brillo-y), rgba(var(--pp-neon-rgb), 0.28), transparent 62%),
+    linear-gradient(
+      115deg,
+      transparent calc(var(--brillo-x) - 40%),
+      rgba(var(--pp-neon-rgb), 0.16) calc(var(--brillo-x) - 22%),
+      rgba(160, 255, 230, 0.2) calc(var(--brillo-x) - 12%),
+      rgba(255, 255, 255, 0.26) var(--brillo-x),
+      rgba(120, 220, 255, 0.14) calc(var(--brillo-x) + 10%),
+      transparent calc(var(--brillo-x) + 26%)
+    );
+  background-blend-mode: screen;
+  mix-blend-mode: color-dodge;
+}
+
+/* ---------- Caída elástica desde el centro superior (perfil-pro.js pone --desde-x) ---------- */
+.js .pp-heroe__caida {
+  animation: pp-caer 1.5s both;
+}
+
+.js .pp-heroe__sombra {
+  animation: pp-sombra-aparece 1.5s both, pp-sombra 5s 1.5s ease-in-out infinite;
+}
+
+@keyframes pp-caer {
+  0% {
+    transform: translate(var(--desde-x, 0px), -115vh) rotate(-8deg) scale(0.9);
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.45);
+  }
+  8% { opacity: 1; }
+  52% {
+    transform: translate(0, 0) rotate(0) scale(1.02, 0.97);
+    animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1);
+  }
+  68% {
+    transform: translate(0, -34px) rotate(1.4deg) scale(0.99, 1.01);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.4);
+  }
+  80% {
+    transform: translate(0, 0) rotate(0) scale(1.01, 0.99);
+    animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1);
+  }
+  90% {
+    transform: translate(0, -8px) rotate(-0.4deg);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.4);
+  }
+  100% { transform: none; opacity: 1; }
+}
+
+@keyframes pp-sombra-aparece {
+  0%, 40% { opacity: 0; transform: scale(0.2); }
+  52% { opacity: 1; transform: scale(1.1); }
+  68% { transform: scale(0.85); }
+  80% { transform: scale(1.04); }
+  100% { opacity: 0.9; transform: scale(1); }
+}
+
+/* La flotación de style.css arranca cuando la carta ya aterrizó */
+.js .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) {
+  animation-delay: 1.5s;
+}
+
+/* ---------- Paneles de cristal ---------- */
+.pp-panel {
+  position: relative;
+  padding: 22px 20px;
+  border-radius: 22px;
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015) 40%, rgba(var(--pp-neon-rgb), 0.04)),
+    var(--pp-cristal);
+  border: 1px solid var(--pp-cristal-borde);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 0 0 1px rgba(var(--pp-neon-rgb), 0.04),
+    0 24px 60px rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  backdrop-filter: blur(28px) saturate(150%);
+  overflow: hidden;
+  animation: pp-panel-entra 0.9s var(--curva) both;
+}
+
+.pp-panel--datos { animation-delay: 0.55s; }
+.pp-panel--radar { animation-delay: 0.7s; }
+
+@keyframes pp-panel-entra {
+  from { opacity: 0; transform: translateX(28px); }
+}
+
+/* Filo neón de 1px arriba: se enciende al centro y se apaga hacia los lados */
+.pp-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--pp-neon), transparent);
+  box-shadow: 0 0 12px 1px rgba(var(--pp-neon-rgb), 0.6);
+  opacity: 0.85;
+}
+
+/* Esquina HUD en L, arriba a la derecha */
+.pp-panel__esquina {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 16px;
+  height: 16px;
+  border-top: 1px solid var(--pp-cristal-neon);
+  border-right: 1px solid var(--pp-cristal-neon);
+}
+
+@media (min-width: 600px) {
+  .pp-panel {
+    padding: 16px 20px 18px;
+  }
+}
+
+.pp-panel__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-right: 18px;
+}
+
+.pp-panel__titulo {
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pp-neon);
+  text-shadow: 0 0 10px rgba(var(--pp-neon-rgb), 0.5);
+}
+
+.pp-panel__codigo,
+.pp-panel__media {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(196, 203, 198, 0.6);
+}
+
+.pp-panel__media strong {
+  margin-left: 8px;
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+/* Identidad */
+.pp-identidad {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  margin-bottom: 14px;
+}
+
+.pp-identidad__nombre {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.pp-identidad__apodo {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--pp-neon);
+}
+
+/* Edad · Altura · Peso como lecturas de instrumento */
+.pp-metricas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pp-metrica {
+  position: relative;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  transition: border-color 0.25s ease, transform 0.25s var(--curva), box-shadow 0.25s ease;
+}
+
+@media (min-width: 700px) {
+  .pp-metricas {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.3fr);
+  }
+}
+
+.pp-metrica--texto .pp-metrica__valor {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.pp-metrica:hover {
+  transform: translateY(-2px);
+  border-color: var(--pp-cristal-neon);
+  box-shadow: 0 0 22px rgba(var(--pp-neon-rgb), 0.12);
+}
+
+.pp-metrica dt {
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(196, 203, 198, 0.65);
+}
+
+.pp-metrica dd {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.pp-metrica__valor {
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 0 16px rgba(var(--pp-neon-rgb), 0.25);
+}
+
+.pp-metrica__unidad {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--pp-neon);
+}
+
+/* ---------- Estadísticas: radar + leyenda en dos columnas ---------- */
+.pp-estadisticas {
+  display: grid;
+  gap: 4px 24px;
+  align-items: center;
+}
+
+@media (min-width: 700px) {
+  .pp-estadisticas {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  }
+}
+
+.pp-leyenda {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.pp-leyenda__item {
+  display: grid;
+  grid-template-columns: 34px 1fr 24px;
+  align-items: center;
+  gap: 10px;
+}
+
+.pp-leyenda__sigla {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--pp-neon);
+}
+
+.pp-leyenda__nombre {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.pp-leyenda__barra {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.pp-leyenda__barra span {
+  display: block;
+  width: calc(var(--valor) * 1%);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(var(--pp-neon-rgb), 0.5), var(--pp-neon));
+  box-shadow: 0 0 8px rgba(var(--pp-neon-rgb), 0.6);
+}
+
+.pp-leyenda__valor {
+  text-align: right;
+  font-size: 0.875rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+/* ---------- Radar hexagonal 3D ---------- */
+.pp-radar {
+  --radar-rx: 22deg;
+  --radar-ry: 0deg;
+  display: grid;
+  place-items: center;
+  perspective: 900px;
+  width: 100%;
+  max-width: 240px;
+  margin: -12px auto -6px;
+}
+
+.pp-radar__svg {
+  width: 100%;
+  overflow: visible;
+  transform: rotateX(var(--radar-rx)) rotateY(var(--radar-ry));
+  transition: transform 0.6s var(--curva);
+}
+
+.pp-radar__rejilla polygon,
+.pp-radar__rejilla line {
+  fill: none;
+  stroke: rgba(196, 203, 198, 0.14);
+  stroke-width: 1;
+}
+
+.pp-radar__rejilla polygon.pp-radar__borde {
+  stroke: rgba(var(--pp-neon-rgb), 0.35);
+  fill: rgba(var(--pp-neon-rgb), 0.02);
+}
+
+.pp-radar__barrido {
+  transform-box: view-box;
+  transform-origin: 160px 160px;
+  animation: pp-girar 7s linear infinite;
+}
+
+.pp-radar__barrido path {
+  fill: rgba(var(--pp-neon-rgb), 0.07);
+}
+
+@keyframes pp-girar {
+  to { transform: rotate(360deg); }
+}
+
+.pp-radar__valores {
+  transform-box: view-box;
+  transform-origin: 160px 160px;
+  animation: pp-radar-crecer 1.1s 1.1s var(--pp-resorte) both;
+}
+
+@keyframes pp-radar-crecer {
+  from { transform: scale(0); opacity: 0; }
+}
+
+.pp-radar__prisma {
+  fill: rgba(var(--pp-neon-rgb), 0.06);
+  stroke: rgba(var(--pp-neon-rgb), 0.22);
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+
+.pp-radar__area {
+  fill: url(#pp-radar-relleno);
+}
+
+.pp-radar__linea {
+  fill: none;
+  stroke: var(--pp-neon);
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+}
+
+.pp-radar__vertice {
+  fill: #eaffe3;
+  stroke: var(--pp-neon);
+  stroke-width: 2;
+}
+
+.pp-radar__etiqueta text {
+  text-anchor: middle;
+}
+
+.pp-radar__valor {
+  font-size: 20px;
+  font-weight: 800;
+  fill: #fff;
+}
+
+.pp-radar__sigla {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  fill: var(--pp-neon);
+}
+
+.pp-nota {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(196, 203, 198, 0.6);
+}
+
+/* ---------- Botón "Editar perfil": el glow se expande y crece un 5% ---------- */
+.pp-boton {
+  position: relative;
+  font-family: var(--pp-titulo);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: 0 0 0 1px rgba(var(--pp-neon-rgb), 0.5), 0 0 18px rgba(var(--pp-neon-rgb), 0.35);
+  transition: transform 0.3s var(--pp-resorte), box-shadow 0.3s ease, background-color 0.2s ease;
+}
+
+.pp-boton:hover {
+  transform: scale(1.05);
+  box-shadow:
+    0 0 0 1px rgba(var(--pp-neon-rgb), 0.8),
+    0 0 26px rgba(var(--pp-neon-rgb), 0.6),
+    0 0 70px rgba(var(--pp-neon-rgb), 0.35);
+}
+
+.pp-boton:active {
+  transform: scale(0.98);
+}
+
+/* Encabezado y pie alineados con el contenedor de la página (56rem, 32px a los lados) */
+@media (min-width: 900px) {
+  .perfil-pro .navbar__interior,
+  .perfil-pro .pie__interior {
+    max-width: 56rem;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+/* ---------- Enlaces de la página ---------- */
+.perfil-pro .enlace-icono {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.perfil-pro .sm-perfil-enlaces a {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+/* ---------- Dock: isla de cristal; el ítem activo se eleva con un halo ---------- */
+.perfil-pro .dock {
+  background: linear-gradient(160deg, rgba(20, 26, 21, 0.62), rgba(6, 8, 6, 0.62));
+  border-color: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(var(--pp-neon-rgb), 0.06);
+}
+
+.perfil-pro .dock__item--activo {
+  transform: translateY(-7px);
+  background: radial-gradient(circle at 50% 60%, rgba(var(--pp-neon-rgb), 0.28), rgba(var(--pp-neon-rgb), 0.06) 70%);
+  box-shadow:
+    0 0 0 1px rgba(var(--pp-neon-rgb), 0.45),
+    0 0 22px rgba(var(--pp-neon-rgb), 0.45),
+    0 10px 18px rgba(0, 0, 0, 0.55);
+}
+
+.perfil-pro .dock__item--activo:hover {
+  background: radial-gradient(circle at 50% 60%, rgba(var(--pp-neon-rgb), 0.34), rgba(var(--pp-neon-rgb), 0.1) 70%);
+}
+
+.perfil-pro .dock__item--activo .dock__icono {
+  filter: drop-shadow(0 0 8px rgba(var(--pp-neon-rgb), 0.9));
+}
+
+/* El punto bajo el ícono queda como "reflejo" en la barra */
+.perfil-pro .dock__item--activo::after {
+  bottom: -9px;
+}
+
+/* ---------- Modo liviano y movimiento reducido ---------- */
+.modo-liviano .pp-fondo__malla,
+.modo-liviano .pp-fondo__particulas {
+  display: none;
+}
+
+.modo-liviano .pp-panel,
+.modo-liviano .perfil-pro .dock {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background-color: rgba(14, 18, 15, 0.92);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-fondo__malla span,
+  .pp-radar__barrido,
+  .pp-eyebrow__punto,
+  .pp-heroe__sombra,
+  .js .pp-heroe__sombra,
+  .js .pp-heroe__caida,
+  .pp-panel,
+  .pp-radar__valores,
+  .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__silueta {
+    animation: none;
+  }
+}
+
+/* ---------- Modo claro: misma escena en "laboratorio" claro; la carta conserva su 3D ---------- */
+html[data-theme="light"] .perfil-pro {
+  --pp-cristal: rgba(255, 255, 255, 0.55);
+  --pp-cristal-borde: rgba(17, 24, 39, 0.1);
+  --pp-cristal-neon: rgba(21, 128, 61, 0.35);
+  --pp-plata: #4b5563;
+  background: #eef1ef;
+}
+
+html[data-theme="light"] .pp-fondo {
+  background: radial-gradient(ellipse 120% 90% at 50% 0%, #f7faf8 0%, #e3e8e4 70%);
+}
+
+html[data-theme="light"] .pp-fondo__malla {
+  opacity: 0.45;
+}
+
+html[data-theme="light"] .pp-fondo__reticula {
+  background-image:
+    linear-gradient(rgba(21, 128, 61, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(21, 128, 61, 0.1) 1px, transparent 1px);
+}
+
+html[data-theme="light"] .pp-eyebrow,
+html[data-theme="light"] .pp-panel__titulo,
+html[data-theme="light"] .pp-identidad__apodo,
+html[data-theme="light"] .pp-metrica__unidad {
+  color: #15803d;
+  text-shadow: none;
+}
+
+html[data-theme="light"] .pp-titulo {
+  background-image: linear-gradient(100deg, #111827 0%, #1f2937 45%, #15803d 100%);
+  filter: none;
+}
+
+html[data-theme="light"] .pp-identidad__nombre,
+html[data-theme="light"] .pp-metrica__valor,
+html[data-theme="light"] .pp-leyenda__valor,
+html[data-theme="light"] .pp-panel__media strong {
+  color: #111827;
+  text-shadow: none;
+}
+
+html[data-theme="light"] .pp-panel {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 18px 44px rgba(17, 24, 39, 0.12);
+}
+
+html[data-theme="light"] .pp-metrica {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(17, 24, 39, 0.08);
+}
+
+html[data-theme="light"] .pp-metrica dt,
+html[data-theme="light"] .pp-panel__codigo,
+html[data-theme="light"] .pp-panel__media,
+html[data-theme="light"] .pp-leyenda__nombre,
+html[data-theme="light"] .pp-nota {
+  color: #6b7280;
+}
+
+html[data-theme="light"] .pp-radar__rejilla polygon,
+html[data-theme="light"] .pp-radar__rejilla line {
+  stroke: rgba(17, 24, 39, 0.14);
+}
+
+html[data-theme="light"] .pp-radar__valor {
+  fill: #111827;
+}
+
+html[data-theme="light"] .pp-radar__sigla {
+  fill: #15803d;
+}
+
+html[data-theme="light"] .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini),
+html[data-theme="light"] .perfil-pro .carta-jugador--perfil.inclinando {
+  filter: none;
+}
+
+html[data-theme="light"] .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__brillo {
+  mix-blend-mode: screen;
+}
+
+html[data-theme="light"] .perfil-pro .dock {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(17, 24, 39, 0.1);
+}
+
+html[data-theme="light"] .perfil-pro .dock__item--activo {
+  color: #15803d;
+  background: rgba(21, 128, 61, 0.12);
+  box-shadow: 0 0 0 1px rgba(21, 128, 61, 0.35), 0 10px 18px rgba(17, 24, 39, 0.15);
+}

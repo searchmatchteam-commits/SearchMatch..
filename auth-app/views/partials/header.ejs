@@ -13,8 +13,10 @@
     // Páginas "cyber-sport": sistema compartido + hoja propia de la página
     const cyber = locals.pagina === 'dashboard' || locals.pagina === 'auth' || locals.pagina === 'equipo';
     // Una sola petición a Google Fonts (cada hoja de fuentes extra bloquea el primer pintado)
-    const fuentes = 'family=Inter:wght@400;500;600;700;800;900' + (cyber ? '&family=Space+Grotesk:wght@500;600;700' : '')
-      + (locals.pagina === 'perfil' || locals.pagina === 'dashboard' ? '&family=Barlow+Condensed:wght@600;700;800' : '');
+    const fuentes = 'family=Inter:wght@400;500;600;700;800;900' + (cyber || locals.perfilPro ? '&family=Space+Grotesk:wght@500;600;700' : '')
+      + (locals.pagina === 'perfil' || locals.pagina === 'dashboard' ? '&family=Barlow+Condensed:wght@600;700;800' : '')
+      // Oswald: solo el apodo dentro de la carta de jugador (perfil, editor, solicitudes y plantel)
+      + (locals.pagina === 'perfil' || locals.pagina === 'equipo' ? '&family=Oswald:wght@700' : '');
   %>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?<%= fuentes %>&display=swap" />
   <!-- ?v= cambia en cada arranque del servidor: el navegador puede guardar los archivos en caché sin quedar desactualizado -->
@@ -39,6 +41,10 @@
   <% } %>
   <!-- Modo claro: todas sus reglas van bajo html[data-theme="light"]; va al final para ganarle a las hojas de cada página -->
   <link rel="stylesheet" href="/css/tema-claro.css?v=<%= versionAssets %>" />
+  <% if (locals.perfilPro) { %>
+    <!-- /perfil: escena "cyber-gamer" (después de tema-claro: también trae sus reglas de modo claro) -->
+    <link rel="stylesheet" href="/css/perfil-pro.css?v=<%= versionAssets %>" />
+  <% } %>
   <% if (locals.pagina === 'landing' || locals.pagina === 'dashboard') { %>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <% } %>
@@ -71,7 +77,7 @@
     })();
   </script>
 </head>
-<body class="<%= locals.pagina ? 'pagina-' + pagina : '' %>">
+<body class="<%= locals.pagina ? 'pagina-' + pagina : '' %><%= locals.perfilPro ? ' perfil-pro' : '' %>">
   <header class="navbar">
     <div class="navbar__interior">
       <a class="logo" href="/" aria-label="SearchMatch, inicio">

@@ -1,26 +1,169 @@
 <%- include('partials/header') %>
+<%
+  // Radar hexagonal de las 6 estadísticas (lienzo 320x320, centro 160,160). Se dibuja aquí para que se vea
+  // sin JS; perfil-pro.js solo lo anima y lo inclina con el mouse. Escala 0-99 (el rango de la tabla jugador).
+  const RADAR = { c: 160, r: 112, max: 99 };
+  const anguloEje = (i) => (-90 + i * 60) * Math.PI / 180;   // primer eje (RIT) arriba, sentido horario
+  const punto = (i, radio) => [
+    +(RADAR.c + radio * Math.cos(anguloEje(i))).toFixed(2),
+    +(RADAR.c + radio * Math.sin(anguloEje(i))).toFixed(2),
+  ];
+  const anillo = (fraccion) => [0, 1, 2, 3, 4, 5].map((i) => punto(i, RADAR.r * fraccion).join(',')).join(' ');
+  const verticesStats = jugador.estadisticas.map((s, i) => {
+    const valor = Number(s.valor) || 0;
+    return punto(i, RADAR.r * Math.min(valor, RADAR.max) / RADAR.max);
+  });
+  const poligonoStats = verticesStats.map((p) => p.join(',')).join(' ');
+%>
 
-<section class="perfil">
-  <!-- ============ COLUMNA IZQUIERDA: LA CARTA ============ -->
+<!-- Escena: malla de color animada + partículas geométricas (canvas, perfil-pro.js) + grano -->
+<div class="pp-fondo" aria-hidden="true">
+  <div class="pp-fondo__malla"><span></span><span></span><span></span><span></span></div>
+  <canvas class="pp-fondo__particulas" data-particulas></canvas>
+  <div class="pp-fondo__reticula"></div>
+  <div class="pp-fondo__grano"></div>
+</div>
+
+<section class="perfil perfil--pro">
+  <!-- ============ IZQUIERDA: EL HÉROE ============ -->
   <div class="perfil__carta">
-    <%- include('partials/carta-jugador', { jugador, editor: false }) %>
+    <div class="pp-heroe">
+      <!-- La caída elástica va en este envoltorio: la carta conserva su transform para el tilt -->
+      <div class="pp-heroe__caida" data-caida>
+        <%- include('partials/carta-jugador', { jugador, editor: false, tilt: 15 }) %>
+      </div>
+      <span class="pp-heroe__sombra"></span>
+    </div>
   </div>
 
-  <!-- ============ COLUMNA DERECHA: RESUMEN ============ -->
-  <!-- Encabezado aparte: en escritorio va sobre la columna derecha y la carta queda al nivel de la primera tarjeta -->
+  <!-- ============ DERECHA: LOS DATOS ============ -->
   <header class="perfil__cabecera">
     <div class="perfil__volver"><%- include('partials/boton-volver') %></div>
-    <span class="rol__eyebrow">SEARCH MATCH · PERFIL</span>
+    <span class="pp-eyebrow"><span class="pp-eyebrow__punto" aria-hidden="true"></span>Perfil de jugador</span>
     <% if (esCapitan) { %><%- include('partials/pestanas-capitan', { activa: 'carta' }) %><% } %>
-    <h1 class="perfil__titulo">Tu carta de jugador</h1>
+    <h1 class="perfil__titulo pp-titulo">Tu carta de jugador</h1>
     <p class="perfil__subtitulo">Así te verán otros jugadores al buscar partidos.</p>
   </header>
 
   <div class="perfil__info">
-    <%- include('partials/perfil-resumen', { jugador, nota: 'Tus estadísticas cambian con las valoraciones de otros jugadores después de cada partido.' /* CORRECCIÓN: regla 8 */ }) %>
+    <!-- Panel superior: identidad -->
+    <article class="pp-panel pp-panel--datos">
+      <span class="pp-panel__esquina" aria-hidden="true"></span>
+      <header class="pp-panel__cabecera">
+        <h2 class="pp-panel__titulo">Datos</h2>
+        <span class="pp-panel__codigo" aria-hidden="true">ID // <%= jugador.posicion.sigla %>-<%= String(jugador.media).padStart(2, '0') %></span>
+      </header>
 
+      <p class="pp-identidad">
+        <span class="pp-identidad__nombre"><%= jugador.nombreCompleto %></span>
+        <span class="pp-identidad__apodo">«<%= jugador.apodo %>»</span>
+      </p>
+
+      <dl class="pp-metricas">
+        <div class="pp-metrica">
+          <dt>Edad</dt>
+          <dd><span class="pp-metrica__valor"><%= jugador.edad !== null ? jugador.edad : '—' %></span><% if (jugador.edad !== null) { %><span class="pp-metrica__unidad">años</span><% } %></dd>
+        </div>
+        <div class="pp-metrica">
+          <dt>Altura</dt>
+          <dd><span class="pp-metrica__valor"><%= jugador.altura || '—' %></span><% if (jugador.altura) { %><span class="pp-metrica__unidad">cm</span><% } %></dd>
+        </div>
+        <div class="pp-metrica">
+          <dt>Peso</dt>
+          <dd><span class="pp-metrica__valor"><%= jugador.peso || '—' %></span><% if (jugador.peso) { %><span class="pp-metrica__unidad">kg</span><% } %></dd>
+        </div>
+        <div class="pp-metrica pp-metrica--texto">
+          <dt>Posiciones</dt>
+          <dd><span class="pp-metrica__valor"><%= jugador.posiciones %></span></dd>
+        </div>
+      </dl>
+    </article>
+
+    <!-- Panel inferior: radar hexagonal -->
+    <article class="pp-panel pp-panel--radar">
+      <span class="pp-panel__esquina" aria-hidden="true"></span>
+      <header class="pp-panel__cabecera">
+        <h2 class="pp-panel__titulo">Estadísticas</h2>
+        <span class="pp-panel__media">MEDIA <strong data-contar="<%= jugador.media %>"><%= jugador.media %></strong></span>
+      </header>
+
+      <!-- Radar a la izquierda, leyenda con los valores a la derecha (la leyenda es la versión accesible) -->
+      <div class="pp-estadisticas">
+      <div class="pp-radar" data-radar aria-hidden="true">
+        <svg class="pp-radar__svg" viewBox="0 0 320 320">
+          <defs>
+            <radialGradient id="pp-radar-relleno" cx="50%" cy="50%" r="50%">
+              <stop offset="0" stop-color="#39ff14" stop-opacity="0.05" />
+              <stop offset="1" stop-color="#39ff14" stop-opacity="0.38" />
+            </radialGradient>
+            <radialGradient id="pp-radar-suelo" cx="50%" cy="50%" r="50%">
+              <stop offset="0" stop-color="#39ff14" stop-opacity="0.10" />
+              <stop offset="1" stop-color="#39ff14" stop-opacity="0" />
+            </radialGradient>
+            <filter id="pp-radar-glow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="4" result="difuso" />
+              <feMerge><feMergeNode in="difuso" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+          </defs>
+
+          <circle cx="<%= RADAR.c %>" cy="<%= RADAR.c %>" r="<%= RADAR.r + 30 %>" fill="url(#pp-radar-suelo)" />
+
+          <!-- Rejilla: 4 anillos hexagonales + 6 ejes -->
+          <g class="pp-radar__rejilla">
+            <% [0.25, 0.5, 0.75, 1].forEach(function (f) { %>
+              <polygon points="<%= anillo(f) %>" class="<%= f === 1 ? 'pp-radar__borde' : '' %>" />
+            <% }) %>
+            <% [0, 1, 2, 3, 4, 5].forEach(function (i) { const p = punto(i, RADAR.r); %>
+              <line x1="<%= RADAR.c %>" y1="<%= RADAR.c %>" x2="<%= p[0] %>" y2="<%= p[1] %>" />
+            <% }) %>
+          </g>
+
+          <!-- Barrido de escáner girando sobre la rejilla -->
+          <g class="pp-radar__barrido">
+            <path d="M<%= RADAR.c %> <%= RADAR.c %> L<%= RADAR.c %> <%= RADAR.c - RADAR.r %> A<%= RADAR.r %> <%= RADAR.r %> 0 0 1 <%= punto(1, RADAR.r).join(' ') %> Z" />
+          </g>
+
+          <!-- Polígono de valores: tres copias desplazadas hacia abajo forman el "grosor" del prisma 3D -->
+          <g class="pp-radar__valores">
+            <polygon points="<%= poligonoStats %>" class="pp-radar__prisma" transform="translate(0 9)" />
+            <polygon points="<%= poligonoStats %>" class="pp-radar__prisma" transform="translate(0 6)" />
+            <polygon points="<%= poligonoStats %>" class="pp-radar__prisma" transform="translate(0 3)" />
+            <polygon points="<%= poligonoStats %>" class="pp-radar__area" />
+            <polygon points="<%= poligonoStats %>" class="pp-radar__linea" filter="url(#pp-radar-glow)" />
+            <% verticesStats.forEach(function (p) { %>
+              <circle cx="<%= p[0] %>" cy="<%= p[1] %>" r="4" class="pp-radar__vertice" filter="url(#pp-radar-glow)" />
+            <% }) %>
+          </g>
+
+          <!-- Etiquetas: sigla + valor fuera del hexágono -->
+          <% jugador.estadisticas.forEach(function (s, i) { const p = punto(i, RADAR.r + 30); %>
+            <g class="pp-radar__etiqueta" transform="translate(<%= p[0] %> <%= p[1] %>)">
+              <text class="pp-radar__valor" y="-2" data-contar="<%= s.valor %>"><%= s.valor %></text>
+              <text class="pp-radar__sigla" y="13"><%= s.sigla %></text>
+            </g>
+          <% }) %>
+        </svg>
+      </div>
+
+      <ul class="pp-leyenda">
+        <% jugador.estadisticas.forEach(function (s) { %>
+          <li class="pp-leyenda__item">
+            <span class="pp-leyenda__sigla"><%= s.sigla %></span>
+            <span class="pp-leyenda__nombre"><%= s.nombre %></span>
+            <span class="pp-leyenda__barra" aria-hidden="true"><span style="--valor: <%= Number(s.valor) || 0 %>"></span></span>
+            <span class="pp-leyenda__valor" data-contar="<%= s.valor %>"><%= s.valor %></span>
+          </li>
+        <% }) %>
+      </ul>
+      </div>
+
+      <p class="perfil__nota pp-nota">Tus estadísticas cambian con las valoraciones de otros jugadores después de cada partido.<% /* CORRECCIÓN: regla 8 */ %></p>
+    </article>
+
+    <!-- Una sola fila: botón principal + descargar / compartir -->
+    <div class="pp-acciones">
     <div class="perfil__acciones">
-      <a class="btn btn--verde btn--grande" href="/perfil/editar">
+      <a class="btn btn--verde btn--grande pp-boton" href="/perfil/editar">
         <svg class="btn__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M13.5 6.5l4 4" /></svg>
         Editar perfil
       </a>
@@ -35,6 +178,7 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5.5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="18.5" r="2.5" /><path d="M8.2 10.8l7.6-4.1M8.2 13.2l7.6 4.1" /></svg>
         Compartir carta
       </button>
+    </div>
     </div>
 
     <p class="perfil__estado" role="status" aria-live="polite" data-estado></p>

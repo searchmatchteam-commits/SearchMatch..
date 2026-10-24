@@ -228,6 +228,7 @@ async function mostrarPerfil(req, res, next) {
     return res.render('perfil', {
       titulo: 'Tu carta de jugador',
       pagina: 'perfil',
+      perfilPro: true, // escena "cyber-gamer": fondo con partículas, carta 3D por capas y radar (perfil-pro.css/js)
       jugador: jugadorParaVista(perfil, urlFoto(perfil)),
       esCapitan: equiposComoCapitan > 0,
     });

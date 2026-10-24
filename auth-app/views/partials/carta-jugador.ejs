@@ -7,6 +7,7 @@
   // data-carta: lo que perfil.js usa para dibujar la carta en un <canvas> (descargar / compartir).
   // Con mini: true (cartas del plantel en la cancha de /mi-equipo) sale solo la carta: sin el
   // escenario del tilt ni data-carta; su tamaño lo pone quien la contiene.
+  // tilt: grados máximos de inclinación (opcional; main.js usa 14 si no viene).
   const mini = Boolean(locals.mini);
   const datosCarta = {
     nombre: jugador.nombre,
@@ -20,13 +21,16 @@
 <div class="perfil__escenario">
 <% } %>
   <div class="carta-jugador carta-jugador--neon carta-jugador--perfil <%= mini ? 'carta-jugador--mini' : '' %> <%= jugador.foto ? 'carta-jugador--con-foto' : '' %>"
-       <% if (!mini) { %>data-tilt data-carta="<%= JSON.stringify(datosCarta) %>"<% } %>>
+       <% if (!mini) { %>data-tilt="<%= locals.tilt || '' %>" data-carta="<%= JSON.stringify(datosCarta) %>"<% } %>>
     <div class="carta-jugador__marco">
-      <!-- Silueta de escudo (viewBox 320x460), por capas de abajo hacia arriba:
+      <!-- Silueta de cresta angular, vertical y esbelta (viewBox 320x520, proporción ~5:8): solo rectas —
+           hombros biselados, muesca en V arriba, costados largos con muescas "navaja" y una punta afilada abajo.
+           Por capas de abajo hacia arriba:
            fondo en diagonal (#1A1A1A → #050505) · halo verde detrás de la foto · textura de carbono ·
-           sombra interior (da grosor) · borde doble con degradado.
+           sombra interior (da grosor) · borde doble con degradado · filos (chevrons y marcas en las muescas).
+           public/js/perfil.js repite el mismo path para la carta descargada.
            #carta-escudo-recorte recorta los datos con la misma forma (en unidades 0-1 del cuerpo). -->
-      <svg class="carta-jugador__silueta" viewBox="0 0 320 460" aria-hidden="true">
+      <svg class="carta-jugador__silueta" viewBox="0 0 320 520" aria-hidden="true">
         <defs>
           <linearGradient id="carta-escudo-borde" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stop-color="#39ff14" />
@@ -51,9 +55,9 @@
             <rect x="3" width="3" height="3" fill="rgba(0, 0, 0, 0.22)" />
             <rect y="3" width="3" height="3" fill="rgba(0, 0, 0, 0.22)" />
           </pattern>
-          <path id="carta-escudo-forma" d="M14 6 L2 24 L2 300 C2 372 72 424 160 452 C248 424 318 372 318 300 L318 24 L306 6 C262 6 214 22 160 22 C106 22 58 6 14 6 Z" />
+          <path id="carta-escudo-forma" d="M160 16 L194 2 L288 2 L318 32 L318 160 L308 172 L318 184 L318 404 L236 476 L178 494 L160 518 L142 494 L84 476 L2 404 L2 184 L12 172 L2 160 L2 32 L32 2 L126 2 Z" />
           <clipPath id="carta-escudo-recorte" clipPathUnits="objectBoundingBox">
-            <use href="#carta-escudo-forma" transform="scale(0.003125 0.002174)" />
+            <use href="#carta-escudo-forma" transform="scale(0.003125 0.001923)" />
           </clipPath>
           <!-- Sombra interior: un trazo grueso y desenfocado sobre el contorno, recortado por dentro del escudo -->
           <clipPath id="carta-escudo-dentro">
@@ -69,9 +73,12 @@
         <g class="carta-jugador__grosor" clip-path="url(#carta-escudo-dentro)">
           <use href="#carta-escudo-forma" fill="none" stroke="#000" stroke-opacity="0.85" stroke-width="22" filter="url(#carta-escudo-difuso)" />
         </g>
-        <use href="#carta-escudo-forma" fill="none" stroke="url(#carta-escudo-borde)" stroke-width="3.5" stroke-linejoin="round" />
-        <use href="#carta-escudo-forma" fill="none" stroke="#39ff14" stroke-opacity="0.45" stroke-width="1"
-             transform="translate(10.5 15.5) scale(0.934)" />
+        <use href="#carta-escudo-forma" fill="none" stroke="url(#carta-escudo-borde)" stroke-width="3.5" stroke-linejoin="miter" />
+        <use href="#carta-escudo-forma" fill="none" stroke="#39ff14" stroke-opacity="0.45" stroke-width="1" stroke-linejoin="miter"
+             transform="translate(9.6 15.6) scale(0.94)" />
+        <!-- Filos: chevron bajo la muesca superior, chevron sobre la punta y marcas en las muescas laterales -->
+        <path class="carta-jugador__filos" d="M146 28 L160 36 L174 28 M142 458 L160 472 L178 458 M18 172 H30 M290 172 H302"
+              fill="none" stroke="#39ff14" stroke-opacity="0.7" stroke-width="2" stroke-linecap="square" />
       </svg>
       <div class="carta-jugador__cuerpo">
         <div class="carta-jugador__cabecera">

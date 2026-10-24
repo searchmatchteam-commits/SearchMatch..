@@ -2885,7 +2885,7 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 }
 
 /* Carta del perfil: silueta de escudo dibujada en SVG (svg.carta-jugador__silueta en
-   views/partials/carta-jugador.ejs, viewBox 320x460): fondo, textura y borde doble siguen la forma.
+   views/partials/carta-jugador.ejs, viewBox 320x520): fondo, textura y borde doble siguen la forma.
    La carta mantiene esa proporción, así el SVG escala sin deformarse; el cuerpo (los datos) se recorta
    con la misma silueta (#carta-escudo-recorte, en unidades relativas: sirve a cualquier ancho).
    El resplandor es drop-shadow en la carta: sigue el contorno del escudo (un box-shadow quedaría rectangular). */
@@ -2938,11 +2938,11 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 
 .carta-jugador--perfil .carta-jugador__marco {
   position: relative;
-  aspect-ratio: 320 / 460;
+  aspect-ratio: 320 / 520;
   padding: 0;
   background: none;
   clip-path: none;
-  container-type: inline-size;   /* el cuerpo mide en cqw: el lienzo 320x460 escala con la carta */
+  container-type: inline-size;   /* el cuerpo mide en cqw: el lienzo 320x520 escala con la carta */
 }
 
 .carta-jugador__silueta {
@@ -2953,7 +2953,8 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   overflow: visible;
 }
 
-/* Datos encima de la silueta, posicionados sobre el lienzo de la silueta (320x460).
+/* Datos encima de la silueta, posicionados sobre el lienzo de la silueta (320x520).
+   Arriba media + foto (40-172), nombre (218), divisoria (276), stats en 3 filas (296-430), punta libre.
    --u = 1px del lienzo a cualquier ancho de carta: todas las medidas van en múltiplos de --u. */
 .carta-jugador--perfil .carta-jugador__cuerpo {
   --u: calc(100cqw / 320);
@@ -2962,7 +2963,9 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   padding: 0;
   background: none;
   clip-path: url(#carta-escudo-recorte);
-  font-family: "Barlow Condensed", var(--fuente);
+  /* Inter, la fuente del sitio: números y nombre muy gruesos, siglas más livianas */
+  font-family: var(--fuente);
+  font-weight: 800;
 }
 
 /* Línea divisoria entre el nombre y las stats */
@@ -2970,7 +2973,7 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   content: "";
   position: absolute;
   left: calc(52 * var(--u));
-  top: calc(254 * var(--u));
+  top: calc(276 * var(--u));
   width: calc(216 * var(--u));
   height: calc(2 * var(--u));
   background: linear-gradient(90deg, transparent, #39ff14, transparent);
@@ -3072,10 +3075,10 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 /* La media manda: grande, neón y con dos sombras — una dura y oscura desplazada (relieve que la
    despega del fondo) y un resplandor verde alrededor. */
 .carta-jugador--perfil .carta-jugador__numero {
-  font-size: calc(80 * var(--u));
-  font-weight: 900;
-  line-height: 0.85;
-  letter-spacing: calc(-2 * var(--u));
+  font-size: calc(72 * var(--u));
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: 0;
   color: #39ff14;
   text-shadow:
     0 calc(3 * var(--u)) 0 #000,
@@ -3085,9 +3088,9 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 
 .carta-jugador--perfil .carta-jugador__posicion {
   margin-top: calc(4 * var(--u));
-  font-size: calc(20 * var(--u));
+  font-size: calc(19 * var(--u));
   font-weight: 700;
-  letter-spacing: calc(3 * var(--u));
+  letter-spacing: calc(2.5 * var(--u));
   line-height: 1;
 }
 
@@ -3105,9 +3108,9 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 }
 
 .carta-jugador--perfil .carta-jugador__marca {
-  width: calc(26 * var(--u));
-  height: calc(26 * var(--u));
-  margin-top: calc(6 * var(--u));
+  width: calc(20 * var(--u));
+  height: calc(20 * var(--u));
+  margin-top: calc(4 * var(--u));
 }
 
 /* Foto de perfil con botón "Subir foto" encima */
@@ -3191,16 +3194,18 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 .carta-jugador--perfil .carta-jugador__nombre {
   position: absolute;
   left: calc(20 * var(--u));
-  top: calc(196 * var(--u));
+  top: calc(218 * var(--u));
   width: calc(280 * var(--u));
   margin: 0;
   padding: 0;
   border: 0;
   text-align: center;
   text-transform: uppercase;
-  font-size: calc(46 * var(--u));
-  font-weight: 900;
-  letter-spacing: calc(5 * var(--u));
+  /* El apodo es el único texto deportivo de la carta: Oswald 700 (su peso máximo), en mayúsculas */
+  font-family: "Oswald", "Arial Narrow", Impact, var(--fuente);
+  font-size: calc(54 * var(--u));
+  font-weight: 700;
+  letter-spacing: calc(2.5 * var(--u));
   line-height: 1;
   overflow-wrap: anywhere;
   /* Texto con degradado blanco → gris claro (metálico). Con el relleno transparente text-shadow se vería
@@ -3218,11 +3223,11 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 .carta-jugador--perfil .carta-jugador__stats {
   position: absolute;
   left: calc(56 * var(--u));
-  top: calc(266 * var(--u));
+  top: calc(296 * var(--u));
   width: calc(208 * var(--u));
-  grid-template-rows: repeat(3, calc(34 * var(--u)));
+  grid-template-rows: repeat(3, calc(40 * var(--u)));
   column-gap: calc(10 * var(--u));
-  row-gap: calc(5 * var(--u));
+  row-gap: calc(7 * var(--u));
   margin: 0;
 }
 
@@ -3230,8 +3235,8 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   justify-content: center;
   align-items: baseline;
   gap: calc(7 * var(--u));
-  height: calc(34 * var(--u));
-  line-height: calc(34 * var(--u));
+  height: calc(40 * var(--u));
+  line-height: calc(40 * var(--u));
   border-radius: calc(6 * var(--u));
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
   box-shadow: inset 0 0 0 1px rgba(57, 255, 20, 0.12);
@@ -3243,16 +3248,18 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 }
 
 .carta-jugador--perfil .carta-jugador__stats dd {
-  font-size: calc(32 * var(--u));
-  font-weight: 900;
+  font-size: calc(25 * var(--u));
+  font-weight: 800;
+  letter-spacing: calc(-0.5 * var(--u));
+  font-variant-numeric: tabular-nums;
   color: #fff;
   text-shadow: 0 calc(2 * var(--u)) 0 rgba(0, 0, 0, 0.85);
 }
 
 .carta-jugador--perfil .carta-jugador__stats dt {
-  font-size: calc(15 * var(--u));
-  font-weight: 700;
-  letter-spacing: calc(1.5 * var(--u));
+  font-size: calc(11 * var(--u));
+  font-weight: 600;
+  letter-spacing: calc(1.4 * var(--u));
   color: #39ff14;
   opacity: 0.85;
 }

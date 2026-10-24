@@ -163,9 +163,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Solo con mouse: en pantallas táctiles o con movimiento reducido la carta queda quieta.
   const conMouse = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   if (conMouse && !sinMovimiento) {
-    const INCLINACION_MAX = 14; // grados
+    const INCLINACION_MAX = 14; // grados (data-tilt="15" lo cambia para esa carta)
 
     document.querySelectorAll('[data-tilt]').forEach((carta) => {
+      const inclinacionMax = Number(carta.dataset.tilt) || INCLINACION_MAX;
       // El área que detecta el mouse es el contenedor (no cambia al inclinarse la carta).
       const zona = carta.parentElement;
 
@@ -176,8 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const rect = carta.getBoundingClientRect();
         const x = Math.min(1, Math.max(0, (evento.clientX - rect.left) / rect.width));
         const y = Math.min(1, Math.max(0, (evento.clientY - rect.top) / rect.height));
-        carta.style.setProperty('--ry', `${(x - 0.5) * 2 * INCLINACION_MAX}deg`);
-        carta.style.setProperty('--rx', `${(0.5 - y) * 2 * INCLINACION_MAX}deg`);
+        carta.style.setProperty('--ry', `${(x - 0.5) * 2 * inclinacionMax}deg`);
+        carta.style.setProperty('--rx', `${(0.5 - y) * 2 * inclinacionMax}deg`);
         carta.style.setProperty('--brillo-x', `${x * 100}%`);
         carta.style.setProperty('--brillo-y', `${y * 100}%`);
         carta.style.setProperty('--brillo-op', '1');
