@@ -1,16 +1,7 @@
-// middlewares/validadoresCuenta.js
-// Validación en el servidor de los formularios de la Fase 1 (recuperar, nueva contraseña,
-// cambiar contraseña y datos de la cuenta). Reutiliza las reglas de validators.js.
-// Cada validador deja:
-//   req.datosFormulario → los datos limpios
-//   req.erroresCampo    → { nombreDelCampo: 'mensaje' } (vacío si todo está bien)
-// y el controlador decide qué hacer (volver a mostrar el formulario con los errores marcados).
-
 const { REGEX_CORREO, errorPasswordSegura, normalizarTelefono } = require('./validators');
 
-const LONGITUD_MAXIMA_CORREO = 150; // usuario.correo / usuario.correo_secundario
+const LONGITUD_MAXIMA_CORREO = 150;
 
-/** Correo en minúsculas y sin espacios; error si falta o tiene mal formato. */
 function revisarCorreo(valor, { obligatorio = true } = {}) {
   const correo = String(valor || '').trim().toLowerCase();
   if (!correo) return { correo, error: obligatorio ? 'El correo es obligatorio.' : null };
@@ -20,7 +11,6 @@ function revisarCorreo(valor, { obligatorio = true } = {}) {
   return { correo, error: null };
 }
 
-/** AR-008 · Formulario "¿Olvidaste tu contraseña?": solo el correo. */
 function validarRecuperar(req, res, next) {
   const { correo, error } = revisarCorreo(req.body.correo);
   req.datosFormulario = { correo };
@@ -28,7 +18,6 @@ function validarRecuperar(req, res, next) {
   next();
 }
 
-/** AR-008 · Contraseña nueva (después de abrir el enlace del correo). */
 function validarNuevaPassword(req, res, next) {
   const password = req.body.password || '';
   const confirmar = req.body.confirmar_password || '';
@@ -42,7 +31,6 @@ function validarNuevaPassword(req, res, next) {
   next();
 }
 
-/** AR-009 · Cambiar contraseña: la actual, la nueva y su confirmación. */
 function validarCambioPassword(req, res, next) {
   const actual = req.body.password_actual || '';
   const nueva = req.body.password || '';
@@ -61,7 +49,6 @@ function validarCambioPassword(req, res, next) {
   next();
 }
 
-/** AR-012 · Datos de la cuenta: correo principal, secundario (opcional), teléfono y contraseña actual. */
 function validarDatosCuenta(req, res, next) {
   const principal = revisarCorreo(req.body.correo);
   const secundario = revisarCorreo(req.body.correo_secundario, { obligatorio: false });
@@ -82,7 +69,7 @@ function validarDatosCuenta(req, res, next) {
   req.datosFormulario = {
     correo: principal.correo,
     correoSecundario: secundario.correo,
-    telefono: telefono || telefonoIngresado, // inválido: se re-pinta como lo escribió
+    telefono: telefono || telefonoIngresado,
     passwordActual,
   };
   req.erroresCampo = errores;

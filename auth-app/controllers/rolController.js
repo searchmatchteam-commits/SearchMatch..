@@ -1,8 +1,3 @@
-// controllers/rolController.js
-// Onboarding: pantalla "¿Cómo quieres empezar?" (jugador o equipo).
-// El rol elegido se guarda en user_metadata.rol_inicio de Supabase Auth
-// (userModel.guardarRolInicio), así que viaja con la sesión en cualquier dispositivo.
-
 const userModel = require('../models/userModel');
 const { ROLES_INICIO } = require('../middlewares/authMiddleware');
 
@@ -15,17 +10,10 @@ function renderSeleccion(res, { status = 200, rolElegido = null, errores = [] } 
   });
 }
 
-// ---------------------------------------------------------------
-// GET /select-role → tarjetas jugador / equipo
-// ---------------------------------------------------------------
 function mostrarSeleccion(req, res) {
-  // Si ya eligió antes, su rol viene marcado (puede cambiarlo).
   return renderSeleccion(res, { rolElegido: req.usuario.rolInicio });
 }
 
-// ---------------------------------------------------------------
-// POST /select-role → guardar el rol y seguir al siguiente paso
-// ---------------------------------------------------------------
 async function guardarSeleccion(req, res, next) {
   const rol = req.body.rol;
 
@@ -48,8 +36,6 @@ async function guardarSeleccion(req, res, next) {
     return next(err);
   }
 }
-
-// El siguiente paso de cada rol está en jugadorController (wizard) y equipoController (crear equipo).
 
 module.exports = {
   mostrarSeleccion,

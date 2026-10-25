@@ -1,19 +1,10 @@
-// public/js/perfil.js
-// Página /perfil (carta de jugador). La foto se sube en /perfil/editar (editar-perfil.js).
-//  1) "Descargar carta": dibuja la carta (con la foto guardada) en un <canvas> y la descarga como PNG.
-//  2) "Compartir carta": comparte el PNG con el menú nativo del dispositivo
-//     (Web Share); si el navegador no lo permite, la descarga.
-
-// La carta descargada tiene la proporción de la silueta (320x460): 600 x 862 px.
 const ANCHO = 600;
 const ALTO = 862;
 const ESCALA = ANCHO / 320;
 const VERDE = '#39ff14';
 
-// Silueta de escudo: el mismo path que svg.carta-jugador__silueta (views/partials/carta-jugador.ejs).
 const ESCUDO = new Path2D('M14 6 L2 24 L2 300 C2 372 72 424 160 452 C248 424 318 372 318 300 L318 24 L306 6 C262 6 214 22 160 22 C106 22 58 6 14 6 Z');
 
-/** Rellena o traza la silueta en coordenadas del viewBox 320x460. */
 function conSilueta(ctx, dibujar) {
   ctx.save();
   ctx.scale(ESCALA, ESCALA);
@@ -29,7 +20,6 @@ function dibujarBandera(ctx, x, y, ancho) {
   ctx.fillRect(x, y + alto / 2, ancho, alto / 2);
   ctx.fillStyle = '#0039a6';
   ctx.fillRect(x, y, ancho / 3, alto / 2);
-  // Estrella de 5 puntas
   const cx = x + ancho / 6;
   const cy = y + alto / 4;
   const r = alto / 6;
@@ -43,7 +33,6 @@ function dibujarBandera(ctx, x, y, ancho) {
   ctx.fill();
 }
 
-/** Foto circular (recorte "cover") o la silueta por defecto. */
 function dibujarFoto(ctx, foto, cx, cy, radio) {
   ctx.save();
   ctx.beginPath();
@@ -76,9 +65,7 @@ function dibujarFoto(ctx, foto, cx, cy, radio) {
   ctx.stroke();
 }
 
-/** Dibuja la carta completa y devuelve el canvas. */
 async function dibujarCarta(datos, foto) {
-  // La fuente Inter debe estar cargada antes de escribir en el canvas.
   if (document.fonts) {
     await Promise.all([document.fonts.load('900 64px Inter'), document.fonts.load('700 28px Inter')]).catch(() => {});
   }
@@ -88,7 +75,6 @@ async function dibujarCarta(datos, foto) {
   canvas.height = ALTO;
   const ctx = canvas.getContext('2d');
 
-  // Silueta igual a la de la página: fondo con degradado, rayas a 45° y borde doble
   conSilueta(ctx, () => {
     const fondo = ctx.createLinearGradient(0, 0, 0, 460);
     fondo.addColorStop(0, '#0f1a0f');
@@ -124,7 +110,6 @@ async function dibujarCarta(datos, foto) {
     ctx.stroke(ESCUDO);
   });
 
-  // Columna izquierda: media, posición, bandera
   ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'left';
   ctx.shadowColor = 'rgba(57, 255, 20, 0.55)';
@@ -139,10 +124,8 @@ async function dibujarCarta(datos, foto) {
   ctx.fillText(datos.posicion, 58, 202);
   dibujarBandera(ctx, 58, 226, 60);
 
-  // Foto
   dibujarFoto(ctx, foto, 380, 205, 140);
 
-  // Nombre
   ctx.textAlign = 'center';
   ctx.fillStyle = '#f2f5f2';
   ctx.font = '900 64px Inter, system-ui, sans-serif';
@@ -157,7 +140,6 @@ async function dibujarCarta(datos, foto) {
   ctx.lineTo(ANCHO - 70, 422);
   ctx.stroke();
 
-  // Estadísticas: dos columnas de tres (RIT TIR PAS | REG DEF FIS)
   ctx.textAlign = 'left';
   datos.estadisticas.forEach(([sigla, valor], i) => {
     const columna = Math.floor(i / 3);
@@ -177,11 +159,10 @@ async function dibujarCarta(datos, foto) {
   ctx.lineTo(ANCHO / 2, 562);
   ctx.stroke();
 
-  // Marca
   ctx.textAlign = 'center';
   ctx.fillStyle = VERDE;
   ctx.font = '900 22px Inter, system-ui, sans-serif';
-  ctx.fillText('SEARCHMATCH', ANCHO / 2, 730); // dentro de la punta del escudo
+  ctx.fillText('SEARCHMATCH', ANCHO / 2, 730);
 
   return canvas;
 }
@@ -224,11 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
         foto.addEventListener('error', resolve, { once: true });
       });
     }
-    // Si la foto no cargó (naturalWidth 0) se dibuja la silueta
     return aBlob(await dibujarCarta(datos, foto && foto.naturalWidth ? foto : null));
   }
 
-  /* ---------- 1) Descargar ---------- */
   document.querySelector('[data-descargar]').addEventListener('click', async () => {
     try {
       descargarBlob(await generarImagen(), nombreArchivo);
@@ -238,7 +217,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  /* ---------- 2) Compartir ---------- */
   document.querySelector('[data-compartir]').addEventListener('click', async () => {
     try {
       const blob = await generarImagen();
@@ -256,7 +234,6 @@ document.addEventListener('DOMContentLoaded', () => {
         avisar('Tu navegador no permite compartir imágenes directamente: descargamos la carta para que la compartas.');
       }
     } catch (err) {
-      // AbortError = el usuario cerró el menú de compartir: no es un error.
       if (err.name !== 'AbortError') avisar('No pudimos compartir tu carta. Prueba con "Descargar carta".');
     }
   });

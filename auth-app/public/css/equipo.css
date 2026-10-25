@@ -1,8 +1,3 @@
-/* public/css/equipo.css
-   Panel del capitán (/mi-equipo) y directorio de equipos (/equipos). Se carga después de cyber.css y dashboard.css:
-   reutiliza sus tokens, los paneles de vidrio (.dash-panel), el aviso flotante y el dock.
-   Secciones: encabezado · contador y tarjetas · solicitudes · cancha y fichas del plantel · directorio · responsive. */
-
 .eq {
   padding: 40px 0 24px;
 }
@@ -13,8 +8,6 @@
   gap: 18px;
 }
 
-/* ---------- Encabezado del equipo ---------- */
-/* Escudo + nombre del equipo */
 .eq-cabecera__identidad {
   display: flex;
   align-items: center;
@@ -43,7 +36,6 @@
   text-shadow: 0 0 10px rgba(var(--verde-rgb), 0.55);
 }
 
-/* Botón de cámara del capitán, en la esquina del escudo */
 .eq-escudo__cambiar {
   position: absolute;
   right: -6px;
@@ -107,7 +99,6 @@
   color: var(--texto-suave);
 }
 
-/* Comuna y capitán */
 .eq-cabecera__datos {
   list-style: none;
   display: flex;
@@ -130,7 +121,6 @@
   stroke-linejoin: round;
 }
 
-/* ---------- Contador y tarjetas de jugador ---------- */
 .eq-contador {
   min-width: 30px;
   padding: 3px 10px;
@@ -143,14 +133,12 @@
   box-shadow: 0 0 14px rgba(var(--verde-rgb), 0.45);
 }
 
-/* "5 Jugadores" junto al título del plantel */
 .eq-total {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--texto-suave);
 }
 
-/* ---------- Solicitudes pendientes ---------- */
 .eq-solicitudes {
   list-style: none;
   display: flex;
@@ -176,7 +164,6 @@
   min-width: 0;
 }
 
-/* Mensaje del jugador al pedir unirse */
 .eq-solicitud__mensaje {
   margin-top: 6px;
   font-size: 0.85rem;
@@ -216,12 +203,8 @@
   color: var(--texto-suave);
 }
 
-/* ---------- Plantel actual: cancha táctica ---------- */
-/* La cancha es un div con relación 4:5; las líneas son divs con borde en posición absoluta
-   y los jugadores van encima, en cuatro franjas (delanteros arriba, arquero abajo). */
 .cancha {
   --linea: rgba(var(--verde-rgb), 0.3);
-  /* Las fichas se miden con el ancho de la cancha (cqi): 4 por línea caben incluso en celular */
   container-type: inline-size;
   position: relative;
   width: 100%;
@@ -236,7 +219,6 @@
   box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6);
 }
 
-/* Borde exterior, un poco hacia adentro como en una cancha real */
 .cancha__lineas {
   position: absolute;
   inset: 4%;
@@ -276,7 +258,6 @@
   transform: translate(-50%, -50%);
 }
 
-/* Áreas grandes y chicas, pegadas a cada línea de fondo */
 .cancha__area,
 .cancha__area-chica {
   left: 50%;
@@ -304,7 +285,6 @@
   bottom: -2px;
 }
 
-/* "Faltan jugadores": sutil, en la mitad de la cancha */
 .cancha__aviso {
   position: absolute;
   left: 50%;
@@ -322,7 +302,6 @@
   pointer-events: none;
 }
 
-/* Cartas del plantel: cada una centrada en su --x / --y (% de la cancha) */
 .cancha__jugadores {
   position: absolute;
   inset: 0;
@@ -334,19 +313,17 @@
   left: calc(var(--x) * 1%);
   top: calc(var(--y) * 1%);
   z-index: 1;
-  width: clamp(50px, 15cqi, 80px);   /* 5 filas de cartas caben a lo alto */
+  width: clamp(50px, 15cqi, 80px);
   transform: translate(-50%, -50%);
   border-radius: 10px;
 }
 
-/* La carta mini: sin tilt y con una sombra más liviana (puede haber 11 o más) */
 .cancha .carta-jugador--perfil {
   width: 100%;
   filter: drop-shadow(0 0 5px rgba(57, 255, 20, 0.35)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
   transition: transform 0.2s var(--curva);
 }
 
-/* El capitán arrastra: la carta entera recibe el puntero (la foto no se arrastra sola) */
 .cancha--editable .cancha__jugador {
   cursor: grab;
   touch-action: none;
@@ -374,7 +351,6 @@
   outline-offset: 3px;
 }
 
-/* "C" de capitán, en la esquina de la carta */
 .cancha__c {
   position: absolute;
   top: -4px;
@@ -391,8 +367,6 @@
   box-shadow: 0 0 10px rgba(var(--verde-rgb), 0.6);
 }
 
-/* "X" para sacar al jugador del plantel: esquina superior izquierda (la "C" va a la derecha).
-   Discreta hasta pasar el mouse por la carta; recibe clics aunque el resto de la carta no (ver arriba). */
 .cancha__sacar {
   position: absolute;
   top: -6px;
@@ -445,13 +419,11 @@
   cursor: progress;
 }
 
-/* Mientras el servidor responde, la carta se atenúa */
 .cancha__jugador--saliendo {
   opacity: 0.4;
   pointer-events: none;
 }
 
-/* ---------- Directorio de equipos (/equipos) ---------- */
 .eq-cabecera__acciones {
   display: flex;
   flex-wrap: wrap;
@@ -519,7 +491,6 @@
   display: none;
 }
 
-/* Escudo: la inicial del equipo */
 .eq-club__escudo {
   overflow: hidden;
   display: grid;
@@ -549,7 +520,6 @@
   margin-top: auto;
 }
 
-/* Solicitud enviada / ya eres parte: gris oscuro y sin clic */
 .eq-club__boton:disabled {
   color: var(--texto-suave);
   background: rgba(255, 255, 255, 0.05);
@@ -558,10 +528,8 @@
   cursor: default;
 }
 
-/* ---------- Desafiar a otro equipo (panel del capitán) ---------- */
-/* Es un <details>: la cabecera (summary) abre y cierra la lista de rivales */
 .eq-desafios {
-  scroll-margin-top: 90px; /* al bajar hasta aquí, el título no queda bajo la barra superior */
+  scroll-margin-top: 90px;
 }
 
 .eq-desafios__cabecera {
@@ -588,11 +556,10 @@
   margin-bottom: 16px;
 }
 
-/* ---------- Modal del desafío ---------- */
 .modal {
   position: fixed;
   inset: 0;
-  z-index: 100; /* sobre el dock (50) y el aviso flotante (60) */
+  z-index: 100;
   display: grid;
   place-items: center;
   padding: 16px;
@@ -660,7 +627,7 @@
   color: var(--texto);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--vidrio-borde);
-  color-scheme: dark; /* calendario y reloj nativos en oscuro */
+  color-scheme: dark;
   resize: vertical;
 }
 
@@ -686,16 +653,12 @@
   gap: 10px;
 }
 
-/* ---------- Modal "Invitar jugador" ---------- */
-/* Tarjetas tipo "manager": 1 columna en celular, 2 desde 768px.
-   Vidrio: la página se desenfoca detrás y la caja es casi negra y semitransparente. */
 .modal--vidrio {
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   background: rgba(0, 0, 0, 0.6);
 }
 
-/* Columna: cabecera, lista (la única que hace scroll) y pie */
 .modal__caja--ancha {
   display: flex;
   flex-direction: column;
@@ -713,7 +676,6 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Marco de la lista: lleva los degradados de arriba y abajo (no tapan la barra de scroll) */
 .eq-invitar__marco {
   position: relative;
   display: flex;
@@ -726,7 +688,7 @@
   content: '';
   position: absolute;
   left: 0;
-  right: 22px; /* deja libre la barra */
+  right: 22px;
   z-index: 1;
   height: 40px;
   opacity: 0;
@@ -749,8 +711,6 @@
   opacity: 1;
 }
 
-/* Lista con scroll: padding a la derecha para que las tarjetas no choquen con la barra,
-   y la barra separada del borde del modal */
 .eq-invitar__cuerpo {
   flex: 1;
   min-height: 0;
@@ -763,7 +723,6 @@
   margin-bottom: 14px;
 }
 
-/* Buscador: fondo oscuro y borde que se ilumina en verde al enfocarlo */
 .eq-buscador--chico {
   border-radius: 12px;
   background: #0d0d0d;
@@ -808,7 +767,6 @@
   transform: translateY(-2px);
 }
 
-/* OVR mayor a 70: borde verde más brillante */
 .eq-invitable--destacado {
   border-color: rgba(var(--verde-rgb), 0.35);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 0 20px rgba(var(--verde-rgb), 0.06);
@@ -822,7 +780,6 @@
   display: none;
 }
 
-/* Arriba: avatar + nombre a la izquierda, OVR a la derecha */
 .eq-invitable__cabecera {
   display: flex;
   align-items: center;
@@ -877,7 +834,6 @@
   font-style: italic;
 }
 
-/* OVR en un círculo: blanco con media normal, verde neón con brillo si es alta (> 75) */
 .eq-ovr {
   display: flex;
   flex-direction: column;
@@ -923,7 +879,6 @@
   color: rgba(var(--verde-rgb), 0.8);
 }
 
-/* Sin estadísticas: el círculo queda apagado */
 .eq-ovr--vacio {
   border-style: dashed;
   border-color: #2e2e2e;
@@ -933,7 +888,6 @@
   color: #555;
 }
 
-/* Situación del jugador: agente libre (verde) o en qué equipo(s) juega (gris azulado) */
 .eq-etiqueta {
   padding: 2px 9px;
   border-radius: 999px;
@@ -957,7 +911,6 @@
   border: 1px solid rgba(148, 163, 184, 0.25);
 }
 
-/* Barras de estadísticas (1-99): --valor llena la barra en verde neón */
 .eq-barras {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1013,13 +966,11 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Sin estadísticas: barras grises y "—" apagado */
 .eq-barras--vacias dt,
 .eq-barras--vacias .eq-barra__numero {
   color: #4a4a4a;
 }
 
-/* Botón píldora chico "+ Invitar", en la esquina inferior derecha */
 .eq-invitable__pie {
   display: flex;
   justify-content: flex-end;
@@ -1053,7 +1004,6 @@
   cursor: default;
 }
 
-/* Pie: total de resultados y "Cerrar" */
 .eq-invitar__pie {
   display: flex;
   flex: none;
@@ -1079,9 +1029,7 @@
   }
 }
 
-/* ---------- Responsive ---------- */
 @media (max-width: 479px) {
-  /* Botones de la solicitud a lo ancho, debajo del nombre */
   .eq-solicitud__acciones {
     width: 100%;
   }

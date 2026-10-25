@@ -2,8 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- PE-011 / PE-004: las solicitudes de unión que envió el jugador, con estado y fechas.
-     Las pendientes se pueden cancelar (con confirmación); después se puede volver a postular. -->
 <%
   const formatoFecha = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', dateStyle: 'medium' });
   const nombres = { pendiente: 'Pendiente', aceptada: 'Aceptada', rechazada: 'Rechazada', cancelada: 'Cancelada' };

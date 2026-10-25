@@ -1,7 +1,4 @@
 <%
-  // Fondo fijo "cyber-sport" + cursor de luz (estilos en public/css/cyber.css). Uso:
-  //   include('partials/fondo-cyber', { variante: 'perspectiva' })  → dashboard: cancha en perspectiva
-  //   include('partials/fondo-cyber', { variante: 'pizarra' })      → auth: pizarra táctica desenfocada con haz de luz
   const pizarra = variante === 'pizarra';
 %>
 <div class="cyber-fondo cyber-fondo--<%= pizarra ? 'pizarra' : 'perspectiva' %>" aria-hidden="true">
@@ -16,14 +13,12 @@
     <rect x="990" y="200" width="170" height="360" />
     <rect x="1098" y="290" width="62" height="180" />
     <path d="M210 312a96 96 0 0 1 0 136M990 312a96 96 0 0 0 0 136" />
-    <!-- Jugada táctica: pases punteados entre posiciones -->
     <path class="jugada" d="M300 520 Q420 430 520 470 T760 300 T930 380" />
     <circle class="ficha" cx="300" cy="520" r="9" />
     <circle class="ficha" cx="520" cy="470" r="9" />
     <circle class="ficha" cx="760" cy="300" r="9" />
     <circle class="ficha ficha--meta" cx="930" cy="380" r="11" />
     <% if (pizarra) { %>
-      <!-- Pizarra: segunda jugada y marcas de rivales (X) -->
       <path class="jugada" d="M180 160 Q330 250 450 210 T690 560" />
       <circle class="ficha" cx="180" cy="160" r="9" />
       <circle class="ficha" cx="450" cy="210" r="9" />
@@ -34,5 +29,4 @@
   <div class="cyber-fondo__ruido"></div>
 </div>
 
-<!-- Cursor de luz (solo escritorio, lo mueve public/js/cyber.js) -->
 <div class="cursor-luz" aria-hidden="true"><span class="cursor-luz__punto"></span></div>

@@ -2,8 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- Detalle de una cancha (adminRecintosController.detalleCancha):
-     AD-009 editar · AD-006/AD-007 desactivar o activar · AD-003 agregar horario · AD-010 eliminar horario. -->
 <%
   const advertenciaReservas = cancha.reservas_futuras > 0
     ? ` Atención: tiene ${cancha.reservas_futuras} ${cancha.reservas_futuras === 1 ? 'reserva confirmada futura' : 'reservas confirmadas futuras'}.`
@@ -45,7 +43,6 @@
     <% } %>
 
     <div class="sm-columnas">
-      <!-- AD-009: editar -->
       <div class="dash-panel eq-panel revelar">
         <header class="dash-panel__cabecera">
           <h2 class="dash-panel__titulo">Datos de la cancha</h2>
@@ -67,7 +64,6 @@
         </form>
       </div>
 
-      <!-- AD-003: agregar horario -->
       <div class="dash-panel eq-panel revelar" id="nuevo-bloque">
         <header class="dash-panel__cabecera">
           <h2 class="dash-panel__titulo">Agregar horario</h2>
@@ -105,7 +101,6 @@
       </div>
     </div>
 
-    <!-- Horario semanal: lo que verán los usuarios en la ficha de la cancha (DE-006) -->
     <div class="dash-panel eq-panel revelar" id="horario">
       <header class="dash-panel__cabecera">
         <h2 class="dash-panel__titulo">Horario semanal</h2>

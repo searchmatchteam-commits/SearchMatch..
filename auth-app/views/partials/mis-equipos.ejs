@@ -1,12 +1,3 @@
-<%
-  // Lista de "Mis equipos" (dashboard y /mis-equipos). Uso:
-  //   include('partials/mis-equipos', { misEquipos, volver: '/dashboard' })
-  // (Desde un partial, include busca junto a este archivo: por eso el escudo va sin 'partials/'.)
-  // misEquipos: [{ id, nombre, detalle, soyCapitan, plantel: [{ nombre, posicion, capitan }] }],
-  // o null si no se pudo leer. Cada equipo se despliega con su plantel (<details>, sin JS);
-  // en los que creó la cuenta (soyCapitan) aparece "Administrar" al lado; en el resto, "Salir del equipo"
-  // (dashboard.js pide confirmación). volver: a qué página regresa después de salir.
-%>
   <% if (misEquipos === null) { %>
     <p class="dash-panel__nota">No pudimos cargar tus equipos. Vuelve a intentarlo en unos minutos.</p>
   <% } else if (misEquipos.length === 0) { %>

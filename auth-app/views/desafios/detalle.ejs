@@ -2,9 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- DE-014 detalle de un desafío (desafioController.detalle): ambos equipos con su nivel, mensaje, fechas y estado.
-     DE-009/DE-010 Aceptar y Rechazar (capitán del desafiado) · DE-013 Cancelar (capitán del desafiante)
-     Programar partido (PA-001) si está aceptado y sin partido · acceso al partido si ya existe. -->
 <%
   const formatoFecha = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', dateStyle: 'long', timeStyle: 'short' });
   const nombresEstado = { pendiente: 'Pendiente', aceptado: 'Aceptado', rechazado: 'Rechazado', cancelado: 'Cancelado' };

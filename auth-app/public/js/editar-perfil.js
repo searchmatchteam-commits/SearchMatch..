@@ -1,17 +1,8 @@
-// public/js/editar-perfil.js
-// Página /perfil/editar:
-//  1) Carta en vivo: apodo, posición, estadísticas y media cambian mientras se edita el formulario.
-//  2) Foto: se recorta al centro en un cuadrado de LADO_FOTO px y se comprime a JPEG en el navegador
-//     (pesa ~100 KB). Queda pendiente hasta "Guardar cambios".
-//  3) Guardar: si la foto cambió, primero la envía (POST /perfil/foto o /perfil/foto/eliminar)
-//     y después envía el formulario normal (POST /perfil/editar).
-
 const LADO_FOTO = 600;
 const CALIDAD_JPEG = 0.85;
 const TAMANO_MAXIMO_ORIGINAL = 15 * 1024 * 1024;
 const TIPOS_FOTO = ['image/jpeg', 'image/png', 'image/webp'];
 
-/** Carga un archivo de imagen en un <img>. */
 function cargarImagen(archivo) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(archivo);
@@ -28,7 +19,6 @@ function cargarImagen(archivo) {
   });
 }
 
-/** Recorte cuadrado al centro (como "object-fit: cover") reducido a LADO_FOTO, en JPEG. */
 async function prepararFoto(archivo) {
   const imagen = await cargarImagen(archivo);
   const lado = Math.min(imagen.naturalWidth, imagen.naturalHeight);
@@ -38,7 +28,6 @@ async function prepararFoto(archivo) {
   canvas.width = salida;
   canvas.height = salida;
   const ctx = canvas.getContext('2d');
-  // Fondo oscuro: un PNG con transparencia no queda negro puro al pasar a JPEG
   ctx.fillStyle = '#151915';
   ctx.fillRect(0, 0, salida, salida);
   ctx.imageSmoothingQuality = 'high';
@@ -65,15 +54,12 @@ document.addEventListener('DOMContentLoaded', () => {
     estado.textContent = mensaje;
   }
 
-  /* ---------- 1) Carta en vivo ---------- */
   const nombreCarta = carta.querySelector('[data-carta-nombre]');
-  // La carta muestra solo el apodo
   const apodoInput = formulario.querySelector('[data-editor-apodo]');
   apodoInput.addEventListener('input', () => {
     nombreCarta.textContent = (apodoInput.value.trim() || '—').toUpperCase();
   });
 
-  // Posiciones (casillas): la carta muestra la primera marcada, igual que el servidor
   const posicionCarta = carta.querySelector('[data-carta-posicion]');
   const casillasPosicion = Array.from(formulario.querySelectorAll('input[name="posicion"]'));
   const grupoPosicion = formulario.querySelector('[data-grupo="posicion"]');
@@ -108,7 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* ---------- 2) Foto ---------- */
   const inputFoto = document.querySelector('[data-foto-input]');
   const preview = carta.querySelector('[data-foto-preview]');
   const silueta = carta.querySelector('[data-foto-silueta]');
@@ -116,8 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const textosSubir = document.querySelectorAll('[data-texto-subir], .carta-jugador__subir');
   const fotoGuardada = !preview.hidden;
 
-  let fotoPendiente = null;  // Blob JPEG listo para subir
-  let quitarFoto = false;    // el jugador quitó la foto que tenía guardada
+  let fotoPendiente = null;
+  let quitarFoto = false;
   let urlPendiente = null;
 
   function mostrarFoto(url) {
@@ -127,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
     carta.classList.toggle('carta-jugador--con-foto', Boolean(url));
     botonQuitar.hidden = !url;
     textosSubir.forEach((elemento) => {
-      // El <label> de la carta tiene un ícono: solo se cambia su último nodo de texto
       const nodo = Array.from(elemento.childNodes).reverse().find((n) => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
       if (nodo) nodo.textContent = url ? ' Cambiar foto ' : ' Subir foto ';
     });
@@ -135,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   inputFoto.addEventListener('change', async () => {
     const archivo = inputFoto.files[0];
-    inputFoto.value = ''; // permite volver a elegir el mismo archivo
+    inputFoto.value = '';
     if (!archivo) return;
     if (!TIPOS_FOTO.includes(archivo.type)) {
       avisar('Elige una imagen JPG, PNG o WebP.');
@@ -165,11 +149,9 @@ document.addEventListener('DOMContentLoaded', () => {
     avisar(fotoGuardada ? 'La foto se quitará al presionar “Guardar cambios”.' : '');
   });
 
-  /* ---------- 3) Guardar ---------- */
   const alerta = formulario.querySelector('[data-alerta-errores]');
 
   formulario.addEventListener('submit', async (evento) => {
-    // Las casillas no admiten "required" como grupo: se revisa aquí (y también en el servidor)
     if (!casillasPosicion.some((c) => c.checked)) {
       evento.preventDefault();
       const item = document.createElement('li');
@@ -183,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!fotoPendiente && !quitarFoto) {
       botonGuardar.classList.add('btn--cargando');
-      return; // envío normal del formulario
+      return;
     }
 
     evento.preventDefault();
@@ -200,12 +182,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       botonGuardar.classList.remove('btn--cargando');
-      // fetch rechaza con TypeError cuando no hay conexión
       avisar(err instanceof TypeError ? 'Sin conexión: no pudimos guardar la foto.' : err.message);
       return;
     }
 
-    // submit() no vuelve a disparar este evento: envía los datos y las estadísticas
     fotoPendiente = null;
     quitarFoto = false;
     formulario.submit();

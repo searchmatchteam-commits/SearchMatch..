@@ -1,13 +1,10 @@
 <%- include('partials/header') %>
 
 <section class="perfil">
-  <!-- ============ COLUMNA IZQUIERDA: LA CARTA ============ -->
   <div class="perfil__carta">
     <%- include('partials/carta-jugador', { jugador, editor: false }) %>
   </div>
 
-  <!-- ============ COLUMNA DERECHA: RESUMEN ============ -->
-  <!-- Encabezado aparte: en escritorio va sobre la columna derecha y la carta queda al nivel de la primera tarjeta -->
   <header class="perfil__cabecera">
     <div class="perfil__volver"><%- include('partials/boton-volver') %></div>
     <span class="rol__eyebrow">SEARCH MATCH · PERFIL</span>
@@ -16,7 +13,7 @@
   </header>
 
   <div class="perfil__info">
-    <%- include('partials/perfil-resumen', { jugador, nota: 'Tus estadísticas cambian con las valoraciones de otros jugadores después de cada partido.' /* CORRECCIÓN: regla 8 */ }) %>
+    <%- include('partials/perfil-resumen', { jugador, nota: 'Tus estadísticas cambian con las valoraciones de otros jugadores después de cada partido.'  }) %>
 
     <div class="perfil__acciones">
       <a class="btn btn--verde btn--grande" href="/perfil/editar">
@@ -38,7 +35,6 @@
 
     <p class="perfil__estado" role="status" aria-live="polite" data-estado></p>
 
-    <!-- NUEVO: AR-012 / AR-009 / AR-010 — cuenta, contraseña y documentos, siempre a mano desde el perfil -->
     <nav class="sm-perfil-enlaces" aria-label="Mi cuenta">
       <a href="/cuenta">Mi cuenta</a>
       <a href="/cuenta/contrasena">Cambiar contraseña</a>

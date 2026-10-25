@@ -1,11 +1,3 @@
-// controllers/partidoController.js
-// Partidos (Fase 7):
-//  PA-001 GET/POST /partidos/programar/:idDesafio   → programar desde un desafío aceptado
-//  AG-002 GET      /partidos/:id                    → detalle
-//  PA-005 POST     /partidos/:id/resultado          → registrar el marcador
-//  PA-007 POST     /partidos/:id/cancelar           → cancelar (motivo opcional)
-// Los permisos (capitán de alguno de los dos equipos) y las reglas 15 y 16 los valida partidoModel.
-
 const partidoModel = require('../models/partidoModel');
 const desafioModel = require('../models/desafioModel');
 const canchaModel = require('../models/canchaModel');
@@ -35,7 +27,6 @@ const AVISOS = {
   'marcador-invalido': 'Ingresa ambos marcadores como números enteros desde 0.',
 };
 
-/** Mensaje "no disponible" (NT-004: el elemento ya no existe). */
 function noDisponible(res) {
   return res.status(404).render('mensaje', {
     titulo: 'Partido no disponible',
@@ -44,8 +35,6 @@ function noDisponible(res) {
     enlace: { href: '/agenda', texto: 'Ir a mi agenda' },
   });
 }
-
-/* ---------- PA-001 · Programar ---------- */
 
 async function renderProgramar(req, res, desafio, { status = 200, datos = {}, erroresCampo = {}, error = null } = {}) {
   const [modalidades, canchas] = await Promise.all([canchaModel.listarModalidades(), canchaModel.buscarCanchas({})]);
@@ -62,7 +51,6 @@ async function renderProgramar(req, res, desafio, { status = 200, datos = {}, er
   });
 }
 
-/** El desafío solo si la cuenta es capitán de uno de los dos equipos (si no, null). */
 async function desafioDelCapitan(req) {
   const idDesafio = idValido(req.params.idDesafio);
   const desafio = idDesafio ? await desafioModel.obtener(idDesafio) : null;
@@ -74,7 +62,6 @@ async function desafioDelCapitan(req) {
   return a === 'capitan' || b === 'capitan' ? desafio : null;
 }
 
-// GET /partidos/programar/:idDesafio
 async function formularioProgramar(req, res, next) {
   try {
     const desafio = await desafioDelCapitan(req);
@@ -86,7 +73,6 @@ async function formularioProgramar(req, res, next) {
   }
 }
 
-// POST /partidos/programar/:idDesafio
 async function programar(req, res, next) {
   try {
     const desafio = await desafioDelCapitan(req);
@@ -107,9 +93,6 @@ async function programar(req, res, next) {
   }
 }
 
-/* ---------- AG-002 · Detalle ---------- */
-
-// GET /partidos/:id
 async function detalle(req, res, next) {
   try {
     const idPartido = idValido(req.params.id);
@@ -137,9 +120,6 @@ async function detalle(req, res, next) {
   }
 }
 
-/* ---------- PA-005 · Resultado ---------- */
-
-// POST /partidos/:id/resultado
 async function registrarResultado(req, res, next) {
   const idPartido = idValido(req.params.id);
   try {
@@ -148,7 +128,6 @@ async function registrarResultado(req, res, next) {
     const resultado = await partidoModel.registrarResultado(req.usuario.idAuth, idPartido, req.datosFormulario);
     if (resultado === 'inexistente') return noDisponible(res);
     if (resultado === 'registrado') {
-      // PA-005: se avisa al capitán del OTRO equipo (el que no registró) con el marcador.
       const partido = await partidoModel.obtener(idPartido);
       const texto = `Resultado registrado: ${partido.desafiante} ${partido.marcador_desafiante} – ${partido.marcador_desafiado} ${partido.desafiado}.`;
       const registroDesafiante = (await desafioModel.relacionConEquipo(req.usuario.idAuth, partido.id_equipo_desafiante)) === 'capitan';
@@ -161,9 +140,6 @@ async function registrarResultado(req, res, next) {
   }
 }
 
-/* ---------- PA-007 · Cancelar ---------- */
-
-// POST /partidos/:id/cancelar
 async function cancelar(req, res, next) {
   const idPartido = idValido(req.params.id);
   const motivo = String(req.body.motivo || '').trim().slice(0, 200);

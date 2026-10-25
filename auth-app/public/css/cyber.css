@@ -1,12 +1,3 @@
-/* public/css/cyber.css
-   Sistema de diseño "cyber-sport" compartido por las páginas rediseñadas
-   (dashboard, panel del equipo, login y registro). Se carga después de style.css y antes de la hoja de cada página.
-   Secciones: tokens · base · fondo (aurora, cancha táctica, haz de luz, ruido) ·
-   cursor de luz · ripple.
-   Rendimiento: lo que se anima en bucle usa solo transform y opacity (GPU), ningún elemento
-   usa backdrop-filter (ver la nota de --vidrio) y las animaciones se pausan durante el scroll. */
-
-/* ---------- Tokens ---------- */
 .pagina-dashboard,
 .pagina-equipo,
 .pagina-auth {
@@ -21,10 +12,6 @@
   --sobre-verde: #00160a;
   --texto: #f3f7f3;
   --texto-suave: #98a398;
-  /* Vidrio sin backdrop-filter: el fondo detrás de los paneles está animado (aurora, haz),
-     y un desenfoque encima obliga a recalcularlo en cada cuadro y en cada scroll (lag).
-     Sobre un fondo casi negro el blur casi no se nota, así que el efecto cristal sale
-     del degradado translúcido, el borde fino y el brillo interior. */
   --vidrio: linear-gradient(160deg, rgba(20, 28, 20, 0.84), rgba(7, 10, 7, 0.8));
   --vidrio-borde: rgba(255, 255, 255, 0.08);
   --sombra-panel: 0 24px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -34,8 +21,6 @@
   background: var(--fondo);
 }
 
-/* ---------- Base ---------- */
-/* El fondo cyber reemplaza a los resplandores y líneas genéricos de style.css */
 .pagina-dashboard::before,
 .pagina-equipo::before,
 .pagina-auth::before,
@@ -43,7 +28,6 @@
   display: none;
 }
 
-/* Navbar sin desenfoque: la aurora animada pasa justo detrás y lo obligaría a re-desenfocar cada cuadro */
 .pagina-dashboard .navbar,
 .pagina-equipo .navbar,
 .pagina-auth .navbar {
@@ -60,21 +44,19 @@
   border-top-color: rgba(255, 255, 255, 0.05);
 }
 
-/* ---------- Fondo: views/partials/fondo-cyber.ejs ---------- */
 .cyber-fondo {
   position: fixed;
   inset: 0;
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
-  contain: strict;           /* nada de adentro obliga a recalcular el resto de la página */
-  transform: translateZ(0);  /* capa propia: al hacer scroll solo se mueve el contenido encima */
+  contain: strict;
+  transform: translateZ(0);
   background:
     radial-gradient(ellipse 120% 70% at 50% 120%, rgba(var(--verde-rgb), 0.06), transparent 60%),
     linear-gradient(180deg, var(--fondo) 0%, var(--fondo-verde) 100%);
 }
 
-/* Aurora verde que se desplaza muy lento */
 .cyber-fondo__aurora {
   position: absolute;
   top: -35vh;
@@ -93,7 +75,6 @@
   to { transform: translate3d(-18vw, 8vh, 0) rotate(6deg) scale(1.15); }
 }
 
-/* Cancha táctica (líneas, jugada punteada y fichas) */
 .cyber-fondo__cancha {
   position: absolute;
   fill: none;
@@ -124,7 +105,6 @@
   stroke-width: 2.5;
 }
 
-/* Dashboard: cancha en perspectiva, como una pizarra que se pierde en la oscuridad */
 .cyber-fondo--perspectiva .cyber-fondo__cancha {
   left: 50%;
   bottom: -12vh;
@@ -134,22 +114,20 @@
   transform-origin: 50% 100%;
   -webkit-mask-image: linear-gradient(to top, #000 10%, transparent 75%);
   mask-image: linear-gradient(to top, #000 10%, transparent 75%);
-  will-change: transform;    /* capa propia: la perspectiva y la máscara se pintan una sola vez */
+  will-change: transform;
 }
 
-/* Auth: pizarra táctica vista desde arriba, desenfocada (es estática: el blur se pinta una sola vez) */
 .cyber-fondo--pizarra .cyber-fondo__cancha {
   inset: -6%;
   width: 112%;
   height: 112%;
   stroke: rgba(var(--verde-rgb), 0.13);
   filter: blur(2px);
-  will-change: transform;    /* capa propia: el blur no se repinta cuando se mueve el haz */
+  will-change: transform;
   -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, #000 30%, transparent 85%);
   mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, #000 30%, transparent 85%);
 }
 
-/* Haz de luz verde que barre la pizarra en diagonal (solo transform y opacity) */
 .cyber-fondo__haz {
   position: absolute;
   top: -50%;
@@ -174,7 +152,6 @@
   100% { transform: translate3d(40vw, 0, 0) rotate(24deg); opacity: 0.6; }
 }
 
-/* Ruido estático: textura de grano que da profundidad (no se anima) */
 .cyber-fondo__ruido {
   position: absolute;
   inset: 0;
@@ -182,7 +159,6 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* ---------- Cursor de luz (solo escritorio: cyber.js agrega html.cursor-luz-activo) ---------- */
 .cursor-luz {
   display: none;
 }
@@ -206,7 +182,6 @@ html.cursor-luz-activo .cursor-luz {
   will-change: transform;
 }
 
-/* Foco de luz grande y tenue alrededor del cursor */
 html.cursor-luz-activo .cursor-luz::before {
   content: "";
   position: absolute;
@@ -231,7 +206,6 @@ html.cursor-luz-activo .cursor-luz::before {
   box-shadow: 0 0 8px var(--verde);
 }
 
-/* El anillo crece sobre botones y enlaces (escala dentro de un hijo para no pisar el transform del JS) */
 .cursor-luz::after {
   content: "";
   position: absolute;
@@ -252,7 +226,6 @@ html.cursor-luz-activo .cursor-luz::before {
   opacity: 1;
 }
 
-/* ---------- Ripple (cyber.js crea una .ripple dentro de .ripple-capa) ---------- */
 .ripple-capa {
   position: absolute;
   inset: 0;
@@ -271,7 +244,6 @@ html.cursor-luz-activo .cursor-luz::before {
   animation: cyber-ripple 0.65s ease-out forwards;
 }
 
-/* Sobre botones verdes la onda es blanca */
 [data-ripple="claro"] .ripple {
   background: radial-gradient(circle, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 70%);
 }
@@ -283,8 +255,6 @@ html.cursor-luz-activo .cursor-luz::before {
   }
 }
 
-/* ---------- Scroll fluido (cyber.js agrega html.desplazando mientras dura el scroll) ---------- */
-/* Las animaciones decorativas se congelan donde están y siguen al soltar: la GPU queda libre para el scroll */
 html.desplazando .cyber-fondo__aurora,
 html.desplazando .cyber-fondo__haz,
 html.desplazando .dash-particula,
@@ -296,13 +266,10 @@ html.desplazando .auth__filo::after {
   animation-play-state: paused;
 }
 
-/* El foco grande del cursor no acompaña al scroll */
 html.desplazando .cursor-luz {
   opacity: 0;
 }
 
-/* ---------- Modo liviano (html.modo-liviano: navegador sin aceleración gráfica o ?liviano=1) ---------- */
-/* Se mantiene el diseño (colores, vidrio, bordes, glow estático) y se apaga lo que cuesta dibujar */
 html.modo-liviano .cyber-fondo__aurora,
 html.modo-liviano .cyber-fondo__haz,
 html.modo-liviano .dash-orbita,
@@ -319,7 +286,7 @@ html.modo-liviano .cursor-luz {
 }
 
 html.modo-liviano .cyber-fondo--pizarra .cyber-fondo__cancha {
-  filter: none;              /* el desenfoque por software es de lo más caro */
+  filter: none;
   opacity: 0.6;
 }
 

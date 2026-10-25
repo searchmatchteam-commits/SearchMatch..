@@ -2,12 +2,9 @@
 
 <%- include('partials/fondo-cyber', { variante: 'perspectiva' }) %>
 <%
-  // Texto del botón cuando ya no se puede pedir unirse
   const estados = { capitan: 'Eres el capitán', miembro: 'Ya eres parte', pendiente: 'Solicitud enviada ✓' };
 %>
 
-<!-- Directorio de equipos. Datos de la tabla "equipo";
-     "Solicitar unirme" guarda una fila pendiente en solicitud_union_equipo (equipo.js lo envía sin recargar). -->
 <section class="eq">
   <div class="contenedor">
     <header class="eq-cabecera revelar">
@@ -17,24 +14,21 @@
         <p class="eq-cabecera__stats">Encuentra un equipo cerca de ti y envía tu solicitud</p>
       </div>
       <div class="eq-cabecera__acciones">
-        <a class="btn btn--contorno btn--grande" href="/solicitudes">Mis solicitudes</a><%# NUEVO: PE-011 %>
+        <a class="btn btn--contorno btn--grande" href="/solicitudes">Mis solicitudes</a>
         <% if (tieneEquipo) { %>
           <a class="btn btn--contorno btn--grande" href="/mis-equipos">Mis equipos</a>
         <% } %>
         <% if (puedeCrear) { %>
-          <!-- Quien crea el equipo queda como su capitán (cada cuenta crea uno) -->
           <a class="btn btn--verde btn--grande" href="/crear-equipo">
             <span aria-hidden="true">+</span> Crear equipo
           </a>
         <% } %>
-        <%# CORRECCIÓN: regla 5 — si no puede crear más equipos, se explica el límite (antes solo se ocultaba el botón) %>
         <% if (locals.avisoLimite) { %>
           <p class="sm-aviso-limite" role="note"><%= avisoLimite %></p>
         <% } %>
       </div>
     </header>
 
-    <%# NUEVO: PE-021 — equipos que buscan jugadores, con las posiciones y el nivel %>
     <%- include('partials/sm-equipos-buscan', { equiposQueBuscan: locals.equiposQueBuscan || [] }) %>
 
     <% if (equipos.length === 0) { %>
@@ -46,7 +40,6 @@
         </p>
       </div>
     <% } else { %>
-      <!-- Buscador: equipo.js filtra las tarjetas por nombre o comuna mientras se escribe -->
       <label class="eq-buscador revelar">
         <svg class="eq-buscador__icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2" /></svg>
         <span class="solo-lectores">Buscar equipo</span>
@@ -59,7 +52,7 @@
             <span class="eq-club__escudo" aria-hidden="true"><%- include('partials/escudo-equipo', { equipo }) %></span>
             <span class="eq-club__texto">
               <span class="eq-nombre"><%= equipo.nombre %></span>
-              <a class="sm-enlace-ficha" href="/equipos/<%= equipo.id %>">Ver ficha</a><%# NUEVO: PE-009 %>
+              <a class="sm-enlace-ficha" href="/equipos/<%= equipo.id %>">Ver ficha</a>
               <span class="eq-posicion">Comuna: <%= equipo.zona || 'Sin definir' %></span>
               <span class="eq-posicion">Nivel: <%= equipo.nivel || 'Sin definir' %><% if (equipo.modalidad) { %> · <%= equipo.modalidad %><% } %></span>
             </span>
@@ -78,7 +71,6 @@
   </div>
 </section>
 
-<!-- Modal de "Solicitar unirme": el mensaje para el capitán (equipo.js lo abre y envía la solicitud) -->
 <div class="modal" hidden data-modal-union>
   <div class="modal__caja" role="dialog" aria-modal="true" aria-labelledby="modal-union-titulo">
     <h2 class="modal__titulo" id="modal-union-titulo">Unirme a <span class="texto-verde" data-modal-equipo></span></h2>
@@ -98,7 +90,6 @@
   </div>
 </div>
 
-<!-- Aviso tras enviar la solicitud (equipo.js lo esconde a los pocos segundos) -->
 <p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
 
 <%- include('partials/dock', { activo: 'equipos' }) %>

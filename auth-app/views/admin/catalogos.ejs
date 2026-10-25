@@ -2,9 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- AD-014: catálogos de modalidades, posiciones y niveles (adminCatalogosController).
-     Cada fila es un formulario para editar; "Eliminar" solo funciona si no está en uso (se indica dónde).
-     Los elementos "protegidos" los usa la aplicación por su nombre: se pueden editar otros datos, no renombrar. -->
 <section class="eq">
   <div class="contenedor">
     <header class="eq-cabecera revelar">
@@ -65,7 +62,6 @@
                 <% if (el.protegido) { %><span class="sm-rol" title="La aplicación lo usa por su nombre">Protegido</span><% } %>
                 <%= usoTexto ? 'En uso: ' + usoTexto : 'Sin uso' %>
               </span>
-              <%# En uso o protegido: no se ofrece eliminar (el servidor también lo impide) %>
               <% if (!el.protegido && !usoTexto) { %>
                 <form action="/admin/catalogos/<%= cat.tipo %>/<%= el.id %>/eliminar" method="POST"
                       data-confirmar="Se eliminará del catálogo."
@@ -77,7 +73,6 @@
           <% }) %>
         </ul>
 
-        <!-- Agregar -->
         <form action="/admin/catalogos/<%= cat.tipo %>" method="POST" class="sm-catalogo__form sm-catalogo__nuevo" novalidate data-sm-validar>
           <div class="campo">
             <label for="<%= cat.tipo %>-nuevo-nombre">Nueva <%= cat.singular %></label>

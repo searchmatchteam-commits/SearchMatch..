@@ -2,8 +2,6 @@
 
 <%- include('partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- Mis equipos: los equipos de la cuenta (equipoModel.listarMisEquiposConPlantel). Al tocar uno se
-     despliega su plantel; en los que creó (es su capitán) aparece "Administrar" al lado. -->
 <section class="eq">
   <div class="contenedor">
     <header class="eq-cabecera revelar">
@@ -19,7 +17,6 @@
             <span aria-hidden="true">+</span> Crear equipo
           </a>
         <% } %>
-        <%# CORRECCIÓN: regla 5 — si no puede crear más equipos, se explica el límite (antes solo se ocultaba el botón) %>
         <% if (locals.avisoLimite) { %>
           <p class="sm-aviso-limite" role="note"><%= avisoLimite %></p>
         <% } %>
@@ -30,7 +27,6 @@
       <%- include('partials/mis-equipos', { misEquipos, volver: '/mis-equipos' }) %>
     </div>
 
-    <%# NUEVO: PE-017 — equipos desactivados que creó la cuenta (se reactivan desde su ficha) %>
     <% if ((locals.equiposInactivos || []).length > 0) { %>
       <div class="dash-panel eq-panel">
         <h2 class="dash-panel__titulo">Equipos desactivados</h2>
@@ -45,7 +41,6 @@
   </div>
 </section>
 
-<!-- Aviso tras salir de un equipo (equipo.js lo esconde) -->
 <p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
 
 <%- include('partials/dock', { activo: 'mis-equipos' }) %>

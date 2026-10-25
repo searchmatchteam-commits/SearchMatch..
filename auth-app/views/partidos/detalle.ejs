@@ -2,9 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- AG-002 detalle de un partido (partidoController.detalle): ambos equipos, fecha, hora, modalidad con jugadores,
-     cancha, recinto, dirección y teléfono; el resultado solo si ya se jugó; el mensaje del desafío.
-     PA-005 registrar resultado (capitanes, después del partido, una vez) · PA-007 cancelar (capitanes, antes). -->
 <%
   const formatoDia = new Intl.DateTimeFormat('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 %>
@@ -45,7 +42,6 @@
     </div>
 
     <% if (puedeRegistrar) { %>
-      <!-- PA-005 -->
       <form class="dash-panel eq-panel sm-form" action="/partidos/<%= partido.id %>/resultado" method="POST" novalidate data-sm-validar
             data-confirmar="El resultado no se podrá modificar después y avisaremos al capitán rival." data-confirmar-titulo="¿Registrar este resultado?" data-confirmar-boton="Registrar">
         <h2 class="dash-panel__titulo">Registrar resultado</h2>
@@ -66,7 +62,6 @@
     <% } %>
 
     <% if (puedeCancelar) { %>
-      <!-- PA-007 -->
       <form class="dash-panel eq-panel sm-form sm-peligro" action="/partidos/<%= partido.id %>/cancelar" method="POST"
             data-confirmar="Se liberará la reserva de la cancha y avisaremos a los integrantes de ambos equipos. El puntaje no cambia."
             data-confirmar-titulo="¿Cancelar el partido?" data-confirmar-boton="Cancelar partido">

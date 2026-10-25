@@ -2,13 +2,11 @@
 
 <%- include('partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- ============ HERO ============ -->
 <section class="dash-hero" data-parallax>
   <div class="contenedor dash-hero__grid">
     <div class="dash-hero__texto">
       <span class="dash-chip revelar"><span class="badge__punto" aria-hidden="true"></span>Sesión activa</span>
 
-      <!-- El nombre se trunca con "..." si no cabe; el title muestra el nombre completo -->
       <h1 class="dash-hero__titulo revelar">
         <span class="dash-hero__saludo">Bienvenido de vuelta,</span>
         <span class="dash-hero__nombre" title="<%= usuario.nombre %>"><%= usuario.nombre %></span>
@@ -48,7 +46,6 @@
       <% } %>
     </div>
 
-    <!-- Escritorio: a la derecha con parallax. Celular: fondo tenue detrás del saludo. -->
     <div class="dash-hero__visual">
       <div class="dash-capa dash-capa--fondo" data-profundidad="-12" aria-hidden="true">
         <span class="dash-orbita dash-orbita--1"></span>
@@ -63,7 +60,6 @@
           <div class="ball-anillo" aria-hidden="true"></div>
           <div class="ball-fallback" aria-hidden="true"></div>
           <div id="ball-canvas" role="img" aria-label="Balón de fútbol 3D interactivo"></div>
-          <!-- ball.js muestra aquí la velocidad de cada remate -->
           <div class="ball-hud" aria-live="polite">
             <span class="ball-hud-titulo">Remate</span>
             <span class="ball-hud-cifra"><span class="ball-hud-vel">0</span><small>km/h</small></span>
@@ -76,12 +72,9 @@
   </div>
 </section>
 
-<!-- ============ PANELES ============ -->
 <section class="dash-paneles">
   <div class="contenedor dash-paneles__grid">
 
-    <!-- Invitaciones de capitanes (invitacion_equipo): solo si hay pendientes. Aceptar/Rechazar son
-         formularios: al volver, "Mis equipos" ya muestra el equipo nuevo (equipoController.responderInvitacion). -->
     <% if (invitaciones.length > 0) { %>
       <article class="dash-panel dash-panel--invitaciones revelar" aria-labelledby="dash-invitaciones-titulo">
         <header class="dash-panel__cabecera">
@@ -112,10 +105,8 @@
       </article>
     <% } %>
 
-    <!-- NUEVO: IN-005 — equipo elegido, su nivel y su próximo partido -->
     <%- include('partials/sm-equipo-inicio', { equipoInicio: locals.equipoInicio }) %>
 
-    <!-- Carta de jugador con foil holográfico -->
     <article class="dash-panel dash-panel--carta revelar">
       <header class="dash-panel__cabecera">
         <h2 class="dash-panel__titulo">Personaliza tu perfil</h2>
@@ -123,10 +114,8 @@
       </header>
 
       <% if (carta) { %>
-        <!-- Silueta a escala con la altura y el peso del perfil (sin dato: 178 cm y 72 kg) -->
         <%- include('partials/visualizador-corporal', { altura: carta.altura, peso: carta.peso }) %>
 
-        <!-- A la derecha: altura, peso y estadísticas -->
         <div class="dash-fisico">
           <dl class="dash-medidas">
             <div><dt>Altura</dt><dd><%= carta.altura ? Math.round(carta.altura) + ' cm' : '—' %></dd></div>
@@ -166,7 +155,6 @@
       <% } %>
     </article>
 
-    <!-- Próximos partidos: aún sin backend, muestra un skeleton con aviso -->
     <article class="dash-panel dash-panel--partidos revelar">
       <header class="dash-panel__cabecera">
         <h2 class="dash-panel__titulo">Partidos cerca de ti</h2>
@@ -187,7 +175,6 @@
       <p class="dash-panel__nota">Estamos preparando la búsqueda de partidos por comuna y horario.</p>
     </article>
 
-    <!-- Mis equipos: cada equipo se despliega con su plantel; en los que creó, "Administrar" -->
     <article class="dash-panel dash-panel--equipos revelar">
       <header class="dash-panel__cabecera">
         <h2 class="dash-panel__titulo">Mis equipos</h2>
@@ -199,7 +186,6 @@
   </div>
 </section>
 
-<!-- Aviso tras responder una invitación (dashboard.js lo esconde); también escribe aquí los de "próximamente" -->
 <p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
 
 <%- include('partials/dock', { activo: 'inicio' }) %>

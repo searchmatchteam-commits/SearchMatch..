@@ -2,11 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- PE-009 ficha pública de un equipo (equipoFichaController.ficha):
-     escudo, nombre, comuna, modalidad, puntaje y nivel · Postular (no integrantes) · Desafiar (capitanes de otros equipos)
-     · integrantes: solo las acciones de su rol · inactivo: aviso y acciones deshabilitadas
-     · secciones plantel, historial y comentarios (PE-008; AD-013 los administradores pueden retirarlos).
-     PE-017: el capitán desactiva o reactiva el equipo aquí. Nunca se muestran correos ni teléfonos. -->
 <%
   const formatoFecha = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', dateStyle: 'medium', timeStyle: 'short' });
   const formatoDia = new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeZone: 'UTC' });
@@ -70,7 +65,6 @@
       <p class="sm-aviso-limite" role="note">Este equipo está inactivo: no recibe solicitudes ni desafíos.</p>
     <% } %>
 
-    <!-- Postular y desafiar (solo si corresponde) -->
     <% if (equipo.activo && !relacion.esIntegrante && !relacion.postulo) { %>
       <form class="dash-panel eq-panel sm-form" id="postular" action="/equipos/<%= equipo.id %>/unirme" method="POST" novalidate data-sm-validar>
         <h2 class="dash-panel__titulo">Postular a <%= equipo.nombre %></h2>
@@ -94,7 +88,6 @@
     <% } %>
 
     <div class="sm-columnas">
-      <!-- Plantel -->
       <section class="dash-panel eq-panel revelar" aria-labelledby="titulo-plantel">
         <header class="dash-panel__cabecera">
           <h2 class="dash-panel__titulo" id="titulo-plantel">Plantel</h2>
@@ -115,7 +108,6 @@
         <% } %>
       </section>
 
-      <!-- Historial -->
       <section class="dash-panel eq-panel revelar" aria-labelledby="titulo-historial">
         <header class="dash-panel__cabecera">
           <h2 class="dash-panel__titulo" id="titulo-historial">Historial</h2>
@@ -136,7 +128,6 @@
       </section>
     </div>
 
-    <!-- PE-008 comentarios -->
     <section class="dash-panel eq-panel revelar" id="comentarios" aria-labelledby="titulo-comentarios">
       <header class="dash-panel__cabecera">
         <h2 class="dash-panel__titulo" id="titulo-comentarios">Comentarios</h2>
@@ -172,7 +163,6 @@
     </section>
 
     <% if (relacion.esCapitan && equipo.activo) { %>
-      <!-- PE-017 desactivar (solo el capitán) -->
       <section class="dash-panel eq-panel sm-peligro" aria-labelledby="titulo-peligro">
         <h2 class="dash-panel__titulo" id="titulo-peligro">Desactivar equipo</h2>
         <p class="dash-panel__nota"><%= advertencia %></p>

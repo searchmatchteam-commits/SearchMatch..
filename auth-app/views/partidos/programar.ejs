@@ -2,8 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- PA-001 programar el partido de un desafío aceptado (partidoController): fecha, hora, modalidad y cancha.
-     El servidor valida disponibilidad, que la cancha esté activa y admita la modalidad, y que no haya choques. -->
 <%
   const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
   const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });

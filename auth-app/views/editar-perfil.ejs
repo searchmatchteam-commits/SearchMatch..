@@ -1,16 +1,13 @@
 <%- include('partials/header') %>
 <%
-  // Altura de la marca en la mini cancha de cada posición (0 = arco rival, 32 = arco propio).
   const alturaPosicion = { arquero: 27, defensa: 21, mediocampista: 15, delantero: 7 };
   const hoy = new Date().toISOString().slice(0, 10);
 %>
 
 <section class="perfil editor">
-  <!-- ============ COLUMNA IZQUIERDA: VISTA PREVIA DE LA CARTA + FOTO ============ -->
   <div class="perfil__carta">
     <%- include('partials/carta-jugador', { jugador, editor: true }) %>
 
-    <!-- La foto se guarda junto con el formulario (editar-perfil.js la envía a POST /perfil/foto) -->
     <div class="editor__foto">
       <label class="btn btn--contorno" for="foto">
         <svg class="btn__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
@@ -25,8 +22,6 @@
     <input type="file" id="foto" accept="image/jpeg,image/png,image/webp" class="solo-lectores" data-foto-input />
   </div>
 
-  <!-- ============ COLUMNA DERECHA: FORMULARIO ============ -->
-  <!-- Encabezado aparte: en escritorio va sobre la columna derecha y la carta queda al nivel de la primera tarjeta -->
   <header class="perfil__cabecera">
     <div class="perfil__volver"><%- include('partials/boton-volver', { fallbackUrl: '/perfil' }) %></div>
     <span class="rol__eyebrow">SEARCH MATCH · PERFIL</span>
@@ -36,18 +31,15 @@
 
   <div class="perfil__info">
     <form action="/perfil/editar" method="POST" class="formulario editor__form" data-editor>
-      <!-- Errores del servidor o de editar-perfil.js -->
       <div class="alerta alerta--error" role="alert" data-alerta-errores <%= errores.length > 0 ? '' : 'hidden' %>>
         <ul>
           <% errores.forEach(function (error) { %><li><%= error %></li><% }) %>
         </ul>
       </div>
 
-      <!-- ============ DATOS PERSONALES ============ -->
       <fieldset class="perfil__tarjeta editor__seccion">
         <legend class="perfil__tarjeta-titulo">Datos personales</legend>
 
-        <!-- Nombre y apellido se piden solo al crear la cuenta -->
         <div class="campo">
           <label for="apodo">Apodo</label>
           <input type="text" id="apodo" name="apodo" value="<%= datos.apodo || '' %>" placeholder="Ej. El Niño Maravilla"
@@ -79,7 +71,6 @@
         </div>
       </fieldset>
 
-      <!-- ============ PERFIL DEPORTIVO ============ -->
       <fieldset class="perfil__tarjeta editor__seccion">
         <legend class="perfil__tarjeta-titulo">Perfil deportivo</legend>
 
@@ -105,15 +96,12 @@
         </div>
       </fieldset>
 
-      <!-- ============ ESTADÍSTICAS ============ -->
       <fieldset class="perfil__tarjeta editor__seccion">
         <legend class="perfil__tarjeta-titulo">Estadísticas</legend>
         <p class="perfil__nota editor__nota">
           Media actual: <strong class="texto-verde" data-editor-media><%= jugador.media %></strong> · promedio de las 6 estadísticas.
         </p>
 
-        <!-- CORRECCIÓN: regla 8 — solo lectura (antes eran deslizadores editables): cambian con las
-             valoraciones de otros jugadores después de los partidos. Mismas barras que /perfil. -->
         <ul class="barras">
           <% jugador.estadisticas.forEach(function (s) { %>
             <li class="barras__item">

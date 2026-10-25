@@ -1,10 +1,8 @@
 <%- include('partials/header') %>
 <%
-  // Pasos del wizard: 1 y 2 son el formulario; el 3 se muestra al crear el equipo (/crear-equipo/listo).
   const pasos = ['Crea tu equipo', 'Configura tu equipo', 'Confirmación'];
   const iconoEscudo = '<path d="M12 3l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6z" />';
   const iconoCheck = '<path d="M5 12.5l4.2 4.2L19 7" />';
-  // Vista previa "Así te verán los rivales" con lo que ya se sabe del equipo
   const vista = creado || {
     nombre: datos.nombre,
     detalle: [catalogos.MODALIDADES[datos.jugadores], catalogos.NIVELES[datos.nivel]].filter(Boolean).join(' · '),
@@ -12,7 +10,6 @@
 %>
 
 <section class="wizard ceq">
-  <!-- Lado izquierdo: branding y vista previa del club -->
   <aside class="wizard__marca">
     <span class="rol__eyebrow">SEARCH MATCH · EQUIPOS</span>
     <h2 class="wizard__marca-titulo">Lleva a tu equipo al siguiente nivel</h2>
@@ -37,7 +34,6 @@
       </li>
     </ul>
 
-    <!-- crear-equipo.js actualiza nombre, detalle y escudo mientras se escribe -->
     <div class="ceq-vista">
       <span class="ceq-etiqueta">Así te verán los rivales</span>
       <div class="ceq-club">
@@ -50,9 +46,7 @@
     </div>
   </aside>
 
-  <!-- Lado derecho: el formulario -->
   <div class="wizard__panel">
-    <!-- Barra de progreso: crear-equipo.js actualiza las clases y --progreso al cambiar de paso -->
     <div class="pasos pasos--3" data-pasos style="--progreso: <%= (paso - 1) / (pasos.length - 1) %>">
       <div class="pasos__barra" aria-hidden="true"><span></span></div>
       <ol class="pasos__lista">
@@ -70,7 +64,6 @@
     </div>
 
     <% if (creado) { %>
-      <!-- ============ PASO 3: CONFIRMACIÓN ============ -->
       <div class="ceq-listo">
         <span class="ceq-listo__icono" aria-hidden="true"><svg viewBox="0 0 24 24"><%- iconoCheck %></svg></span>
         <h1 class="wizard__titulo">¡Tu equipo está listo!</h1>
@@ -90,7 +83,6 @@
       </div>
     <% } else { %>
       <form action="/crear-equipo" method="POST" class="formulario wizard__form" data-wizard-equipo data-paso-inicial="<%= paso %>" novalidate>
-        <!-- ============ PASO 1: IDENTIDAD ============ -->
         <fieldset class="wizard__paso" data-paso="1">
           <legend class="wizard__titulo">Crea tu equipo</legend>
           <p class="wizard__subtitulo">Nombre, escudo, zona y nivel de tu escuadra.</p>
@@ -100,7 +92,6 @@
             <span class="ceq-identidad__texto">
               <span class="ceq-etiqueta">Identidad de club</span>
               <strong class="ceq-identidad__nombre <%= datos.nombre ? '' : 'ceq-identidad__nombre--vacio' %>" data-vista-nombre><%= datos.nombre || 'Nombre del Club' %></strong>
-              <!-- El escudo es solo una vista previa: el input no tiene name, así que no se envía -->
               <label class="ceq-subir">
                 Subir escudo
                 <input type="file" accept="image/*" class="solo-lectores" data-subir-escudo />
@@ -131,7 +122,6 @@
           </div>
         </fieldset>
 
-        <!-- ============ PASO 2: CONFIGURACIÓN ============ -->
         <fieldset class="wizard__paso" data-paso="2">
           <legend class="wizard__titulo">Configura tu equipo</legend>
           <p class="wizard__subtitulo">Con esto te sugerimos rivales de tu nivel y de tu zona.</p>
@@ -154,8 +144,6 @@
             <small class="campo__error" id="nivel-error"></small>
           </div>
 
-          <%# CORRECCIÓN: regla 11 — región y comuna de la lista (para filtrar y recomendar rivales por ubicación).
-              crear-equipo.js muestra solo las comunas de la región elegida; sin JS se ven todas agrupadas. %>
           <div class="formulario__fila">
             <div class="campo">
               <label for="id_region">Región</label>
@@ -191,7 +179,7 @@
                      autocomplete="address-level2" maxlength="100" aria-describedby="zona-error zona-ayuda" required />
             </div>
             <small class="campo__error" id="zona-error"></small>
-            <small class="campo__ayuda" id="zona-ayuda">El sector o la cancha donde suelen jugar. Los rivales cercanos se buscan por la comuna.</small><%# CORRECCIÓN: regla 11 %>
+            <small class="campo__ayuda" id="zona-ayuda">El sector o la cancha donde suelen jugar. Los rivales cercanos se buscan por la comuna.</small>
           </div>
 
           <div class="grupo-opciones" role="radiogroup" aria-labelledby="modalidad-label" aria-describedby="modalidad-error" data-grupo="modalidad">
@@ -219,7 +207,6 @@
           </div>
         </fieldset>
 
-        <!-- Errores del servidor o de crear-equipo.js -->
         <div class="alerta alerta--error" role="alert" data-alerta-errores <%= errores.length > 0 ? '' : 'hidden' %>>
           <ul>
             <% errores.forEach(function (error) { %><li><%= error %></li><% }) %>
@@ -227,11 +214,9 @@
         </div>
 
         <div class="wizard__nav">
-          <!-- Sin JS vuelve a la selección de rol; crear-equipo.js lo convierte en "paso anterior" -->
           <a class="btn btn--oscuro btn--grande" href="/select-role" data-volver>
             <span aria-hidden="true">←</span> Volver
           </a>
-          <!-- Sin JS los dos pasos se ven juntos y este botón crea el equipo -->
           <button type="submit" class="btn btn--verde btn--grande" data-continuar data-texto-cargando="CREANDO EQUIPO...">
             <span class="btn__spinner" aria-hidden="true"></span>
             <span class="btn__texto">Crear equipo</span>

@@ -1,93 +1,60 @@
-// controllers/equipoController.js
-// Equipos:
-//  - GET/POST /crear-equipo → wizard (1: identidad, 2: configuración) que crea el equipo.
-//  - GET /crear-equipo/listo → paso 3: confirmación del equipo recién creado.
-//  - GET /mi-equipo → mi equipo (capitán o integrante): cabecera y plantel real desde equipo_jugador;
-//    el capitán ve además las solicitudes pendientes. ?equipo=<id> elige uno de sus equipos
-//    (el botón "Administrar" de "Mis equipos" en el dashboard).
-//  - POST /mi-equipo/solicitudes/:id/(aceptar|rechazar) → el capitán responde una solicitud.
-//  - GET /mi-equipo/solicitudes/:id (y /foto) → el capitán ve el perfil y el mensaje de quien pidió unirse.
-//  - POST /equipos/:id/plantel/:idJugador/posicion → el capitán deja la carta de un jugador en la cancha.
-//  - GET/POST /equipos/:id/escudo → el escudo del equipo (lo sube el capitán desde /mi-equipo).
-//  - POST /mi-equipo/desafios/:id → el capitán desafía a otro equipo (JSON si viene de fetch).
-//  - POST /equipos/:id/invitaciones/:idJugador → el capitán invita a un jugador (modal "Invitar jugador +").
-//  - POST /invitaciones/:id/(aceptar|rechazar) → el jugador responde una invitación (panel del dashboard).
-//  - POST /equipos/:id/plantel/:idJugador/sacar → el capitán saca a un jugador del plantel (JSON si viene de fetch).
-//  - POST /equipos/:id/salir → el jugador sale de un equipo ("Mis equipos" del dashboard y /mis-equipos).
-//  - GET /mis-equipos → los equipos de la cuenta con su plantel ("Administrar" en los que creó).
-//  - GET /equipos → directorio de equipos con buscador, "Solicitar unirme" y "+ Crear equipo".
-//  - POST /equipos/:id/unirme → guarda la solicitud y su mensaje en solicitud_union_equipo (JSON si viene de fetch).
-// Cualquier cuenta puede crear un equipo y queda como su capitán: solo es capitán de los equipos que creó.
-// Cada cuenta crea un solo equipo: quien ya tiene no vuelve al wizard y quien no tiene no ve el panel.
-// La validación está en middlewares/validators.js (validarEquipo) y el acceso a datos en models/equipoModel.js.
-
 const equipoModel = require('../models/equipoModel');
 const jugadorModel = require('../models/jugadorModel');
 const { jugadorParaVista, detectarTipoImagen } = require('./jugadorController');
 const { LONGITUD_MAXIMA_MENSAJE_SOLICITUD } = require('../middlewares/validators');
 const { NIVELES, POSICIONES, ESTADISTICAS, calcularMedia } = require('../config/perfilJugador');
-const { MODALIDADES, DETALLE_NIVEL, BARRAS_NIVEL, MAX_EQUIPOS_COMO_CAPITAN } = require('../config/equipo'); // CORRECCIÓN: regla 5
-const ubicacionModel = require('../models/ubicacionModel'); // CORRECCIÓN: regla 11
+const { MODALIDADES, DETALLE_NIVEL, BARRAS_NIVEL, MAX_EQUIPOS_COMO_CAPITAN } = require('../config/equipo');
+const ubicacionModel = require('../models/ubicacionModel');
 const avisosEquipo = require('./avisosEquipo');
-const equipoFichaModel = require('../models/equipoFichaModel'); // NUEVO: PE-021 / PE-017 // NUEVO: NT-001 (notificaciones de solicitudes, invitaciones y desafíos)
+const equipoFichaModel = require('../models/equipoFichaModel');
 
-// CORRECCIÓN: regla 5 — aviso cuando la cuenta ya capitanea el máximo de equipos.
 const AVISO_LIMITE_EQUIPOS = `Alcanzaste el límite de ${MAX_EQUIPOS_COMO_CAPITAN} `
   + `${MAX_EQUIPOS_COMO_CAPITAN === 1 ? 'equipo' : 'equipos'} como capitán. Para crear otro, primero desactiva uno.`;
 
-/** CORRECCIÓN: regla 5 — ¿la cuenta ya capitanea el máximo de equipos permitido? */
 async function alcanzoLimiteEquipos(authId) {
   return (await equipoModel.contarEquiposDeCapitan(authId)) >= MAX_EQUIPOS_COMO_CAPITAN;
 }
 
-// Avisos del directorio (?aviso=... o JSON): solo textos fijos, nunca lo que llega en la URL.
-// Responden a "Solicitar unirme".
 const AVISOS_UNION = {
   enviada: 'Solicitud enviada. El capitán la verá en su panel.',
   pendiente: 'Ya tienes una solicitud pendiente con ese equipo.',
-  invitado: 'Ese equipo ya te invitó: acepta la invitación desde tu panel.', // CORRECCIÓN: regla 6
+  invitado: 'Ese equipo ya te invitó: acepta la invitación desde tu panel.',
   miembro: 'Ya eres parte de ese equipo.',
   inexistente: 'Ese equipo ya no está disponible.',
   'mensaje-largo': 'El mensaje es demasiado largo: acórtalo e inténtalo de nuevo.',
 };
 
-// Avisos del panel tras responder una solicitud (?aviso=...): solo textos fijos.
 const AVISOS_PANEL = {
   aceptada: 'Solicitud aceptada: el jugador ya es parte de tu plantel.',
   rechazada: 'Solicitud rechazada.',
   inexistente: 'Esa solicitud ya fue respondida o no es de tu equipo.',
 };
 
-// Avisos tras "Enviar Desafío" (?desafio=... o JSON): solo textos fijos.
 const AVISOS_DESAFIO = {
   enviado: '¡Desafío enviado! El capitán rival lo verá en su panel.',
   pendiente: 'Ya hay un desafío pendiente con ese equipo.',
   'sin-equipo': 'Solo el capitán que creó el equipo puede enviar desafíos.',
   inexistente: 'Ese equipo ya no está disponible.',
-  modalidad: 'Solo puedes desafiar a equipos de tu misma modalidad.', // CORRECCIÓN: regla 12
+  modalidad: 'Solo puedes desafiar a equipos de tu misma modalidad.',
 };
 
-// Avisos tras "Enviar Invitación" (?invitacion=... o JSON): solo textos fijos.
 const AVISOS_INVITACION = {
   enviada: '¡Invitación enviada! El jugador la verá pronto.',
   'ya-invitado': 'Ya invitaste a ese jugador.',
   miembro: 'Ese jugador ya es parte de tu plantel.',
   'sin-permiso': 'Solo el capitán que creó el equipo puede invitar jugadores.',
   inexistente: 'Ese jugador ya no está disponible.',
-  'solicitud-pendiente': 'Ese jugador ya te envió una solicitud: respóndela en Solicitudes Pendientes.', // CORRECCIÓN: regla 6
+  'solicitud-pendiente': 'Ese jugador ya te envió una solicitud: respóndela en Solicitudes Pendientes.',
 };
 
-// Etiquetas de las posiciones del catálogo: cualquier otra cosa se muestra como "Sin posición" en gris.
 const POSICIONES_ETIQUETAS = Object.values(POSICIONES).map(({ etiqueta }) => etiqueta);
 
-// Avisos del dashboard tras responder una invitación (?invitacion=...): solo textos fijos.
 const AVISOS_RESPUESTA_INVITACION = {
   aceptada: '¡Bienvenido! Ya eres parte del plantel.',
   rechazada: 'Invitación rechazada.',
   inexistente: 'Esa invitación ya fue respondida o ya no está disponible.',
 };
 
-// Avisos al sacar a un jugador (panel) o al salir de un equipo (?salida=...): solo textos fijos.
 const AVISOS_SACAR = {
   sacado: 'El jugador ya no es parte del plantel.',
   'no-permitido': 'No puedes sacar a ese jugador.',
@@ -96,17 +63,10 @@ const AVISOS_SALIDA = {
   saliste: 'Saliste del equipo.',
   'no-permitido': 'No puedes salir de ese equipo (si eres su capitán, el equipo quedaría sin capitán).',
 };
-// Después de salir se vuelve a la página desde donde se pidió (solo estas)
 const VOLVER_TRAS_SALIR = ['/dashboard', '/mis-equipos'];
 
-// Cancha táctica (views/equipo-panel.ejs): altura (% del alto) de cada línea, de arriba (ataque) hacia abajo.
-// Sin posición guardada, la carta va a la altura de su línea y las de una misma línea se reparten a lo ancho.
 const ALTURA_LINEA = { delantero: 12, mediocampista: 32, sinPosicion: 51, defensa: 70, arquero: 88 };
 
-/**
- * El plantel con lo que dibuja la cancha: la carta de cada jugador (partials/carta-jugador con mini)
- * y su posición en % (la que dejó el capitán o la automática según su línea).
- */
 function plantelEnCancha(plantel) {
   const porLinea = {};
   plantel.forEach((jugador) => {
@@ -133,15 +93,9 @@ function plantelEnCancha(plantel) {
   });
 }
 
-// Modal "Invitar jugador +": desde qué media la tarjeta lleva borde destacado y el OVR brilla en neón.
 const MEDIA_DESTACADA = 70;
 const MEDIA_ALTA = 75;
 
-/**
- * Tarjeta del modal "Invitar jugador +": media, barras de stats y la etiqueta con su situación
- * ("Agente Libre", "Juega en <equipo>" o "Multi-equipo" si está en varios).
- * Sin estadísticas (perfil incompleto) la media es '—' y las barras quedan en gris con '—'.
- */
 function jugadorInvitable(jugador) {
   const { equipos } = jugador;
   const media = jugador.stats ? calcularMedia(jugador.stats) : null;
@@ -163,10 +117,8 @@ function jugadorInvitable(jugador) {
   };
 }
 
-// Código de PostgreSQL para "la columna no existe".
 const COLUMNA_INEXISTENTE = '42703';
 
-/** Pasa el error al manejador general; si faltan las columnas de la sección W, deja una pista clara en la consola. */
 function pasarError(err, next) {
   if (err.code === COLUMNA_INEXISTENTE) {
     console.error('⚠️  Faltan columnas de la tabla equipo: ejecuta la sección W de sql/seed.sql en Supabase.');
@@ -183,37 +135,28 @@ function renderWizard(res, { status = 200, datos, errores = [], paso = 1, creado
     errores,
     paso,
     creado,
-    regiones, // CORRECCIÓN: regla 11 (listas Región y Comuna del paso 2)
+    regiones,
     catalogos: { NIVELES, MODALIDADES, DETALLE_NIVEL, BARRAS_NIVEL },
   });
 }
 
-// ---------------------------------------------------------------
-// GET /crear-equipo → wizard vacío (el correo de contacto parte con el de la cuenta)
-// ---------------------------------------------------------------
 async function mostrarCrear(req, res, next) {
   try {
-    // CORRECCIÓN: regla 5 — con el límite alcanzado se explica por qué (antes redirigía sin aviso).
     if (await alcanzoLimiteEquipos(req.usuario.idAuth)) return res.redirect('/mis-equipos?aviso=limite');
-    const regiones = await ubicacionModel.listarRegionesConComunas(); // CORRECCIÓN: regla 11
+    const regiones = await ubicacionModel.listarRegionesConComunas();
     return renderWizard(res, { datos: { correo: req.usuario.correo }, regiones });
   } catch (err) {
     return pasarError(err, next);
   }
 }
 
-// ---------------------------------------------------------------
-// POST /crear-equipo → crear el equipo y mostrar la confirmación
-// ---------------------------------------------------------------
 async function crear(req, res, next) {
   const datos = req.datosFormulario;
   const { errores, paso } = req.erroresEquipo;
 
   try {
-    // CORRECCIÓN: regla 5 — límite de equipos como capitán, con aviso.
     if (await alcanzoLimiteEquipos(req.usuario.idAuth)) return res.redirect('/mis-equipos?aviso=limite');
 
-    // CORRECCIÓN: regla 11 — la comuna debe existir en la lista (no se confía en lo que llega del formulario).
     if (datos.idComuna && !(await ubicacionModel.obtenerComuna(datos.idComuna))) {
       errores.push('La comuna elegida no es válida.');
     }
@@ -229,9 +172,6 @@ async function crear(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// GET /crear-equipo/listo → paso 3: confirmación
-// ---------------------------------------------------------------
 async function confirmacion(req, res, next) {
   try {
     const equipo = await equipoModel.obtenerEquipoDeCapitan(req.usuario.idAuth);
@@ -242,17 +182,12 @@ async function confirmacion(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// GET /mi-equipo → equipo de la cuenta (capitán o integrante) con su plantel real
-// ---------------------------------------------------------------
 async function panel(req, res, next) {
   const idElegido = Number(req.query.equipo);
   try {
     if (req.query.equipo !== undefined && !(Number.isInteger(idElegido) && idElegido > 0)) return res.redirect('/mi-equipo');
     const equipo = await equipoModel.obtenerMiEquipo(req.usuario.idAuth, idElegido || null);
-    // Pidió un equipo al que no pertenece: vuelve a su equipo principal
     if (!equipo && idElegido) return res.redirect('/mi-equipo');
-    // Sin equipo: el rol "equipo" lo crea; el jugador busca uno al que unirse.
     if (!equipo) return res.redirect(req.usuario.rolInicio === 'equipo' ? '/crear-equipo' : '/equipos');
 
     const [plantel, solicitudes, rivales, invitables] = await Promise.all([
@@ -278,22 +213,19 @@ async function panel(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// GET /mis-equipos → los equipos de la cuenta, cada uno con su plantel
-// ---------------------------------------------------------------
 async function misEquipos(req, res, next) {
   try {
     const [equipos, limiteAlcanzado] = await Promise.all([
       equipoModel.listarMisEquiposConPlantel(req.usuario.idAuth),
-      alcanzoLimiteEquipos(req.usuario.idAuth), // CORRECCIÓN: regla 5
+      alcanzoLimiteEquipos(req.usuario.idAuth),
     ]);
     return res.render('mis-equipos', {
       titulo: 'Mis equipos',
       pagina: 'equipo',
       misEquipos: equipos,
-      puedeCrear: !limiteAlcanzado, // CORRECCIÓN: regla 5 (MAX_EQUIPOS_COMO_CAPITAN)
-      avisoLimite: limiteAlcanzado ? AVISO_LIMITE_EQUIPOS : null, // CORRECCIÓN: regla 5
-      equiposInactivos: await equipoFichaModel.listarInactivosDeCapitan(req.usuario.idAuth), // NUEVO: PE-017
+      puedeCrear: !limiteAlcanzado,
+      avisoLimite: limiteAlcanzado ? AVISO_LIMITE_EQUIPOS : null,
+      equiposInactivos: await equipoFichaModel.listarInactivosDeCapitan(req.usuario.idAuth),
       aviso: AVISOS_SALIDA[req.query.salida] || (req.query.aviso === 'limite' ? AVISO_LIMITE_EQUIPOS : null),
     });
   } catch (err) {
@@ -301,24 +233,21 @@ async function misEquipos(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// GET /equipos → directorio de equipos (también para el capitán: ve el suyo marcado)
-// ---------------------------------------------------------------
 async function directorio(req, res, next) {
   try {
     const [equipos, miEquipo, limiteAlcanzado] = await Promise.all([
       equipoModel.listarEquipos(req.usuario.idAuth),
       equipoModel.obtenerMiEquipo(req.usuario.idAuth),
-      alcanzoLimiteEquipos(req.usuario.idAuth), // CORRECCIÓN: regla 5
+      alcanzoLimiteEquipos(req.usuario.idAuth),
     ]);
     return res.render('equipos', {
       titulo: 'Directorio de Equipos',
       pagina: 'equipo',
       equipos,
       tieneEquipo: Boolean(miEquipo),
-      puedeCrear: !limiteAlcanzado, // CORRECCIÓN: regla 5 (MAX_EQUIPOS_COMO_CAPITAN)
-      avisoLimite: limiteAlcanzado ? AVISO_LIMITE_EQUIPOS : null, // CORRECCIÓN: regla 5
-      equiposQueBuscan: await equipoFichaModel.listarEquiposQueBuscan(), // NUEVO: PE-021
+      puedeCrear: !limiteAlcanzado,
+      avisoLimite: limiteAlcanzado ? AVISO_LIMITE_EQUIPOS : null,
+      equiposQueBuscan: await equipoFichaModel.listarEquiposQueBuscan(),
       LONGITUD_MENSAJE: LONGITUD_MAXIMA_MENSAJE_SOLICITUD,
       aviso: AVISOS_UNION[req.query.aviso] || null,
     });
@@ -327,11 +256,6 @@ async function directorio(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// POST /equipos/:id/unirme → solicitud para unirse
-// Desde equipo.js (fetch) responde JSON y la página no se recarga;
-// sin JavaScript el formulario normal vuelve al directorio con el aviso.
-// ---------------------------------------------------------------
 async function unirse(req, res, next) {
   const idEquipo = Number(req.params.id);
   const quiereJson = req.accepts(['html', 'json']) === 'json';
@@ -343,7 +267,7 @@ async function unirse(req, res, next) {
     const resultado = Number.isInteger(idEquipo) && idEquipo > 0
       ? await equipoModel.solicitarUnion(req.usuario.idAuth, idEquipo, req.datosSolicitud.mensaje)
       : 'inexistente';
-    if (resultado === 'enviada') await avisosEquipo.solicitudEnviada(req.usuario, idEquipo); // NUEVO: NT-001 / PE-004
+    if (resultado === 'enviada') await avisosEquipo.solicitudEnviada(req.usuario, idEquipo);
     if (quiereJson) {
       return res.json({ resultado, mensaje: AVISOS_UNION[resultado] });
     }
@@ -353,10 +277,6 @@ async function unirse(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// POST /mi-equipo/solicitudes/:id/:accion → aceptar o rechazar (el modelo
-// comprueba que la solicitud sea de un equipo de este capitán)
-// ---------------------------------------------------------------
 async function responder(req, res, next) {
   const idSolicitud = Number(req.params.id);
   const { accion } = req.params;
@@ -364,20 +284,18 @@ async function responder(req, res, next) {
     const resultado = Number.isInteger(idSolicitud) && idSolicitud > 0 && (accion === 'aceptar' || accion === 'rechazar')
       ? await equipoModel.responderSolicitud(req.usuario.idAuth, idSolicitud, accion === 'aceptar')
       : 'inexistente';
-    if (resultado !== 'inexistente') await avisosEquipo.solicitudRespondida(idSolicitud, resultado); // NUEVO: NT-001 / PE-005
+    if (resultado !== 'inexistente') await avisosEquipo.solicitudRespondida(idSolicitud, resultado);
     return res.redirect(`/mi-equipo?aviso=${resultado}`);
   } catch (err) {
     return pasarError(err, next);
   }
 }
 
-/** Número entero positivo de un parámetro de la URL, o null. */
 function idDeParametro(valor) {
   const id = Number(valor);
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-/** Coordenada en % (0 a 100) con dos decimales, o null si no es válida. */
 function porcentaje(valor) {
   const numero = Number(valor);
   return valor !== undefined && valor !== '' && Number.isFinite(numero) && numero >= 0 && numero <= 100
@@ -385,9 +303,6 @@ function porcentaje(valor) {
     : null;
 }
 
-// ---------------------------------------------------------------
-// POST /equipos/:id/plantel/:idJugador/posicion → x, y en % (lo envía equipo.js al soltar una carta)
-// ---------------------------------------------------------------
 async function guardarPosicion(req, res, next) {
   const idEquipo = idDeParametro(req.params.id);
   const idJugador = idDeParametro(req.params.idJugador);
@@ -405,9 +320,6 @@ async function guardarPosicion(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// POST /equipos/:id/escudo → guarda el escudo (cuerpo = la imagen; equipo.js la reduce antes)
-// ---------------------------------------------------------------
 async function subirEscudo(req, res, next) {
   const idEquipo = idDeParametro(req.params.id);
   try {
@@ -421,9 +333,6 @@ async function subirEscudo(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// GET /equipos/:id/escudo → el escudo del equipo (404 si no tiene: la vista muestra la inicial)
-// ---------------------------------------------------------------
 async function servirEscudo(req, res, next) {
   const idEquipo = idDeParametro(req.params.id);
   try {
@@ -432,7 +341,7 @@ async function servirEscudo(req, res, next) {
 
     res.set({
       'Content-Type': escudo.tipo,
-      'Cache-Control': 'private, max-age=31536000', // la URL lleva ?v=<versión>
+      'Cache-Control': 'private, max-age=31536000',
       'X-Content-Type-Options': 'nosniff',
     });
     return res.send(escudo.datos);
@@ -441,17 +350,12 @@ async function servirEscudo(req, res, next) {
   }
 }
 
-/** Solicitud de :id si es de un equipo que creó la cuenta (si no, null). */
 async function leerSolicitudPropia(req) {
   const idSolicitud = Number(req.params.id);
   if (!Number.isInteger(idSolicitud) || idSolicitud <= 0) return null;
   return equipoModel.obtenerSolicitudDeMiEquipo(req.usuario.idAuth, idSolicitud);
 }
 
-// ---------------------------------------------------------------
-// GET /mi-equipo/solicitudes/:id → carta, datos y mensaje de quien pidió unirse
-// (solo el capitán que creó ese equipo; a cualquier otro lo devuelve a su panel)
-// ---------------------------------------------------------------
 async function verSolicitud(req, res, next) {
   try {
     const solicitud = await leerSolicitudPropia(req);
@@ -464,7 +368,7 @@ async function verSolicitud(req, res, next) {
     return res.render('solicitud-jugador', {
       titulo: `Solicitud de ${perfil.nombre}`,
       pagina: 'perfil',
-      perfilAjeno: true, // sin descargar/compartir carta (perfil.js)
+      perfilAjeno: true,
       solicitud,
       jugador: jugadorParaVista(perfil, foto),
     });
@@ -473,9 +377,6 @@ async function verSolicitud(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// GET /mi-equipo/solicitudes/:id/foto → foto de quien pidió unirse (mismo permiso que verSolicitud)
-// ---------------------------------------------------------------
 async function fotoSolicitud(req, res, next) {
   try {
     const solicitud = await leerSolicitudPropia(req);
@@ -493,10 +394,6 @@ async function fotoSolicitud(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// POST /mi-equipo/desafios/:id → desafiar a otro equipo (validarDesafio deja el mensaje listo)
-// Desde equipo.js (fetch) responde JSON; sin JavaScript vuelve al panel con el aviso.
-// ---------------------------------------------------------------
 async function desafiar(req, res, next) {
   const idRival = Number(req.params.id);
   const quiereJson = req.accepts(['html', 'json']) === 'json';
@@ -508,7 +405,7 @@ async function desafiar(req, res, next) {
     const resultado = Number.isInteger(idRival) && idRival > 0
       ? await equipoModel.enviarDesafio(req.usuario.idAuth, idRival, req.datosDesafio.mensaje)
       : 'inexistente';
-    if (resultado === 'enviado') await avisosEquipo.desafioEnviado(req.usuario, idRival); // NUEVO: NT-001 / DE-008
+    if (resultado === 'enviado') await avisosEquipo.desafioEnviado(req.usuario, idRival);
     if (quiereJson) return res.json({ resultado, mensaje: AVISOS_DESAFIO[resultado] });
     return res.redirect(`/mi-equipo?desafio=${resultado}`);
   } catch (err) {
@@ -516,10 +413,6 @@ async function desafiar(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// POST /equipos/:id/invitaciones/:idJugador → el capitán invita a un jugador (el modelo
-// comprueba que el equipo sea suyo). JSON desde equipo.js; sin JavaScript vuelve al panel.
-// ---------------------------------------------------------------
 async function invitar(req, res, next) {
   const idEquipo = idDeParametro(req.params.id);
   const idJugador = idDeParametro(req.params.idJugador);
@@ -528,7 +421,7 @@ async function invitar(req, res, next) {
     const resultado = idEquipo && idJugador
       ? await equipoModel.invitarJugador(req.usuario.idAuth, idEquipo, idJugador)
       : 'inexistente';
-    if (resultado === 'enviada') await avisosEquipo.invitacionEnviada(idEquipo, idJugador); // NUEVO: NT-001 / PE-022
+    if (resultado === 'enviada') await avisosEquipo.invitacionEnviada(idEquipo, idJugador);
     if (quiereJson) return res.json({ resultado, mensaje: AVISOS_INVITACION[resultado] });
     return res.redirect(`/mi-equipo?invitacion=${resultado}`);
   } catch (err) {
@@ -536,10 +429,6 @@ async function invitar(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// POST /invitaciones/:id/:accion → el jugador acepta o rechaza (el modelo comprueba
-// que la invitación sea para el jugador de esta cuenta). Vuelve al dashboard con el aviso.
-// ---------------------------------------------------------------
 async function responderInvitacion(req, res, next) {
   const idInvitacion = idDeParametro(req.params.id);
   const { accion } = req.params;
@@ -547,17 +436,13 @@ async function responderInvitacion(req, res, next) {
     const resultado = idInvitacion && (accion === 'aceptar' || accion === 'rechazar')
       ? await equipoModel.responderInvitacion(req.usuario.idAuth, idInvitacion, accion === 'aceptar')
       : 'inexistente';
-    if (resultado === 'aceptada') await avisosEquipo.invitacionAceptada(idInvitacion); // NUEVO: NT-001 / PE-023
+    if (resultado === 'aceptada') await avisosEquipo.invitacionAceptada(idInvitacion);
     return res.redirect(`/dashboard?invitacion=${resultado}`);
   } catch (err) {
     return pasarError(err, next);
   }
 }
 
-// ---------------------------------------------------------------
-// POST /equipos/:id/plantel/:idJugador/sacar → el capitán saca a un jugador (el modelo comprueba
-// que el equipo sea suyo y que no sea él mismo). JSON desde equipo.js; sin JavaScript vuelve al panel.
-// ---------------------------------------------------------------
 async function sacar(req, res, next) {
   const idEquipo = idDeParametro(req.params.id);
   const idJugador = idDeParametro(req.params.idJugador);
@@ -572,9 +457,6 @@ async function sacar(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// POST /equipos/:id/salir → el jugador sale del equipo y vuelve a la página desde donde lo pidió
-// ---------------------------------------------------------------
 async function salir(req, res, next) {
   const idEquipo = idDeParametro(req.params.id);
   const volver = VOLVER_TRAS_SALIR.includes(req.body.volver) ? req.body.volver : '/dashboard';

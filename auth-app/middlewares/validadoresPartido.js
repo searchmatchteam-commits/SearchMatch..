@@ -1,7 +1,3 @@
-// middlewares/validadoresPartido.js
-// Validación en el servidor de los formularios de la Fase 7 (reservar, programar partido y resultado).
-// Cada validador deja req.datosFormulario y req.erroresCampo ({ campo: 'mensaje' }).
-
 const { ZONA_HORARIA } = require('../config/canchas');
 const { RESERVA, MARCADOR_MAXIMO } = require('../config/partidos');
 const { idValido } = require('./validadoresAdmin');
@@ -9,7 +5,6 @@ const { idValido } = require('./validadoresAdmin');
 const REGEX_FECHA = /^\d{4}-\d{2}-\d{2}$/;
 const REGEX_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-/** Fecha y hora actuales de Chile: { fecha: 'AAAA-MM-DD', hora: 'HH:MM' }. */
 function ahoraEnChile() {
   const partes = new Intl.DateTimeFormat('en-CA', {
     timeZone: ZONA_HORARIA, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
@@ -18,20 +13,17 @@ function ahoraEnChile() {
   return { fecha: `${valor('year')}-${valor('month')}-${valor('day')}`, hora: `${valor('hour')}:${valor('minute')}` };
 }
 
-/** ¿La fecha "AAAA-MM-DD" existe en el calendario? (descarta 2026-02-30) */
 function fechaReal(texto) {
   if (!REGEX_FECHA.test(texto)) return false;
   const fecha = new Date(`${texto}T00:00:00Z`);
   return !Number.isNaN(fecha.getTime()) && fecha.toISOString().slice(0, 10) === texto;
 }
 
-/** "HH:MM" → minutos desde la medianoche. */
 function minutos(hora) {
   const [h, m] = hora.split(':').map(Number);
   return h * 60 + m;
 }
 
-/** Revisa fecha y hora de inicio: obligatorias, reales y no pasadas. Agrega errores a "e". */
 function revisarFechaHora(fecha, hora, e, campoHora) {
   const ahora = ahoraEnChile();
   if (!fecha) e.fecha = 'La fecha es obligatoria.';
@@ -42,7 +34,6 @@ function revisarFechaHora(fecha, hora, e, campoHora) {
   else if (!e.fecha && fecha === ahora.fecha && hora <= ahora.hora) e[campoHora] = 'Esa hora ya pasó.';
 }
 
-/** PA-002 · Reserva: fecha, hora de inicio y hora de fin (posterior). */
 function validarReserva(req, res, next) {
   const datos = {
     fecha: String(req.body.fecha || '').trim(),
@@ -64,7 +55,6 @@ function validarReserva(req, res, next) {
   next();
 }
 
-/** PA-001 · Programar partido: fecha, hora, modalidad y cancha. */
 function validarProgramacion(req, res, next) {
   const datos = {
     fecha: String(req.body.fecha || '').trim(),
@@ -81,7 +71,6 @@ function validarProgramacion(req, res, next) {
   next();
 }
 
-/** PA-005 · Resultado: los dos marcadores, enteros entre 0 y MARCADOR_MAXIMO. */
 function validarResultado(req, res, next) {
   const leer = (valor) => {
     const texto = String(valor ?? '').trim();

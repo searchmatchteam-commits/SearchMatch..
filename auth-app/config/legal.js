@@ -1,8 +1,3 @@
-// config/legal.js
-// Términos y condiciones y política de privacidad (AR-010 y AR-011).
-// Cada documento tiene versión y fecha de última actualización. Al publicar una versión nueva
-// basta con cambiar "version" y "actualizado": todas las cuentas deberán aceptarla al entrar.
-
 const TERMINOS = {
   clave: 'terminos',
   titulo: 'Términos y condiciones',
@@ -83,7 +78,6 @@ const PRIVACIDAD = {
 
 const DOCUMENTOS = { terminos: TERMINOS, privacidad: PRIVACIDAD };
 
-/** ¿La cuenta ya aceptó las versiones vigentes de ambos documentos? */
 function aceptoVersionesVigentes(usuario) {
   return usuario.terminosVersion === TERMINOS.version && usuario.privacidadVersion === PRIVACIDAD.version;
 }

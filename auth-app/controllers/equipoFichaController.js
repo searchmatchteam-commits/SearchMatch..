@@ -1,13 +1,3 @@
-// controllers/equipoFichaController.js
-// Fase 6 · Equipos:
-//  PE-009 GET  /equipos/:id                       → ficha pública (plantel, historial y comentarios)
-//  PE-008 POST /equipos/:id/comentarios           → comentar
-//  AD-013 POST /comentarios/:id/ocultar           → retirar un comentario (solo administradores)
-//  PE-021 GET/POST /equipos/:id/posiciones        → posiciones que busca el equipo (solo el capitán)
-//  PE-017 POST /equipos/:id/desactivar y /reactivar (solo el capitán)
-//  PE-011 GET  /solicitudes y POST /solicitudes/:id/cancelar
-//  PE-020 GET/POST /cuenta/desactivar
-
 const equipoFichaModel = require('../models/equipoFichaModel');
 const equipoModel = require('../models/equipoModel');
 const cuentaModel = require('../models/cuentaModel');
@@ -27,7 +17,6 @@ const AVISOS = {
   'no-cancelada': 'Esa solicitud ya fue respondida o no es tuya.',
 };
 
-/** Página "no disponible" para equipos que no existen. */
 function noDisponible(res) {
   return res.status(404).render('mensaje', {
     titulo: 'Equipo no disponible',
@@ -36,8 +25,6 @@ function noDisponible(res) {
     enlace: { href: '/equipos', texto: 'Ver equipos' },
   });
 }
-
-/* ---------- PE-009 · Ficha pública ---------- */
 
 async function renderFicha(req, res, idEquipo, { status = 200, errorComentario = null, mensaje = '' } = {}) {
   const equipo = await equipoFichaModel.obtenerFicha(idEquipo);
@@ -71,7 +58,6 @@ async function renderFicha(req, res, idEquipo, { status = 200, errorComentario =
   });
 }
 
-// GET /equipos/:id
 async function ficha(req, res, next) {
   const idEquipo = idValido(req.params.id);
   try {
@@ -82,9 +68,6 @@ async function ficha(req, res, next) {
   }
 }
 
-/* ---------- PE-008 · Comentar ---------- */
-
-// POST /equipos/:id/comentarios
 async function comentar(req, res, next) {
   const idEquipo = idValido(req.params.id);
   const mensaje = String(req.body.mensaje || '').trim().replace(/\s+\n/g, '\n');
@@ -98,7 +81,6 @@ async function comentar(req, res, next) {
     if (error) return await renderFicha(req, res, idEquipo, { status: 400, errorComentario: error, mensaje });
 
     await equipoFichaModel.crearComentario(req.usuario.idAuth, idEquipo, mensaje);
-    // NT-001: el capitán se entera de los comentarios en su equipo (salvo que el autor sea él).
     const equipo = await equipoFichaModel.obtenerFicha(idEquipo);
     const idAutor = await notificacionModel.idUsuarioDe(req.usuario.idAuth);
     if (idAutor !== equipo.id_usuario_creador) {
@@ -111,14 +93,11 @@ async function comentar(req, res, next) {
   }
 }
 
-/* ---------- AD-013 · Moderar ---------- */
-
-// POST /comentarios/:id/ocultar  (la ruta exige requireAdmin)
 async function ocultarComentario(req, res, next) {
   try {
     const idComentario = idValido(req.params.id);
     const datos = idComentario ? await equipoFichaModel.ocultarComentario(idComentario) : null;
-    if (!datos) return res.redirect('/equipos'); // ya estaba retirado o no existe
+    if (!datos) return res.redirect('/equipos');
     await notificacionModel.notificarUsuario(datos.idUsuario, 'moderacion',
       `Tu comentario en la ficha de ${datos.equipo} fue retirado por moderación por no cumplir las reglas de la comunidad.`,
       '/terminos');
@@ -128,9 +107,6 @@ async function ocultarComentario(req, res, next) {
   }
 }
 
-/* ---------- PE-021 · Posiciones buscadas ---------- */
-
-/** Equipo de la URL solo si la cuenta es su capitán y está activo (si no, null). */
 async function equipoDelCapitan(req) {
   const idEquipo = idValido(req.params.id);
   const equipo = idEquipo ? await equipoFichaModel.obtenerFicha(idEquipo) : null;
@@ -139,7 +115,6 @@ async function equipoDelCapitan(req) {
   return relacion.esCapitan ? equipo : null;
 }
 
-// GET /equipos/:id/posiciones
 async function formularioPosiciones(req, res, next) {
   try {
     const equipo = await equipoDelCapitan(req);
@@ -155,7 +130,6 @@ async function formularioPosiciones(req, res, next) {
   }
 }
 
-// POST /equipos/:id/posiciones
 async function guardarPosiciones(req, res, next) {
   const idEquipo = idValido(req.params.id);
   const ids = [].concat(req.body.posicion || []).map(Number).filter((id) => Number.isInteger(id) && id > 0);
@@ -167,9 +141,6 @@ async function guardarPosiciones(req, res, next) {
   }
 }
 
-/* ---------- PE-017 · Desactivar / reactivar ---------- */
-
-// POST /equipos/:id/desactivar
 async function desactivar(req, res, next) {
   const idEquipo = idValido(req.params.id);
   try {
@@ -186,7 +157,6 @@ async function desactivar(req, res, next) {
   }
 }
 
-// POST /equipos/:id/reactivar
 async function reactivar(req, res, next) {
   const idEquipo = idValido(req.params.id);
   try {
@@ -197,9 +167,6 @@ async function reactivar(req, res, next) {
   }
 }
 
-/* ---------- PE-011 · Mis solicitudes ---------- */
-
-// GET /solicitudes
 async function misSolicitudes(req, res, next) {
   try {
     return res.render('equipos/solicitudes', {
@@ -213,7 +180,6 @@ async function misSolicitudes(req, res, next) {
   }
 }
 
-// POST /solicitudes/:id/cancelar
 async function cancelarSolicitud(req, res, next) {
   try {
     const idSolicitud = idValido(req.params.id);
@@ -224,8 +190,6 @@ async function cancelarSolicitud(req, res, next) {
   }
 }
 
-/* ---------- PE-020 · Desactivar mi cuenta ---------- */
-
 async function renderDesactivarCuenta(req, res, { status = 200, error = null } = {}) {
   return res.status(status).render('cuenta/desactivar', {
     titulo: 'Desactivar mi cuenta',
@@ -235,7 +199,6 @@ async function renderDesactivarCuenta(req, res, { status = 200, error = null } =
   });
 }
 
-// GET /cuenta/desactivar
 async function formularioDesactivarCuenta(req, res, next) {
   try {
     return await renderDesactivarCuenta(req, res);
@@ -244,10 +207,8 @@ async function formularioDesactivarCuenta(req, res, next) {
   }
 }
 
-// POST /cuenta/desactivar
 async function desactivarCuenta(req, res, next) {
   try {
-    // Regla 4: un capitán no se va dejando equipos activos sin capitán.
     if ((await cuentaModel.equiposActivosComoCapitan(req.usuario.idAuth)).length > 0) {
       return await renderDesactivarCuenta(req, res, { status: 400, error: 'Primero desactiva los equipos que capitaneas.' });
     }

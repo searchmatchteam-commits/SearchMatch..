@@ -1,27 +1,15 @@
-// models/partidoModel.js
-// Partidos (tablas "partido" y "participacion"):
-//  PA-001 programar desde un desafío aceptado (crea la participación de ambos equipos y la reserva)
-//  PA-005 registrar el resultado · PA-007 cancelar · AG-001 calendario · AG-002 detalle · IN-005 próximo partido.
-// Reglas 15 y 16: sin choques de horario por equipo ni por cancha; resultado una sola vez, después del partido,
-// solo por un capitán de los dos equipos. Capitán = quien creó el equipo.
-// Todas las consultas son parametrizadas ($1, $2...).
-
 const { pool } = require('../config/db');
 const reservaModel = require('./reservaModel');
 const { DURACION_PARTIDO_MIN } = require('../config/partidos');
 
 const { SQL_AHORA } = reservaModel;
 
-/** "HH:MM" + minutos → "HH:MM" (sin pasar de 23:59). */
 function sumarMinutos(hora, minutos) {
   const [h, m] = hora.split(':').map(Number);
   const total = Math.min(h * 60 + m + minutos, 23 * 60 + 59);
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
-/**
- * Regla 15 · ¿Alguno de los dos equipos ya tiene un partido (no cancelado) que se cruce con ese horario?
- */
 async function equipoOcupado(cliente, idsEquipos, fecha, hora) {
   const { rowCount } = await cliente.query(
     `SELECT 1 FROM partido p JOIN participacion pa ON pa.id_partido = p.id
@@ -32,12 +20,6 @@ async function equipoOcupado(cliente, idsEquipos, fecha, hora) {
   return rowCount > 0;
 }
 
-/**
- * PA-001 · Programa el partido de un desafío ACEPTADO sin partido, en UNA transacción:
- * valida permiso (capitán de cualquiera de los dos), cancha activa con la modalidad elegida, horario dentro
- * de su disponibilidad y sin choques; crea el partido, la participación de ambos equipos y la reserva.
- * @returns {Promise<{resultado: string, idPartido?: number, equipos?: number[]}>}
- */
 async function programar(authId, idDesafio, { fecha, hora, idModalidad, idCancha }) {
   const cliente = await pool.connect();
   try {
@@ -82,7 +64,6 @@ async function programar(authId, idDesafio, { fecha, hora, idModalidad, idCancha
         'INSERT INTO participacion (es_desafiante, id_equipo, id_partido) VALUES (TRUE, $1, $3), (FALSE, $2, $3)',
         [desafio.id_equipo_desafiante, desafio.id_equipo_desafiado, idPartido]
       );
-      // La reserva revisa disponibilidad y choques en la cancha (si falla, se deshace todo).
       const reserva = await reservaModel.insertarReserva(cliente, {
         idCancha, idUsuario: desafio.id_usuario, fecha, inicio: hora, fin, idPartido,
       });
@@ -103,7 +84,6 @@ async function programar(authId, idDesafio, { fecha, hora, idModalidad, idCancha
   }
 }
 
-// Columnas comunes del detalle y las listas.
 const SQL_PARTIDO = `
   SELECT p.id, to_char(p.fecha, 'YYYY-MM-DD') AS fecha, to_char(p.hora, 'HH24:MI') AS hora,
          p.marcador_desafiante, p.marcador_desafiado, p.cancelado, p.motivo_cancelacion,
@@ -123,13 +103,11 @@ const SQL_PARTIDO = `
     JOIN direccion dir ON dir.id = rd.id_direccion
     JOIN comunas co ON co.id = dir.id_comunas`;
 
-/** AG-002 · Un partido con sus equipos, cancha, recinto (dirección y teléfono) y el mensaje del desafío. */
 async function obtener(idPartido) {
   const { rows } = await pool.query(`${SQL_PARTIDO} WHERE p.id = $1`, [idPartido]);
   return rows[0] || null;
 }
 
-/** ¿La cuenta es capitán de alguno de los dos equipos del partido? */
 async function esCapitanDelPartido(cliente, authId, idPartido) {
   const { rowCount } = await cliente.query(
     `SELECT 1 FROM participacion pa JOIN equipo e ON e.id = pa.id_equipo JOIN usuario u ON u.id = e.id_usuario_creador
@@ -139,10 +117,6 @@ async function esCapitanDelPartido(cliente, authId, idPartido) {
   return rowCount > 0;
 }
 
-/**
- * PA-005 · Registra el marcador (regla 16): después de la fecha y hora, una sola vez, solo un capitán.
- * @returns {Promise<'registrado'|'antes-de-tiempo'|'ya-registrado'|'cancelado'|'sin-permiso'|'inexistente'>}
- */
 async function registrarResultado(authId, idPartido, { desafiante, desafiado }) {
   const cliente = await pool.connect();
   try {
@@ -174,10 +148,6 @@ async function registrarResultado(authId, idPartido, { desafiante, desafiado }) 
   }
 }
 
-/**
- * PA-007 · Cancela un partido futuro sin marcador (solo un capitán) y su reserva; el puntaje no cambia.
- * @returns {Promise<'cancelado'|'no-cancelable'|'sin-permiso'|'inexistente'>}
- */
 async function cancelar(authId, idPartido, motivo) {
   const cliente = await pool.connect();
   try {
@@ -207,13 +177,11 @@ async function cancelar(authId, idPartido, motivo) {
   }
 }
 
-// Equipos de la cuenta (capitán o integrante): para el calendario.
 const SQL_MIS_EQUIPOS = `
   SELECT e.id FROM equipo e JOIN usuario u ON u.auth_id = $1
    WHERE e.id_usuario_creador = u.id
       OR EXISTS (SELECT 1 FROM equipo_jugador ej JOIN jugador j ON j.id = ej.id_jugador WHERE ej.id_equipo = e.id AND j.id_usuario = u.id)`;
 
-/** AG-001 · Partidos de los equipos de la cuenta entre dos fechas (incluye cancelados, marcados como tales). */
 async function listarDeCuentaEntre(authId, desde, hasta) {
   const { rows } = await pool.query(
     `${SQL_PARTIDO}
@@ -225,7 +193,6 @@ async function listarDeCuentaEntre(authId, desde, hasta) {
   return rows;
 }
 
-/** AG-001 · Próximos (no cancelados, desde ahora) o pasados de la cuenta. */
 async function listarDeCuenta(authId, proximos) {
   const { rows } = await pool.query(
     `${SQL_PARTIDO}
@@ -238,7 +205,6 @@ async function listarDeCuenta(authId, proximos) {
   return rows;
 }
 
-/** IN-005 · Próximo partido (no cancelado) de un equipo, o null. */
 async function proximoDeEquipo(idEquipo) {
   const { rows } = await pool.query(
     `${SQL_PARTIDO}

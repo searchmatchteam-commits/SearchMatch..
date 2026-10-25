@@ -2,10 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- Ficha de una cancha (canchasController.ficha):
-     DE-003 datos y teléfono del recinto · DE-006 horario semanal (días sin horario = cerrado)
-     y los próximos días con los bloques ocupados por reservas confirmadas.
-     Refleja al instante los cambios de horario del administrador (se lee de la base en cada visita). -->
 <%
   const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
 %>
@@ -19,7 +15,7 @@
       </div>
       <div class="eq-cabecera__acciones">
         <span class="sm-precio sm-precio--grande"><%= pesos.format(cancha.precio) %><small>/hora</small></span>
-        <a class="btn btn--verde btn--grande" href="/canchas/<%= cancha.id %>/reservar">Reservar</a><%# PA-002 %>
+        <a class="btn btn--verde btn--grande" href="/canchas/<%= cancha.id %>/reservar">Reservar</a>
       </div>
     </header>
 
@@ -43,7 +39,6 @@
         </dl>
       </div>
 
-      <!-- DE-006: horario semanal -->
       <div class="dash-panel eq-panel revelar">
         <header class="dash-panel__cabecera">
           <h2 class="dash-panel__titulo">Horario de la semana</h2>
@@ -66,7 +61,6 @@
     </div>
 
     <% if (cancha.latitud !== null && cancha.longitud !== null) { %>
-      <!-- DE-003: ubicación del recinto en el mapa (mismo script que la lista de canchas) -->
       <div class="dash-panel eq-panel revelar">
         <header class="dash-panel__cabecera">
           <h2 class="dash-panel__titulo">Ubicación</h2>
@@ -86,7 +80,6 @@
       <script src="/js/canchas-mapa.js?v=<%= versionAssets %>" defer></script>
     <% } %>
 
-    <!-- DE-006: próximos 7 días con los horarios ocupados por reservas confirmadas -->
     <div class="dash-panel eq-panel revelar">
       <header class="dash-panel__cabecera">
         <h2 class="dash-panel__titulo">Próximos 7 días</h2>

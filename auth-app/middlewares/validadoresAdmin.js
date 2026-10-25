@@ -1,34 +1,23 @@
-// middlewares/validadoresAdmin.js
-// Validación en el servidor de los formularios del módulo de administración (Fase 2).
-// Cada validador deja req.datosFormulario (datos limpios) y req.erroresCampo ({ campo: 'mensaje' }).
-
 const { DIAS_SEMANA, LIMITES_CHILE, PRECIO_HORA } = require('../config/canchas');
 
 const LARGO = { nombreRecinto: 150, calle: 150, numero: 20, referencias: 255, nombreCancha: 100, catalogo: 50 };
 const REGEX_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-/** Texto sin espacios repetidos. */
 function texto(valor) {
   return String(valor || '').trim().replace(/\s+/g, ' ');
 }
 
-/** Entero positivo de un formulario o null. */
 function idValido(valor) {
   const id = Number(valor);
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-/**
- * Teléfono chileno de un recinto: celular (9 XXXX XXXX) o fijo (2 XXXX XXXX, código de área + número):
- * 9 dígitos con o sin +56. Se guarda como "+56XXXXXXXXX".
- */
 function normalizarTelefonoRecinto(valor) {
   const limpio = String(valor || '').replace(/[\s\-().]/g, '');
   const coincidencia = limpio.match(/^(?:\+?56)?(\d{9})$/);
   return coincidencia ? `+56${coincidencia[1]}` : null;
 }
 
-/** Número decimal dentro de [min, max] (acepta coma decimal) o null. */
 function decimalEnRango(valor, { min, max }) {
   const limpio = String(valor || '').trim().replace(',', '.');
   if (!limpio) return null;
@@ -36,7 +25,6 @@ function decimalEnRango(valor, { min, max }) {
   return Number.isFinite(numero) && numero >= min && numero <= max ? numero : null;
 }
 
-/** AD-001 / AD-008 · Datos del recinto y su dirección. */
 function validarRecinto(req, res, next) {
   const b = req.body;
   const datos = {
@@ -74,21 +62,19 @@ function validarRecinto(req, res, next) {
   next();
 }
 
-/** Precio por hora: entero en pesos dentro de PRECIO_HORA (acepta "25.000"). */
 function precioValido(valor) {
   const limpio = String(valor || '').trim().replace(/\./g, '');
   const precio = Number(limpio);
   return limpio && Number.isInteger(precio) && precio >= PRECIO_HORA.min && precio <= PRECIO_HORA.max ? precio : null;
 }
 
-/** AD-002 / AD-009 · Nombre, precio por hora y modalidad de una cancha. */
 function validarCancha(req, res, next) {
   const datos = {
     nombre: texto(req.body.nombre),
     precioIngresado: String(req.body.precio || '').trim(),
     precio: precioValido(req.body.precio),
     idModalidad: idValido(req.body.id_modalidad),
-    confirmado: req.body.confirmado === 'si', // AD-009: ya vio la advertencia de modalidad
+    confirmado: req.body.confirmado === 'si',
   };
   const e = {};
   if (!datos.nombre) e.nombre = 'El nombre de la cancha es obligatorio.';
@@ -101,7 +87,6 @@ function validarCancha(req, res, next) {
   next();
 }
 
-/** AD-003 · Bloque de disponibilidad: día, hora de apertura y hora de cierre (posterior). */
 function validarBloque(req, res, next) {
   const datos = {
     dia: String(req.body.dia || ''),
@@ -120,14 +105,12 @@ function validarBloque(req, res, next) {
   next();
 }
 
-/** Entero dentro de [min, max] o null. */
 function enteroEnRango(valor, min, max) {
   const limpio = String(valor ?? '').trim();
   const numero = Number(limpio);
   return limpio !== '' && Number.isInteger(numero) && numero >= min && numero <= max ? numero : null;
 }
 
-/** AD-014 · Elemento de un catálogo (los campos dependen del tipo: modalidades, posiciones o niveles). */
 function validarCatalogo(req, res, next) {
   const tipo = req.params.tipo;
   const datos = { nombre: texto(req.body.nombre) };

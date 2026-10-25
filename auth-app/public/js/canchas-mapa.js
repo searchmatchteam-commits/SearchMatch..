@@ -1,8 +1,3 @@
-// public/js/canchas-mapa.js
-// DE-003 · Mapa de canchas: un marcador por recinto según su latitud y longitud (Leaflet + OpenStreetMap).
-// Los datos los deja el servidor en <script type="application/json" id="datos-mapa"> (canchasController.recintosParaMapa).
-// El contenido de cada globo se arma con textContent (nunca con HTML del usuario).
-
 const CENTRO_SANTIAGO = [-33.45, -70.66];
 const ZOOM_INICIAL = 11;
 
@@ -20,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
     attribution: '&copy; colaboradores de OpenStreetMap',
   }).addTo(mapa);
 
-  /** Contenido del globo: nombre, dirección y sus canchas con enlace a la ficha. */
   function globo(recinto) {
     const caja = document.createElement('div');
     const titulo = document.createElement('strong');
@@ -42,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const marcadores = recintos.map((recinto) => L.marker([recinto.latitud, recinto.longitud]).bindPopup(globo(recinto)).addTo(mapa));
 
-  // Encuadra todos los recintos encontrados
   if (marcadores.length > 0) {
     mapa.fitBounds(L.featureGroup(marcadores).getBounds(), { padding: [40, 40], maxZoom: 15 });
   }

@@ -1,7 +1,4 @@
 <%
-  // IN-005 · Panel del inicio con el equipo elegido: selector (solo si pertenece a más de uno),
-  // su nivel y su próximo partido. El equipo elegido se recuerda en una cookie (agendaController.elegirEquipo).
-  // Uso: include('partials/sm-equipo-inicio', { equipoInicio })  — equipoInicio puede ser null.
   const formatoDia = new Intl.DateTimeFormat('es-CL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 %>
 <% if (equipoInicio) { const e = equipoInicio.equipo; const p = equipoInicio.proximo; %>

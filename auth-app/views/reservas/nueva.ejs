@@ -2,8 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- PA-002 reservar una cancha (reservaController): fecha, inicio y fin; el costo estimado se calcula
-     en vivo (precio por hora × duración) y el servidor lo vuelve a calcular y lo guarda en la reserva. -->
 <%
   const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
   const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());

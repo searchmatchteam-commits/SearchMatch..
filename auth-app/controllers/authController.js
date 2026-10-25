@@ -1,21 +1,11 @@
-// controllers/authController.js
-// Lógica de las acciones de autenticación con Supabase Auth: mostrar formularios,
-// registrar, confirmar el correo, iniciar sesión y cerrar sesión.
-// La validación de formato ya corrió en middlewares/validators.js;
-// todo acceso a Supabase y a la base de datos pasa por models/userModel.js.
-// Las cookies de sesión las escribe y borra el cliente de @supabase/ssr
-// (req.supabase, creado en authMiddleware.cargarSesion).
-
 const userModel = require('../models/userModel');
 const { rutaDeInicio } = require('../middlewares/authMiddleware');
-const cuentaModel = require('../models/cuentaModel'); // NUEVO: AR-011
-const { TERMINOS, PRIVACIDAD } = require('../config/legal'); // NUEVO: AR-011
+const cuentaModel = require('../models/cuentaModel');
+const { TERMINOS, PRIVACIDAD } = require('../config/legal');
 
 const MSG_CORREO_REGISTRADO = 'Este correo ya está registrado. Inicia sesión o usa otro correo.';
-// CORRECCIÓN: regla 7 — mensaje para cuentas desactivadas (por el usuario o por un administrador).
 const MSG_CUENTA_DESACTIVADA = 'Tu cuenta está desactivada. Si crees que es un error, escríbenos.';
 
-// Mensajes en español para los códigos de error más comunes de Supabase Auth.
 const ERRORES_SUPABASE = {
   invalid_credentials: 'Correo o contraseña incorrectos.',
   email_not_confirmed: 'Confirma tu correo antes de iniciar sesión. Revisa tu bandeja de entrada.',
@@ -29,10 +19,6 @@ const ERRORES_SUPABASE = {
   user_banned: 'Esta cuenta está suspendida.',
 };
 
-/**
- * Traduce un error de Supabase a un mensaje para el usuario.
- * Primero por código; si no viene código (versiones antiguas), por el texto.
- */
 function traducirErrorSupabase(error) {
   if (error.code && ERRORES_SUPABASE[error.code]) {
     return ERRORES_SUPABASE[error.code];
@@ -44,8 +30,6 @@ function traducirErrorSupabase(error) {
   if (texto.includes('rate limit')) return ERRORES_SUPABASE.over_request_rate_limit;
   if (texto.includes('password')) return ERRORES_SUPABASE.weak_password;
 
-  // Para la consola: todo lo que trae el error. Algunos (ej. "Invalid API key")
-  // no traen code, así que también mostramos el status HTTP y el tipo de error.
   console.error('⚠️  Error de Supabase sin traducción:', {
     code: error.code || '(sin código)',
     status: error.status,
@@ -61,7 +45,6 @@ function traducirErrorSupabase(error) {
   return 'No pudimos completar la operación. Inténtalo de nuevo en unos minutos.';
 }
 
-// Re-pinta el registro con un error (conserva todo menos las contraseñas).
 function renderRegistroConError(req, res, status, mensaje) {
   return res.status(status).render('registro', {
     pagina: 'auth',
@@ -73,14 +56,11 @@ function renderRegistroConError(req, res, status, mensaje) {
       correo: req.datosFormulario.correo,
       telefono: req.body.telefono || '',
       fecha_nacimiento: req.datosFormulario.fechaNacimiento,
-      acepto_terminos: req.body.acepto_terminos === 'si', // NUEVO: AR-011
+      acepto_terminos: req.body.acepto_terminos === 'si',
     },
   });
 }
 
-// ---------------------------------------------------------------
-// GET /registro → mostrar el formulario de registro
-// ---------------------------------------------------------------
 function mostrarRegistro(req, res) {
   res.render('registro', {
     pagina: 'auth',
@@ -90,21 +70,15 @@ function mostrarRegistro(req, res) {
   });
 }
 
-// ---------------------------------------------------------------
-// POST /registro → crear la cuenta en Supabase Auth + perfil en usuario/jugador
-// ---------------------------------------------------------------
 async function registrar(req, res, next) {
   const { nombre, apellido, correo, telefono, fechaNacimiento } = req.datosFormulario;
   const password = req.body.password;
 
   try {
-    // 1) Si el correo ya tiene perfil, avisamos sin llamar a Supabase.
     if (await userModel.findByEmail(correo)) {
       return renderRegistroConError(req, res, 400, MSG_CORREO_REGISTRADO);
     }
 
-    // 2) Cuenta en Supabase Auth. El enlace del correo de confirmación vuelve a
-    //    /auth/confirmar, que abre la sesión directamente.
     const appUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`;
     const { data, error } = await userModel.registrarEnAuth(req.supabase, {
       correo,
@@ -119,14 +93,10 @@ async function registrar(req, res, next) {
       return renderRegistroConError(req, res, 400, traducirErrorSupabase(error));
     }
 
-    // Con "Confirm email" activo, Supabase no devuelve error si el correo ya existe:
-    // devuelve un usuario sin identidades (para no revelar qué correos existen).
     if (!data.user || (data.user.identities && data.user.identities.length === 0)) {
       return renderRegistroConError(req, res, 400, MSG_CORREO_REGISTRADO);
     }
 
-    // 3) Perfil en "usuario" + "jugador" (una sola transacción en el modelo).
-    //    Si falla, la transacción ya hizo ROLLBACK; además deshacemos la cuenta de Auth.
     try {
       await userModel.create({
         authId: data.user.id,
@@ -137,7 +107,6 @@ async function registrar(req, res, next) {
         fechaNacimiento,
       });
     } catch (err) {
-      // Con la confirmación de correo desactivada, signUp ya dejó la sesión en cookies.
       if (data.session) {
         await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
       }
@@ -145,44 +114,33 @@ async function registrar(req, res, next) {
       if (!eliminada) {
         console.error(`⚠️  Cuenta de Auth ${data.user.id} quedó sin perfil (falta SUPABASE_SERVICE_ROLE_KEY para deshacerla).`);
       }
-      // 23505 = unique_violation: el correo se registró entre la verificación y el INSERT.
       if (err.code === '23505') {
         return renderRegistroConError(req, res, 400, MSG_CORREO_REGISTRADO);
       }
       throw err;
     }
 
-    // NUEVO: AR-011 — guarda la versión de términos y privacidad aceptada y la fecha.
-    // Si fallara, la cuenta igual se crea y se le pedirá aceptar al iniciar sesión.
     await cuentaModel.guardarAceptacion(data.user.id, { terminos: TERMINOS.version, privacidad: PRIVACIDAD.version })
       .catch((err) => console.error('⚠️  No se pudo guardar la aceptación de términos:', err.message));
 
-    // 4a) Confirmación de correo desactivada: Supabase ya entregó la sesión
-    //     y el cliente la guardó en las cookies.
-    //     Cuenta nueva = aún sin rol → "¿Cómo quieres empezar?".
     if (data.session) {
       return res.redirect('/select-role');
     }
 
-    // 4b) Confirmación activada: hay que revisar el correo antes de entrar.
     return res.redirect('/login?msg=Confirma_tu_correo');
   } catch (err) {
     return next(err);
   }
 }
 
-// ---------------------------------------------------------------
-// GET /login → mostrar el formulario de login
-// ---------------------------------------------------------------
 function mostrarLogin(req, res) {
-  // Mensaje opcional que llega por query string (ej: ?msg=Confirma_tu_correo).
   const mensajes = {
     Confirma_tu_correo: 'Te enviamos un correo de confirmación. Ábrelo y luego inicia sesión.',
     Enlace_invalido: 'El enlace de confirmación no es válido o ya expiró. Inicia sesión para recibir uno nuevo.',
     Debes_iniciar_sesion: 'Debes iniciar sesión para acceder a esa página.',
     Sesion_cerrada: 'Cerraste sesión correctamente.',
-    Cuenta_desactivada: MSG_CUENTA_DESACTIVADA, // CORRECCIÓN: regla 7
-    Contrasena_actualizada: 'Tu contraseña se actualizó. Inicia sesión con la nueva.', // NUEVO: AR-008
+    Cuenta_desactivada: MSG_CUENTA_DESACTIVADA,
+    Contrasena_actualizada: 'Tu contraseña se actualizó. Inicia sesión con la nueva.',
   };
 
   res.render('login', {
@@ -194,10 +152,6 @@ function mostrarLogin(req, res) {
   });
 }
 
-// ---------------------------------------------------------------
-// GET /auth/confirmar → enlace del correo de confirmación.
-// Supabase redirige aquí con ?code=... (PKCE) o ?token_hash=...&type=...
-// ---------------------------------------------------------------
 async function confirmarCorreo(req, res, next) {
   const { code, token_hash: tokenHash, type } = req.query;
 
@@ -211,7 +165,6 @@ async function confirmarCorreo(req, res, next) {
       console.error('⚠️  No se pudo confirmar el correo:', error.code, error.message);
       return res.redirect('/login?msg=Enlace_invalido');
     }
-    // Correo confirmado y sesión abierta (cookies ya escritas).
     const meta = (data.user && data.user.user_metadata) || {};
     return res.redirect(rutaDeInicio(meta.rol_inicio));
   } catch (err) {
@@ -219,9 +172,6 @@ async function confirmarCorreo(req, res, next) {
   }
 }
 
-// ---------------------------------------------------------------
-// POST /login → validar credenciales con Supabase (la sesión queda en cookies)
-// ---------------------------------------------------------------
 async function iniciarSesion(req, res, next) {
   const { correo } = req.datosFormulario;
 
@@ -242,7 +192,6 @@ async function iniciarSesion(req, res, next) {
       });
     }
 
-    // CORRECCIÓN: regla 7 — credenciales correctas pero cuenta inactiva: se cierra la sesión recién abierta.
     const perfil = await userModel.findByAuthId(data.user.id);
     if (perfil && perfil.activo === false) {
       await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
@@ -255,21 +204,15 @@ async function iniciarSesion(req, res, next) {
       });
     }
 
-    // Sin rol elegido → selección de rol; si ya eligió → dashboard.
     return res.redirect(rutaDeInicio(data.user.user_metadata && data.user.user_metadata.rol_inicio));
   } catch (err) {
     return next(err);
   }
 }
 
-// ---------------------------------------------------------------
-// POST /logout → revocar la sesión en Supabase y borrar las cookies
-// ---------------------------------------------------------------
 async function cerrarSesion(req, res) {
-  // signOut borra las cookies aunque Supabase no responda; el error solo se registra.
   const { error } = await userModel.cerrarSesionEnAuth(req.supabase).catch((err) => ({ error: err }));
   if (error) console.error('⚠️  No se pudo revocar la sesión en Supabase:', error.message);
-  // Por si quedó alguna página de la cuenta en la caché del navegador (las privadas ya van con no-store).
   res.set('Clear-Site-Data', '"cache"');
   return res.redirect('/login?msg=Sesion_cerrada');
 }

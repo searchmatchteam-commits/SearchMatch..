@@ -2,9 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- Desafíos del equipo (desafioController.listar):
-     DE-012 recibidos (primero los pendientes; Aceptar/Rechazar solo al capitán, en el detalle)
-     DE-011 enviados (rival, mensaje, fechas, estado y filtro por estado). -->
 <%
   const formatoFecha = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', dateStyle: 'medium' });
   const nombresEstado = { pendiente: 'Pendiente', aceptado: 'Aceptado', rechazado: 'Rechazado', cancelado: 'Cancelado' };
@@ -19,7 +16,6 @@
         <p class="eq-cabecera__stats"><%= equipo ? equipo.nombre : 'Sin equipo' %></p>
       </div>
       <% if (equipos.length > 1) { %>
-        <!-- Equipo a revisar (un jugador puede estar en varios) -->
         <form method="GET" action="/desafios" class="sm-selector-equipo">
           <input type="hidden" name="ver" value="<%= ver %>" />
           <label class="solo-lectores" for="equipo">Equipo</label>
@@ -46,7 +42,6 @@
       </nav>
 
       <% if (ver === 'enviados') { %>
-        <!-- DE-011: filtro por estado -->
         <nav class="sm-pestanas sm-pestanas--chicas" aria-label="Filtrar por estado">
           <a class="sm-pestanas__item <%= !estado ? 'sm-pestanas__item--activa' : '' %>" href="<%= base %>&ver=enviados">Todos</a>
           <% estados.forEach(function (e) { %>

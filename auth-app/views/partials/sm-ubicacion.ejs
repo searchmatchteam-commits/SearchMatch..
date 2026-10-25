@@ -1,9 +1,4 @@
 <%
-  // Listas Región y Comuna: la de comunas muestra solo las de la región elegida (sm-formularios.js).
-  // Uso:
-  //   include('partials/sm-ubicacion', { regiones, idRegion, idComuna, erroresCampo, obligatorio: true })
-  //   obligatorio: false → agrega "Todas" (filtros); true → exige elegir (formularios).
-  // Sin JavaScript se ven todas las comunas agrupadas por región y el servidor valida que coincidan.
   const errores = locals.erroresCampo || {};
   const obligatorio = Boolean(locals.obligatorio);
   const textoVacio = obligatorio ? 'Elige' : 'Todas';

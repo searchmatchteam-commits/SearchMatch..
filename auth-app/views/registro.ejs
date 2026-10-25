@@ -7,7 +7,6 @@
 
   <div class="tarjeta auth__tarjeta auth__tarjeta--ancha">
     <span class="auth__filo" aria-hidden="true"></span>
-    <!-- Cambiar entre login y registro -->
     <nav class="auth-pestanas auth-pestanas--registro" aria-label="Elegir formulario">
       <span class="auth-pestanas__indicador" aria-hidden="true"></span>
       <a class="auth-pestanas__item" href="/login">Iniciar sesión</a>
@@ -18,10 +17,8 @@
     <h1 class="auth__titulo">Crear cuenta</h1>
     <p class="auth__subtitulo">Toma menos de un minuto. Después podrás completar tu perfil de jugador.</p>
 
-    <!-- data-validar: auth.js valida en el navegador y muestra el estado "cargando".
-         La validación real sigue en el servidor (middlewares/validators.js). -->
     <form action="/registro" method="POST" class="formulario" data-validar="registro" novalidate
-          data-requiere-aceptar><%# NUEVO: AR-011 (sm-formularios.js habilita "Crear cuenta" solo con la casilla) %>
+          data-requiere-aceptar>
       <div class="formulario__fila">
         <div class="campo">
           <label for="nombre">Nombre</label>
@@ -105,8 +102,6 @@
 
         <div class="campo">
           <label for="fecha_nacimiento">Fecha de nacimiento</label>
-          <!-- max = hoy: el calendario del navegador no deja elegir fechas futuras
-               (la validación real está en middlewares/validators.js) -->
           <div class="campo__control">
             <svg class="campo__icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
             <input
@@ -133,13 +128,12 @@
               type="password"
               id="password"
               name="password"
-              placeholder="8+ caracteres, letras y números"<%# CORRECCIÓN: contraseña segura %>
+              placeholder="8+ caracteres, letras y números"
               autocomplete="new-password"
               minlength="8"
               aria-describedby="password-error"
               required
             />
-            <!-- Mostrar / ocultar contraseña (auth.js). Sin JS queda oculto. -->
             <button type="button" class="campo__ojo" data-ver-password aria-controls="password" aria-pressed="false" aria-label="Mostrar contraseña">
               <svg class="campo__ojo-icono campo__ojo-icono--ver" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0" /><circle cx="12" cy="12" r="3" /></svg>
               <svg class="campo__ojo-icono campo__ojo-icono--ocultar" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.73 5.08a10.74 10.74 0 0 1 11.2 6.57 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-1.44 2.49" /><path d="M14.08 14.16a3 3 0 0 1-4.24-4.24" /><path d="M17.48 17.5a10.75 10.75 0 0 1-15.42-5.15 1 1 0 0 1 0-.7 10.75 10.75 0 0 1 4.45-5.14" /><path d="m2 2 20 20" /></svg>
@@ -162,7 +156,6 @@
               aria-describedby="confirmar_password-error"
               required
             />
-            <!-- Mostrar / ocultar contraseña (auth.js). Sin JS queda oculto. -->
             <button type="button" class="campo__ojo" data-ver-password aria-controls="confirmar_password" aria-pressed="false" aria-label="Mostrar contraseña">
               <svg class="campo__ojo-icono campo__ojo-icono--ver" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0" /><circle cx="12" cy="12" r="3" /></svg>
               <svg class="campo__ojo-icono campo__ojo-icono--ocultar" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.73 5.08a10.74 10.74 0 0 1 11.2 6.57 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-1.44 2.49" /><path d="M14.08 14.16a3 3 0 0 1-4.24-4.24" /><path d="M17.48 17.5a10.75 10.75 0 0 1-15.42-5.15 1 1 0 0 1 0-.7 10.75 10.75 0 0 1 4.45-5.14" /><path d="m2 2 20 20" /></svg>
@@ -172,8 +165,6 @@
         </div>
       </div>
 
-      <!-- NUEVO: AR-010 / AR-011 — aceptación obligatoria. Los documentos se abren en otra pestaña
-           para no perder lo ya escrito en el formulario. -->
       <div class="campo sm-check-campo">
         <label class="sm-check">
           <input type="checkbox" name="acepto_terminos" value="si" <%= datos.acepto_terminos ? 'checked' : '' %> data-casilla-aceptar />
@@ -185,7 +176,7 @@
       </div>
 
       <button type="submit" class="btn btn--verde btn--bloque btn--grande auth-btn" data-ripple="claro" data-texto-cargando="CREANDO CUENTA..."
-              data-boton-aceptar><%# NUEVO: AR-011 %>
+              data-boton-aceptar>
         <span class="auth-btn__halo" aria-hidden="true"></span>
         <span class="btn__spinner" aria-hidden="true"></span>
         <span class="btn__texto">CREAR CUENTA</span>
@@ -193,7 +184,6 @@
       </button>
     </form>
 
-    <!-- Errores del servidor (correo ya registrado, contraseñas que no coinciden...) o de auth.js -->
     <div class="alerta alerta--error" role="alert" data-alerta-errores <%= errores && errores.length > 0 ? '' : 'hidden' %>>
       <ul>
         <% (errores || []).forEach(function(error) { %>

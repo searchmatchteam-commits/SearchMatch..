@@ -1,12 +1,4 @@
 <%
-  // Carta de jugador grande (/perfil y vista previa de /perfil/editar). Uso:
-  //   include('partials/carta-jugador', { jugador, editor: false })
-  // jugador: { nombre, media, posicion: { sigla }, estadisticas: [{ clave?, sigla, valor }], foto: url | null }
-  // Con editor: true la foto lleva el botón "Cambiar foto" (abre el input #foto del editor) y los
-  // data-carta-* que editar-perfil.js actualiza mientras el jugador cambia el formulario.
-  // data-carta: lo que perfil.js usa para dibujar la carta en un <canvas> (descargar / compartir).
-  // Con mini: true (cartas del plantel en la cancha de /mi-equipo) sale solo la carta: sin el
-  // escenario del tilt ni data-carta; su tamaño lo pone quien la contiene.
   const mini = Boolean(locals.mini);
   const datosCarta = {
     nombre: jugador.nombre,
@@ -16,14 +8,11 @@
   };
 %>
 <% if (!mini) { %>
-<!-- main.js inclina la carta (data-tilt) usando este contenedor como zona del mouse -->
 <div class="perfil__escenario">
 <% } %>
   <div class="carta-jugador carta-jugador--neon carta-jugador--perfil <%= mini ? 'carta-jugador--mini' : '' %> <%= jugador.foto ? 'carta-jugador--con-foto' : '' %>"
        <% if (!mini) { %>data-tilt data-carta="<%= JSON.stringify(datosCarta) %>"<% } %>>
     <div class="carta-jugador__marco">
-      <!-- Silueta de escudo (viewBox 320x460): fondo con degradado, rayas sutiles y borde doble.
-           #carta-escudo-recorte recorta los datos con la misma forma (en unidades 0-1 del cuerpo). -->
       <svg class="carta-jugador__silueta" viewBox="0 0 320 460" aria-hidden="true">
         <defs>
           <linearGradient id="carta-escudo-borde" x1="0" y1="0" x2="0" y2="1">
@@ -67,7 +56,6 @@
             </svg>
           </div>
 
-          <!-- Foto guardada o la silueta -->
           <div class="carta-jugador__foto">
             <% if (jugador.foto) { %>
               <img alt="" src="<%= jugador.foto %>" data-foto-preview />

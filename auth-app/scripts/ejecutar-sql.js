@@ -1,8 +1,3 @@
-// scripts/ejecutar-sql.js
-// Ejecuta un archivo .sql completo sobre la base de DATABASE_URL, en UNA transacción:
-// si una sentencia falla, se deshace todo (ROLLBACK) y la base queda como estaba.
-// Uso:  node scripts/ejecutar-sql.js sql/nuevas_tablas.sql
-
 const fs = require('fs');
 const path = require('path');
 const { pool } = require('../config/db');
@@ -12,7 +7,7 @@ async function ejecutar(archivo) {
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
-    await cliente.query(sql); // pg acepta varias sentencias separadas por ";"
+    await cliente.query(sql);
     await cliente.query('COMMIT');
     console.log(`✅ ${archivo} ejecutado correctamente.`);
   } catch (err) {

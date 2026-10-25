@@ -1,46 +1,29 @@
-// models/equipoModel.js
-// Equipos: tabla "equipo" (nombre, zona, correo, modalidad, nivel y usuario creador),
-// el plantel en "equipo_jugador" (rol "capitan" o "integrante" de rol_equipo, con el
-// nombre y la posición desde "jugador"), las solicitudes en "solicitud_union_equipo",
-// los desafíos entre equipos en "desafio" (estados en "estado_desafio") y las invitaciones
-// del capitán en "invitacion_equipo".
-// Requiere las secciones W, Z (mensaje de la solicitud), AA (escudo y posiciones en la cancha) y AB (invitaciones) de sql/seed.sql. Todas las consultas son parametrizadas.
-
 const { pool } = require('../config/db');
 const { NIVELES, POSICIONES, ESTADISTICAS } = require('../config/perfilJugador');
 const { MODALIDADES } = require('../config/equipo');
 
-// Nombres aceptados en los catálogos (se buscan en minúsculas).
 const NOMBRES_ROL_CAPITAN = ['capitán', 'capitan'];
 const ESTADO_PENDIENTE = 'pendiente';
 const ESTADO_ACEPTADA = 'aceptada';
 const ESTADO_RECHAZADA = 'rechazada';
 const ROL_INTEGRANTE = 'integrante';
-const ESTADO_DESAFIO_PENDIENTE = 'pendiente'; // tabla estado_desafio
-const ESTADO_CANCELADA = 'cancelada'; // CORRECCIÓN: regla 6 (estado agregado por sql/nuevas_tablas.sql)
+const ESTADO_DESAFIO_PENDIENTE = 'pendiente';
+const ESTADO_CANCELADA = 'cancelada';
 
-/** CORRECCIÓN: regla 6 — id del estado "cancelada" de estado_solicitud (dentro de la transacción en curso). */
 async function idEstadoCancelada(cliente) {
   const { rows } = await cliente.query('SELECT id FROM estado_solicitud WHERE lower(nombre) = $1', [ESTADO_CANCELADA]);
   if (!rows[0]) throw new Error("No existe el estado 'cancelada' en estado_solicitud: ejecuta sql/nuevas_tablas.sql.");
   return rows[0].id;
 }
 
-/** "Fútbol 11 · Intermedio · Puente Alto" (omite lo que falte). */
 function detalleEquipo(fila) {
   return [MODALIDADES[fila.jugadores], fila.nivel, fila.zona].filter(Boolean).join(' · ');
 }
 
-/** URL del escudo subido (la versión evita que el navegador muestre uno viejo), o null: la vista usa la inicial. */
 function urlEscudo(fila) {
   return fila.escudo_actualizado ? `/equipos/${fila.id}/escudo?v=${fila.escudo_actualizado.getTime()}` : null;
 }
 
-/**
- * Equipo activo que creó la cuenta (su capitán).
- * @param {string} authId - UUID de auth.users.
- * @returns {Promise<{id, nombre, zona, modalidad, nivel, detalle}|null>}
- */
 async function obtenerEquipoDeCapitan(authId) {
   const { rows } = await pool.query(
     `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel
@@ -67,12 +50,6 @@ async function obtenerEquipoDeCapitan(authId) {
   };
 }
 
-/**
- * CORRECCIÓN: regla 5 — cuántos equipos activos creó (capitanea) la cuenta, para compararlo con
- * MAX_EQUIPOS_COMO_CAPITAN (config/equipo.js).
- * @param {string} authId - UUID de auth.users.
- * @returns {Promise<number>}
- */
 async function contarEquiposDeCapitan(authId) {
   const { rows } = await pool.query(
     `SELECT count(*)::int AS total
@@ -84,7 +61,6 @@ async function contarEquiposDeCapitan(authId) {
   return rows[0].total;
 }
 
-/** Clave del catálogo (ej. 'arquero') a partir del nombre en la tabla posicion. */
 function clavePosicion(nombreDb) {
   if (!nombreDb) return null;
   const nombre = nombreDb.toLowerCase();
@@ -92,16 +68,11 @@ function clavePosicion(nombreDb) {
   return encontrada ? encontrada[0] : null;
 }
 
-/** Etiqueta de la posición (ej. 'Portero') a partir del nombre en la tabla posicion. */
 function etiquetaPosicion(nombreDb) {
   const clave = clavePosicion(nombreDb);
   return clave ? POSICIONES[clave].etiqueta : nombreDb;
 }
 
-// Equipos activos de la cuenta ($1): los que creó y a los que pertenece según "equipo_jugador".
-// Solo es capitán de los que creó (equipo.id_usuario_creador); en el resto es jugador.
-// El creador los encuentra aunque falte su fila en equipo_jugador o en jugador.
-// $2: un equipo en particular (o null para todos). Primero los que capitanea.
 const SQL_MIS_EQUIPOS = `
   SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
          e.id_usuario_creador = u.id AS soy_capitan
@@ -127,46 +98,22 @@ function filaMiEquipo(fila) {
   };
 }
 
-/**
- * Equipo activo de la cuenta (ver SQL_MIS_EQUIPOS). Si tiene varios, prioriza el que capitanea.
- * @param {string} authId - UUID de auth.users.
- * @param {number|null} [idEquipo] - Uno en particular: null si la cuenta no pertenece a ese equipo.
- * @returns {Promise<{id, nombre, zona, detalle, escudo: string|null, soyCapitan: boolean}|null>}
- */
 async function obtenerMiEquipo(authId, idEquipo = null) {
   const { rows } = await pool.query(`${SQL_MIS_EQUIPOS} LIMIT 1`, [authId, idEquipo]);
   return rows[0] ? filaMiEquipo(rows[0]) : null;
 }
 
-/**
- * Todos los equipos activos de la cuenta (ver SQL_MIS_EQUIPOS), primero los que capitanea.
- * @param {string} authId - UUID de auth.users.
- * @returns {Promise<Array<{id, nombre, zona, detalle, soyCapitan: boolean}>>}
- */
 async function listarMisEquipos(authId) {
   const { rows } = await pool.query(SQL_MIS_EQUIPOS, [authId, null]);
   return rows.map(filaMiEquipo);
 }
 
-/**
- * "Mis equipos" (dashboard y /mis-equipos): los equipos de la cuenta, cada uno con su plantel.
- * @param {string} authId - UUID de auth.users.
- * @returns {Promise<Array<{id, nombre, zona, detalle, soyCapitan: boolean, plantel: Array}>>}
- */
 async function listarMisEquiposConPlantel(authId) {
   const equipos = await listarMisEquipos(authId);
   const planteles = await Promise.all(equipos.map((equipo) => listarPlantel(equipo.id)));
   return equipos.map((equipo, i) => ({ ...equipo, plantel: planteles[i] }));
 }
 
-/**
- * Plantel de un equipo: equipo_jugador + jugador (nombre, carta y foto) + su primera posición + rol,
- * y dónde dejó el capitán su carta en la cancha. El capitán va primero; el resto, en orden de llegada.
- * @param {number} idEquipo
- * @returns {Promise<Array<{id, nombre, nombreCarta, posicion, clavePosicion, capitan: boolean,
- *          stats: {ritmo, ...}|null, fotoVersion: number|null, posX: number|null, posY: number|null}>>}
- *          clavePosicion: 'arquero' | 'defensa' | 'mediocampista' | 'delantero' | null (la línea en la cancha).
- */
 async function listarPlantel(idEquipo) {
   const columnasStats = ESTADISTICAS.map(({ columna }) => `j.${columna}`).join(', ');
   const { rows } = await pool.query(
@@ -191,7 +138,7 @@ async function listarPlantel(idEquipo) {
   return rows.map((fila) => ({
     id: fila.id,
     nombre: fila.nombre || 'Jugador',
-    nombreCarta: fila.nombre_carta || 'Jugador', // apodo si tiene (como en su carta)
+    nombreCarta: fila.nombre_carta || 'Jugador',
     posicion: etiquetaPosicion(fila.posicion) || 'Sin posición',
     clavePosicion: clavePosicion(fila.posicion),
     capitan: Boolean(fila.capitan),
@@ -204,12 +151,6 @@ async function listarPlantel(idEquipo) {
   }));
 }
 
-/**
- * El capitán deja la carta de un jugador en un punto de la cancha (en % del ancho y del alto).
- * Solo el que creó el equipo, y solo con jugadores de su plantel.
- * @param {string} authId - UUID de auth.users (el capitán).
- * @returns {Promise<boolean>} false si el equipo no es suyo o el jugador no está en el plantel.
- */
 async function guardarPosicionEnCancha(authId, idEquipo, idJugador, x, y) {
   const { rowCount } = await pool.query(
     `UPDATE equipo_jugador ej
@@ -222,12 +163,6 @@ async function guardarPosicionEnCancha(authId, idEquipo, idJugador, x, y) {
   return rowCount > 0;
 }
 
-/**
- * Reemplaza el escudo del equipo (solo el capitán que lo creó).
- * @param {Buffer} datos - Imagen ya validada.
- * @param {string} tipo - 'image/jpeg' | 'image/png' | 'image/webp'
- * @returns {Promise<boolean>} false si el equipo no es de esta cuenta.
- */
 async function guardarEscudo(authId, idEquipo, datos, tipo) {
   const { rowCount } = await pool.query(
     `UPDATE equipo e
@@ -239,10 +174,6 @@ async function guardarEscudo(authId, idEquipo, datos, tipo) {
   return rowCount > 0;
 }
 
-/**
- * Escudo de un equipo activo (lo sirve GET /equipos/:id/escudo).
- * @returns {Promise<{datos: Buffer, tipo: string}|null>}
- */
 async function obtenerEscudo(idEquipo) {
   const { rows } = await pool.query('SELECT escudo, escudo_tipo FROM equipo WHERE id = $1 AND activo AND escudo IS NOT NULL', [
     idEquipo,
@@ -250,12 +181,6 @@ async function obtenerEscudo(idEquipo) {
   return rows[0] ? { datos: rows[0].escudo, tipo: rows[0].escudo_tipo } : null;
 }
 
-/**
- * Solicitudes pendientes de un equipo, de la más antigua a la más nueva,
- * con el nombre y la primera posición del jugador y su mensaje.
- * @param {number} idEquipo
- * @returns {Promise<Array<{id, nombre, posicion, mensaje: string|null}>>} id es el de la solicitud.
- */
 async function listarSolicitudesPendientes(idEquipo) {
   const { rows } = await pool.query(
     `SELECT s.id, s.mensaje, trim(concat_ws(' ', j.nombre_apodo, j.apellido)) AS nombre,
@@ -281,14 +206,6 @@ async function listarSolicitudesPendientes(idEquipo) {
   }));
 }
 
-/**
- * Una solicitud de un equipo creado por la cuenta (para que su capitán vea el perfil y el mensaje).
- * Cualquier estado: si ya se respondió, la vista lo dice en vez de mostrar Aceptar/Rechazar.
- * @param {string} authId - UUID de auth.users (el capitán).
- * @param {number} idSolicitud
- * @returns {Promise<{id, idJugador, mensaje, fecha: Date, estado: string, pendiente: boolean,
- *          equipo: {id, nombre}}|null>} null si no existe o no es de un equipo suyo.
- */
 async function obtenerSolicitudDeMiEquipo(authId, idSolicitud) {
   const { rows } = await pool.query(
     `SELECT s.id, s.id_jugador, s.mensaje, s.fecha_solicitud, lower(es.nombre) AS estado,
@@ -313,23 +230,11 @@ async function obtenerSolicitudDeMiEquipo(authId, idSolicitud) {
   };
 }
 
-/**
- * El capitán acepta o rechaza una solicitud, en UNA transacción:
- *  1) Bloquea la solicitud y comprueba que siga pendiente y que sea de un equipo
- *     creado por esta cuenta (nadie más puede responderla).
- *  2) La marca como aceptada o rechazada, con la fecha de respuesta.
- *  3) Si se acepta, suma al jugador al plantel con el rol "integrante".
- * @param {string} authId - UUID de auth.users (el capitán).
- * @param {number} idSolicitud
- * @param {boolean} aceptar
- * @returns {Promise<'aceptada'|'rechazada'|'inexistente'>}
- */
 async function responderSolicitud(authId, idSolicitud, aceptar) {
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
 
-    // 1) Solicitud pendiente de un equipo de este capitán
     const solicitud = await cliente.query(
       `SELECT s.id_jugador, s.id_equipo
          FROM solicitud_union_equipo s
@@ -346,7 +251,6 @@ async function responderSolicitud(authId, idSolicitud, aceptar) {
     }
     const { id_jugador: idJugador, id_equipo: idEquipo } = solicitud.rows[0];
 
-    // 2) Nuevo estado
     const resultado = aceptar ? ESTADO_ACEPTADA : ESTADO_RECHAZADA;
     const estado = await cliente.query('SELECT id FROM estado_solicitud WHERE lower(nombre) = $1', [resultado]);
     if (estado.rowCount === 0) throw new Error(`No existe el estado '${resultado}' en la tabla estado_solicitud.`);
@@ -355,7 +259,6 @@ async function responderSolicitud(authId, idSolicitud, aceptar) {
       [idSolicitud, estado.rows[0].id]
     );
 
-    // 3) Al plantel como integrante (si ya estaba, no se duplica: UNIQUE (id_jugador, id_equipo))
     if (aceptar) {
       const rol = await cliente.query('SELECT id FROM rol_equipo WHERE lower(nombre) = $1', [ROL_INTEGRANTE]);
       if (rol.rowCount === 0) throw new Error(`No existe el rol '${ROL_INTEGRANTE}' en la tabla rol_equipo.`);
@@ -364,7 +267,6 @@ async function responderSolicitud(authId, idSolicitud, aceptar) {
          ON CONFLICT (id_jugador, id_equipo) DO NOTHING`,
         [idJugador, idEquipo, rol.rows[0].id]
       );
-      // CORRECCIÓN: regla 6 — si el equipo también lo había invitado, esa invitación pendiente se cancela.
       await cliente.query(
         `UPDATE invitacion_equipo i
             SET id_estado_solicitud = $3, fecha_respuesta = now()
@@ -385,12 +287,6 @@ async function responderSolicitud(authId, idSolicitud, aceptar) {
   }
 }
 
-/**
- * Rivales para desafiar: equipos activos menos el propio, con el estado del
- * último desafío PENDIENTE entre ambos (para el botón "Enviar Desafío").
- * @param {number} idEquipo - El equipo del capitán.
- * @returns {Promise<Array<{id, nombre, zona, nivel, modalidad, desafio: 'enviado'|'recibido'|null}>>}
- */
 async function listarRivales(idEquipo) {
   const { rows } = await pool.query(
     `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
@@ -421,24 +317,11 @@ async function listarRivales(idEquipo) {
   }));
 }
 
-/**
- * El capitán desafía a otro equipo, en UNA transacción:
- *  1) Busca el equipo que capitanea (el que creó) y lo bloquea: dos clics
- *     seguidos no crean dos desafíos.
- *  2) Comprueba que el rival exista, esté activo y no tenga ya un desafío
- *     pendiente con este equipo (en cualquier sentido).
- *  3) Inserta el desafío como "pendiente" (fecha_solicitud la pone la base).
- * @param {string} authId - UUID de auth.users (el capitán).
- * @param {number} idRival
- * @param {string|null} mensaje - Ya validado (fecha tentativa y/o mensaje).
- * @returns {Promise<'enviado'|'pendiente'|'sin-equipo'|'inexistente'>}
- */
 async function enviarDesafio(authId, idRival, mensaje) {
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
 
-    // 1) Equipo del capitán
     const propio = await cliente.query(
       `SELECT e.id
          FROM usuario u
@@ -455,12 +338,10 @@ async function enviarDesafio(authId, idRival, mensaje) {
     } else {
       const idEquipo = propio.rows[0].id;
 
-      // 2) Rival válido y sin desafío pendiente entre ambos
       const rival = await cliente.query('SELECT 1 FROM equipo WHERE id = $1 AND activo AND id <> $2', [idRival, idEquipo]);
       const estado = await cliente.query('SELECT id FROM estado_desafio WHERE lower(nombre) = $1', [ESTADO_DESAFIO_PENDIENTE]);
       if (estado.rowCount === 0) throw new Error("No existe el estado 'pendiente' en la tabla estado_desafio.");
 
-      // CORRECCIÓN: regla 12 — ¿el rival juega la misma modalidad?
       const mismaModalidad = await cliente.query(
         `SELECT 1 FROM equipo rival JOIN equipo propio ON propio.id = $2
           WHERE rival.id = $1 AND rival.id_modalidad = propio.id_modalidad`,
@@ -470,7 +351,7 @@ async function enviarDesafio(authId, idRival, mensaje) {
       if (rival.rowCount === 0) {
         resultado = 'inexistente';
       } else if (mismaModalidad.rowCount === 0) {
-        resultado = 'modalidad'; // CORRECCIÓN: regla 12
+        resultado = 'modalidad';
       } else if (
         (await cliente.query(
           `SELECT 1 FROM desafio
@@ -482,7 +363,6 @@ async function enviarDesafio(authId, idRival, mensaje) {
       ) {
         resultado = 'pendiente';
       } else {
-        // 3) El desafío
         await cliente.query(
           `INSERT INTO desafio (id_equipo_desafiante, id_equipo_desafiado, id_estado_desafio, mensaje)
            VALUES ($1, $2, $3, $4)`,
@@ -502,24 +382,11 @@ async function enviarDesafio(authId, idRival, mensaje) {
   }
 }
 
-/**
- * Crea el equipo y deja a la cuenta como su capitán, en UNA transacción:
- *  1) Busca la fila de "usuario" y de "jugador" de la cuenta.
- *  2) Busca los ids del rol capitán, del nivel y de la modalidad.
- *  3) Inserta el equipo con la cuenta como id_usuario_creador.
- *  4) Inserta al jugador en equipo_jugador con el rol capitán.
- * Si falla cualquier paso se hace ROLLBACK y no queda un equipo sin capitán.
- * @param {string} authId - UUID de auth.users.
- * @param {{nombre, correo, zona, nivel, jugadores}} datos - Ya validados;
- *        nivel es clave de NIVELES y jugadores es 5, 7 u 11.
- * @returns {Promise<{id: number}>} El id del equipo creado.
- */
-async function crearEquipo(authId, { nombre, correo, zona, nivel, jugadores, idComuna = null }) { // CORRECCIÓN: regla 11 (idComuna)
+async function crearEquipo(authId, { nombre, correo, zona, nivel, jugadores, idComuna = null }) {
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
 
-    // 1) Usuario y jugador de la cuenta (el registro crea ambos).
     const cuenta = await cliente.query(
       `SELECT u.id AS id_usuario, j.id AS id_jugador
          FROM usuario u
@@ -532,13 +399,11 @@ async function crearEquipo(authId, { nombre, correo, zona, nivel, jugadores, idC
       throw new Error(`La cuenta ${authId} no tiene fila en "usuario" o en "jugador".`);
     }
 
-    // 2) Catálogos
     const rol = await cliente.query('SELECT id FROM rol_equipo WHERE lower(nombre) = ANY($1) ORDER BY id LIMIT 1', [
       NOMBRES_ROL_CAPITAN,
     ]);
     if (rol.rowCount === 0) throw new Error("No existe el rol 'capitan' en la tabla rol_equipo.");
 
-    // CORRECCIÓN: regla 10 — también el puntaje mínimo del nivel, que será el puntaje inicial del equipo.
     const filaNivel = await cliente.query('SELECT id, puntaje_min FROM nivel WHERE lower(nombre) = lower($1)', [NIVELES[nivel]]);
     if (filaNivel.rowCount === 0) throw new Error(`No existe el nivel '${NIVELES[nivel]}' en la tabla nivel.`);
 
@@ -547,9 +412,6 @@ async function crearEquipo(authId, { nombre, correo, zona, nivel, jugadores, idC
     ]);
     if (modalidad.rowCount === 0) throw new Error(`No existe una modalidad de ${jugadores} jugadores en la tabla modalidad.`);
 
-    // 3) El equipo; activo toma su valor por defecto.
-    // CORRECCIÓN: regla 10 — puntaje_nivel parte en el mínimo del nivel elegido (antes quedaba en 0 para todos).
-    // CORRECCIÓN: regla 11 — se guarda la comuna elegida de la lista (id_comuna).
     const equipo = await cliente.query(
       `INSERT INTO equipo (nombre, zona, correo_contacto, id_modalidad, id_nivel, id_usuario_creador, puntaje_nivel, id_comuna)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -558,7 +420,6 @@ async function crearEquipo(authId, { nombre, correo, zona, nivel, jugadores, idC
     );
     const idEquipo = equipo.rows[0].id;
 
-    // 4) El creador entra al plantel como capitán.
     await cliente.query('INSERT INTO equipo_jugador (id_jugador, id_equipo, id_rol_equipo) VALUES ($1, $2, $3)', [
       idJugador,
       idEquipo,
@@ -575,12 +436,6 @@ async function crearEquipo(authId, { nombre, correo, zona, nivel, jugadores, idC
   }
 }
 
-/**
- * Directorio: todos los equipos activos, del más nuevo al más antiguo, con la
- * relación de la cuenta con cada uno (para el botón "Unirme").
- * @param {string} authId - UUID de auth.users.
- * @returns {Promise<Array<{id, nombre, zona, nivel, modalidad, detalle, relacion: 'capitan'|'miembro'|'pendiente'|null}>>}
- */
 async function listarEquipos(authId) {
   const { rows } = await pool.query(
     `WITH yo AS (
@@ -618,15 +473,6 @@ async function listarEquipos(authId) {
   }));
 }
 
-/**
- * Envía la solicitud del jugador de la cuenta para unirse a un equipo, con su mensaje.
- * Bloquea la fila del jugador durante la transacción: dos clics seguidos no
- * crean dos solicitudes pendientes.
- * @param {string} authId - UUID de auth.users.
- * @param {number} idEquipo
- * @param {string|null} mensaje - Ya validado (validarSolicitudUnion).
- * @returns {Promise<'enviada'|'miembro'|'pendiente'|'inexistente'>}
- */
 async function solicitarUnion(authId, idEquipo, mensaje) {
   const cliente = await pool.connect();
   try {
@@ -652,7 +498,6 @@ async function solicitarUnion(authId, idEquipo, mensaje) {
     ) {
       resultado = 'miembro';
     } else if (
-      // CORRECCIÓN: regla 6 — si ese equipo ya lo invitó, no se crea una solicitud paralela: acepta la invitación.
       (await cliente.query(
         `SELECT 1 FROM invitacion_equipo i JOIN estado_solicitud es ON es.id = i.id_estado_solicitud
           WHERE i.id_equipo = $1 AND i.id_jugador = $2 AND lower(es.nombre) = $3`,
@@ -689,14 +534,6 @@ async function solicitarUnion(authId, idEquipo, mensaje) {
   }
 }
 
-/**
- * Jugadores para el modal "Invitar jugador +": TODOS los jugadores con cuenta activa (con o sin
- * equipo: un jugador puede estar en varios), menos los que ya están en este plantel.
- * Cada uno trae los equipos en que juega (equipo_jugador + equipo) y si tiene una invitación pendiente de este equipo.
- * @param {number} idEquipo - El equipo del capitán.
- * @returns {Promise<Array<{id, nombre, posicion, stats: {ritmo, ...}|null, fotoVersion: number|null,
- *          equipos: string[], invitado: boolean}>>}
- */
 async function listarJugadoresParaInvitar(idEquipo) {
   const columnasStats = ESTADISTICAS.map(({ columna }) => `j.${columna}`).join(', ');
   const { rows } = await pool.query(
@@ -734,13 +571,6 @@ async function listarJugadoresParaInvitar(idEquipo) {
   }));
 }
 
-/**
- * El capitán invita a un jugador: guarda en invitacion_equipo el equipo ($2) y el jugador ($3)
- * como "pendiente". Solo el que creó el equipo; UNIQUE (id_equipo, id_jugador) evita repetirla.
- * Si ya la había respondido (la rechazó, o la aceptó y después salió o lo sacaron), vuelve a "pendiente".
- * @param {string} authId - UUID de auth.users (el capitán).
- * @returns {Promise<'enviada'|'ya-invitado'|'miembro'|'sin-permiso'|'inexistente'>}
- */
 async function invitarJugador(authId, idEquipo, idJugador) {
   const { rows } = await pool.query(
     `SELECT EXISTS (SELECT 1 FROM equipo e JOIN usuario u ON u.id = e.id_usuario_creador
@@ -758,7 +588,7 @@ async function invitarJugador(authId, idEquipo, idJugador) {
   if (!soyCapitan) return 'sin-permiso';
   if (!existe) return 'inexistente';
   if (miembro) return 'miembro';
-  if (postulo) return 'solicitud-pendiente'; // CORRECCIÓN: regla 6
+  if (postulo) return 'solicitud-pendiente';
 
   const estado = await pool.query('SELECT id FROM estado_solicitud WHERE lower(nombre) = $1', [ESTADO_PENDIENTE]);
   if (estado.rowCount === 0) throw new Error("No existe el estado 'pendiente' en la tabla estado_solicitud.");
@@ -772,13 +602,6 @@ async function invitarJugador(authId, idEquipo, idJugador) {
   return rowCount > 0 ? 'enviada' : 'ya-invitado';
 }
 
-/**
- * Invitaciones pendientes que recibió el jugador de la cuenta (panel "Invitaciones" del dashboard),
- * de la más nueva a la más antigua, con el equipo que invita y su capitán.
- * @param {string} authId - UUID de auth.users.
- * @returns {Promise<Array<{id, fecha: Date, equipo: {id, nombre, detalle, escudo}, capitan: string|null}>>}
- *          id es el de la invitación.
- */
 async function listarMisInvitaciones(authId) {
   const { rows } = await pool.query(
     `SELECT i.id, i.fecha_invitacion, e.id AS id_equipo, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado,
@@ -806,24 +629,11 @@ async function listarMisInvitaciones(authId) {
   }));
 }
 
-/**
- * El jugador acepta o rechaza una invitación, en UNA transacción:
- *  1) Bloquea la invitación y comprueba que siga pendiente, que sea para el jugador
- *     de esta cuenta (nadie más puede responderla) y que el equipo siga activo.
- *  2) La marca como aceptada o rechazada, con la fecha de respuesta.
- *  3) Si la acepta, lo suma al plantel con el rol "integrante" y da por aceptada la
- *     solicitud pendiente que él mismo hubiera enviado a ese equipo (así no le queda al capitán).
- * @param {string} authId - UUID de auth.users (el jugador invitado).
- * @param {number} idInvitacion
- * @param {boolean} aceptar
- * @returns {Promise<'aceptada'|'rechazada'|'inexistente'>}
- */
 async function responderInvitacion(authId, idInvitacion, aceptar) {
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
 
-    // 1) Invitación pendiente para el jugador de esta cuenta
     const invitacion = await cliente.query(
       `SELECT i.id_jugador, i.id_equipo
          FROM invitacion_equipo i
@@ -841,7 +651,6 @@ async function responderInvitacion(authId, idInvitacion, aceptar) {
     }
     const { id_jugador: idJugador, id_equipo: idEquipo } = invitacion.rows[0];
 
-    // 2) Nuevo estado
     const resultado = aceptar ? ESTADO_ACEPTADA : ESTADO_RECHAZADA;
     const estado = await cliente.query('SELECT id FROM estado_solicitud WHERE lower(nombre) = $1', [resultado]);
     if (estado.rowCount === 0) throw new Error(`No existe el estado '${resultado}' en la tabla estado_solicitud.`);
@@ -850,7 +659,6 @@ async function responderInvitacion(authId, idInvitacion, aceptar) {
       [idInvitacion, estado.rows[0].id]
     );
 
-    // 3) Al plantel como integrante (si ya estaba, no se duplica: UNIQUE (id_jugador, id_equipo))
     if (aceptar) {
       const rol = await cliente.query('SELECT id FROM rol_equipo WHERE lower(nombre) = $1', [ROL_INTEGRANTE]);
       if (rol.rowCount === 0) throw new Error(`No existe el rol '${ROL_INTEGRANTE}' en la tabla rol_equipo.`);
@@ -865,7 +673,6 @@ async function responderInvitacion(authId, idInvitacion, aceptar) {
            FROM estado_solicitud es
           WHERE es.id = s.id_estado_solicitud AND lower(es.nombre) = $4
             AND s.id_jugador = $1 AND s.id_equipo = $2`,
-        // CORRECCIÓN: regla 6 — su solicitud pendiente a ese equipo queda "cancelada" (antes se marcaba "aceptada")
         [idJugador, idEquipo, await idEstadoCancelada(cliente), ESTADO_PENDIENTE]
       );
     }
@@ -880,12 +687,6 @@ async function responderInvitacion(authId, idInvitacion, aceptar) {
   }
 }
 
-/**
- * El capitán saca a un jugador del plantel: borra su fila de equipo_jugador
- * (WHERE id_equipo AND id_jugador). Solo el que creó el equipo, y nunca a sí mismo.
- * @param {string} authId - UUID de auth.users (el capitán).
- * @returns {Promise<boolean>} false si el equipo no es suyo, el jugador no está o es el propio capitán.
- */
 async function sacarJugador(authId, idEquipo, idJugador) {
   const { rowCount } = await pool.query(
     `DELETE FROM equipo_jugador ej
@@ -899,12 +700,6 @@ async function sacarJugador(authId, idEquipo, idJugador) {
   return rowCount > 0;
 }
 
-/**
- * El jugador de la cuenta sale de un equipo: borra su fila de equipo_jugador
- * (WHERE id_equipo AND id_jugador). El que creó el equipo no puede salir: el equipo quedaría sin capitán.
- * @param {string} authId - UUID de auth.users.
- * @returns {Promise<boolean>} false si no estaba en ese equipo o es su capitán.
- */
 async function salirDeEquipo(authId, idEquipo) {
   const { rowCount } = await pool.query(
     `DELETE FROM equipo_jugador ej
@@ -918,7 +713,7 @@ async function salirDeEquipo(authId, idEquipo) {
 }
 
 module.exports = {
-  contarEquiposDeCapitan, // CORRECCIÓN: regla 5
+  contarEquiposDeCapitan,
   obtenerEquipoDeCapitan,
   obtenerMiEquipo,
   listarMisEquipos,

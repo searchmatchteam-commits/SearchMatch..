@@ -10,44 +10,32 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <%
-    // Páginas "cyber-sport": sistema compartido + hoja propia de la página
     const cyber = locals.pagina === 'dashboard' || locals.pagina === 'auth' || locals.pagina === 'equipo';
-    // Una sola petición a Google Fonts (cada hoja de fuentes extra bloquea el primer pintado)
     const fuentes = 'family=Inter:wght@400;500;600;700;800;900' + (cyber ? '&family=Space+Grotesk:wght@500;600;700' : '')
       + (locals.pagina === 'perfil' || locals.pagina === 'dashboard' ? '&family=Barlow+Condensed:wght@600;700;800' : '');
   %>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?<%= fuentes %>&display=swap" />
-  <!-- ?v= cambia en cada arranque del servidor: el navegador puede guardar los archivos en caché sin quedar desactualizado -->
   <link rel="stylesheet" href="/css/style.css?v=<%= versionAssets %>" />
-  <!-- NUEVO: estilos de las funciones nuevas (clases sm-*, no cambia las existentes) -->
   <link rel="stylesheet" href="/css/modulos.css?v=<%= versionAssets %>" />
   <% if (locals.wizardEquipo) { %>
-    <!-- Wizard de equipo: la base es la del wizard de jugador (style.css) -->
     <link rel="stylesheet" href="/css/crear-equipo.css?v=<%= versionAssets %>" />
   <% } %>
   <% if (cyber) { %>
     <link rel="stylesheet" href="/css/cyber.css?v=<%= versionAssets %>" />
     <% if (pagina === 'equipo') { %>
-      <!-- El panel del equipo reutiliza los paneles, el aviso y el dock del dashboard -->
       <link rel="stylesheet" href="/css/dashboard.css?v=<%= versionAssets %>" />
     <% } %>
     <link rel="stylesheet" href="/css/<%= pagina %>.css?v=<%= versionAssets %>" />
   <% } %>
   <% if (locals.pagina === 'perfil') { %>
-    <!-- El perfil reutiliza el dock y el aviso flotante del dashboard -->
     <link rel="stylesheet" href="/css/dashboard.css?v=<%= versionAssets %>" />
   <% } %>
   <% if (locals.pagina === 'landing' || locals.pagina === 'dashboard') { %>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <% } %>
   <% if (locals.pagina === 'auth') { %>
-    <!-- Mientras el usuario escribe, el navegador baja Three.js en segundo plano:
-         al entrar al dashboard el balón 3D ya está en caché -->
     <link rel="prefetch" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" crossorigin="anonymous" />
   <% } %>
-  <!-- Marca que hay JS (las animaciones de aparición solo se activan si existe) y decide el
-       "modo liviano": sin efectos pesados cuando el navegador no tiene aceleración gráfica.
-       ?liviano=1 lo fuerza, ?liviano=0 lo desactiva (queda guardado); "sm-gpu" lo detecta cyber.js. -->
   <script>
     (function () {
       var raiz = document.documentElement;
@@ -57,7 +45,7 @@
         if (forzado !== null) localStorage.setItem('sm-liviano', forzado === '0' ? 'no' : 'si');
         var modo = localStorage.getItem('sm-liviano') || (sessionStorage.getItem('sm-gpu') === 'software' ? 'si' : 'no');
         if (modo === 'si') raiz.classList.add('modo-liviano');
-      } catch (e) { /* sin localStorage: modo normal */ }
+      } catch (e) {  }
     })();
   </script>
 </head>
@@ -66,7 +54,6 @@
     <div class="navbar__interior">
       <a class="logo" href="/" aria-label="SearchMatch, inicio">
         <svg class="logo__icono" viewBox="0 0 24 24" aria-hidden="true">
-          <!-- Silueta sólida del balón: disco lleno con pentágono y costuras en negativo -->
           <defs>
             <mask id="logo-balon">
               <circle cx="12" cy="12" r="10" fill="#fff" />
@@ -81,11 +68,9 @@
 
       <nav class="navbar__nav" aria-label="Cuenta">
         <% if (usuario) { %>
-          <!-- Usuario con sesión activa. Las páginas con dock ya llevan a Inicio desde la barra inferior -->
           <% if (!['dashboard', 'equipo', 'perfil'].includes(locals.pagina)) { %>
             <a class="btn btn--contorno btn--chico" href="/dashboard">Mi panel</a>
           <% } %>
-          <!-- NUEVO: AG-001 agenda y NT-002/NT-003 campana con el contador de no leídas -->
           <a class="sm-icono-nav" href="/agenda" title="Agenda de partidos" aria-label="Agenda de partidos">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
           </a>
@@ -95,14 +80,12 @@
             <% if (locals.notificacionesSinLeer) { %><span class="sm-icono-nav__contador"><%= notificacionesSinLeer > 99 ? '99+' : notificacionesSinLeer %></span><% } %>
           </a>
           <% if (usuario.esAdmin) { %>
-            <!-- NUEVO: AR-004 — acceso al módulo de administración, solo para administradores -->
             <a class="btn btn--contorno btn--chico" href="/admin">Admin</a>
           <% } %>
           <form action="/logout" method="POST" class="navbar__form">
             <button type="submit" class="btn btn--verde btn--chico">Cerrar sesión</button>
           </form>
         <% } else { %>
-          <!-- Sin sesión -->
           <a class="btn btn--contorno btn--chico" href="/login">Iniciar sesión</a>
           <a class="btn btn--verde btn--chico" href="/registro">Registrarse</a>
         <% } %>

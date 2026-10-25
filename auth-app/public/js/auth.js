@@ -1,30 +1,16 @@
-// public/js/auth.js
-// Formularios de login, registro y crear equipo (form[data-validar]):
-//  1) Validación en el navegador: campos obligatorios, formato del correo,
-//     celular chileno, contraseña de 8+ caracteres y confirmación.
-//  2) Errores bajo cada campo + resumen en la alerta roja bajo el formulario.
-//  3) Estado "cargando": spinner, botón deshabilitado y luz en la tarjeta mientras responde el servidor.
-//  4) Botón de ojo para mostrar u ocultar las contraseñas ([data-ver-password]).
-// Es solo una ayuda para el usuario: la validación real la repite el servidor
-// (middlewares/validators.js), así que las reglas deben coincidir con las de allá.
-
 const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const REGEX_CELULAR_CL = /^(?:\+?56)?9\d{8}$/;
 const LONGITUD_MINIMA_PASSWORD = 8;
 const EDAD_MINIMA = 18;
 
-/** Años cumplidos a partir de "AAAA-MM-DD", comparando con el día de hoy. */
 function calcularEdad(valor) {
   const [anio, mes, dia] = valor.split('-').map(Number);
   const hoy = new Date();
   let edad = hoy.getFullYear() - anio;
-  // Aún no cumple años este año
   if (hoy.getMonth() + 1 < mes || (hoy.getMonth() + 1 === mes && hoy.getDate() < dia)) edad -= 1;
   return edad;
 }
 
-// Reglas por campo. Cada una recibe el valor (y el formulario) y devuelve
-// el mensaje de error, o null si el valor es válido.
 const REGLAS = {
   nombre: (valor) => (valor ? null : 'El nombre es obligatorio.'),
 
@@ -46,7 +32,6 @@ const REGLAS = {
 
   fecha_nacimiento: (valor) => {
     if (!valor) return 'La fecha de nacimiento es obligatoria.';
-    // "AAAA-MM-DD" se compara bien como texto
     if (valor > new Date().toISOString().slice(0, 10)) return 'La fecha de nacimiento no puede estar en el futuro.';
     if (calcularEdad(valor) < EDAD_MINIMA) return `Debes tener al menos ${EDAD_MINIMA} años para registrarte.`;
     return null;
@@ -54,18 +39,15 @@ const REGLAS = {
 
   password: (valor, formulario) => {
     if (!valor) return 'La contraseña es obligatoria.';
-    // En el login no exigimos largo mínimo: cuentas antiguas podrían tener otra regla.
     if (formulario.dataset.validar === 'registro' && valor.length < LONGITUD_MINIMA_PASSWORD) {
       return `La contraseña debe tener al menos ${LONGITUD_MINIMA_PASSWORD} caracteres.`;
     }
-    // CORRECCIÓN: contraseña segura (misma regla que errorPasswordSegura en validators.js)
     if (formulario.dataset.validar === 'registro' && (!/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(valor) || !/\d/.test(valor))) {
       return 'La contraseña debe combinar letras y números.';
     }
     return null;
   },
 
-  // Crear equipo
   nombre_equipo: (valor) => (valor ? null : 'El nombre del equipo es obligatorio.'),
 
   id_comuna: (valor) => (valor ? null : 'Elige la comuna del equipo.'),
@@ -77,12 +59,10 @@ const REGLAS = {
   },
 };
 
-/** Valida un campo, pinta su error y devuelve el mensaje (o null). */
 function validarCampo(input, formulario) {
   const regla = REGLAS[input.name];
   if (!regla) return null;
 
-  // Las contraseñas no se recortan (aunque estén visibles, con type="text").
   const esPassword = input.name === 'password' || input.name === 'confirmar_password';
   const valor = esPassword ? input.value : input.value.trim();
   const mensaje = regla(valor, formulario);
@@ -96,7 +76,6 @@ function validarCampo(input, formulario) {
   return mensaje;
 }
 
-/** Muestra (o esconde, con una lista vacía) la alerta roja bajo el formulario. */
 function mostrarAlerta(alerta, mensajes) {
   if (!alerta) return;
   const lista = alerta.querySelector('ul');
@@ -110,7 +89,6 @@ function mostrarAlerta(alerta, mensajes) {
   alerta.hidden = mensajes.length === 0;
 }
 
-/** Alterna una contraseña entre visible y oculta, y actualiza el botón del ojo. */
 function alternarPassword(boton) {
   const input = document.getElementById(boton.getAttribute('aria-controls'));
   const visible = input.type === 'password';
@@ -119,7 +97,6 @@ function alternarPassword(boton) {
   boton.setAttribute('aria-label', visible ? 'Ocultar contraseña' : 'Mostrar contraseña');
 }
 
-/** Activa o desactiva el estado "cargando" del botón de envío. */
 function ponerCargando(boton, cargando) {
   const texto = boton.querySelector('.btn__texto');
   if (!boton.dataset.textoOriginal) boton.dataset.textoOriginal = texto.textContent;
@@ -128,7 +105,6 @@ function ponerCargando(boton, cargando) {
   boton.classList.toggle('btn--cargando', cargando);
   boton.setAttribute('aria-busy', String(cargando));
   texto.textContent = cargando ? boton.dataset.textoCargando : boton.dataset.textoOriginal;
-  // Luz que recorre el borde de la tarjeta mientras responde el servidor (auth.css)
   const tarjeta = boton.closest('.auth__tarjeta');
   if (tarjeta) tarjeta.classList.toggle('auth__tarjeta--enviando', cargando);
 }
@@ -144,7 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputs = Array.from(formulario.querySelectorAll('input[name], select[name]'));
 
     formulario.addEventListener('submit', (evento) => {
-      // Evita doble envío si el usuario hace clic varias veces.
       if (boton.disabled) {
         evento.preventDefault();
         return;
@@ -168,31 +143,24 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Todo válido: el formulario se envía normalmente (POST) y el servidor
-      // responde con una redirección al dashboard o con la página y sus errores.
       ponerCargando(boton, true);
     });
 
-    // Re-valida en vivo los campos que ya se marcaron como erróneos.
     formulario.addEventListener('input', (evento) => {
       const input = evento.target;
       if (input.closest('.campo--error')) validarCampo(input, formulario);
-      // Si cambia la contraseña, la confirmación puede pasar a coincidir (o dejar de hacerlo).
       const confirmar = formulario.elements.confirmar_password;
       if (input.name === 'password' && confirmar && confirmar.closest('.campo--error')) {
         validarCampo(confirmar, formulario);
       }
     });
 
-    // Al salir de un campo con contenido se valida (no molestamos con campos aún vacíos).
     formulario.addEventListener('focusout', (evento) => {
       const input = evento.target;
       if (input.matches('input[name], select[name]') && input.value) validarCampo(input, formulario);
     });
   });
 
-  // Al volver con el botón "Atrás", el navegador puede restaurar la página desde
-  // su caché con el botón aún en "cargando": lo dejamos listo de nuevo.
   window.addEventListener('pageshow', (evento) => {
     if (!evento.persisted) return;
     document.querySelectorAll('form[data-validar] button[type="submit"]').forEach((boton) => {

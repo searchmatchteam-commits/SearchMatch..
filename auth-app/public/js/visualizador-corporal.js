@@ -1,19 +1,10 @@
-// public/js/visualizador-corporal.js
-// Visualizador corporal (views/partials/visualizador-corporal.ejs): coloca la silueta según
-// data-altura (cm) y data-peso (kg) del <figure data-visualizador-corporal>.
-//  - Altura: la silueta escala hasta que la cabeza toca esa marca de la regla.
-//  - Peso: el IMC ensancha torso, brazos y piernas (solo en X); la cabeza no se deforma.
-// Si data-altura o data-peso cambian, la silueta se anima (~300 ms). Para conectarlo a otra fuente:
-//   visualizador.dataset.altura = 182; visualizador.dataset.peso = 80;
-
 (() => {
   const DURACION_MS = 300;
   const POR_DEFECTO = { altura: 178, peso: 72 };
-  const ALTURA_DIBUJO = [130, 215]; // límites del dibujo (las etiquetas muestran el valor real)
-  const ALTO_FIGURA = 100;          // la silueta mide 100 unidades (pies en 0, cabeza en -100)
-  const MEDIO_ANCHO_FIGURA = 16.6;  // de la mano al centro, para ubicar la etiqueta del peso
-  const ALTURA_PECHO = 70;          // la etiqueta del peso va a la altura del pecho
-  // IMC → factor de ancho, lineal por tramos y con límites en los extremos
+  const ALTURA_DIBUJO = [130, 215];
+  const ALTO_FIGURA = 100;
+  const MEDIO_ANCHO_FIGURA = 16.6;
+  const ALTURA_PECHO = 70;
   const TRAMOS_IMC = [[16, 0.8], [22, 1], [35, 1.35]];
 
   const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -73,7 +64,6 @@
     dibujar(actual);
     visualizador.classList.add('vc--listo');
 
-    // Transición de los valores actuales a los nuevos (ease-out); un cambio a mitad parte desde donde va
     function animarHacia(destino) {
       if (cuadro) cancelAnimationFrame(cuadro);
       if (sinMovimiento) {

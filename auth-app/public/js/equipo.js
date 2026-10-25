@@ -1,41 +1,19 @@
-// public/js/equipo.js
-// Directorio de equipos (views/equipos.ejs):
-//  1) Buscador: filtra las tarjetas (data-busqueda) mientras se escribe. Lo usan el directorio
-//     (nombre o comuna) y el modal "Invitar jugador" del panel (nombre o posición).
-//  2) "Solicitar unirme": abre un modal para el mensaje al capitán, envía la solicitud con fetch
-//     (sin recargar) y deja el botón deshabilitado como "Solicitud enviada ✓" para no mandarla dos veces.
-// Panel /mi-equipo (views/equipo-panel.ejs): el plantel y las solicitudes llegan del servidor;
-//  3) Aceptar/Rechazar desactivan los botones de esa solicitud al enviarse (evita doble envío).
-//  4) Desafíos: "Desafiar a otro equipo" abre la lista de rivales; "Enviar Desafío" abre un
-//     modal (fecha, hora y mensaje opcionales) y lo envía con fetch, sin recargar.
-//  5) Cancha táctica (solo el capitán): las cartas se arrastran (o se mueven con las flechas) y
-//     cada posición se guarda al soltar. La "X" de cada carta saca al jugador (confirmarAccion + fetch):
-//     la carta desaparece sin recargar.
-//  6) Escudo (solo el capitán): la imagen se reduce a LADO_ESCUDO px en el navegador y se sube.
-//  7) "Invitar jugador +" (solo el capitán): abre el modal con todos los jugadores (con buscador, ver 1);
-//     "Invitar" se envía con fetch y el botón queda gris como "Invitación Enviada".
-
-// (dashboard.js, cargado en la misma página, ya declara DURACION_AVISO_MS)
 const DURACION_EXITO_MS = 3200;
 
-// Cancha: hasta dónde se puede llevar el centro de una carta (en %), para que no se salga
 const LIMITES_CANCHA = { x: [8, 92], y: [9, 91] };
-const PASO_TECLADO = 2;          // % que avanza una carta con cada flecha
-const ESPERA_GUARDAR_MS = 450;   // con el teclado, se guarda al dejar de mover
+const PASO_TECLADO = 2;
+const ESPERA_GUARDAR_MS = 450;
 
-// Escudo: cabe entero (como "object-fit: contain") en un cuadrado de este lado, en PNG (con transparencia)
 const LADO_ESCUDO = 256;
 
-// Texto del botón según la respuesta del servidor
 const TEXTOS_BOTON = {
   enviada: 'Solicitud enviada ✓',
   pendiente: 'Solicitud enviada ✓',
   miembro: 'Ya eres parte',
   inexistente: 'No disponible',
-  invitado: 'Te invitaron ✓', // CORRECCIÓN: regla 6 (el equipo ya lo invitó: acepta desde el panel)
+  invitado: 'Te invitaron ✓',
 };
 
-/** Minúsculas y sin tildes, para que "maipu" encuentre "Maipú". */
 function normalizar(texto) {
   return texto.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
 }
@@ -52,17 +30,15 @@ document.addEventListener('DOMContentLoaded', () => {
     temporizador = setTimeout(() => aviso.classList.remove('panel-aviso--visible'), DURACION_EXITO_MS);
   }
 
-  // El aviso que llega del servidor (formulario sin JavaScript) se esconde solo
   if (aviso && aviso.classList.contains('panel-aviso--visible')) {
     temporizador = setTimeout(() => aviso.classList.remove('panel-aviso--visible'), DURACION_EXITO_MS);
   }
 
-  // ---------- 1) Buscador ----------
   const buscador = document.querySelector('[data-buscar-equipo]');
   if (buscador) {
     const tarjetas = [...document.querySelectorAll('[data-busqueda]')];
     const sinResultados = document.querySelector('[data-sin-resultados]');
-    const total = document.querySelector('[data-total-resultados]'); // pie del modal "Invitar jugador"
+    const total = document.querySelector('[data-total-resultados]');
     buscador.addEventListener('input', () => {
       const texto = normalizar(buscador.value);
       let visibles = 0;
@@ -76,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ---------- 3) Aceptar / Rechazar ----------
   document.querySelectorAll('form[data-responder]').forEach((formulario) => {
     formulario.addEventListener('submit', (evento) => {
       const botones = formulario.closest('.eq-solicitud__acciones').querySelectorAll('button');
@@ -84,16 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
         evento.preventDefault();
         return;
       }
-      // Después del envío: si se desactivan antes, el formulario no se manda
       setTimeout(() => botones.forEach((boton) => { boton.disabled = true; }));
     });
   });
 
-  // ---------- 4) Desafíos ----------
   const seccionDesafios = document.querySelector('[data-desafios]');
   const modal = document.querySelector('[data-modal-desafio]');
 
-  // El botón de la cabecera abre la sección (es un <details>) y baja hasta ella
   document.querySelector('[data-abrir-desafios]')?.addEventListener('click', (evento) => {
     evento.preventDefault();
     seccionDesafios.open = true;
@@ -104,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const formModal = modal.querySelector('[data-form-desafio]');
     const errorModal = modal.querySelector('[data-modal-error]');
     const botonEnviar = formModal.querySelector('button[type="submit"]');
-    let formularioRival = null; // el formulario del rival elegido (su action dice a quién desafiar)
+    let formularioRival = null;
 
     function abrirModal(formulario) {
       formularioRival = formulario;
@@ -112,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formModal.reset();
       errorModal.hidden = true;
       modal.hidden = false;
-      document.body.style.overflow = 'hidden'; // la página no se desplaza detrás del modal
+      document.body.style.overflow = 'hidden';
       formModal.querySelector('input').focus();
     }
 
@@ -122,7 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
       formularioRival?.querySelector('button')?.focus();
     }
 
-    // "Enviar Desafío" no envía todavía: abre el modal (sin JS, el formulario se envía directo)
     document.querySelectorAll('form[data-desafiar]').forEach((formulario) => {
       formulario.addEventListener('submit', (evento) => {
         evento.preventDefault();
@@ -130,7 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Cerrar: botón Cancelar, clic fuera de la caja o tecla Escape
     modal.querySelector('[data-cerrar-modal]').addEventListener('click', cerrarModal);
     modal.addEventListener('click', (evento) => { if (evento.target === modal) cerrarModal(); });
     document.addEventListener('keydown', (evento) => { if (evento.key === 'Escape' && !modal.hidden) cerrarModal(); });
@@ -150,7 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const datos = await respuesta.json().catch(() => ({}));
         if (!respuesta.ok || !datos.resultado) throw new Error(datos.error || 'No se pudo enviar el desafío. Inténtalo de nuevo.');
 
-        // Enviado (o ya había uno pendiente): el botón queda gris y deshabilitado
         const boton = formularioRival.querySelector('button');
         if (datos.resultado === 'enviado' || datos.resultado === 'pendiente') {
           boton.textContent = 'Desafío Enviado ✓';
@@ -169,14 +138,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ---------- 2) Solicitar unirme ----------
   const modalUnion = document.querySelector('[data-modal-union]');
   if (modalUnion) {
     const formUnion = modalUnion.querySelector('[data-form-union]');
     const campoMensaje = formUnion.querySelector('textarea');
     const errorUnion = modalUnion.querySelector('[data-modal-error]');
     const botonUnion = formUnion.querySelector('button[type="submit"]');
-    let formularioEquipo = null; // el formulario del equipo elegido (su action dice a cuál unirse)
+    let formularioEquipo = null;
 
     function abrirUnion(formulario) {
       formularioEquipo = formulario;
@@ -184,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formUnion.reset();
       errorUnion.hidden = true;
       modalUnion.hidden = false;
-      document.body.style.overflow = 'hidden'; // la página no se desplaza detrás del modal
+      document.body.style.overflow = 'hidden';
       campoMensaje.focus();
     }
 
@@ -194,7 +162,6 @@ document.addEventListener('DOMContentLoaded', () => {
       formularioEquipo?.querySelector('button')?.focus();
     }
 
-    // "Solicitar unirme" abre el modal (sin JS, el formulario se envía directo y sin mensaje)
     document.querySelectorAll('form[data-unirme]').forEach((formulario) => {
       formulario.addEventListener('submit', (evento) => {
         evento.preventDefault();
@@ -202,7 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Cerrar: botón Cancelar, clic fuera de la caja o tecla Escape
     modalUnion.querySelector('[data-cerrar-modal]').addEventListener('click', cerrarUnion);
     modalUnion.addEventListener('click', (evento) => { if (evento.target === modalUnion) cerrarUnion(); });
     document.addEventListener('keydown', (evento) => { if (evento.key === 'Escape' && !modalUnion.hidden) cerrarUnion(); });
@@ -244,7 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ---------- 7) Invitar jugador ----------
   const modalInvitar = document.querySelector('[data-modal-invitar]');
   if (modalInvitar) {
     function cerrarInvitar() {
@@ -252,7 +217,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.style.overflow = '';
     }
 
-    // Degradados de la lista: arriba si ya se bajó, abajo si quedan jugadores (también al filtrar)
     const marco = modalInvitar.querySelector('[data-marco-invitar]');
     const cuerpo = modalInvitar.querySelector('[data-cuerpo-invitar]');
     function marcarScroll() {
@@ -265,11 +229,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('[data-abrir-invitar]')?.addEventListener('click', () => {
       modalInvitar.hidden = false;
       marcarScroll();
-      document.body.style.overflow = 'hidden'; // la página no se desplaza detrás del modal
+      document.body.style.overflow = 'hidden';
       (modalInvitar.querySelector('[data-buscar-equipo]') || modalInvitar.querySelector('[data-cerrar-modal]')).focus();
     });
 
-    // Cerrar: botón Cerrar, clic fuera de la caja o tecla Escape
     modalInvitar.querySelector('[data-cerrar-modal]').addEventListener('click', cerrarInvitar);
     modalInvitar.addEventListener('click', (evento) => { if (evento.target === modalInvitar) cerrarInvitar(); });
     document.addEventListener('keydown', (evento) => { if (evento.key === 'Escape' && !modalInvitar.hidden) cerrarInvitar(); });
@@ -286,7 +249,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const datos = await respuesta.json().catch(() => ({}));
           if (!respuesta.ok || !datos.resultado) throw new Error('No se pudo enviar la invitación. Inténtalo de nuevo.');
 
-          // Enviada (o ya estaba): el botón queda gris y deshabilitado
           if (datos.resultado === 'enviada' || datos.resultado === 'ya-invitado') {
             boton.textContent = 'Invitación Enviada';
             boton.classList.remove('btn--verde');
@@ -303,7 +265,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ---------- 5) Cancha táctica ----------
   const cancha = document.querySelector('[data-cancha-editable]');
   if (cancha) {
     const limitar = (valor, [min, max]) => Math.min(max, Math.max(min, valor));
@@ -317,7 +278,6 @@ document.addEventListener('DOMContentLoaded', () => {
       ficha.style.setProperty('--y', ficha.dataset.y);
     }
 
-    // Guarda la posición; si falla, la carta vuelve a donde estaba
     async function guardar(ficha, anterior) {
       try {
         const respuesta = await fetch(ficha.dataset.url, {
@@ -345,7 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const punteroY = ((evento.clientY - rect.top) / rect.height) * 100;
         const x = Number(ficha.dataset.x);
         const y = Number(ficha.dataset.y);
-        // Se guarda dónde se tomó la carta: no salta a centrarse bajo el puntero
         arrastre = { rect, desfaseX: punteroX - x, desfaseY: punteroY - y, anterior: { x, y }, movida: false };
         ficha.setPointerCapture(evento.pointerId);
         ficha.classList.add('arrastrando');
@@ -372,7 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
       ficha.addEventListener('pointerup', soltar);
       ficha.addEventListener('pointercancel', soltar);
 
-      // Teclado: flechas para mover; se guarda al dejar de mover
       let pendiente = null;
       let antesDeTeclas = null;
       ficha.addEventListener('keydown', (evento) => {
@@ -390,11 +348,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // "X": sacar del plantel. Su pointerdown no llega a la carta (no empieza un arrastre).
   document.querySelectorAll('form[data-sacar]').forEach((formulario) => {
     const boton = formulario.querySelector('button');
     boton.addEventListener('pointerdown', (evento) => evento.stopPropagation());
-    boton.addEventListener('keydown', (evento) => evento.stopPropagation()); // las flechas no mueven la carta
+    boton.addEventListener('keydown', (evento) => evento.stopPropagation());
 
     formulario.addEventListener('submit', async (evento) => {
       evento.preventDefault();
@@ -407,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!confirmado) return;
       const ficha = formulario.closest('.cancha__jugador');
       boton.disabled = true;
-      ficha.classList.add('cancha__jugador--saliendo'); // cargando: la carta se atenúa
+      ficha.classList.add('cancha__jugador--saliendo');
 
       try {
         const respuesta = await fetch(formulario.action, { method: 'POST', headers: { Accept: 'application/json' } });
@@ -428,12 +385,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ---------- 6) Escudo ----------
   const inputEscudo = document.querySelector('[data-escudo-input]');
   if (inputEscudo) {
     const vistaEscudo = document.querySelector('[data-escudo-vista]');
 
-    /** La imagen entera dentro de un cuadrado de LADO_ESCUDO px, en PNG. */
     async function reducirEscudo(archivo) {
       const imagen = await createImageBitmap(archivo);
       const escala = Math.min(1, LADO_ESCUDO / Math.max(imagen.width, imagen.height));

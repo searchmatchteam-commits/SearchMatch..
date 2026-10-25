@@ -1,6 +1,3 @@
-// public/js/sm-reserva.js
-// PA-002 · Costo estimado en vivo: precio por hora × duración (el servidor lo recalcula al guardar).
-
 document.addEventListener('DOMContentLoaded', () => {
   const formulario = document.querySelector('form[data-costo-por-hora]');
   if (!formulario) return;

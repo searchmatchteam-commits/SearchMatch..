@@ -1,9 +1,3 @@
-// controllers/reservaController.js
-// Reservas de cancha (Fase 7):
-//  PA-002 GET/POST /canchas/:id/reservar   → formulario con costo estimado y reserva confirmada
-//  AG-003 GET      /reservas               → mis reservas (futuras primero; canceladas se distinguen)
-//  PA-003 POST     /reservas/:id/cancelar  → cancelar (solo las propias y futuras; no las de un partido)
-
 const reservaModel = require('../models/reservaModel');
 const canchaModel = require('../models/canchaModel');
 const disponibilidadModel = require('../models/disponibilidadModel');
@@ -38,7 +32,6 @@ async function renderFormulario(res, cancha, { status = 200, datos = {}, errores
   });
 }
 
-// GET /canchas/:id/reservar
 async function formulario(req, res, next) {
   try {
     const idCancha = idValido(req.params.id);
@@ -50,7 +43,6 @@ async function formulario(req, res, next) {
   }
 }
 
-// POST /canchas/:id/reservar
 async function reservar(req, res, next) {
   try {
     const idCancha = idValido(req.params.id);
@@ -73,7 +65,6 @@ async function reservar(req, res, next) {
   }
 }
 
-// GET /reservas
 async function misReservas(req, res, next) {
   try {
     return res.render('reservas/index', {
@@ -87,7 +78,6 @@ async function misReservas(req, res, next) {
   }
 }
 
-// POST /reservas/:id/cancelar
 async function cancelar(req, res, next) {
   try {
     const idReserva = idValido(req.params.id);

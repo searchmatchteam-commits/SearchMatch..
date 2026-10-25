@@ -1,9 +1,4 @@
 <%
-  // Botón "Volver" reutilizable. Uso (desde una vista):
-  //   include('partials/boton-volver')                              → vuelve atrás o, si no hay página anterior, a /dashboard
-  //   include('partials/boton-volver', { fallbackUrl: '/equipos' }) → otra página de respaldo
-  // main.js hace history.back() si se llegó desde otra página del sitio; si no (enlace directo,
-  // pestaña nueva) o sin JavaScript, el enlace lleva a fallbackUrl. Estilos: .boton-volver (style.css).
   const fallbackUrl = locals.fallbackUrl || '/dashboard';
 %>
 <a class="boton-volver" href="<%= fallbackUrl %>" data-boton-volver>

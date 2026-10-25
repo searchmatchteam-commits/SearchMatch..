@@ -5,8 +5,6 @@
   const estados = { aceptada: 'Ya aceptaste esta solicitud: el jugador es parte de tu plantel.', rechazada: 'Rechazaste esta solicitud.' };
 %>
 
-<!-- Perfil de quien pidió unirse (equipoController.verSolicitud): la misma carta y resumen de /perfil,
-     su mensaje y Aceptar/Rechazar (los formularios de /mi-equipo/solicitudes/:id/:accion). -->
 <section class="perfil">
   <div class="perfil__carta">
     <%- include('partials/carta-jugador', { jugador, editor: false }) %>

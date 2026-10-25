@@ -2,9 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- Detalle de un recinto (adminRecintosController.detalle): datos, canchas y formulario de cancha nueva.
-     AD-004/AD-005: desactivar o activar (con confirmación; solo se muestra la opción que corresponde).
-     AD-002: registrar canchas solo si el recinto está activo. -->
 <%
   const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
   const advertenciaReservas = recinto.reservasFuturas > 0

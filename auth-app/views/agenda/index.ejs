@@ -2,9 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- AG-001 calendario (agendaController.agenda): mes con los días de partido marcados, partidos del día elegido,
-     navegación entre meses y lista de Próximos (sin cancelados) o Pasados. Las fechas se leen de la base:
-     un partido reprogramado aparece en su nueva fecha. -->
 <%
   const formatoDia = new Intl.DateTimeFormat('es-CL', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
   const diaLargo = new Intl.DateTimeFormat('es-CL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
@@ -26,7 +23,6 @@
     </header>
 
     <div class="sm-columnas">
-      <!-- Calendario -->
       <section class="dash-panel eq-panel" aria-labelledby="titulo-mes">
         <header class="dash-panel__cabecera sm-mes">
           <a class="btn btn--contorno btn--chico" href="/agenda?mes=<%= mesAnterior %>&lista=<%= lista %>" aria-label="Mes anterior">←</a>
@@ -64,7 +60,6 @@
         <% } %>
       </section>
 
-      <!-- Próximos / Pasados -->
       <section class="dash-panel eq-panel" aria-labelledby="titulo-lista">
         <h2 class="solo-lectores" id="titulo-lista">Lista de partidos</h2>
         <nav class="sm-pestanas sm-pestanas--chicas" aria-label="Próximos o pasados">

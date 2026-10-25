@@ -1,10 +1,3 @@
-/* public/css/style.css
-   Estilos de SearchMatch: modo oscuro con acento verde neón.
-   Secciones: tokens · base · navbar · botones · hero · balón 3D · secciones y
-   tarjetas · CTA · formularios y alertas · error · footer · animaciones.
-   El dashboard tiene su propia hoja: dashboard.css. */
-
-/* ---------- Tokens ---------- */
 :root {
   --fondo: #0b0d0b;
   --superficie: #1c1c1c;
@@ -17,7 +10,7 @@
   --verde-hover: #5cff3d;
   --verde-tenue: rgba(57, 255, 20, 0.1);
   --verde-borde: rgba(57, 255, 20, 0.28);
-  --sobre-verde: #061204;          /* texto encima del verde */
+  --sobre-verde: #061204;
   --error: #ff6b6b;
   --radio: 18px;
   --radio-chico: 12px;
@@ -27,7 +20,6 @@
   --curva: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-/* ---------- Base ---------- */
 *,
 *::before,
 *::after {
@@ -53,7 +45,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Resplandor verde muy tenue en la parte superior de todas las páginas */
 body::before {
   content: "";
   position: fixed;
@@ -100,7 +91,6 @@ svg {
   text-shadow: 0 0 28px rgba(57, 255, 20, 0.35);
 }
 
-/* ---------- Navbar fija ---------- */
 .navbar {
   position: fixed;
   inset: 0 0 auto 0;
@@ -159,7 +149,6 @@ svg {
   display: inline;
 }
 
-/* ---------- Botones ---------- */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -240,7 +229,6 @@ svg {
   box-shadow: 0 0 0 1px rgba(57, 255, 20, 0.5), 0 0 56px rgba(57, 255, 20, 0.5);
 }
 
-/* ---------- Badge y etiquetas ---------- */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -276,10 +264,9 @@ svg {
   text-transform: uppercase;
 }
 
-/* ---------- Hero ---------- */
 .hero {
   padding: 56px 0 72px;
-  overflow-x: clip;          /* el resplandor del balón no genera scroll horizontal en móvil */
+  overflow-x: clip;
 }
 
 .hero__grid {
@@ -342,10 +329,9 @@ svg {
   }
 }
 
-/* ---------- Balón 3D: escenario con cuadrícula y anillos ---------- */
 .ball-stage {
-  --energia: 0;              /* de 0 a 1, lo actualiza ball.js según qué tan rápido gira */
-  --sombra: 1;               /* tamaño de la sombra: cambia cuando la pelota flota */
+  --energia: 0;
+  --sombra: 1;
   position: relative;
   width: 100%;
   max-width: 340px;
@@ -364,7 +350,6 @@ svg {
   .ball-stage { max-width: 480px; }
 }
 
-/* Cuadrícula tenue que se desvanece hacia los bordes */
 .ball-cuadricula {
   position: absolute;
   inset: -12%;
@@ -379,7 +364,6 @@ svg {
   pointer-events: none;
 }
 
-/* Resplandor verde detrás de la pelota: se enciende más cuando gira rápido */
 .ball-stage::before {
   content: "";
   position: absolute;
@@ -392,7 +376,6 @@ svg {
   pointer-events: none;
 }
 
-/* Sombra en el piso: se achica cuando la pelota sube */
 .ball-stage::after {
   content: "";
   position: absolute;
@@ -409,7 +392,6 @@ svg {
   pointer-events: none;
 }
 
-/* Círculo central de la cancha */
 .ball-anillo {
   position: absolute;
   inset: 3%;
@@ -419,7 +401,6 @@ svg {
   pointer-events: none;
 }
 
-/* Anillo neón punteado que gira */
 .ball-anillo::before {
   content: "";
   position: absolute;
@@ -439,7 +420,7 @@ svg {
   width: 100%;
   height: 100%;
   cursor: grab;
-  touch-action: none;        /* en celular el dedo gira la pelota en vez de hacer scroll */
+  touch-action: none;
 }
 
 #ball-canvas:active {
@@ -454,12 +435,10 @@ svg {
   transition: opacity 0.6s ease;
 }
 
-/* ball.js agrega .ball-lista cuando la escena está armada: la pelota aparece suave */
 .ball-stage.ball-lista #ball-canvas canvas {
   opacity: 1;
 }
 
-/* Respaldo sin WebGL (o si Three.js no carga): balón dibujado con CSS */
 .ball-fallback {
   display: none;
   position: absolute;
@@ -475,7 +454,6 @@ svg {
     0 0 50px rgba(57, 255, 20, 0.3);
 }
 
-/* Pentágono central con costura neón: uno verde y uno negro un poco más chico encima */
 .ball-fallback::before,
 .ball-fallback::after {
   content: "";
@@ -501,12 +479,10 @@ svg {
   display: none;
 }
 
-/* Sin 3D no hay nada que arrastrar: ocultamos la pista */
 .ball-stage.sin-3d + .hero__pista {
   visibility: hidden;
 }
 
-/* ---------- Secciones y tarjetas ---------- */
 .seccion {
   padding: 72px 0;
 }
@@ -537,15 +513,12 @@ svg {
   padding: 28px;
 }
 
-/* ---------- La plataforma: grid bento ---------- */
-/* Color animable del borde iluminado (se enciende en hover) */
 @property --glow-borde {
   syntax: "<color>";
   inherits: true;
   initial-value: rgba(57, 255, 20, 0);
 }
 
-/* Esta sección usa un contenedor más ancho para que las tarjetas respiren */
 .contenedor--amplio {
   max-width: 1200px;
 }
@@ -554,7 +527,6 @@ svg {
   margin-bottom: 56px;
 }
 
-/* Móvil: 1 columna, la carta primero */
 .bento {
   display: grid;
   gap: 16px;
@@ -567,8 +539,6 @@ svg {
     "desafios";
 }
 
-/* Tablet: 2 columnas. La carta ocupa tres filas y Torneos va a lo ancho
-   para que el bracket tenga espacio. */
 @media (min-width: 640px) {
   .bento {
     gap: 20px;
@@ -581,8 +551,6 @@ svg {
   }
 }
 
-/* Escritorio: 3 columnas, carta a la izquierda (dos filas) y la columna
-   de Torneos/Desafíos más ancha */
 @media (min-width: 1100px) {
   .bento {
     gap: 24px;
@@ -600,7 +568,7 @@ svg {
 .bento__tarjeta--desafios { grid-area: desafios; }
 
 .bento__tarjeta {
-  --mx: 50%;                 /* posición del cursor dentro de la tarjeta (la actualiza main.js) */
+  --mx: 50%;
   --my: 0%;
   position: relative;
   isolation: isolate;
@@ -614,7 +582,6 @@ svg {
   transition: --glow-borde 0.35s ease, transform 0.35s var(--curva), box-shadow 0.35s ease;
 }
 
-/* Glow radial verde que sigue al cursor */
 .bento__tarjeta::before {
   content: "";
   position: absolute;
@@ -627,7 +594,6 @@ svg {
   pointer-events: none;
 }
 
-/* Borde con degradado: tenue en reposo, se ilumina cerca del cursor en hover */
 .bento__tarjeta::after {
   content: "";
   position: absolute;
@@ -672,7 +638,6 @@ svg {
   color: var(--verde);
 }
 
-/* Íconos estilo línea (Lucide) */
 .bento__icono svg {
   width: 20px;
   height: 20px;
@@ -700,33 +665,31 @@ svg {
   }
 }
 
-/* Mini vista de la interfaz: siempre al fondo de la tarjeta */
 .bento__demo {
-  margin-top: auto;          /* el mockup se alinea al fondo de la tarjeta */
-  padding-top: 24px;         /* separación mínima con la descripción */
+  margin-top: auto;
+  padding-top: 24px;
   font-size: 0.8rem;
   user-select: none;
 }
 
-/* ---------- Carta de jugador (diseño propio de SearchMatch) ---------- */
 .bento__demo--carta {
   flex: 1;
   display: grid;
-  place-items: center;       /* centrada vertical y horizontalmente bajo el texto */
+  place-items: center;
   padding: 24px 0 4px;
 }
 
 .carta-jugador {
   --carta-color: var(--verde);
-  --corte: 26px;             /* corte diagonal de las esquinas: la forma de la marca */
+  --corte: 26px;
   --rx: 0deg;
   --ry: 0deg;
   --brillo-x: 50%;
   --brillo-y: 20%;
   --brillo-op: 0;
-  --px: 0;                   /* paralaje de los datos, de -1 a 1 (main.js) */
+  --px: 0;
   --py: 0;
-  width: min(calc(100% - 24px), 288px);   /* nunca toca los bordes de la tarjeta */
+  width: min(calc(100% - 24px), 288px);
   transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
   transition: transform 0.6s var(--curva), filter 0.3s ease;
   filter:
@@ -734,7 +697,6 @@ svg {
     drop-shadow(0 22px 28px rgba(0, 0, 0, 0.6));
 }
 
-/* Mientras el mouse la mueve, la carta responde casi al instante */
 .carta-jugador.inclinando {
   transition: transform 0.1s ease-out, filter 0.3s ease;
 }
@@ -752,7 +714,6 @@ svg {
   );
 }
 
-/* El marco es un borde de 2px con brillo en las esquinas cortadas */
 .carta-jugador__marco {
   padding: 2px;
   background: linear-gradient(
@@ -840,7 +801,6 @@ svg {
   border-bottom: 1px solid color-mix(in srgb, var(--carta-color) 35%, transparent);
 }
 
-/* 6 estadísticas en dos columnas (VEL TIR PAS | REG DEF FÍS) */
 .carta-jugador__stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -861,7 +821,7 @@ svg {
 }
 
 .carta-jugador__stats dd {
-  order: -1;                 /* el número antes de la sigla: "88 VEL" */
+  order: -1;
   font-weight: 900;
   font-size: 1.05rem;
   font-variant-numeric: tabular-nums;
@@ -874,7 +834,6 @@ svg {
   letter-spacing: 0.1em;
 }
 
-/* Reflejo de luz que sigue al cursor: blanco al centro con un halo verde (holográfico) */
 .carta-jugador__brillo {
   position: absolute;
   inset: 0;
@@ -887,7 +846,6 @@ svg {
   pointer-events: none;
 }
 
-/* ---------- Canchas: agenda del día ---------- */
 .agenda__cabecera {
   display: flex;
   justify-content: space-between;
@@ -960,10 +918,9 @@ svg {
   background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0 6px, transparent 6px 12px);
 }
 
-/* ---------- Torneos: bracket ---------- */
 .bracket {
-  --bracket-gap: 40px;       /* separación horizontal entre semifinales y final */
-  --bracket-fila: 16px;      /* separación vertical entre las dos semifinales */
+  --bracket-gap: 40px;
+  --bracket-fila: 16px;
   --bracket-linea: rgba(57, 255, 20, 0.45);
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--bracket-gap) minmax(0, 1fr);
@@ -997,7 +954,6 @@ svg {
   border-radius: 10px;
 }
 
-/* La final queda centrada entre las dos semifinales */
 .bracket__partido--final {
   grid-area: final;
   align-self: center;
@@ -1005,8 +961,6 @@ svg {
   box-shadow: 0 0 18px rgba(57, 255, 20, 0.12);
 }
 
-/* Conectores: cada semifinal sale con una línea horizontal, ambas se unen en
-   una vertical a mitad del espacio y de ahí parte una línea hacia la final. */
 .bracket__partido--semi1::after,
 .bracket__partido--semi2::after,
 .bracket__partido--semi1::before,
@@ -1034,8 +988,6 @@ svg {
   right: 100%;
 }
 
-/* Tramo vertical: desde el centro de cada semi hasta el punto medio entre ambas
-   (mitad del gap vertical + 1px del borde) */
 .bracket__partido--semi1::before,
 .bracket__partido--semi2::before {
   left: calc(100% + var(--bracket-gap) / 2);
@@ -1057,7 +1009,7 @@ svg {
   gap: 10px;
   padding: 8px 12px;
   color: var(--texto-suave);
-  font-size: 0.75rem;        /* 12px */
+  font-size: 0.75rem;
 }
 
 .bracket__equipo:first-child {
@@ -1103,7 +1055,6 @@ svg {
   }
 }
 
-/* ---------- Equipos ---------- */
 .equipo__fila {
   display: flex;
   flex-wrap: wrap;
@@ -1181,7 +1132,6 @@ svg {
   border: 1px solid var(--borde-fuerte);
 }
 
-/* ---------- Desafíos: notificación ---------- */
 .aviso {
   padding: 18px 18px 18px 20px;
   border-radius: 14px;
@@ -1250,15 +1200,13 @@ svg {
   color: var(--sobre-verde);
 }
 
-/* ---------- Cómo funciona: timeline ---------- */
 .timeline {
-  --progreso: 0;             /* 0 a 1, lo actualiza main.js según el scroll */
+  --progreso: 0;
   position: relative;
   max-width: 960px;
   margin: 0 auto;
 }
 
-/* Riel gris; main.js lo ubica entre el centro del primer y del último número */
 .timeline__linea {
   position: absolute;
   border-radius: 2px;
@@ -1283,7 +1231,6 @@ svg {
   gap: 36px;
 }
 
-/* Móvil: vertical, número a la izquierda */
 .timeline__paso {
   display: grid;
   grid-template-columns: 48px 1fr;
@@ -1312,7 +1259,6 @@ svg {
     box-shadow 0.45s ease, transform 0.45s var(--curva);
 }
 
-/* Se "enciende" cuando la línea verde lo alcanza (o si no hay JS) */
 .timeline__numero.encendido,
 html:not(.js) .timeline__numero {
   background: var(--verde);
@@ -1334,7 +1280,6 @@ html:not(.js) .timeline__numero {
   font-size: 0.95rem;
 }
 
-/* Tablet y escritorio: horizontal, número arriba y texto centrado */
 @media (min-width: 760px) {
   .timeline__progreso {
     transform-origin: left;
@@ -1360,7 +1305,6 @@ html:not(.js) .timeline__numero {
   }
 }
 
-/* ---------- CTA final ---------- */
 .seccion--cta {
   padding-bottom: 96px;
 }
@@ -1394,9 +1338,6 @@ html:not(.js) .timeline__numero {
   margin-bottom: 12px;
 }
 
-/* ---------- Páginas de autenticación ---------- */
-/* Fondo casi negro con un resplandor verde muy tenue al centro (::after) y, encima,
-   el círculo central y la línea de media cancha casi invisibles (::before). */
 .pagina-auth,
 .pagina-rol,
 .pagina-wizard,
@@ -1419,7 +1360,6 @@ html:not(.js) .timeline__numero {
   pointer-events: none;
 }
 
-/* Reemplaza el resplandor superior de body::before en estas páginas */
 .pagina-auth::before,
 .pagina-rol::before,
 .pagina-wizard::before,
@@ -1427,12 +1367,9 @@ html:not(.js) .timeline__numero {
   inset: 0;
   height: auto;
   background:
-    /* círculo central + anillo exterior que se pierde en el negro */
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000' fill='none' stroke='%2339ff14'%3E%3Ccircle cx='500' cy='500' r='250' stroke-opacity='0.06' stroke-width='2'/%3E%3Ccircle cx='500' cy='500' r='470' stroke-opacity='0.03' stroke-width='2'/%3E%3Ccircle cx='500' cy='500' r='5' fill='%2339ff14' fill-opacity='0.08' stroke='none'/%3E%3C/svg%3E")
       center / min(150vw, 1100px) no-repeat,
-    /* línea de media cancha */
     linear-gradient(transparent calc(50% - 1px), var(--auth-linea) calc(50% - 1px), var(--auth-linea) calc(50% + 1px), transparent calc(50% + 1px));
-  /* todo se desvanece hacia los bordes */
   -webkit-mask-image: radial-gradient(ellipse 65% 65% at 50% 50%, #000 40%, transparent 100%);
   mask-image: radial-gradient(ellipse 65% 65% at 50% 50%, #000 40%, transparent 100%);
 }
@@ -1459,7 +1396,6 @@ html:not(.js) .timeline__numero {
   }
 }
 
-/* Tarjeta de cristal oscuro: semitransparente con desenfoque, borde sutil y sombra amplia */
 .auth__tarjeta {
   width: 100%;
   max-width: 440px;
@@ -1476,19 +1412,16 @@ html:not(.js) .timeline__numero {
   animation: aparecer 0.5s var(--curva) both;
 }
 
-/* Sin desenfoque disponible: tarjeta opaca para que se lea igual */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .auth__tarjeta {
     background: #171717;
   }
 }
 
-/* Etiqueta de arriba ("Bienvenido de vuelta", "Únete a SearchMatch") más espaciada */
 .auth__tarjeta .etiqueta-verde {
   letter-spacing: 0.22em;
 }
 
-/* Formularios de login / registro: más aire entre filas y columnas */
 .auth__tarjeta .formulario {
   gap: 20px;
 }
@@ -1497,7 +1430,6 @@ html:not(.js) .timeline__numero {
   gap: 20px 16px;
 }
 
-/* Labels gris muy claro, un poco más chicos y en negrita, separados del input */
 .auth__tarjeta .campo {
   gap: 8px;
 }
@@ -1508,7 +1440,6 @@ html:not(.js) .timeline__numero {
   font-weight: 600;
 }
 
-/* Inputs: más oscuros que la tarjeta, borde definido y más aire; al enfocar, borde y anillo neón */
 .auth__tarjeta .campo input {
   padding: 13px 16px;
   background: #0a0a0a;
@@ -1537,7 +1468,6 @@ html:not(.js) .timeline__numero {
   box-shadow: 0 0 0 1px rgba(255, 107, 107, 0.5);
 }
 
-/* Ícono a la izquierda del texto (sobre, candado, teléfono, usuario, calendario) */
 .campo__control {
   position: relative;
 }
@@ -1570,13 +1500,11 @@ html:not(.js) .timeline__numero {
   stroke: var(--error);
 }
 
-/* Botón principal: más brillo y un tono más claro al pasar el mouse */
 .auth__tarjeta .formulario .btn--verde:hover {
   background: #6dff52;
   box-shadow: 0 0 0 1px rgba(57, 255, 20, 0.5), 0 0 20px rgba(57, 255, 20, 0.6), 0 8px 32px rgba(57, 255, 20, 0.3);
 }
 
-/* Ojo para mostrar / ocultar la contraseña (solo con JS: html.js lo agrega el header) */
 .campo__ojo {
   display: none;
   position: absolute;
@@ -1626,7 +1554,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   stroke-linejoin: round;
 }
 
-/* Ojo abierto = "mostrar"; tachado = "ocultar" (cuando ya se ve la contraseña) */
 .campo__ojo-icono--ocultar,
 .campo__ojo[aria-pressed="true"] .campo__ojo-icono--ver {
   display: none;
@@ -1670,7 +1597,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   font-weight: 700;
 }
 
-/* ---------- Formularios ---------- */
 .formulario {
   display: flex;
   flex-direction: column;
@@ -1708,13 +1634,13 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 .campo input {
   width: 100%;
   font: inherit;
-  font-size: 16px;          /* 16px evita que iOS haga zoom al enfocar */
+  font-size: 16px;
   color: var(--texto);
   background: var(--superficie-campo);
   border: 1px solid var(--borde-fuerte);
   border-radius: var(--radio-chico);
   padding: 13px 14px;
-  color-scheme: dark;       /* controles nativos oscuros (ej: ícono del calendario en type="date") */
+  color-scheme: dark;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -1736,7 +1662,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
 }
 
-/* Mensaje de error bajo cada campo (lo escribe auth.js) */
 .campo__error {
   color: var(--error);
   font-size: 0.8rem;
@@ -1751,7 +1676,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   color: var(--texto-suave);
   font-size: 0.8rem;
 }
-/* ---------- Alertas ---------- */
 .alerta {
   padding: 12px 16px;
   border-radius: var(--radio-chico);
@@ -1780,7 +1704,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   color: #b9ffa8;
 }
 
-/* Alerta de errores bajo el formulario */
 .formulario + .alerta {
   margin: 18px 0 0;
 }
@@ -1789,7 +1712,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   display: none;
 }
 
-/* ---------- Botón con estado "cargando" ---------- */
 .btn__spinner {
   display: none;
   width: 18px;
@@ -1814,7 +1736,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   display: none;
 }
 
-/* ---------- Selección de rol (onboarding) ---------- */
 .solo-lectores {
   position: absolute;
   width: 1px;
@@ -1881,7 +1802,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   }
 }
 
-/* Tarjeta seleccionable (label + radio oculto) */
 .rol-tarjeta {
   position: relative;
   display: flex;
@@ -1916,7 +1836,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   outline-offset: 3px;
 }
 
-/* Estado seleccionado: borde neón + check en la esquina */
 .rol-tarjeta:has(.rol-tarjeta__radio:checked) {
   background: #161a15;
   border-color: var(--verde);
@@ -1975,7 +1894,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   height: 34px;
 }
 
-/* Escudo con la etiqueta CAPITÁN debajo */
 .rol-tarjeta__icono--escudo {
   width: auto;
   min-width: 64px;
@@ -2026,7 +1944,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   padding-left: 26px;
 }
 
-/* Check verde de cada beneficio */
 .rol-tarjeta__lista li::before {
   content: "";
   position: absolute;
@@ -2043,7 +1960,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   margin: 20px 0 0;
 }
 
-/* Botón: apagado (gris) sin elección, verde neón cuando hay un rol elegido */
 .rol__boton {
   display: flex;
   width: 100%;
@@ -2071,7 +1987,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   transform: translateY(-2px);
 }
 
-/* ---------- Botones extra (wizard y perfil) ---------- */
 .btn--oscuro {
   background: #262626;
   color: var(--texto);
@@ -2093,7 +2008,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   stroke-linejoin: round;
 }
 
-/* Enlace de texto con ícono (Descargar / Compartir carta) */
 .enlace-icono {
   display: inline-flex;
   align-items: center;
@@ -2122,7 +2036,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   stroke-linejoin: round;
 }
 
-/* ---------- Wizard de perfil (split-screen) ---------- */
 .wizard {
   display: grid;
   grid-template-columns: 1fr;
@@ -2139,7 +2052,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   }
 }
 
-/* Lado izquierdo: verde muy oscuro con líneas de cancha casi invisibles (::before) */
 .wizard__marca {
   position: relative;
   isolation: isolate;
@@ -2153,7 +2065,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
     linear-gradient(160deg, #0b2410, #06120a 70%);
 }
 
-/* Las líneas de cancha van en una capa aparte para poder difuminarlas */
 .wizard__marca::before {
   content: "";
   position: absolute;
@@ -2189,7 +2100,7 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 
 .wizard__beneficios {
   list-style: none;
-  display: none;            /* en celulares solo título y texto, para llegar rápido al formulario */
+  display: none;
   flex-direction: column;
   gap: 16px;
   margin-top: 32px;
@@ -2230,7 +2141,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   stroke-linejoin: round;
 }
 
-/* Lado derecho: el formulario */
 .wizard__panel {
   min-width: 0;
   padding: 24px 20px 28px;
@@ -2257,7 +2167,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   background: #121212;
 }
 
-/* Versión oscura del wizard: fondo más negro y cancha difuminada en todos los pasos */
 .wizard .wizard__marca {
   border-color: rgba(57, 255, 20, 0.07);
   background:
@@ -2287,7 +2196,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   background: rgba(57, 255, 20, 0.06);
 }
 
-/* Mini canchas de las posiciones: líneas más tenues; el punto de la posición sigue nítido */
 .wizard .opcion__cancha {
   stroke: rgba(255, 255, 255, 0.12);
 }
@@ -2296,7 +2204,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   stroke: rgba(57, 255, 20, 0.25);
 }
 
-/* También la cancha del fondo de la página (círculo central y media cancha) */
 .pagina-wizard::before {
   filter: blur(3px);
   opacity: 0.5;
@@ -2306,7 +2213,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   background: radial-gradient(ellipse 70% 60% at 50% 50%, #051208 0%, #000 100%);
 }
 
-/* Indicador de pasos con barra de progreso */
 .pasos {
   --progreso: 0;
   position: relative;
@@ -2401,14 +2307,12 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   box-shadow: 0 0 0 4px rgba(57, 255, 20, 0.15), 0 0 16px rgba(57, 255, 20, 0.35);
 }
 
-/* En celulares solo se lee el nombre del paso actual */
 @media (max-width: 479px) {
   .pasos__item:not(.pasos__item--activo) .pasos__nombre {
     visibility: hidden;
   }
 }
 
-/* Pasos del formulario: sin JS se ven todos; con JS (wizard__form--pasos), uno a la vez */
 .wizard__paso {
   border: 0;
   min-width: 0;
@@ -2433,7 +2337,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   animation: aparecer 0.35s var(--curva) both;
 }
 
-/* El <legend> no es un ítem flex del fieldset: su espacio va con margin */
 .wizard__titulo {
   font-size: 1.5rem;
   font-weight: 900;
@@ -2446,7 +2349,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   margin-bottom: 4px;
 }
 
-/* Campo con unidad (cm / kg) al final */
 .campo__unidad {
   position: relative;
 }
@@ -2474,7 +2376,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   pointer-events: none;
 }
 
-/* Grupos de opciones (posición, pie hábil, nivel) */
 .grupo-opciones {
   display: flex;
   flex-direction: column;
@@ -2579,7 +2480,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   color: var(--texto-suave);
 }
 
-/* Mini cancha con la ubicación de la posición */
 .opcion__cancha {
   width: 30px;
   height: 42px;
@@ -2602,7 +2502,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   filter: drop-shadow(0 0 4px var(--verde));
 }
 
-/* Pie hábil: ícono y texto en fila */
 .opcion--fila {
   flex-direction: row;
   justify-content: center;
@@ -2627,7 +2526,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   stroke: var(--verde);
 }
 
-/* Nivel: barras tipo señal */
 .opcion--nivel {
   align-items: flex-start;
   text-align: left;
@@ -2665,7 +2563,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   line-height: 1.4;
 }
 
-/* Resumen del paso 4 */
 .resumen {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2685,7 +2582,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   grid-column: 1 / -1;
 }
 
-/* Si el último dato queda solo en su fila, ocupa todo el ancho (sin celda vacía) */
 .resumen div:nth-child(even):last-child {
   grid-column: 1 / -1;
 }
@@ -2726,7 +2622,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   }
 }
 
-/* ---------- Perfil: carta + resumen ---------- */
 .pagina-perfil {
   --auth-fondo: #0a0a0a;
 }
@@ -2746,7 +2641,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
 .perfil__cabecera { grid-area: cabecera; }
 .perfil__info { grid-area: info; }
 
-/* Escritorio: el encabezado va sobre la columna derecha y la carta empieza a la altura de la primera tarjeta */
 @media (min-width: 900px) {
   .perfil {
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -2773,11 +2667,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   padding: 12px 0;
 }
 
-/* Carta del perfil: silueta de escudo dibujada en SVG (svg.carta-jugador__silueta en
-   views/partials/carta-jugador.ejs, viewBox 320x460): fondo, textura y borde doble siguen la forma.
-   La carta mantiene esa proporción, así el SVG escala sin deformarse; el cuerpo (los datos) se recorta
-   con la misma silueta (#carta-escudo-recorte, en unidades relativas: sirve a cualquier ancho).
-   El resplandor es drop-shadow en la carta: sigue el contorno del escudo (un box-shadow quedaría rectangular). */
 .carta-jugador--perfil {
   width: min(100%, 340px);
   filter:
@@ -2785,8 +2674,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
     drop-shadow(0 26px 34px rgba(0, 0, 0, 0.65));
 }
 
-/* Carta grande (perfil, editor, solicitud): flota en reposo; al pasar el mouse se detiene donde va
-   (sin saltos) y el resplandor crece. La flotación usa "translate", que se suma al "transform" del tilt. */
 .carta-jugador--perfil:not(.carta-jugador--mini) {
   animation: flotar-carta 5s ease-in-out infinite;
 }
@@ -2806,8 +2693,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   50% { translate: 0 -10px; }
 }
 
-/* Datos que "flotan": se corren hasta 5px hacia el cursor (paralaje). translateZ no serviría aquí:
-   el drop-shadow de la carta y el clip-path del cuerpo aplanan el 3D. */
 .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cabecera,
 .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__nombre,
 .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__stats {
@@ -2827,7 +2712,7 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   padding: 0;
   background: none;
   clip-path: none;
-  container-type: inline-size;   /* el cuerpo mide en cqw: el lienzo 320x460 escala con la carta */
+  container-type: inline-size;
 }
 
 .carta-jugador__silueta {
@@ -2838,8 +2723,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   overflow: visible;
 }
 
-/* Datos encima de la silueta, posicionados sobre el lienzo de la silueta (320x460).
-   --u = 1px del lienzo a cualquier ancho de carta: todas las medidas van en múltiplos de --u. */
 .carta-jugador--perfil .carta-jugador__cuerpo {
   --u: calc(100cqw / 320);
   position: absolute;
@@ -2850,7 +2733,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   font-family: "Barlow Condensed", var(--fuente);
 }
 
-/* Línea divisoria entre el nombre y las stats */
 .carta-jugador--perfil .carta-jugador__cuerpo::before {
   content: "";
   position: absolute;
@@ -2865,9 +2747,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   display: block;
 }
 
-/* Foto cuadrada sin borde: se desvanece en los cuatro bordes con un degradado suave (varias paradas,
-   para que no se note dónde empieza) y más largo abajo, donde se funde con el nombre.
-   La máscara va en la imagen y en ::before, no en el contenedor, para no desvanecer el botón "Subir foto". */
 .carta-jugador--perfil .carta-jugador__foto {
   --foto-borde:
     linear-gradient(to right, transparent, rgba(0, 0, 0, 0.35) 7%, rgba(0, 0, 0, 0.75) 15%, #000 24%,
@@ -2904,7 +2783,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   position: relative;
 }
 
-/* Rating, posición, bandera y balón en columna centrada */
 .carta-jugador--perfil .carta-jugador__media {
   position: absolute;
   left: calc(34 * var(--u));
@@ -2949,7 +2827,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   margin-top: calc(6 * var(--u));
 }
 
-/* Foto de perfil con botón "Subir foto" encima */
 .carta-jugador__foto {
   position: relative;
   flex: none;
@@ -3016,7 +2893,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   stroke-linejoin: round;
 }
 
-/* Con foto el botón solo aparece al pasar el mouse (en táctil queda visible) */
 @media (hover: hover) {
   .carta-jugador--con-foto .carta-jugador__subir {
     opacity: 0;
@@ -3081,12 +2957,10 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   color: #b7c4b7;
 }
 
-/* El botón "Subir foto" sigue con la fuente del sitio */
 .carta-jugador--perfil .carta-jugador__subir {
   font-family: var(--fuente);
 }
 
-/* Columna derecha */
 .perfil__info {
   display: flex;
   flex-direction: column;
@@ -3104,7 +2978,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   }
 }
 
-/* Botón "Volver" en su propia línea, sobre "SEARCH MATCH · PERFIL" */
 .perfil__volver {
   margin-bottom: 18px;
 }
@@ -3143,7 +3016,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   margin-bottom: 16px;
 }
 
-/* Perfil de una solicitud: el mensaje del jugador y Aceptar/Rechazar */
 .perfil__mensaje {
   margin: 0;
   padding: 4px 0 4px 14px;
@@ -3191,7 +3063,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   overflow-wrap: anywhere;
 }
 
-/* Estadísticas en barras */
 .barras {
   list-style: none;
   display: flex;
@@ -3285,7 +3156,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   font-size: 0.88rem;
 }
 
-/* ---------- Editor de perfil (/perfil/editar): reutiliza la carta y las tarjetas del perfil ---------- */
 .editor__foto {
   display: flex;
   flex-wrap: wrap;
@@ -3320,7 +3190,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   margin-bottom: 0;
 }
 
-/* fieldset sin estilos del navegador; la leyenda queda dentro de la tarjeta (float) */
 .editor__seccion {
   min-width: 0;
   margin: 0;
@@ -3336,7 +3205,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   margin-top: 18px;
 }
 
-/* El primer bloque tras la leyenda ya tiene el espacio del título */
 .editor__seccion > legend + * {
   clear: both;
   margin-top: 0;
@@ -3358,7 +3226,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   margin-top: 0;
 }
 
-/* Estadísticas: deslizador con relleno neón hasta el valor (--valor lo actualiza editar-perfil.js) */
 .editor__stats {
   list-style: none;
   display: flex;
@@ -3439,10 +3306,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   border-radius: 999px;
 }
 
-/* Dashboard y dock: ver public/css/dashboard.css (solo se carga en /dashboard) */
-
-/* ---------- Error ---------- */
-
 .error {
   text-align: center;
 }
@@ -3455,7 +3318,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   text-shadow: 0 0 40px rgba(57, 255, 20, 0.4);
 }
 
-/* ---------- Footer ---------- */
 .pie {
   border-top: 1px solid var(--borde);
 }
@@ -3490,7 +3352,6 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   text-decoration: none;
 }
 
-/* ---------- Animaciones de aparición (scroll) ---------- */
 @keyframes aparecer {
   from {
     opacity: 0;
@@ -3510,7 +3371,6 @@ html.js .revelar.visible {
   transform: none;
 }
 
-/* Tarjetas bento: la aparición no debe pisar las transiciones del hover */
 html.js .bento__tarjeta.revelar {
   transition: opacity 0.7s ease, transform 0.7s var(--curva), --glow-borde 0.35s ease, box-shadow 0.35s ease;
   transition-delay: var(--retraso, 0ms), var(--retraso, 0ms), 0ms, 0ms;
@@ -3520,7 +3380,6 @@ html.js .bento__tarjeta.revelar.visible:hover {
   transform: translateY(-3px);
 }
 
-/* ---------- Pantallas chicas ---------- */
 @media (max-width: 480px) {
   .navbar__interior {
     padding: 0 16px;
@@ -3549,16 +3408,12 @@ html.js .bento__tarjeta.revelar.visible:hover {
   }
 }
 
-/* En celulares angostos los dos botones no caben junto al nombre: queda solo el ícono */
 @media (max-width: 420px) {
   .logo__texto {
     display: none;
   }
 }
 
-/* ---------- Barra de scroll oscura (.scroll-oscuro en cualquier contenedor con scroll) ---------- */
-/* Pulgar gris redondeado que se ilumina en verde neón; riel transparente y redondeado.
-   Chrome/Edge/Safari usan ::-webkit-scrollbar (permite el hover); Firefox, scrollbar-color. */
 .scroll-oscuro::-webkit-scrollbar {
   width: 12px;
 }
@@ -3571,7 +3426,7 @@ html.js .bento__tarjeta.revelar.visible:hover {
 .scroll-oscuro::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: #3a3a3a;
-  border: 2px solid transparent; /* pulgar visible de 8px, con aire a los lados */
+  border: 2px solid transparent;
   background-clip: padding-box;
 }
 
@@ -3587,11 +3442,10 @@ html.js .bento__tarjeta.revelar.visible:hover {
   }
 }
 
-/* ---------- Confirmación (confirmarAccion en main.js) ---------- */
 .confirmar {
   position: fixed;
   inset: 0;
-  z-index: 200; /* sobre los demás modales (100), el dock y los avisos */
+  z-index: 200;
   display: grid;
   place-items: center;
   padding: 16px;
@@ -3630,7 +3484,6 @@ html.js .bento__tarjeta.revelar.visible:hover {
   gap: 10px;
 }
 
-/* Acción que no se deshace: rojo */
 .confirmar__si {
   color: #fff;
   background: #d93c3c;
@@ -3652,7 +3505,6 @@ html.js .bento__tarjeta.revelar.visible:hover {
   from { opacity: 0; transform: translateY(8px) scale(0.97); }
 }
 
-/* ---------- Botón "Volver" (partials/boton-volver) ---------- */
 .boton-volver {
   display: inline-flex;
   align-items: center;
@@ -3692,7 +3544,6 @@ html.js .bento__tarjeta.revelar.visible:hover {
   transform: translateX(-2px);
 }
 
-/* Usuarios que prefieren menos movimiento: sin desplazamientos ni animaciones */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

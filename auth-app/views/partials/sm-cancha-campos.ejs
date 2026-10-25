@@ -1,7 +1,4 @@
 <%
-  // Campos de una cancha (AD-002 registrar y AD-009 editar). Uso:
-  //   include('partials/sm-cancha-campos', { datos, erroresCampo, modalidades })
-  // La modalidad muestra su cantidad de jugadores en cada opción (AD-002).
   const errores = locals.erroresCampo || {};
 %>
 <div class="campo <%= errores.nombre ? 'campo--error' : '' %>">

@@ -2,8 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- AD-001 registrar / AD-008 editar un recinto (adminRecintosController). Mismo formulario:
-     con "recinto" edita (parte con lo guardado); sin él, registra. "Cancelar" no guarda nada. -->
 <%
   const accion = recinto ? `/admin/recintos/${recinto.id}/editar` : '/admin/recintos';
   const volverA = recinto ? `/admin/recintos/${recinto.id}` : '/admin/recintos';

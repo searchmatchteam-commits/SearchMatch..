@@ -1,29 +1,3 @@
--- ============================================================
--- sql/seed.sql  (PostgreSQL — para el SQL Editor de Supabase)
--- ============================================================
--- Esquema COMPLETO de searchmatch portado de MySQL a PostgreSQL,
--- más la tabla "usuarios" que usa auth-app.
---
--- Ejecutar tal cual en: Supabase Dashboard -> SQL Editor -> Run
--- Todo usa IF NOT EXISTS / ON CONFLICT DO NOTHING: se puede re-ejecutar
--- sin romper datos existentes.
---
--- Conversiones aplicadas (MySQL -> PostgreSQL):
---   * AUTO_INCREMENT           ->  SERIAL
---   * DATETIME DEFAULT NOW()   ->  TIMESTAMPTZ DEFAULT NOW()
---   * CREATE DATABASE / USE    ->  no aplica (Supabase ya tiene la base
---                                  "postgres" y usamos el esquema public)
---   * BOOLEAN / DECIMAL / VARCHAR / CHECK  ->  idénticos
--- ============================================================
-
-
--- ============================================================
--- A) TABLA ANTIGUA DE LA APP (ya no se usa)
--- ============================================================
--- La usaba la primera versión de auth-app (login propio con bcrypt).
--- Desde la integración con Supabase Auth, la app usa "usuario" y
--- "jugador" (ver sección U al final). Se deja para no romper datos.
-
 CREATE TABLE IF NOT EXISTS usuarios (
     id            SERIAL PRIMARY KEY,
     nombre        TEXT        NOT NULL,
@@ -34,10 +8,6 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios (email);
 
-
--- ============================================================
--- B) CATÁLOGOS DE SEARCHMATCH
--- ============================================================
 
 CREATE TABLE IF NOT EXISTS rol_aplicacion (
     id     SERIAL PRIMARY KEY,
@@ -91,10 +61,6 @@ CREATE TABLE IF NOT EXISTS modalidad (
 );
 
 
--- ============================================================
--- C) UBICACIÓN
--- ============================================================
-
 CREATE TABLE IF NOT EXISTS region (
     id     SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE
@@ -125,10 +91,6 @@ CREATE TABLE IF NOT EXISTS direccion (
 );
 
 
--- ============================================================
--- D) USUARIO DE SEARCHMATCH
--- ============================================================
-
 CREATE TABLE IF NOT EXISTS usuario (
     id                  SERIAL PRIMARY KEY,
     correo              VARCHAR(150) NOT NULL UNIQUE,
@@ -143,10 +105,6 @@ CREATE TABLE IF NOT EXISTS usuario (
         REFERENCES rol_aplicacion(id)
 );
 
-
--- ============================================================
--- E) JUGADOR
--- ============================================================
 
 CREATE TABLE IF NOT EXISTS jugador (
     id               SERIAL PRIMARY KEY,
@@ -166,10 +124,6 @@ CREATE TABLE IF NOT EXISTS jugador (
 );
 
 
--- ============================================================
--- F) POSICIONES DEL JUGADOR
--- ============================================================
-
 CREATE TABLE IF NOT EXISTS jugador_posicion (
     id           SERIAL PRIMARY KEY,
     id_jugador   INT NOT NULL,
@@ -187,10 +141,6 @@ CREATE TABLE IF NOT EXISTS jugador_posicion (
     UNIQUE (id_jugador, id_posicion)
 );
 
-
--- ============================================================
--- G) EQUIPO
--- ============================================================
 
 CREATE TABLE IF NOT EXISTS equipo (
     id                 SERIAL PRIMARY KEY,
@@ -211,10 +161,6 @@ CREATE TABLE IF NOT EXISTS equipo (
     CHECK (puntaje_nivel >= 0)
 );
 
-
--- ============================================================
--- H) JUGADORES DE UN EQUIPO
--- ============================================================
 
 CREATE TABLE IF NOT EXISTS equipo_jugador (
     id            SERIAL PRIMARY KEY,
@@ -240,10 +186,6 @@ CREATE TABLE IF NOT EXISTS equipo_jugador (
 );
 
 
--- ============================================================
--- I) SOLICITUD PARA UNIRSE A UN EQUIPO
--- ============================================================
-
 CREATE TABLE IF NOT EXISTS solicitud_union_equipo (
     id                  SERIAL PRIMARY KEY,
     id_jugador          INT NOT NULL,
@@ -266,10 +208,6 @@ CREATE TABLE IF NOT EXISTS solicitud_union_equipo (
 );
 
 
--- ============================================================
--- J) RECINTO DEPORTIVO
--- ============================================================
-
 CREATE TABLE IF NOT EXISTS recinto_deportivo (
     id           SERIAL PRIMARY KEY,
     nombre       VARCHAR(150) NOT NULL,
@@ -284,10 +222,6 @@ CREATE TABLE IF NOT EXISTS recinto_deportivo (
         REFERENCES direccion(id)
 );
 
-
--- ============================================================
--- K) CANCHA
--- ============================================================
 
 CREATE TABLE IF NOT EXISTS cancha (
     id                   SERIAL PRIMARY KEY,
@@ -309,10 +243,6 @@ CREATE TABLE IF NOT EXISTS cancha (
 );
 
 
--- ============================================================
--- L) DISPONIBILIDAD DE CANCHA
--- ============================================================
-
 CREATE TABLE IF NOT EXISTS disponibilidad_cancha (
     id             SERIAL PRIMARY KEY,
     dia_semana     VARCHAR(20) NOT NULL,
@@ -328,10 +258,6 @@ CREATE TABLE IF NOT EXISTS disponibilidad_cancha (
     CHECK (hora_cierre > hora_apertura)
 );
 
-
--- ============================================================
--- M) RESERVA DE CANCHA
--- ============================================================
 
 CREATE TABLE IF NOT EXISTS reservar_cancha (
     id                 SERIAL PRIMARY KEY,
@@ -358,10 +284,6 @@ CREATE TABLE IF NOT EXISTS reservar_cancha (
 );
 
 
--- ============================================================
--- N) DESAFÍOS ENTRE EQUIPOS
--- ============================================================
-
 CREATE TABLE IF NOT EXISTS desafio (
     id                   SERIAL PRIMARY KEY,
     mensaje              VARCHAR(500),
@@ -386,10 +308,6 @@ CREATE TABLE IF NOT EXISTS desafio (
     CHECK (id_equipo_desafiado <> id_equipo_desafiante)
 );
 
-
--- ============================================================
--- O) PARTIDO
--- ============================================================
 
 CREATE TABLE IF NOT EXISTS partido (
     id                  SERIAL PRIMARY KEY,
@@ -418,10 +336,6 @@ CREATE TABLE IF NOT EXISTS partido (
 );
 
 
--- ============================================================
--- P) PARTICIPACIÓN
--- ============================================================
-
 CREATE TABLE IF NOT EXISTS participacion (
     id             SERIAL PRIMARY KEY,
     es_desafiante  BOOLEAN NOT NULL,
@@ -442,10 +356,6 @@ CREATE TABLE IF NOT EXISTS participacion (
 );
 
 
--- ============================================================
--- Q) COMENTARIOS
--- ============================================================
-
 CREATE TABLE IF NOT EXISTS comentario (
     id         SERIAL PRIMARY KEY,
     fecha      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -463,10 +373,6 @@ CREATE TABLE IF NOT EXISTS comentario (
         REFERENCES usuario(id)
 );
 
-
--- ============================================================
--- R) NOTIFICACIONES
--- ============================================================
 
 CREATE TABLE IF NOT EXISTS notificacion (
     id                  SERIAL PRIMARY KEY,
@@ -487,18 +393,12 @@ CREATE TABLE IF NOT EXISTS notificacion (
 );
 
 
--- ============================================================
--- S) DATOS INICIALES (semilla)
--- ============================================================
--- ON CONFLICT DO NOTHING evita duplicados si el script corre más de una vez.
-
 INSERT INTO rol_aplicacion (nombre) VALUES
     ('Jugador'),
     ('Administrador')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO nivel (nombre, puntaje_min, puntaje_max) VALUES
-    -- CORRECCIÓN: seed = código. Los 3 niveles de config/perfilJugador.js, sin rangos superpuestos.
     ('Principiante', 0,   299),
     ('Intermedio',   300, 699),
     ('Avanzado',     700, 1000)
@@ -514,12 +414,12 @@ ON CONFLICT DO NOTHING;
 INSERT INTO rol_equipo (nombre) VALUES
     ('Capitán'),
     ('Entrenador'),
-    ('Integrante') -- CORRECCIÓN: seed = código (equipoModel busca 'integrante'; en pantalla se muestra "Jugador")
+    ('Integrante')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO estado_solicitud (nombre) VALUES
     ('Pendiente'),
-    ('Aceptada'), -- CORRECCIÓN: seed = código (equipoModel busca 'aceptada')
+    ('Aceptada'),
     ('Rechazada')
 ON CONFLICT DO NOTHING;
 
@@ -556,52 +456,22 @@ INSERT INTO region (nombre) VALUES
 ON CONFLICT DO NOTHING;
 
 
--- ============================================================
--- T) VERIFICACIÓN (opcional)
--- ============================================================
--- Tras ejecutar, deberías ver ~25 tablas:
---   SELECT table_name FROM information_schema.tables
---   WHERE table_schema = 'public' ORDER BY table_name;
-
-
--- ============================================================
--- U) INTEGRACIÓN CON SUPABASE AUTH (la usa models/userModel.js)
--- ============================================================
--- Las contraseñas ahora las maneja Supabase Auth (tabla auth.users).
--- "usuario" se vincula a esa cuenta con auth_id (UUID).
--- Re-ejecutable: IF NOT EXISTS / DROP NOT NULL no fallan si ya se aplicó.
-
--- Vínculo con la cuenta de Supabase Auth.
--- CORRECCIÓN: seed = código (todos los modelos consultan u.auth_id; antes decía id_auth)
 ALTER TABLE usuario
     ADD COLUMN IF NOT EXISTS auth_id UUID UNIQUE
     REFERENCES auth.users(id) ON DELETE SET NULL;
 
--- La contraseña ya no se guarda en nuestras tablas.
 ALTER TABLE usuario ALTER COLUMN contrasena DROP NOT NULL;
 
--- El registro no pide fecha de nacimiento; se podrá completar en el perfil.
 ALTER TABLE jugador ALTER COLUMN fecha_nacimiento DROP NOT NULL;
 
--- RLS sin políticas: la API pública de Supabase (anon key) NO puede leer
--- estas tablas. El servidor entra por DATABASE_URL (rol postgres), que no
--- está sujeto a RLS, así que la app sigue funcionando.
 ALTER TABLE usuario ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jugador ENABLE ROW LEVEL SECURITY;
 
-
--- ============================================================
--- V) PERFIL DEPORTIVO DEL JUGADOR (wizard /perfil-jugador y carta /perfil)
--- ============================================================
--- Re-ejecutable: solo AGREGA columnas (nullable) y catálogos; no borra ni
--- modifica datos existentes. La posición sigue en jugador_posicion.
 
 ALTER TABLE jugador
     ADD COLUMN IF NOT EXISTS pie_habil       VARCHAR(10)
         CHECK (pie_habil IN ('izquierdo', 'derecho')),
     ADD COLUMN IF NOT EXISTS id_nivel        INT REFERENCES nivel(id),
-    -- Estadísticas de la carta (1-99). Se generan al terminar el wizard
-    -- y no se vuelven a sortear al editar el perfil.
     ADD COLUMN IF NOT EXISTS stat_ritmo      SMALLINT CHECK (stat_ritmo   BETWEEN 1 AND 99),
     ADD COLUMN IF NOT EXISTS stat_tiro       SMALLINT CHECK (stat_tiro    BETWEEN 1 AND 99),
     ADD COLUMN IF NOT EXISTS stat_pase       SMALLINT CHECK (stat_pase    BETWEEN 1 AND 99),
@@ -610,25 +480,11 @@ ALTER TABLE jugador
     ADD COLUMN IF NOT EXISTS stat_fisico     SMALLINT CHECK (stat_fisico  BETWEEN 1 AND 99),
     ADD COLUMN IF NOT EXISTS perfil_completo BOOLEAN NOT NULL DEFAULT FALSE;
 
--- Niveles de experiencia que ofrece el wizard (se buscan por nombre).
 INSERT INTO nivel (nombre, puntaje_min, puntaje_max) VALUES
     ('Principiante', 0,   299),
     ('Intermedio',   300, 699),
     ('Avanzado',     700, 1000)
 ON CONFLICT (nombre) DO NOTHING;
-
--- Posiciones: se usan las de la sección de catálogos. El arco se busca
--- como 'Arquero' o 'Portero' (models/jugadorModel.js), así que sirve cualquiera.
-
-
--- ============================================================
--- W) EQUIPOS DESDE LA APP (wizard /crear-equipo y directorio /equipos)
--- ============================================================
--- Re-ejecutable: solo AGREGA columnas (nullable) y quita un NOT NULL;
--- no borra ni modifica datos existentes.
--- La zona de juego es texto libre ("Puente Alto"), así que id_comuna deja
--- de ser obligatoria. Modalidad y nivel usan los catálogos que ya existen
--- (la modalidad se busca por cantidad_de_jugadores: 5, 7 u 11).
 
 ALTER TABLE equipo
     ADD COLUMN IF NOT EXISTS zona            VARCHAR(100),
@@ -638,20 +494,10 @@ ALTER TABLE equipo
 
 ALTER TABLE equipo ALTER COLUMN id_comuna DROP NOT NULL;
 
--- Igual que usuario y jugador: solo el servidor (DATABASE_URL) lee y escribe.
 ALTER TABLE equipo ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipo_jugador ENABLE ROW LEVEL SECURITY;
 ALTER TABLE solicitud_union_equipo ENABLE ROW LEVEL SECURITY;
 
-
--- ============================================================
--- X) FOTO DEL JUGADOR (editor /perfil/editar y carta /perfil)
--- ============================================================
--- Re-ejecutable: solo AGREGA columnas (nullable).
--- La foto llega ya recortada y comprimida desde el navegador (~600 px, unos
--- 50-150 KB), así que se guarda directo en la fila del jugador.
--- foto_actualizada sirve de versión en la URL (/perfil/foto?v=...) para
--- que el navegador la guarde en caché sin quedar desactualizada.
 
 ALTER TABLE jugador
     ADD COLUMN IF NOT EXISTS foto             BYTEA,
@@ -660,36 +506,13 @@ ALTER TABLE jugador
     ADD COLUMN IF NOT EXISTS foto_actualizada TIMESTAMPTZ;
 
 
--- ============================================================
--- Y) APODO DEL JUGADOR (wizard /perfil-jugador y editor /perfil/editar)
--- ============================================================
--- Re-ejecutable: solo AGREGA una columna (nullable).
--- Es el nombre que muestra la carta; si está vacío, la carta usa nombre_apodo
--- (que guarda el nombre real). 20 caracteres caben en la carta.
-
 ALTER TABLE jugador
     ADD COLUMN IF NOT EXISTS apodo VARCHAR(20);
 
 
--- ============================================================
--- Z) MENSAJE DE LA SOLICITUD PARA UNIRSE (directorio /equipos)
--- ============================================================
--- Re-ejecutable: solo AGREGA una columna (nullable).
--- Lo que escribe el jugador al pedir unirse; el capitán lo lee en /mi-equipo
--- y en el perfil del jugador. Las solicitudes anteriores quedan sin mensaje.
-
 ALTER TABLE solicitud_union_equipo
     ADD COLUMN IF NOT EXISTS mensaje VARCHAR(200);
 
-
--- ============================================================
--- AA) ESCUDO DEL EQUIPO Y POSICIONES EN LA CANCHA (/mi-equipo)
--- ============================================================
--- Re-ejecutable: solo AGREGA columnas (nullable).
--- El escudo llega ya reducido desde el navegador (~256 px, PNG), así que se guarda
--- directo en la fila del equipo; escudo_actualizado sirve de versión en la URL.
--- pos_x / pos_y: dónde dejó el capitán la carta de cada jugador en la cancha táctica,
--- en % del ancho y del alto (NULL = posición automática según su línea).
 
 ALTER TABLE equipo
     ADD COLUMN IF NOT EXISTS escudo             BYTEA,
@@ -701,14 +524,6 @@ ALTER TABLE equipo_jugador
     ADD COLUMN IF NOT EXISTS pos_x NUMERIC(5, 2) CHECK (pos_x BETWEEN 0 AND 100),
     ADD COLUMN IF NOT EXISTS pos_y NUMERIC(5, 2) CHECK (pos_y BETWEEN 0 AND 100);
 
-
--- ============================================================
--- AB) INVITACIONES DEL CAPITÁN A JUGADORES (modal "Invitar jugador +" de /mi-equipo)
--- ============================================================
--- Re-ejecutable: solo CREA una tabla nueva.
--- Vincula el equipo que invita (id_equipo) con el jugador invitado (id_jugador).
--- Un jugador puede estar en varios equipos: se puede invitar a cualquiera que no
--- esté ya en este plantel. UNIQUE: cada equipo invita una sola vez a cada jugador.
 
 CREATE TABLE IF NOT EXISTS invitacion_equipo (
     id                  SERIAL PRIMARY KEY,

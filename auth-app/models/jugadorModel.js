@@ -1,16 +1,8 @@
-// models/jugadorModel.js
-// Perfil deportivo del jugador: tabla "jugador" (datos, estadísticas de la carta,
-// foto, apodo) y "jugador_posicion". Requiere las secciones V, X e Y
-// de sql/seed.sql; si faltan, PostgreSQL responde 42703 (columna inexistente).
-// Todas las consultas son parametrizadas.
-
 const { pool } = require('../config/db');
 const { POSICIONES, ESTADISTICAS } = require('../config/perfilJugador');
 
-// Código de PostgreSQL para "la columna no existe".
 const COLUMNA_INEXISTENTE = '42703';
 
-/** Clave del catálogo (ej. 'arquero') a partir del nombre en la tabla posicion. */
 function clavePosicion(nombreDb) {
   if (!nombreDb) return null;
   const nombre = nombreDb.toLowerCase();
@@ -18,14 +10,6 @@ function clavePosicion(nombreDb) {
   return encontrada ? encontrada[0] : null;
 }
 
-/**
- * Perfil de un jugador: el de una cuenta (filtro 'u.auth_id') o uno por su id (filtro 'j.id').
- * @param {'u.auth_id'|'j.id'} filtro - Columna fija del código, nunca algo que llegue del usuario.
- * @returns {Promise<object|null>} { id, nombre, apellido, apodo ('' si no tiene), fechaNacimiento, altura, peso,
- *          posiciones: ['defensa', ...], posicion: la primera (principal) | null,
- *          stats: {ritmo, ...} | null, perfilCompleto,
- *          fotoVersion: ms de la última foto (para la URL) | null }
- */
 async function leerPerfil(filtro, valor) {
   const columnasStats = ESTADISTICAS.map(({ columna }) => `j.${columna}`).join(', ');
   const consulta = `
@@ -51,45 +35,32 @@ async function leerPerfil(filtro, valor) {
     id: fila.id,
     nombre: fila.nombre_apodo,
     apellido: fila.apellido,
-    apodo: fila.apodo || '', // los perfiles anteriores al apodo no tienen
+    apodo: fila.apodo || '',
     fechaNacimiento: fila.fecha_nacimiento,
     altura: fila.altura === null ? null : Number(fila.altura),
     peso: fila.peso === null ? null : Number(fila.peso),
     posiciones,
-    posicion: posiciones[0] || null, // la principal (la que muestra la carta)
+    posicion: posiciones[0] || null,
     stats: tieneStats ? Object.fromEntries(ESTADISTICAS.map(({ clave, columna }) => [clave, fila[columna]])) : null,
     perfilCompleto: fila.perfil_completo,
     fotoVersion: fila.foto_actualizada ? fila.foto_actualizada.getTime() : null,
   };
 }
 
-/** Perfil del jugador de una cuenta de Supabase Auth (ver leerPerfil). */
 function obtenerPerfil(authId) {
   return leerPerfil('u.auth_id', authId);
 }
 
-/** Perfil de un jugador por su id (el capitán revisando una solicitud; ver leerPerfil). */
 function obtenerPerfilPorId(idJugador) {
   return leerPerfil('j.id', idJugador);
 }
 
 
-/**
- * Escribe el perfil en UNA transacción: datos de "jugador",
- * sus posiciones (reemplazan las anteriores) y las estadísticas.
- * @param {number} idJugador
- * @param {{apodo, fechaNacimiento, altura, peso, posiciones}} datos
- *        Ya validados; posiciones (1 o más, la primera es la principal) son
- *        claves de config/perfilJugador.js.
- * @param {object} stats - { ritmo: 72, ... }
- * @param {boolean} conservarStats - true: solo se escriben si aún no tenía (wizard).
- */
 async function escribirPerfil(idJugador, datos, stats, conservarStats) {
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
 
-    // Id de cada posición elegida, en el mismo orden (la primera es la principal).
     const idsPosiciones = [];
     for (const clave of datos.posiciones) {
       const posicion = await cliente.query(
@@ -102,9 +73,6 @@ async function escribirPerfil(idJugador, datos, stats, conservarStats) {
       idsPosiciones.push(posicion.rows[0].id);
     }
 
-    // Nombre y apellido no se tocan: se piden solo al crear la cuenta (/registro).
-    // Pie hábil y nivel ya no se piden: las columnas quedan como estaban.
-    // $6.. = estadísticas; con conservarStats, COALESCE deja las que ya tenía.
     const asignacionStats = ESTADISTICAS.map(({ columna }, i) => (
       conservarStats ? `${columna} = COALESCE(${columna}, $${i + 6})` : `${columna} = $${i + 6}`
     )).join(',\n           ');
@@ -124,7 +92,6 @@ async function escribirPerfil(idJugador, datos, stats, conservarStats) {
       ]
     );
 
-    // Se reemplazan todas: WITH ORDINALITY inserta en el orden elegido (jp.id marca la principal).
     await cliente.query('DELETE FROM jugador_posicion WHERE id_jugador = $1', [idJugador]);
     await cliente.query(
       `INSERT INTO jugador_posicion (id_jugador, id_posicion)
@@ -141,23 +108,14 @@ async function escribirPerfil(idJugador, datos, stats, conservarStats) {
   }
 }
 
-/**
- * Wizard (primera vez): guarda el perfil con las estadísticas sorteadas.
- * Si ya tenía estadísticas no se re-sortean.
- */
 function guardarPerfil(idJugador, datos, statsIniciales) {
   return escribirPerfil(idJugador, datos, statsIniciales, true);
 }
 
-/** Editor /perfil/editar: guarda el perfil con las estadísticas que eligió el jugador. */
 function actualizarPerfil(idJugador, datos, stats) {
   return escribirPerfil(idJugador, datos, stats, false);
 }
 
-/**
- * Foto del jugador de una cuenta (la sirve GET /perfil/foto).
- * @returns {Promise<{datos: Buffer, tipo: string}|null>}
- */
 async function obtenerFoto(authId) {
   const { rows } = await pool.query(
     `SELECT j.foto, j.foto_tipo
@@ -169,20 +127,11 @@ async function obtenerFoto(authId) {
   return rows[0] ? { datos: rows[0].foto, tipo: rows[0].foto_tipo } : null;
 }
 
-/**
- * Foto de un jugador por su id (la sirve GET /mi-equipo/solicitudes/:id/foto).
- * @returns {Promise<{datos: Buffer, tipo: string}|null>}
- */
 async function obtenerFotoPorId(idJugador) {
   const { rows } = await pool.query('SELECT foto, foto_tipo FROM jugador WHERE id = $1 AND foto IS NOT NULL', [idJugador]);
   return rows[0] ? { datos: rows[0].foto, tipo: rows[0].foto_tipo } : null;
 }
 
-/**
- * Reemplaza la foto del jugador.
- * @param {Buffer} datos - Imagen ya validada.
- * @param {string} tipo - 'image/jpeg' | 'image/png' | 'image/webp'
- */
 async function guardarFoto(idJugador, datos, tipo) {
   await pool.query('UPDATE jugador SET foto = $1, foto_tipo = $2, foto_actualizada = NOW() WHERE id = $3', [
     datos,
@@ -191,7 +140,6 @@ async function guardarFoto(idJugador, datos, tipo) {
   ]);
 }
 
-/** Quita la foto: la carta vuelve a la silueta. */
 async function eliminarFoto(idJugador) {
   await pool.query('UPDATE jugador SET foto = NULL, foto_tipo = NULL, foto_actualizada = NULL WHERE id = $1', [idJugador]);
 }

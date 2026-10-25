@@ -1,6 +1,5 @@
 <%- include('partials/header') %>
 
-<!-- ============ HERO ============ -->
 <section class="hero">
   <div class="contenedor hero__grid">
     <div class="hero__texto">
@@ -17,7 +16,6 @@
 
       <div class="hero__acciones revelar">
         <% if (usuario) { %>
-          <!-- Sesión activa: nunca mostrar CTAs de registro/login -->
           <a class="btn btn--verde btn--grande btn--glow" href="/dashboard">IR A MI PANEL <span aria-hidden="true">→</span></a>
           <a class="btn btn--contorno btn--grande" href="/perfil/editar">Editar mi perfil</a>
         <% } else { %>
@@ -31,7 +29,6 @@
       <div class="ball-stage">
         <div class="ball-cuadricula" aria-hidden="true"></div>
         <div class="ball-anillo" aria-hidden="true"></div>
-        <!-- Respaldo sin WebGL: un balón dibujado con CSS -->
         <div class="ball-fallback" aria-hidden="true"></div>
         <div id="ball-canvas" role="img" aria-label="Balón de fútbol 3D interactivo"></div>
       </div>
@@ -40,10 +37,7 @@
   </div>
 </section>
 
-<!-- ============ LA PLATAFORMA (grid bento) ============ -->
 <%
-  // Carta de ejemplo: el color del borde depende de la media
-  // (<65 bronce, 65-79 plata, 80+ verde neón).
   const cartaEjemplo = {
     media: 84,
     posicion: 'DEL',
@@ -59,7 +53,6 @@
     </header>
 
     <div class="bento">
-      <!-- 1) Perfil de jugador (tarjeta grande) -->
       <article class="bento__tarjeta bento__tarjeta--perfil revelar">
         <header class="bento__cabecera">
           <span class="bento__icono" aria-hidden="true">
@@ -104,7 +97,6 @@
         </div>
       </article>
 
-      <!-- 2) Canchas: agenda de un día -->
       <article class="bento__tarjeta bento__tarjeta--canchas revelar">
         <header class="bento__cabecera">
           <span class="bento__icono" aria-hidden="true">
@@ -129,7 +121,6 @@
         </div>
       </article>
 
-      <!-- 3) Torneos: mini bracket -->
       <article class="bento__tarjeta bento__tarjeta--torneos revelar">
         <header class="bento__cabecera">
           <span class="bento__icono" aria-hidden="true">
@@ -137,7 +128,7 @@
           </span>
           <h3 class="bento__titulo">Torneos</h3>
         </header>
-        <p class="bento__texto">Próximamente: inscribe a tu equipo en torneos y sigue los resultados.<%# CORRECCIÓN: la pantalla no promete algo que aún no existe %></p>
+        <p class="bento__texto">Próximamente: inscribe a tu equipo en torneos y sigue los resultados.</p>
 
         <div class="bento__demo bracket" aria-hidden="true">
           <span class="bracket__etiqueta bracket__etiqueta--semis">Semifinales</span>
@@ -157,7 +148,6 @@
         </div>
       </article>
 
-      <!-- 4) Equipos -->
       <article class="bento__tarjeta bento__tarjeta--equipos revelar">
         <header class="bento__cabecera">
           <span class="bento__icono" aria-hidden="true">
@@ -183,7 +173,6 @@
         </div>
       </article>
 
-      <!-- 5) Desafíos -->
       <article class="bento__tarjeta bento__tarjeta--desafios revelar">
         <header class="bento__cabecera">
           <span class="bento__icono" aria-hidden="true">
@@ -211,7 +200,6 @@
   </div>
 </section>
 
-<!-- ============ CÓMO FUNCIONA (timeline) ============ -->
 <section class="seccion" id="como-funciona">
   <div class="contenedor">
     <header class="seccion__cabecera revelar">
@@ -220,7 +208,6 @@
     </header>
 
     <div class="timeline" data-timeline>
-      <!-- Línea que se rellena de verde según el scroll (la controla main.js) -->
       <div class="timeline__linea" aria-hidden="true"><span class="timeline__progreso"></span></div>
 
       <ol class="timeline__pasos">
@@ -250,7 +237,6 @@
   </div>
 </section>
 
-<!-- ============ CTA FINAL ============ -->
 <section class="seccion seccion--cta">
   <div class="contenedor">
     <div class="cta revelar">

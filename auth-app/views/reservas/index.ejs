@@ -2,8 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- AG-003 mis reservas (futuras primero, de la más próxima a la más lejana; canceladas se distinguen)
-     PA-003 cancelar: solo reservas propias, confirmadas y futuras (las de un partido se gestionan desde el partido). -->
 <%
   const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
   const formatoDia = new Intl.DateTimeFormat('es-CL', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });

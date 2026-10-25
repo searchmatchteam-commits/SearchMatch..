@@ -1,45 +1,30 @@
-// middlewares/validators.js
-// Validación en el servidor de los formularios de registro y login.
-// Si hay errores, re-renderiza la vista con los mensajes y los datos ya escritos
-// (nunca las contraseñas). Si todo está bien, deja los datos limpios en
-// req.datosFormulario para el controlador.
-
-// Expresión regular sencilla para validar un correo.
 const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-// Celular chileno: 9 + 8 dígitos, con o sin +56 delante.
 const REGEX_CELULAR_CL = /^(?:\+?56)?(9\d{8})$/;
 
 const { POSICIONES, NIVELES, ESTADISTICAS, STAT_RANGO } = require('../config/perfilJugador');
 const { MODALIDADES } = require('../config/equipo');
 
 const LONGITUD_MINIMA_PASSWORD = 8;
-const LONGITUD_MAXIMA_NOMBRE = 100; // jugador.nombre_apodo / jugador.apellido
-const LONGITUD_MAXIMA_APODO = 20; // jugador.apodo (lo que cabe en la carta)
-const LONGITUD_MAXIMA_CORREO = 150; // usuario.correo / equipo.correo_contacto
-const LONGITUD_MAXIMA_ZONA = 100; // equipo.zona
-const LONGITUD_MAXIMA_MENSAJE_DESAFIO = 200; // lo que escribe el capitán en desafio.mensaje
-const LONGITUD_MAXIMA_MENSAJE_SOLICITUD = 200; // solicitud_union_equipo.mensaje (sección Z de sql/seed.sql)
-const DIAS_MAXIMOS_DESAFIO = 365; // la fecha tentativa no puede estar a más de un año
+const LONGITUD_MAXIMA_NOMBRE = 100;
+const LONGITUD_MAXIMA_APODO = 20;
+const LONGITUD_MAXIMA_CORREO = 150;
+const LONGITUD_MAXIMA_ZONA = 100;
+const LONGITUD_MAXIMA_MENSAJE_DESAFIO = 200;
+const LONGITUD_MAXIMA_MENSAJE_SOLICITUD = 200;
+const DIAS_MAXIMOS_DESAFIO = 365;
 
-// Rango de edad aceptado al registrarse (jugador.fecha_nacimiento).
 const EDAD_MINIMA = 18;
 const EDAD_MAXIMA = 100;
 
-// Rangos aceptados en el perfil deportivo.
 const ALTURA_CM = { min: 120, max: 230 };
 const PESO_KG = { min: 35, max: 200 };
 
-/**
- * Edad en años cumplidos a partir de una fecha "AAAA-MM-DD" (la que envía <input type="date">).
- * @returns {number|null} La edad, o null si la fecha no existe (ej: 2024-02-30) o tiene otro formato.
- */
 function calcularEdad(valor) {
   const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valor);
   if (!partes) return null;
   const [anio, mes, dia] = partes.slice(1).map(Number);
 
-  // Date corrige fechas imposibles (30 de febrero → 1 de marzo): si cambió, no existe.
   const fecha = new Date(Date.UTC(anio, mes - 1, dia));
   if (fecha.getUTCFullYear() !== anio || fecha.getUTCMonth() !== mes - 1 || fecha.getUTCDate() !== dia) {
     return null;
@@ -47,15 +32,10 @@ function calcularEdad(valor) {
 
   const hoy = new Date();
   let edad = hoy.getFullYear() - anio;
-  // Aún no cumple años este año
   if (hoy.getMonth() + 1 < mes || (hoy.getMonth() + 1 === mes && hoy.getDate() < dia)) edad -= 1;
   return edad;
 }
 
-/**
- * Valida la fecha de nacimiento (obligatoria, real y con edad entre EDAD_MINIMA y EDAD_MAXIMA).
- * @returns {string|null} El mensaje de error o null si es válida.
- */
 function validarFechaNacimiento(fechaNacimiento) {
   const edad = calcularEdad(fechaNacimiento);
   if (!fechaNacimiento) return 'La fecha de nacimiento es obligatoria.';
@@ -66,32 +46,18 @@ function validarFechaNacimiento(fechaNacimiento) {
   return null;
 }
 
-/**
- * Convierte un número entero dentro de [min, max]; acepta coma decimal ("70,5" → 71).
- * @returns {number|null} El número redondeado, o null si no es válido o está fuera de rango.
- */
 function enteroEnRango(valor, { min, max }) {
   const numero = Math.round(Number(String(valor || '').trim().replace(',', '.')));
   if (!String(valor || '').trim() || !Number.isFinite(numero) || numero < min || numero > max) return null;
   return numero;
 }
 
-/**
- * Normaliza un teléfono chileno a "+569XXXXXXXX".
- * Acepta espacios, guiones y paréntesis: "+56 9 1234 5678", "9 1234-5678"...
- * @returns {string|null} El número normalizado o null si no es válido.
- */
 function normalizarTelefono(valor) {
   const limpio = String(valor || '').replace(/[\s\-().]/g, '');
   const coincidencia = limpio.match(REGEX_CELULAR_CL);
   return coincidencia ? `+56${coincidencia[1]}` : null;
 }
 
-/**
- * CORRECCIÓN: contraseña segura (la pantalla ya pedía "letras y números", pero solo se revisaba el largo).
- * Regla única de la plataforma: la usan el registro, recuperar contraseña (AR-008) y cambiarla (AR-009).
- * @returns {string|null} El mensaje de error o null si cumple.
- */
 function errorPasswordSegura(password) {
   if (!password) return 'La contraseña es obligatoria.';
   if (password.length < LONGITUD_MINIMA_PASSWORD) return `La contraseña debe tener al menos ${LONGITUD_MINIMA_PASSWORD} caracteres.`;
@@ -101,9 +67,6 @@ function errorPasswordSegura(password) {
   return null;
 }
 
-/**
- * Valida el formulario de REGISTRO.
- */
 function validarRegistro(req, res, next) {
   const nombre = (req.body.nombre || '').trim();
   const apellido = (req.body.apellido || '').trim();
@@ -143,18 +106,16 @@ function validarRegistro(req, res, next) {
   const errorFecha = validarFechaNacimiento(fechaNacimiento);
   if (errorFecha) errores.push(errorFecha);
 
-  const errorPassword = errorPasswordSegura(password); // CORRECCIÓN: contraseña segura
+  const errorPassword = errorPasswordSegura(password);
   if (errorPassword) errores.push(errorPassword);
 
   if (password && confirmarPassword !== password) {
     errores.push('Las contraseñas no coinciden.');
   }
 
-  // NUEVO: AR-011 — sin aceptar los términos y la privacidad no se crea la cuenta.
   const aceptoTerminos = req.body.acepto_terminos === 'si';
   if (!aceptoTerminos) errores.push('Debes aceptar los términos y condiciones y la política de privacidad.');
 
-  // Valores para el controlador (teléfono ya normalizado) y para re-pintar el formulario.
   req.datosFormulario = { nombre, apellido, correo, telefono, fechaNacimiento };
   const datos = {
     nombre,
@@ -162,7 +123,7 @@ function validarRegistro(req, res, next) {
     correo,
     telefono: telefonoIngresado,
     fecha_nacimiento: fechaNacimiento,
-    acepto_terminos: aceptoTerminos, // NUEVO: AR-011 (la casilla sigue marcada si hay otros errores)
+    acepto_terminos: aceptoTerminos,
   };
 
   if (errores.length > 0) {
@@ -177,9 +138,6 @@ function validarRegistro(req, res, next) {
   return next();
 }
 
-/**
- * Valida el formulario de LOGIN (campos obligatorios y formato del correo).
- */
 function validarLogin(req, res, next) {
   const correo = (req.body.correo || '').trim().toLowerCase();
   const password = req.body.password || '';
@@ -211,21 +169,12 @@ function validarLogin(req, res, next) {
   return next();
 }
 
-/**
- * Limpia y valida los datos del perfil deportivo (los comparten el wizard y el editor).
- * Nombre y apellido no van aquí: se piden solo al crear la cuenta (validarRegistro).
- * @returns {{ datos: object, paso2: string[], paso3: string[] }}
- *          paso2 = errores de datos personales, paso3 = errores del perfil deportivo.
- */
 function revisarDatosPerfil(body) {
-  // Lo único que muestra la carta como nombre; espacios repetidos se juntan (va en una sola línea)
   const apodo = (body.apodo || '').trim().replace(/\s+/g, ' ');
   const fechaNacimiento = (body.fecha_nacimiento || '').trim();
   const altura = enteroEnRango(body.altura, ALTURA_CM);
   const peso = enteroEnRango(body.peso, PESO_KG);
-  // Casillas "posicion": urlencoded entrega un texto (una marcada) o un arreglo (varias).
   const posicionesEnviadas = [].concat(body.posicion || []);
-  // Orden del catálogo, sin repetidas: la primera es la principal (la que muestra la carta).
   const posiciones = Object.keys(POSICIONES).filter((clave) => posicionesEnviadas.includes(clave));
 
   const paso2 = [];
@@ -247,12 +196,6 @@ function revisarDatosPerfil(body) {
   return { datos: { apodo, fechaNacimiento, altura, peso, posiciones }, paso2, paso3 };
 }
 
-/**
- * Valida el wizard de PERFIL DE JUGADOR (pasos 2 y 3).
- * No corta la petición: deja los datos limpios en req.datosFormulario y los
- * errores en req.erroresPerfil = { errores: [...], paso } (paso = el primero con error),
- * para que jugadorController vuelva a pintar el wizard en ese paso.
- */
 function validarPerfilJugador(req, res, next) {
   const { datos, paso2, paso3 } = revisarDatosPerfil(req.body);
   req.datosFormulario = datos;
@@ -263,27 +206,13 @@ function validarPerfilJugador(req, res, next) {
   return next();
 }
 
-/**
- * Valida el EDITOR DE PERFIL (/perfil/editar): los datos del wizard más las
- * 6 estadísticas (stat_ritmo, stat_tiro... entre STAT_RANGO.min y STAT_RANGO.max).
- * No corta la petición: deja req.datosFormulario (con .stats) y req.erroresPerfil = { errores }.
- * Las estadísticas inválidas quedan en null para que el editor re-pinte lo que había.
- */
 function validarEdicionPerfil(req, res, next) {
-  // CORRECCIÓN: regla 8 — las estadísticas ya no llegan del formulario (las cambia solo el sistema);
-  // cualquier stat_* que alguien envíe a mano se ignora.
   const { datos, paso2, paso3 } = revisarDatosPerfil(req.body);
   req.datosFormulario = datos;
   req.erroresPerfil = { errores: [...paso2, ...paso3] };
   return next();
 }
 
-/**
- * Valida el wizard de CREAR EQUIPO (paso 1: nombre y correo; paso 2: nivel, zona y tipo de fútbol).
- * No corta la petición: deja los datos limpios en req.datosFormulario y los errores en
- * req.erroresEquipo = { errores: [...], paso } (paso = el primero con error),
- * para que equipoController vuelva a pintar el wizard en ese paso.
- */
 function validarEquipo(req, res, next) {
   const nombre = (req.body.nombre_equipo || '').trim();
   const correo = (req.body.correo_contacto || '').trim().toLowerCase();
@@ -307,16 +236,14 @@ function validarEquipo(req, res, next) {
 
   if (!MODALIDADES[jugadores]) paso2.push('Elige el tipo de fútbol.');
 
-  // CORRECCIÓN: regla 11 — comuna de la lista (para filtrar y recomendar rivales por ubicación).
-  // Que exista la revisa equipoController.crear con ubicacionModel.obtenerComuna.
   const idComuna = Number(req.body.id_comuna);
   const comunaValida = Number.isInteger(idComuna) && idComuna > 0;
   if (!comunaValida) paso2.push('Elige la región y la comuna de tu equipo.');
 
   req.datosFormulario = {
     nombre, correo, nivel, zona, jugadores: MODALIDADES[jugadores] ? jugadores : null,
-    idComuna: comunaValida ? idComuna : null, // CORRECCIÓN: regla 11
-    idRegion: Number(req.body.id_region) || null, // CORRECCIÓN: regla 11 (solo para re-pintar el formulario)
+    idComuna: comunaValida ? idComuna : null,
+    idRegion: Number(req.body.id_region) || null,
   };
   req.erroresEquipo = {
     errores: [...paso1, ...paso2],
@@ -325,17 +252,10 @@ function validarEquipo(req, res, next) {
   return next();
 }
 
-/** Fecha de hoy en Chile como AAAA-MM-DD (para comparar con el input type="date"). */
 function hoyEnChile() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
 }
 
-/**
- * Desafío a otro equipo (modal del panel): fecha y hora tentativas y mensaje, todo opcional.
- * Deja en req.datosDesafio.mensaje el texto para desafio.mensaje, por ejemplo
- * "Fecha tentativa: 25/10/2026 a las 20:00. ¿Jugamos en La Florida?" (o null),
- * y los errores en req.erroresDesafio.
- */
 function validarDesafio(req, res, next) {
   const fecha = (req.body.fecha || '').trim();
   const hora = (req.body.hora || '').trim();
@@ -344,7 +264,6 @@ function validarDesafio(req, res, next) {
 
   let textoFecha = '';
   if (fecha) {
-    // Ida y vuelta: "2027-02-31" se convierte en 3 de marzo, así que no vuelve igual y se rechaza.
     const fechaDate = new Date(`${fecha}T00:00:00Z`);
     const valida = /^\d{4}-\d{2}-\d{2}$/.test(fecha) && !Number.isNaN(fechaDate.getTime())
       && fechaDate.toISOString().slice(0, 10) === fecha;
@@ -372,13 +291,7 @@ function validarDesafio(req, res, next) {
   return next();
 }
 
-/**
- * Mensaje de "Solicitar unirme" (POST /equipos/:id/unirme). En el directorio es obligatorio
- * (el modal lo pide); aquí solo se limpia y se limita: sin JavaScript la solicitud llega sin mensaje.
- * Deja req.datosSolicitud = { mensaje: string|null } y req.erroresSolicitud = [].
- */
 function validarSolicitudUnion(req, res, next) {
-  // Espacios y saltos de línea repetidos cuentan como uno (el capitán lo lee en una tarjeta)
   const mensaje = (req.body.mensaje || '').replace(/\s+/g, ' ').trim();
   const errores = [];
   if (mensaje.length > LONGITUD_MAXIMA_MENSAJE_SOLICITUD) {
@@ -397,8 +310,8 @@ module.exports = {
   validarEquipo,
   validarDesafio,
   validarSolicitudUnion,
-  errorPasswordSegura, // CORRECCIÓN: contraseña segura (la reutilizan AR-008 y AR-009)
-  REGEX_CORREO, // NUEVO: AR-012 (y otros formularios nuevos)
+  errorPasswordSegura,
+  REGEX_CORREO,
   LONGITUD_MAXIMA_MENSAJE_SOLICITUD,
   normalizarTelefono,
   calcularEdad,

@@ -1,18 +1,3 @@
-// controllers/adminRecintosController.js
-// Panel de administración de recintos, canchas y disponibilidad (Fase 2). Todas las rutas pasan
-// por requireAdmin (routes/adminRoutes.js).
-//  AD-011 GET  /admin/recintos                       → listado con búsqueda y filtros
-//  AD-001 GET  /admin/recintos/nuevo, POST /admin/recintos
-//         GET  /admin/recintos/:id                   → detalle con sus canchas
-//  AD-008 GET/POST /admin/recintos/:id/editar
-//  AD-004/AD-005 POST /admin/recintos/:id/(desactivar|activar)
-//  AD-002 POST /admin/recintos/:id/canchas
-//         GET  /admin/canchas/:id                    → detalle de la cancha con su horario
-//  AD-009 POST /admin/canchas/:id/editar
-//  AD-006/AD-007 POST /admin/canchas/:id/(desactivar|activar)
-//  AD-003 POST /admin/canchas/:id/disponibilidad
-//  AD-010 POST /admin/disponibilidad/:id/eliminar
-
 const recintoModel = require('../models/recintoModel');
 const canchaModel = require('../models/canchaModel');
 const disponibilidadModel = require('../models/disponibilidadModel');
@@ -20,7 +5,6 @@ const ubicacionModel = require('../models/ubicacionModel');
 const { idValido } = require('../middlewares/validadoresAdmin');
 const { DIAS_SEMANA } = require('../config/canchas');
 
-// Avisos tras cada acción (?aviso=...): solo textos fijos, nunca lo que llega en la URL.
 const AVISOS = {
   'recinto-creado': 'Recinto registrado y activo. Ahora agrégale sus canchas.',
   'recinto-editado': 'Datos del recinto actualizados.',
@@ -38,14 +22,9 @@ const AVISOS = {
   inexistente: 'Ese elemento ya no existe.',
 };
 
-/** Resultado de un formulario con errores: lista para la alerta y objeto por campo. */
 function conErrores(erroresCampo) {
   return { erroresCampo, errores: Object.values(erroresCampo) };
 }
-
-/* =====================================================================
-   AD-011 · Listado
-   ===================================================================== */
 
 async function listar(req, res, next) {
   const filtros = {
@@ -76,31 +55,25 @@ async function listar(req, res, next) {
   }
 }
 
-/* =====================================================================
-   AD-001 / AD-008 · Registrar y editar recinto
-   ===================================================================== */
-
 async function renderFormularioRecinto(res, { status = 200, recinto, datos, erroresCampo = {} }) {
   const regiones = await ubicacionModel.listarRegionesConComunas();
   return res.status(status).render('admin/recinto-form', {
     titulo: recinto ? `Editar ${recinto.nombre}` : 'Registrar recinto',
     pagina: 'equipo',
     seccion: 'recintos',
-    recinto, // null al registrar
+    recinto,
     datos,
     regiones,
     ...conErrores(erroresCampo),
   });
 }
 
-/** Revisa que la comuna exista y sea de la región elegida (AD-001: solo comunas de la región). */
 async function revisarComuna(datos, erroresCampo) {
   if (!datos.idComuna || erroresCampo.id_comuna) return;
   const comuna = await ubicacionModel.obtenerComuna(datos.idComuna);
   if (!comuna || comuna.idRegion !== datos.idRegion) erroresCampo.id_comuna = 'Elige una comuna de la región seleccionada.';
 }
 
-// GET /admin/recintos/nuevo
 async function formularioNuevo(req, res, next) {
   try {
     return await renderFormularioRecinto(res, { recinto: null, datos: {} });
@@ -109,7 +82,6 @@ async function formularioNuevo(req, res, next) {
   }
 }
 
-// POST /admin/recintos
 async function crear(req, res, next) {
   const datos = req.datosFormulario;
   const erroresCampo = { ...req.erroresCampo };
@@ -125,7 +97,6 @@ async function crear(req, res, next) {
   }
 }
 
-// GET /admin/recintos/:id/editar  (el formulario parte con los datos guardados)
 async function formularioEditar(req, res, next) {
   try {
     const recinto = await recintoModel.obtenerRecinto(idValido(req.params.id));
@@ -144,7 +115,6 @@ async function formularioEditar(req, res, next) {
   }
 }
 
-// POST /admin/recintos/:id/editar
 async function editar(req, res, next) {
   const idRecinto = idValido(req.params.id);
   const datos = req.datosFormulario;
@@ -162,10 +132,6 @@ async function editar(req, res, next) {
     return next(err);
   }
 }
-
-/* =====================================================================
-   Detalle del recinto + AD-002 registrar cancha
-   ===================================================================== */
 
 async function renderDetalleRecinto(res, idRecinto, { status = 200, aviso = null, datosCancha = {}, erroresCampo = {} } = {}) {
   const [recinto, canchas, modalidades] = await Promise.all([
@@ -187,7 +153,6 @@ async function renderDetalleRecinto(res, idRecinto, { status = 200, aviso = null
   });
 }
 
-// GET /admin/recintos/:id
 async function detalle(req, res, next) {
   try {
     return await renderDetalleRecinto(res, idValido(req.params.id), { aviso: AVISOS[req.query.aviso] || null });
@@ -196,7 +161,6 @@ async function detalle(req, res, next) {
   }
 }
 
-// POST /admin/recintos/:id/canchas
 async function crearCancha(req, res, next) {
   const idRecinto = idValido(req.params.id);
   const datos = req.datosFormulario;
@@ -215,10 +179,6 @@ async function crearCancha(req, res, next) {
   }
 }
 
-/* =====================================================================
-   AD-004 / AD-005 · Desactivar y activar recinto
-   ===================================================================== */
-
 function cambiarEstadoRecinto(activo) {
   return async (req, res, next) => {
     const idRecinto = idValido(req.params.id);
@@ -232,10 +192,6 @@ function cambiarEstadoRecinto(activo) {
   };
 }
 
-/* =====================================================================
-   Detalle de la cancha · AD-009 editar · AD-006/AD-007 estado · AD-003/AD-010 horario
-   ===================================================================== */
-
 async function renderDetalleCancha(res, idCancha, opciones = {}) {
   const { status = 200, aviso = null, datos = null, erroresCampo = {}, advertencia = null,
     datosBloque = {}, erroresBloque = {} } = opciones;
@@ -245,7 +201,6 @@ async function renderDetalleCancha(res, idCancha, opciones = {}) {
     disponibilidadModel.listarBloques(idCancha),
   ]);
   if (!cancha) return res.redirect('/admin/recintos?aviso=inexistente');
-  // Horario agrupado por día: los días sin bloques se muestran "Cerrado".
   const horario = DIAS_SEMANA.map((dia) => ({ ...dia, bloques: bloques.filter((b) => b.dia === dia.clave) }));
   return res.status(status).render('admin/cancha', {
     titulo: cancha.nombre,
@@ -255,7 +210,6 @@ async function renderDetalleCancha(res, idCancha, opciones = {}) {
     modalidades,
     horario,
     dias: DIAS_SEMANA,
-    // Sin "datos" el formulario muestra lo guardado (salir sin guardar no cambia nada).
     datos: datos || { nombre: cancha.nombre, precioIngresado: String(Math.round(cancha.precio)), idModalidad: cancha.id_modalidad },
     advertencia,
     datosBloque,
@@ -265,7 +219,6 @@ async function renderDetalleCancha(res, idCancha, opciones = {}) {
   });
 }
 
-// GET /admin/canchas/:id
 async function detalleCancha(req, res, next) {
   try {
     return await renderDetalleCancha(res, idValido(req.params.id), { aviso: AVISOS[req.query.aviso] || null });
@@ -274,7 +227,6 @@ async function detalleCancha(req, res, next) {
   }
 }
 
-// POST /admin/canchas/:id/editar
 async function editarCancha(req, res, next) {
   const idCancha = idValido(req.params.id);
   const datos = req.datosFormulario;
@@ -284,7 +236,6 @@ async function editarCancha(req, res, next) {
     if (!cancha) return res.redirect('/admin/recintos?aviso=inexistente');
     if (Object.keys(erroresCampo).length > 0) return await renderDetalleCancha(res, idCancha, { status: 400, datos, erroresCampo });
 
-    // AD-009: si cambia la modalidad y hay partidos futuros en la cancha, primero se advierte.
     if (datos.idModalidad !== cancha.id_modalidad && !datos.confirmado) {
       const afectados = await canchaModel.contarPartidosFuturosOtraModalidad(idCancha, datos.idModalidad);
       if (afectados > 0) {
@@ -317,7 +268,6 @@ function cambiarEstadoCancha(activo) {
       const cambio = await canchaModel.cambiarEstadoCancha(idCancha, activo);
       let aviso = 'sin-cambio';
       if (cambio && !activo) aviso = 'cancha-desactivada';
-      // AD-007: se informa si no será visible porque su recinto está inactivo.
       if (cambio && activo) aviso = cancha.recinto_activo ? 'cancha-activada' : 'cancha-activada-oculta';
       return res.redirect(`/admin/canchas/${idCancha}?aviso=${aviso}`);
     } catch (err) {
@@ -326,7 +276,6 @@ function cambiarEstadoCancha(activo) {
   };
 }
 
-// POST /admin/canchas/:id/disponibilidad
 async function crearBloque(req, res, next) {
   const idCancha = idValido(req.params.id);
   const datos = req.datosFormulario;
@@ -344,13 +293,11 @@ async function crearBloque(req, res, next) {
   }
 }
 
-// POST /admin/disponibilidad/:id/eliminar
 async function eliminarBloque(req, res, next) {
   try {
     const idBloque = idValido(req.params.id);
     const resultado = idBloque && (await disponibilidadModel.eliminarBloque(idBloque));
     if (!resultado) return res.redirect('/admin/recintos?aviso=inexistente');
-    // AD-010: si era el único bloque del día, se avisa que ese día quedó cerrado.
     const aviso = resultado.diaCerrado ? 'bloque-eliminado-cerrado' : 'bloque-eliminado';
     return res.redirect(`/admin/canchas/${resultado.idCancha}?aviso=${aviso}#horario`);
   } catch (err) {

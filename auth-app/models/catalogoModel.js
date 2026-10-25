@@ -1,11 +1,3 @@
-// models/catalogoModel.js
-// AD-014 · Catálogos de la plataforma: modalidades, posiciones y niveles.
-// Permite agregar, editar y eliminar (solo si no están en uso; se indica dónde se usan).
-// "Protegidos": los elementos que el código busca por su nombre o cantidad (config/equipo.js y
-// config/perfilJugador.js). Se pueden editar sus otros datos, pero no renombrarlos ni eliminarlos,
-// porque se romperían el asistente de equipo o el perfil de jugador.
-// Los nombres de tabla salen de CATALOGOS (fijos en el código), nunca de lo que escribe el usuario.
-
 const { pool } = require('../config/db');
 const { MODALIDADES } = require('../config/equipo');
 const { NIVELES, POSICIONES } = require('../config/perfilJugador');
@@ -22,7 +14,6 @@ const CATALOGOS = {
       { tabla: 'cancha', columna: 'id_modalidad', etiqueta: 'canchas' },
       { tabla: 'partido', columna: 'id_modalidad', etiqueta: 'partidos' },
     ],
-    // Protegidas: las de 5, 7 y 11 jugadores (el asistente de equipo las busca por cantidad).
     esProtegido: (fila) => Boolean(MODALIDADES[fila.cantidad_de_jugadores]),
   },
   posiciones: {
@@ -44,7 +35,6 @@ const CATALOGOS = {
   },
 };
 
-/** Dónde se usa un elemento: [{ etiqueta: 'equipos', total: 3 }] (solo los que tienen uso). */
 async function usosDe(catalogo, id) {
   const usos = await Promise.all(catalogo.usos.map(async ({ tabla, columna, etiqueta }) => {
     const { rows } = await pool.query(`SELECT count(*)::int AS total FROM ${tabla} WHERE ${columna} = $1`, [id]);
@@ -53,7 +43,6 @@ async function usosDe(catalogo, id) {
   return usos.filter((uso) => uso.total > 0);
 }
 
-/** Elementos de un catálogo con su uso y si está protegido. */
 async function listar(tipo) {
   const catalogo = CATALOGOS[tipo];
   const { rows } = await pool.query(`SELECT * FROM ${catalogo.tabla} ORDER BY id`);
@@ -64,7 +53,6 @@ async function listar(tipo) {
   })));
 }
 
-/** Niveles: ¿el rango [min, max] se cruza con el de otro nivel? (excluye al que se edita) */
 async function rangoSuperpuesto(min, max, idExcluido = null) {
   const { rowCount } = await pool.query(
     'SELECT 1 FROM nivel WHERE puntaje_min <= $2 AND puntaje_max >= $1 AND ($3::int IS NULL OR id <> $3)',
@@ -73,7 +61,6 @@ async function rangoSuperpuesto(min, max, idExcluido = null) {
   return rowCount > 0;
 }
 
-/** Ejecuta un INSERT/UPDATE y traduce el nombre repetido (índice único) a 'repetido'. */
 async function guardar(sql, valores, resultadoOk) {
   try {
     await pool.query(sql, valores);
@@ -84,10 +71,6 @@ async function guardar(sql, valores, resultadoOk) {
   }
 }
 
-/**
- * Agrega un elemento (datos ya validados por validadoresAdmin.validarCatalogo).
- * @returns {Promise<'creado'|'repetido'|'superpuesto'>}
- */
 async function crear(tipo, datos) {
   if (tipo === 'modalidades') {
     return guardar('INSERT INTO modalidad (nombre, cantidad_de_jugadores) VALUES ($1, $2)', [datos.nombre, datos.jugadores], 'creado');
@@ -99,10 +82,6 @@ async function crear(tipo, datos) {
   return guardar('INSERT INTO nivel (nombre, puntaje_min, puntaje_max) VALUES ($1, $2, $3)', [datos.nombre, datos.min, datos.max], 'creado');
 }
 
-/**
- * Edita un elemento. En los protegidos no se puede cambiar el nombre (ni la cantidad en las modalidades base).
- * @returns {Promise<'editado'|'repetido'|'superpuesto'|'protegido'|'inexistente'>}
- */
 async function editar(tipo, id, datos) {
   const catalogo = CATALOGOS[tipo];
   const { rows } = await pool.query(`SELECT * FROM ${catalogo.tabla} WHERE id = $1`, [id]);
@@ -123,10 +102,6 @@ async function editar(tipo, id, datos) {
   return guardar('UPDATE nivel SET nombre = $2, puntaje_min = $3, puntaje_max = $4 WHERE id = $1', [id, datos.nombre, datos.min, datos.max], 'editado');
 }
 
-/**
- * Elimina un elemento solo si no está en uso ni protegido.
- * @returns {Promise<{resultado: 'eliminado'|'en-uso'|'protegido'|'inexistente', usos: Array}>}
- */
 async function eliminar(tipo, id) {
   const catalogo = CATALOGOS[tipo];
   const { rows } = await pool.query(`SELECT * FROM ${catalogo.tabla} WHERE id = $1`, [id]);

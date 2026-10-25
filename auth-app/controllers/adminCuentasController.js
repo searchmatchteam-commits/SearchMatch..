@@ -1,10 +1,3 @@
-// controllers/adminCuentasController.js
-// AD-012 · Gestionar cuentas de usuario (solo administradores, por requireAdmin):
-//  GET  /admin/cuentas?texto=...             → buscar por correo o nombre; muestra rol y estado
-//  POST /admin/cuentas/:id/(desactivar|activar)
-// Al desactivar, la persona pierde el acceso en su siguiente clic (authMiddleware revisa usuario.activo)
-// y no puede volver a iniciar sesión hasta que la reactiven.
-
 const cuentaAdminModel = require('../models/cuentaAdminModel');
 const { idValido } = require('../middlewares/validadoresAdmin');
 
@@ -15,7 +8,6 @@ const AVISOS = {
   'sin-cambio': 'No hubo cambios: la cuenta ya estaba en ese estado.',
 };
 
-// GET /admin/cuentas
 async function listar(req, res, next) {
   const texto = String(req.query.texto || '').trim();
   try {
@@ -40,7 +32,6 @@ function cambiarEstado(activo) {
       const idUsuario = idValido(req.params.id);
       const resultado = idUsuario ? await cuentaAdminModel.cambiarEstadoCuenta(idUsuario, activo, req.usuario.idAuth) : 'sin-cambio';
       const aviso = resultado === 'cambiada' ? (activo ? 'activada' : 'desactivada') : resultado;
-      // Vuelve a la misma búsqueda (el texto se pasa codificado, nunca se inserta tal cual)
       const texto = String(req.body.texto || '');
       return res.redirect(`/admin/cuentas?aviso=${aviso}&texto=${encodeURIComponent(texto)}`);
     } catch (err) {

@@ -1,14 +1,11 @@
 <%- include('partials/header') %>
 <%
-  // Pasos del wizard. El 1 (tipo de cuenta) ya se completó en /select-role.
   const pasos = ['Tipo de cuenta', 'Datos personales', 'Perfil deportivo', 'Confirmación'];
-  // Altura de la marca en la mini cancha de cada posición (0 = arco rival, 32 = arco propio).
   const alturaPosicion = { arquero: 27, defensa: 21, mediocampista: 15, delantero: 7 };
   const hoy = new Date().toISOString().slice(0, 10);
 %>
 
 <section class="wizard">
-  <!-- Lado izquierdo: branding sobre una cancha muy tenue -->
   <aside class="wizard__marca">
     <span class="rol__eyebrow">SEARCH MATCH · PERFIL</span>
     <h2 class="wizard__marca-titulo">Encuentra tu próximo <span class="texto-verde">partido</span></h2>
@@ -42,9 +39,7 @@
     </ul>
   </aside>
 
-  <!-- Lado derecho: el formulario -->
   <div class="wizard__panel">
-    <!-- Barra de progreso: wizard.js actualiza las clases y --progreso al cambiar de paso -->
     <div class="pasos" data-pasos style="--progreso: <%= (paso - 1) / (pasos.length - 1) %>">
       <div class="pasos__barra" aria-hidden="true"><span></span></div>
       <ol class="pasos__lista">
@@ -62,12 +57,10 @@
     </div>
 
     <form action="/perfil-jugador" method="POST" class="formulario wizard__form" data-wizard data-paso-inicial="<%= paso %>" novalidate>
-      <!-- ============ PASO 2: DATOS PERSONALES ============ -->
       <fieldset class="wizard__paso" data-paso="2">
         <legend class="wizard__titulo">Datos personales</legend>
         <p class="wizard__subtitulo">Así aparecerás en tu carta y en las búsquedas.</p>
 
-        <!-- Nombre y apellido ya se pidieron al crear la cuenta (/registro) -->
         <div class="campo">
           <label for="apodo">Apodo</label>
           <input type="text" id="apodo" name="apodo" placeholder="Ej. El Niño Maravilla" value="<%= datos.apodo || '' %>"
@@ -105,7 +98,6 @@
         </div>
       </fieldset>
 
-      <!-- ============ PASO 3: PERFIL DEPORTIVO ============ -->
       <fieldset class="wizard__paso" data-paso="3">
         <legend class="wizard__titulo">Perfil deportivo</legend>
         <p class="wizard__subtitulo">Con esto armamos tu carta y te sugerimos partidos.</p>
@@ -132,12 +124,10 @@
         </div>
       </fieldset>
 
-      <!-- ============ PASO 4: CONFIRMACIÓN ============ -->
       <fieldset class="wizard__paso" data-paso="4">
         <legend class="wizard__titulo">Confirmación</legend>
         <p class="wizard__subtitulo">Revisa tus datos. Al confirmar generaremos tu carta con tus estadísticas iniciales.</p>
 
-        <!-- wizard.js copia aquí los valores de los pasos anteriores -->
         <dl class="resumen">
           <div><dt>Apodo en la carta</dt><dd data-resumen="apodo">—</dd></div>
           <div><dt>Nacimiento</dt><dd data-resumen="fecha_nacimiento">—</dd></div>
@@ -147,7 +137,6 @@
         </dl>
       </fieldset>
 
-      <!-- Errores del servidor o de wizard.js -->
       <div class="alerta alerta--error" role="alert" data-alerta-errores <%= errores.length > 0 ? '' : 'hidden' %>>
         <ul>
           <% errores.forEach(function (error) { %><li><%= error %></li><% }) %>
@@ -155,7 +144,6 @@
       </div>
 
       <div class="wizard__nav">
-        <!-- Sin JS vuelve a la selección de rol; wizard.js lo convierte en "paso anterior" -->
         <a class="btn btn--oscuro btn--grande" href="/select-role" data-volver>
           <span aria-hidden="true">←</span> Volver
         </a>

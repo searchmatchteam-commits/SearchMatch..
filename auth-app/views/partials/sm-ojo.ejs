@@ -1,8 +1,3 @@
-<%
-  // Botón para mostrar u ocultar una contraseña (el mismo del login). Uso:
-  //   include('partials/sm-ojo', { campo: 'password' })
-  // Lo activa auth.js en páginas "auth" y sm-formularios.js en el resto ([data-ver-password]).
-%>
 <button type="button" class="campo__ojo" data-ver-password aria-controls="<%= campo %>" aria-pressed="false" aria-label="Mostrar contraseña">
   <svg class="campo__ojo-icono campo__ojo-icono--ver" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0" /><circle cx="12" cy="12" r="3" /></svg>
   <svg class="campo__ojo-icono campo__ojo-icono--ocultar" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.73 5.08a10.74 10.74 0 0 1 11.2 6.57 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-1.44 2.49" /><path d="M14.08 14.16a3 3 0 0 1-4.24-4.24" /><path d="M17.48 17.5a10.75 10.75 0 0 1-15.42-5.15 1 1 0 0 1 0-.7 10.75 10.75 0 0 1 4.45-5.14" /><path d="m2 2 20 20" /></svg>

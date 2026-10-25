@@ -1,27 +1,11 @@
-// Pelota 3D de la landing: un balón de fútbol (icosaedro truncado) con paneles
-// acolchados de carbono brillante y costuras de luz neón, usando Three.js.
-//
-// Interacción:
-//  - Arrastrar: gira la pelota en cualquier dirección y sigue girando con inercia.
-//  - Mover el mouse: la pelota se inclina hacia el cursor y una luz lo sigue.
-//  - Clic o toque sobre la pelota: "remate" (gira fuerte, chispas, onda expansiva
-//    y velocidad del disparo en km/h). Mientras más rápido gira, más brillan las costuras.
-//
-// Three.js se carga desde CDN al final del archivo. Si no carga o no hay WebGL,
-// el escenario recibe la clase "sin-3d" y se muestra el balón de respaldo en CSS.
-// En modo liviano (sin aceleración gráfica) se dibuja una versión más ligera de la misma pelota.
 const THREE_CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 let THREE;
 
-// Modo liviano (html.modo-liviano, ver header.ejs y cyber.js): navegador sin aceleración gráfica.
-// La pelota se mantiene, pero con menos resolución, materiales simples y 30 fps.
 const LIVIANO = document.documentElement.classList.contains('modo-liviano');
-const INTERVALO_CUADRO = LIVIANO ? 1000 / 30 - 2 : 1000 / 60 - 2; // ms (−2 de tolerancia para no saltar cuadros)
+const INTERVALO_CUADRO = LIVIANO ? 1000 / 30 - 2 : 1000 / 60 - 2;
 
-// Color de la paleta actual (--verde de la página: style.css o dashboard.css); se crea al cargar Three.js
 let NEON;
 
-/* ---------- Geometría: 12 pentágonos + 20 hexágonos ---------- */
 function buildTruncatedIcosahedron(radius) {
   const t = (1 + Math.sqrt(5)) / 2;
 
@@ -38,7 +22,6 @@ function buildTruncatedIcosahedron(radius) {
     [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]
   ];
 
-  // Punto a 1/3 de la arista, proyectado sobre la esfera
   const cache = new Map();
   function truncPoint(near, far) {
     const key = `${near}>${far}`;
@@ -48,14 +31,12 @@ function buildTruncatedIcosahedron(radius) {
     return cache.get(key);
   }
 
-  // Cada cara del icosaedro se convierte en un hexágono
   const hexagons = faces.map(([a, b, c]) => [
     truncPoint(a, b), truncPoint(b, a),
     truncPoint(b, c), truncPoint(c, b),
     truncPoint(c, a), truncPoint(a, c)
   ]);
 
-  // Cada vértice del icosaedro se convierte en un pentágono
   const vecinos = new Map();
   faces.forEach((f) => {
     f.forEach((v) => {
@@ -85,27 +66,21 @@ function buildTruncatedIcosahedron(radius) {
   return { pentagons, hexagons };
 }
 
-/* ---------- Panel acolchado: se curva sobre la esfera y deja una costura alrededor ---------- */
-// points: esquinas del panel sobre la esfera unitaria
-// gap: ancho de la costura · bulge: cuánto sobresale el centro del panel
 function buildPanelGeometry(points, radius, gap, bulge, detalle = 6) {
   const n = points.length;
   const centro = points.reduce((s, p) => s.add(p), new THREE.Vector3()).normalize();
 
-  // Las esquinas se acercan al centro para abrir la costura entre paneles
   const apotema = centro.distanceTo(points[0].clone().add(points[1]).multiplyScalar(0.5));
   const esquinas = points.map((p) => p.clone().lerp(centro, gap / apotema).normalize());
 
   const positions = [];
   const indices = [];
-  const vistos = new Map(); // vértices compartidos, para que el sombreado sea suave
+  const vistos = new Map();
 
-  // wc = peso del centro (1 en el centro del panel, 0 en el borde)
   function vertice(wc, a, wa, b, wb) {
     const dir = centro.clone().multiplyScalar(wc).addScaledVector(a, wa).addScaledVector(b, wb).normalize();
     const key = `${Math.round(dir.x * 1e5)},${Math.round(dir.y * 1e5)},${Math.round(dir.z * 1e5)}`;
     if (vistos.has(key)) return vistos.get(key);
-    // El centro sobresale y el borde baja redondeado hacia la costura
     const r = radius * (1 + bulge * (1 - Math.pow(1 - wc, 3)));
     positions.push(dir.x * r, dir.y * r, dir.z * r);
     const idx = positions.length / 3 - 1;
@@ -113,11 +88,9 @@ function buildPanelGeometry(points, radius, gap, bulge, detalle = 6) {
     return idx;
   }
 
-  // El panel se arma como un abanico de triángulos desde el centro, cada uno subdividido
   for (let k = 0; k < n; k++) {
     let a = esquinas[k];
     let b = esquinas[(k + 1) % n];
-    // Asegurar que los triángulos miren hacia afuera
     const normal = new THREE.Vector3().crossVectors(a.clone().sub(centro), b.clone().sub(centro));
     if (normal.dot(centro) < 0) [a, b] = [b, a];
 
@@ -143,7 +116,6 @@ function buildPanelGeometry(points, radius, gap, bulge, detalle = 6) {
   return geo;
 }
 
-/* ---------- Texturas dibujadas en canvas ---------- */
 function makeGlowSprite(size = 128) {
   const canvas = document.createElement('canvas');
   canvas.width = size;
@@ -159,7 +131,6 @@ function makeGlowSprite(size = 128) {
   return new THREE.CanvasTexture(canvas);
 }
 
-// Anillo brillante para la onda expansiva del remate
 function makeRingTexture(size = 256) {
   const canvas = document.createElement('canvas');
   canvas.width = size;
@@ -175,7 +146,6 @@ function makeRingTexture(size = 256) {
   return new THREE.CanvasTexture(canvas);
 }
 
-/* ---------- Entorno para los reflejos: focos de estadio y franjas neón ---------- */
 function crearEntorno(renderer) {
   const env = new THREE.Scene();
   env.background = new THREE.Color(0x030403);
@@ -189,10 +159,10 @@ function crearEntorno(renderer) {
     m.lookAt(0, 0, 0);
     env.add(m);
   }
-  foco(0xffffff, 5, 6, 2.5, 0, 6, 1);      // focos del estadio (arriba)
-  foco(0xeaffe0, 2.5, 2.5, 3.5, 5, 1.5, 4); // luz principal (derecha, al frente)
-  foco(NEON, 4, 1, 7, -6, 0, -1);      // franja neón a la izquierda
-  foco(NEON, 2.5, 7, 0.8, 0, -5, -2);  // franja neón abajo
+  foco(0xffffff, 5, 6, 2.5, 0, 6, 1);
+  foco(0xeaffe0, 2.5, 2.5, 3.5, 5, 1.5, 4);
+  foco(NEON, 4, 1, 7, -6, 0, -1);
+  foco(NEON, 2.5, 7, 0.8, 0, -5, -2);
 
   const pmrem = new THREE.PMREMGenerator(renderer);
   const textura = pmrem.fromScene(env, 0.035).texture;
@@ -200,7 +170,6 @@ function crearEntorno(renderer) {
   return textura;
 }
 
-/* ---------- Órbita: una línea tenue con un cometa y su estela ---------- */
 function crearOrbita(radio, rotX, rotY, velocidad, fase, glow) {
   const grupo = new THREE.Group();
   grupo.rotation.set(rotX, rotY, 0);
@@ -215,14 +184,12 @@ function crearOrbita(radio, rotX, rotY, velocidad, fase, glow) {
     new THREE.LineBasicMaterial({ color: NEON, transparent: true, opacity: 0.18, depthWrite: false, blending: THREE.AdditiveBlending })
   ));
 
-  // Cabeza del cometa
   const cabeza = new THREE.Sprite(new THREE.SpriteMaterial({
     map: glow, color: 0xd8ffcc, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false
   }));
   cabeza.scale.setScalar(0.32);
   grupo.add(cabeza);
 
-  // Estela: puntos que van quedando atrás y se apagan
   const LARGO = 30;
   const pos = new Float32Array(LARGO * 3);
   const col = new Float32Array(LARGO * 3);
@@ -252,20 +219,16 @@ function crearOrbita(radio, rotX, rotY, velocidad, fase, glow) {
   };
 }
 
-/* ---------- Escena ---------- */
 function initBall(stage, container) {
   let renderer;
   try {
-    // En pantallas de alta densidad (o en modo liviano) el antialias casi no se nota y cuesta mucho
     renderer = new THREE.WebGLRenderer({
       antialias: !LIVIANO && (window.devicePixelRatio || 1) < 1.5, alpha: true, powerPreference: 'high-performance'
     });
   } catch (e) {
-    // Sin WebGL queda solo el fondo del escenario
     stage.classList.add('sin-3d');
     return;
   }
-  // Más de 1.5 no se distingue y cuadruplica el trabajo; en modo liviano, 1 píxel por píxel de pantalla
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, LIVIANO ? 1 : 1.5));
   renderer.setClearColor(0x000000, 0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -278,25 +241,20 @@ function initBall(stage, container) {
   scene.environment = crearEntorno(renderer);
 
   const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
-  camera.position.set(0, 0, 10.5); // lo bastante lejos para que la pelota y sus efectos quepan completos
+  camera.position.set(0, 0, 10.5);
 
   const R = 1.7;
   const glow = makeGlowSprite();
 
-  // pelota: se inclina hacia el cursor, flota y rebota al rematar
-  // giro: rota con el arrastre, el remate y el giro automático
   const pelota = new THREE.Group();
   const giro = new THREE.Group();
   pelota.add(giro);
   scene.add(pelota);
 
-  // Núcleo de luz neón: solo se ve a través de las costuras
   const nucleoMat = new THREE.MeshBasicMaterial({ color: NEON.clone(), toneMapped: false });
   const nucleo = new THREE.Mesh(new THREE.SphereGeometry(R * 0.985, LIVIANO ? 32 : 64, LIVIANO ? 24 : 48), nucleoMat);
   giro.add(nucleo);
 
-  // Paneles: hexágonos de carbono y pentágonos negros con un leve brillo neón.
-  // En modo liviano: material estándar (sin la capa de barniz, que duplica el cálculo) y menos triángulos.
   const Material = LIVIANO ? THREE.MeshStandardMaterial : THREE.MeshPhysicalMaterial;
   const barniz = (rugosidad) => (LIVIANO ? {} : { clearcoat: 1, clearcoatRoughness: rugosidad });
   const hexMat = new Material({ color: 0x283028, metalness: 0.25, roughness: 0.38, ...barniz(0.12) });
@@ -309,7 +267,6 @@ function initBall(stage, container) {
   hexagons.forEach((pts) => giro.add(new THREE.Mesh(buildPanelGeometry(pts, R, 0.017, 0.035, detallePanel), hexMat)));
   pentagons.forEach((pts) => giro.add(new THREE.Mesh(buildPanelGeometry(pts, R, 0.017, 0.035, detallePanel), pentMat)));
 
-  // Halo: brillo neón alrededor del borde de la pelota (efecto Fresnel)
   const haloMat = new THREE.ShaderMaterial({
     uniforms: { uColor: { value: NEON.clone() }, uIntensidad: { value: 0.6 } },
     vertexShader: `
@@ -337,11 +294,9 @@ function initBall(stage, container) {
   });
   pelota.add(new THREE.Mesh(new THREE.SphereGeometry(R * 1.3, LIVIANO ? 32 : 64, LIVIANO ? 24 : 48), haloMat));
 
-  // Luces: principal blanca, contraluces neón y una luz que sigue al cursor
   const keyLight = new THREE.DirectionalLight(0xffffff, 1.1);
   keyLight.position.set(3, 4, 5);
   scene.add(keyLight);
-  // Foco de estadio desde arriba: ilumina fuerte la parte superior de la pelota
   const focoArriba = new THREE.SpotLight(0xf2fff0, 3.4, 0, Math.PI / 7, 0.65, 0);
   focoArriba.position.set(0, 7.5, 2);
   focoArriba.target = pelota;
@@ -356,17 +311,15 @@ function initBall(stage, container) {
   luzCursor.position.set(0, 0, 3);
   scene.add(luzCursor);
 
-  // Órbitas con cometas
   const orbitas = [
     crearOrbita(R * 1.5, 1.2, 0.35, 0.8, 0, glow),
     crearOrbita(R * 1.38, -1.05, -0.6, -0.55, Math.PI, glow)
   ];
   orbitas.forEach((o) => {
-    o.actualizar(0, 0); // dejar cada cometa en su posición inicial
+    o.actualizar(0, 0);
     pelota.add(o.grupo);
   });
 
-  // Polvo de luz flotando alrededor
   const POLVO = LIVIANO ? 60 : 140;
   const polvoPos = new Float32Array(POLVO * 3);
   for (let i = 0; i < POLVO; i++) {
@@ -388,7 +341,6 @@ function initBall(stage, container) {
   const polvo = new THREE.Points(polvoGeo, polvoMat);
   pelota.add(polvo);
 
-  // Chispas del remate (se reutiliza un grupo fijo de partículas)
   const CHISPAS = 160;
   const chispaPos = new Float32Array(CHISPAS * 3);
   const chispaCol = new Float32Array(CHISPAS * 3);
@@ -418,17 +370,16 @@ function initBall(stage, container) {
   function actualizarChispas(dt) {
     for (let i = 0; i < CHISPAS; i++) {
       if (chispaVida[i] <= 0) {
-        chispaCol.set([0, 0, 0], i * 3); // apagada
+        chispaCol.set([0, 0, 0], i * 3);
         continue;
       }
       chispaVida[i] -= dt * 1.3;
       const v = chispaVel[i];
-      v.multiplyScalar(Math.pow(0.06, dt)); // roce con el aire
-      v.y -= 2 * dt;                        // un poco de gravedad
+      v.multiplyScalar(Math.pow(0.06, dt));
+      v.y -= 2 * dt;
       chispaPos[i * 3] += v.x * dt;
       chispaPos[i * 3 + 1] += v.y * dt;
       chispaPos[i * 3 + 2] += v.z * dt;
-      // Nacen casi blancas y se apagan en verde neón
       const vida = Math.max(chispaVida[i], 0);
       const blanco = vida * vida;
       chispaCol.set([
@@ -441,7 +392,6 @@ function initBall(stage, container) {
     chispaGeo.attributes.color.needsUpdate = true;
   }
 
-  // Ondas expansivas del remate (dos anillos, uno tras otro)
   const anilloTex = makeRingTexture();
   const ondas = [0, 0.09].map((retraso) => {
     const mesh = new THREE.Mesh(
@@ -456,7 +406,6 @@ function initBall(stage, container) {
     return { mesh, retraso };
   });
 
-  // Ajustar el tamaño del canvas al contenedor (responsive)
   function resize() {
     const w = container.clientWidth;
     const h = container.clientHeight;
@@ -468,19 +417,18 @@ function initBall(stage, container) {
   new ResizeObserver(resize).observe(container);
   resize();
 
-  /* ---------- Estado de la interacción ---------- */
-  const BASE = reduceMotion ? 0 : 0.0045;            // giro automático (radianes por cuadro)
+  const BASE = reduceMotion ? 0 : 0.0045;
   const base = new THREE.Vector3(0.0008, BASE, 0);
-  const omega = base.clone();                         // velocidad de giro actual
+  const omega = base.clone();
   const eje = new THREE.Vector3();
   const q = new THREE.Quaternion();
   const tmp = new THREE.Vector3();
   const raycaster = new THREE.Raycaster();
-  const ndc = new THREE.Vector2(); // posición del cursor relativa a la pelota (-1 a 1)
+  const ndc = new THREE.Vector2();
 
   let tiempo = 0;
-  let energia = 0;      // 0 a 1: qué tan "encendida" está la pelota
-  let flash = 0;        // destello del remate
+  let energia = 0;
+  let flash = 0;
   let hover = 0;
   let hoverObjetivo = 0;
   let luzObjetivo = 0;
@@ -493,8 +441,6 @@ function initBall(stage, container) {
   let recorrido = 0;
   let inicioToque = 0;
 
-  // Gira la pelota sobre los ejes de la pantalla (no los de la pelota):
-  // arrastrar hacia arriba siempre la gira hacia arriba
   function girar(vector) {
     const angulo = vector.length();
     if (angulo < 1e-6) return;
@@ -515,7 +461,6 @@ function initBall(stage, container) {
     return raycaster.intersectObject(nucleo)[0] || null;
   }
 
-  // HUD con la velocidad del remate
   const hud = stage.querySelector('.ball-hud');
   const hudVel = stage.querySelector('.ball-hud-vel');
   const hudRecord = stage.querySelector('.ball-hud-record');
@@ -536,7 +481,7 @@ function initBall(stage, container) {
     hud.classList.toggle('record', nuevoRecord);
     hud.classList.add('visible');
     hud.classList.remove('golpe');
-    void hud.offsetWidth; // reinicia la animación del número
+    void hud.offsetWidth;
     hud.classList.add('golpe');
     clearTimeout(hudTimer);
     hudTimer = setTimeout(() => hud.classList.remove('visible'), 4000);
@@ -545,9 +490,8 @@ function initBall(stage, container) {
   function rematar(hit) {
     const centro = pelota.getWorldPosition(new THREE.Vector3());
     const normal = hit.point.clone().sub(centro).normalize();
-    // Pegarle cerca del borde la hace girar más; al centro sale "derecha" y más rápida
     const brazo = Math.min(1, Math.hypot(normal.x, normal.y));
-    eje.set(-normal.y, normal.x, 0); // torque de empujar ese punto hacia el fondo
+    eje.set(-normal.y, normal.x, 0);
     if (eje.lengthSq() < 0.01) eje.set(Math.random() - 0.5, 1, 0);
     omega.addScaledVector(eje.normalize(), 0.12 + brazo * 0.26);
 
@@ -567,7 +511,7 @@ function initBall(stage, container) {
     ultimoMovimiento = performance.now();
     inicioToque = ultimoMovimiento;
     recorrido = 0;
-    omega.set(0, 0, 0); // al agarrarla, la pelota se detiene en la mano
+    omega.set(0, 0, 0);
     container.setPointerCapture(e.pointerId);
   });
 
@@ -590,9 +534,7 @@ function initBall(stage, container) {
     if (!arrastrando) return;
     arrastrando = false;
     const ahora = performance.now();
-    // Si la soltó quieta, no hay inercia
     if (ahora - ultimoMovimiento > 80) omega.set(0, 0, 0);
-    // Toque corto y sin arrastrar = remate
     if (recorrido < 8 && ahora - inicioToque < 400) {
       actualizarCursor(e);
       const hit = tocaPelota();
@@ -602,7 +544,6 @@ function initBall(stage, container) {
   container.addEventListener('pointercancel', () => { arrastrando = false; });
   container.addEventListener('pointerleave', () => { hoverObjetivo = 0; });
 
-  // La pelota se inclina hacia el mouse aunque esté fuera del escenario
   const inclinacion = new THREE.Vector2();
   window.addEventListener('pointermove', (e) => {
     if (e.pointerType !== 'mouse') return;
@@ -614,7 +555,6 @@ function initBall(stage, container) {
     luzObjetivo = Math.max(0, 1 - Math.hypot(x, y) / 1.8);
   });
 
-  /* ---------- Animación ---------- */
   const reloj = new THREE.Clock();
   let enPantalla = true;
   let corriendo = false;
@@ -624,29 +564,25 @@ function initBall(stage, container) {
   let energiaAnterior = '';
 
   function animate() {
-    // Se pausa cuando la pelota no se ve (ahorra batería)
     if (!enPantalla || document.hidden || desplazando) {
       corriendo = false;
       return;
     }
     requestAnimationFrame(animate);
 
-    // Tope de cuadros: 60 fps (en pantallas de 144 Hz dibujaría más del doble sin necesidad) y 30 en modo liviano
     const ahora = performance.now();
     if (ahora - ultimoCuadro < INTERVALO_CUADRO) return;
     ultimoCuadro = ahora;
 
     const dt = Math.min(reloj.getDelta(), 0.05);
-    const f = dt * 60; // factor para que todo vaya igual a 30, 60 o 120 fps
+    const f = dt * 60;
     tiempo += dt;
 
-    // Giro con inercia: después de un arrastre o remate vuelve al giro lento
     if (!arrastrando) {
       omega.lerp(base, 1 - Math.pow(0.978, f));
       girar(tmp.copy(omega).multiplyScalar(f));
     }
 
-    // Energía según la velocidad de giro, el hover y el destello del remate
     hover += (hoverObjetivo - hover) * (1 - Math.pow(0.85, f));
     flash *= Math.pow(0.9, f);
     const velocidad = Math.max(0, omega.length() - BASE);
@@ -658,11 +594,9 @@ function initBall(stage, container) {
     haloMat.uniforms.uIntensidad.value = 0.55 + energia * 0.55 + flash * 0.9;
     luzCursor.intensity += (luzObjetivo * 28 - luzCursor.intensity) * (1 - Math.pow(0.9, f));
 
-    // Inclinación hacia el cursor
     pelota.rotation.y += (inclinacion.x * 0.28 - pelota.rotation.y) * (1 - Math.pow(0.94, f));
     pelota.rotation.x += (-inclinacion.y * 0.28 - pelota.rotation.x) * (1 - Math.pow(0.94, f));
 
-    // Flotar, y al rematar: retroceder y rebotar (squash & stretch)
     const k = tiempo - ultimoRemate;
     const flotar = reduceMotion ? 0 : Math.sin(tiempo * 1.1) * 0.07;
     let escala = 1;
@@ -674,7 +608,6 @@ function initBall(stage, container) {
     pelota.position.set(0, flotar, fondo);
     pelota.scale.set(escala, 2 - escala, escala);
 
-    // Polvo, órbitas, chispas y ondas
     if (!reduceMotion) {
       polvo.rotation.y -= 0.0012 * f * (1 + energia * 5);
       polvo.rotation.x += 0.0006 * f;
@@ -696,13 +629,11 @@ function initBall(stage, container) {
       o.mesh.material.opacity = Math.pow(1 - p, 2) * 1.4;
     });
 
-    // Número del HUD subiendo hasta la velocidad del remate
     if (hudVel && velMostrada < velObjetivo) {
       velMostrada = Math.min(velObjetivo, velMostrada + dt * 320);
       hudVel.textContent = Math.round(velMostrada);
     }
 
-    // El fondo CSS (resplandor y sombra) acompaña a la pelota
     const sombra = (1 - flotar * 1.6 + fondo * 0.25).toFixed(3);
     const energiaCss = Math.min(1, energia + flash * 0.6).toFixed(2);
     if (sombra !== sombraAnterior) stage.style.setProperty('--sombra', sombraAnterior = sombra);
@@ -714,7 +645,7 @@ function initBall(stage, container) {
   function arrancar() {
     if (corriendo || !enPantalla || document.hidden || desplazando) return;
     corriendo = true;
-    reloj.getDelta(); // descartar el tiempo que estuvo pausada
+    reloj.getDelta();
     requestAnimationFrame(animate);
   }
   new IntersectionObserver(([entrada]) => {
@@ -723,8 +654,6 @@ function initBall(stage, container) {
   }).observe(container);
   document.addEventListener('visibilitychange', arrancar);
 
-  // Durante el scroll la pelota se queda quieta: dibujar WebGL a 60 fps mientras la página
-  // se desplaza compite con el scroll por la GPU y lo traba. Vuelve a moverse al soltar.
   let finScroll;
   window.addEventListener('scroll', () => {
     desplazando = true;
@@ -744,16 +673,13 @@ if (canvasBall) {
   try {
     THREE = await import(THREE_CDN);
     NEON = new THREE.Color(getComputedStyle(stage).getPropertyValue('--verde').trim() || '#39ff14');
-    // Armar la escena (geometría, reflejos, shaders) ocupa el hilo principal un momento:
-    // se espera a que la página ya se haya pintado y esté libre, así la carga no se traba.
     await new Promise((listo) => {
       if ('requestIdleCallback' in window) requestIdleCallback(listo, { timeout: 800 });
       else setTimeout(listo, 200);
     });
     initBall(stage, canvasBall);
-    stage.classList.add('ball-lista'); // el canvas aparece con un fundido (style.css)
+    stage.classList.add('ball-lista');
   } catch (e) {
-    // CDN caído, navegador sin módulos/WebGL o error al armar la escena
     console.warn('Balón 3D no disponible, se usa el respaldo:', e);
     stage.classList.add('sin-3d');
   }

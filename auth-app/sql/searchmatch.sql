@@ -1,13 +1,3 @@
--- ============================================================
--- sql/searchmatch.sql  (MySQL — REFERENCIA, no se ejecuta)
--- ============================================================
--- Esquema original del proyecto "searchmatch" en MySQL.
--- auth-app NO usa esta base (la app está en Supabase/PostgreSQL con
--- la tabla "usuarios" de sql/seed.sql). Este archivo queda como
--- referencia para una futura conexión del auth-app a searchmatch
--- (tabla "usuario" con columnas correo / contrasena / id_rol_aplicacion).
--- ============================================================
-
 CREATE DATABASE IF NOT EXISTS searchmatch
 CHARACTER SET utf8mb4
 COLLATE utf8mb4_unicode_ci;
@@ -15,10 +5,6 @@ COLLATE utf8mb4_unicode_ci;
 
 USE searchmatch;
 
-
--- =====================================================
--- TABLAS DE CATÁLOGO
--- =====================================================
 
 CREATE TABLE rol_aplicacion (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -75,10 +61,6 @@ CREATE TABLE modalidad (
 );
 
 
--- =====================================================
--- UBICACIÓN
--- =====================================================
-
 CREATE TABLE region (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE
@@ -112,10 +94,6 @@ CREATE TABLE direccion (
 );
 
 
--- =====================================================
--- USUARIO
--- =====================================================
-
 CREATE TABLE usuario (
     id INT AUTO_INCREMENT PRIMARY KEY,
     correo VARCHAR(150) NOT NULL UNIQUE,
@@ -131,10 +109,6 @@ CREATE TABLE usuario (
         REFERENCES rol_aplicacion(id)
 );
 
-
--- =====================================================
--- JUGADOR
--- =====================================================
 
 CREATE TABLE jugador (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -156,10 +130,6 @@ CREATE TABLE jugador (
 );
 
 
--- =====================================================
--- POSICIONES DEL JUGADOR
--- =====================================================
-
 CREATE TABLE jugador_posicion (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_jugador INT NOT NULL,
@@ -180,10 +150,6 @@ CREATE TABLE jugador_posicion (
     UNIQUE (id_jugador, id_posicion)
 );
 
-
--- =====================================================
--- EQUIPO
--- =====================================================
 
 CREATE TABLE equipo (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -207,10 +173,6 @@ CREATE TABLE equipo (
     CHECK (puntaje_nivel >= 0)
 );
 
-
--- =====================================================
--- JUGADORES DE UN EQUIPO
--- =====================================================
 
 CREATE TABLE equipo_jugador (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -240,10 +202,6 @@ CREATE TABLE equipo_jugador (
 );
 
 
--- =====================================================
--- SOLICITUD PARA UNIRSE A UN EQUIPO
--- =====================================================
-
 CREATE TABLE solicitud_union_equipo (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_jugador INT NOT NULL,
@@ -269,10 +227,6 @@ CREATE TABLE solicitud_union_equipo (
 );
 
 
--- =====================================================
--- RECINTO DEPORTIVO
--- =====================================================
-
 CREATE TABLE recinto_deportivo (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(150) NOT NULL,
@@ -288,10 +242,6 @@ CREATE TABLE recinto_deportivo (
         REFERENCES direccion(id)
 );
 
-
--- =====================================================
--- CANCHA
--- =====================================================
 
 CREATE TABLE cancha (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -316,10 +266,6 @@ CREATE TABLE cancha (
 );
 
 
--- =====================================================
--- DISPONIBILIDAD DE CANCHA
--- =====================================================
-
 CREATE TABLE disponibilidad_cancha (
     id INT AUTO_INCREMENT PRIMARY KEY,
     dia_semana VARCHAR(20) NOT NULL,
@@ -337,10 +283,6 @@ CREATE TABLE disponibilidad_cancha (
     CHECK (hora_cierre > hora_apertura)
 );
 
-
--- =====================================================
--- RESERVA DE CANCHA
--- =====================================================
 
 CREATE TABLE reservar_cancha (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -371,10 +313,6 @@ CREATE TABLE reservar_cancha (
 );
 
 
--- =====================================================
--- DESAFÍOS ENTRE EQUIPOS
--- =====================================================
-
 CREATE TABLE desafio (
     id INT AUTO_INCREMENT PRIMARY KEY,
     mensaje VARCHAR(500),
@@ -403,10 +341,6 @@ CREATE TABLE desafio (
     CHECK (id_equipo_desafiado <> id_equipo_desafiante)
 );
 
-
--- =====================================================
--- PARTIDO
--- =====================================================
 
 CREATE TABLE partido (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -447,10 +381,6 @@ CREATE TABLE partido (
 );
 
 
--- =====================================================
--- PARTICIPACIÓN
--- =====================================================
-
 CREATE TABLE participacion (
     id INT AUTO_INCREMENT PRIMARY KEY,
     es_desafiante BOOLEAN NOT NULL,
@@ -472,14 +402,9 @@ CREATE TABLE participacion (
     UNIQUE (id_equipo, id_partido),
 
 
-    -- Impide dos equipos con el mismo rol en un partido.
     UNIQUE (id_partido, es_desafiante)
 );
 
-
--- =====================================================
--- COMENTARIOS
--- =====================================================
 
 CREATE TABLE comentario (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -500,10 +425,6 @@ CREATE TABLE comentario (
         REFERENCES usuario(id)
 );
 
-
--- =====================================================
--- NOTIFICACIONES
--- =====================================================
 
 CREATE TABLE notificacion (
     id INT AUTO_INCREMENT PRIMARY KEY,

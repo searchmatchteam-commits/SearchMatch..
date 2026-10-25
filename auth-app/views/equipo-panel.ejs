@@ -2,18 +2,11 @@
 
 <%- include('partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- Mi equipo: el equipo, las solicitudes, los rivales y el plantel vienen de "equipo", "solicitud_union_equipo",
-     "desafio" y "equipo_jugador" (equipoController.panel). Aceptar/Rechazar son formularios: al volver, la página
-     ya muestra el plantel actualizado. "Enviar Desafío" abre un modal (equipo.js) y se envía sin recargar.
-     "Invitar jugador +" abre un modal con TODOS los jugadores (con o sin equipo, menos los del plantel) y
-     "Invitar" guarda en "invitacion_equipo" sin recargar (equipo.js). -->
 <section class="eq">
   <div class="contenedor">
 
-    <!-- ============ ENCABEZADO DEL EQUIPO ============ -->
     <header class="eq-cabecera revelar">
       <div class="eq-cabecera__identidad">
-      <!-- Escudo: el capitán lo cambia aquí (equipo.js lo reduce y lo sube a POST /equipos/:id/escudo) -->
       <div class="eq-escudo">
         <span class="eq-escudo__imagen" data-escudo-vista><%- include('partials/escudo-equipo', { equipo }) %></span>
         <% if (equipo.soyCapitan) { %>
@@ -37,17 +30,14 @@
       </div>
       </div>
       <div class="eq-cabecera__acciones">
-        <!-- NUEVO: DE-011/DE-012 desafíos, PE-009 ficha pública y PE-021 posiciones buscadas (solo el capitán) -->
         <a class="btn btn--contorno btn--grande" href="/desafios?equipo=<%= equipo.id %>">Desafíos</a>
         <a class="btn btn--contorno btn--grande" href="/equipos/<%= equipo.id %>">Ficha pública</a>
         <% if (equipo.soyCapitan) { %><a class="btn btn--contorno btn--grande" href="/equipos/<%= equipo.id %>/posiciones">Posiciones que buscamos</a><% } %>
         <% if (equipo.soyCapitan) { %>
-          <!-- Abre la sección "Desafiar a otro equipo" (equipo.js); sin JS solo baja hasta ella -->
           <a class="btn btn--verde btn--grande" href="#desafiar" data-ripple="claro" data-abrir-desafios>
             <svg class="eq-cabecera__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2" /></svg>
             Desafiar a otro equipo
           </a>
-          <!-- Abre el modal "Invitar jugador" (equipo.js) -->
           <button type="button" class="btn btn--contorno btn--grande" data-abrir-invitar>
             Invitar jugador <span aria-hidden="true">+</span>
           </button>
@@ -55,7 +45,6 @@
       </div>
     </header>
 
-    <!-- ============ SOLICITUDES PENDIENTES (solo el capitán) ============ -->
     <% if (equipo.soyCapitan) { %>
       <section class="dash-panel eq-panel revelar" aria-labelledby="eq-solicitudes-titulo">
         <div class="dash-panel__cabecera">
@@ -92,10 +81,8 @@
       </section>
     <% } %>
 
-    <!-- ============ DESAFIAR A OTRO EQUIPO (solo el capitán) ============ -->
     <% if (equipo.soyCapitan) { %>
       <%
-        // Texto del botón cuando ya hay un desafío pendiente entre los dos equipos
         const estadosDesafio = { enviado: 'Desafío Enviado ✓', recibido: 'Te desafió' };
       %>
       <details class="dash-panel eq-panel eq-desafios revelar" id="desafiar" data-desafios>
@@ -104,7 +91,7 @@
           <span class="eq-total"><%= rivales.length %> <%= rivales.length === 1 ? 'equipo disponible' : 'equipos disponibles' %></span>
         </summary>
         <% if (rivales.length === 0) { %>
-          <p class="dash-panel__nota eq-vacio">Todavía no hay otros equipos de tu modalidad para desafiar.<%# CORRECCIÓN: regla 12 %></p>
+          <p class="dash-panel__nota eq-vacio">Todavía no hay otros equipos de tu modalidad para desafiar.</p>
         <% } else { %>
           <ul class="eq-clubes eq-rivales">
             <% rivales.forEach(function (rival) { %>
@@ -128,7 +115,6 @@
         <% } %>
       </details>
 
-      <!-- Modal del desafío: fecha, hora y mensaje opcionales (equipo.js lo abre al pulsar "Enviar Desafío") -->
       <div class="modal" hidden data-modal-desafio>
         <div class="modal__caja scroll-oscuro" role="dialog" aria-modal="true" aria-labelledby="modal-desafio-titulo">
           <h2 class="modal__titulo" id="modal-desafio-titulo">Desafiar a <span class="texto-verde" data-modal-rival></span></h2>
@@ -157,11 +143,8 @@
         </div>
       </div>
 
-      <!-- Modal "Invitar jugador": todos los jugadores (un jugador puede estar en varios equipos).
-           La etiqueta dice si es agente libre o en qué equipo(s) juega (equipoController.jugadorInvitable). -->
       <div class="modal modal--vidrio" hidden data-modal-invitar>
         <div class="modal__caja modal__caja--ancha" role="dialog" aria-modal="true" aria-labelledby="modal-invitar-titulo">
-          <!-- Cabecera: título y buscador (equipo.js filtra por nombre o posición). Solo la lista hace scroll. -->
           <div class="eq-invitar__cabecera">
             <h2 class="modal__titulo" id="modal-invitar-titulo">Invitar jugadores</h2>
             <p class="modal__texto">Agentes libres o jugadores que ya juegan en otros equipos.</p>
@@ -173,7 +156,6 @@
               </label>
             <% } %>
           </div>
-          <!-- Marco: degradados arriba y abajo del scroll (equipo.js los muestra solo si hay más contenido) -->
           <div class="eq-invitar__marco" data-marco-invitar>
           <div class="eq-invitar__cuerpo scroll-oscuro" data-cuerpo-invitar>
           <% if (invitables.length === 0) { %>
@@ -199,7 +181,6 @@
                       <span class="eq-ovr__sigla" aria-hidden="true">OVR</span>
                     </span>
                   </div>
-                  <!-- Fila a fila: RIT | TIR, PAS | REG, DEF | FIS (columna izquierda RIT, PAS, DEF) -->
                   <dl class="eq-barras <%= jugador.tieneStats ? '' : 'eq-barras--vacias' %>">
                     <% jugador.estadisticas.forEach(function (s) { %>
                       <div class="eq-barra">
@@ -227,7 +208,6 @@
           <% } %>
           </div>
           </div>
-          <!-- Pie: cuántos jugadores muestra la búsqueda (equipo.js lo actualiza al filtrar) -->
           <div class="eq-invitar__pie">
             <p class="eq-invitar__total">Resultados: <strong data-total-resultados><%= invitables.length %></strong> <%= invitables.length === 1 ? 'jugador' : 'jugadores' %></p>
             <button type="button" class="btn btn--contorno btn--chico" data-cerrar-modal>Cerrar</button>
@@ -236,12 +216,7 @@
       </div>
     <% } %>
 
-    <!-- ============ PLANTEL: CANCHA TÁCTICA ============ -->
     <%
-      // Cada jugador es su carta (partials/carta-jugador con mini) en la posición x/y (%) que armó
-      // equipoController.plantelEnCancha: la que dejó el capitán o la automática según su línea.
-      // El capitán (que creó el equipo) las arrastra; equipo.js guarda cada posición al soltar.
-      // Con menos de 5 (lo mínimo para Fútbol 5) la cancha se ve vacía: aviso sutil encima.
       const JUGADORES_MINIMOS = 5;
     %>
     <section class="dash-panel eq-panel revelar" aria-labelledby="eq-plantel-titulo">
@@ -254,7 +229,6 @@
       <% } %>
 
       <div class="cancha <%= equipo.soyCapitan ? 'cancha--editable' : '' %>" <%- equipo.soyCapitan ? 'data-cancha-editable' : '' %>>
-        <!-- Líneas: solo bordes y posiciones absolutas (decorativas) -->
         <div class="cancha__lineas" aria-hidden="true">
           <span class="cancha__mitad"></span>
           <span class="cancha__circulo"></span>
@@ -279,7 +253,6 @@
               <%- include('partials/carta-jugador', { jugador: jugador.carta, editor: false, mini: true }) %>
               <% if (jugador.capitan) { %><span class="cancha__c" aria-hidden="true">C</span><% } %>
               <% if (equipo.soyCapitan && !jugador.capitan) { %>
-                <!-- Sacar del plantel (equipo.js pide confirmación y lo envía sin recargar) -->
                 <form class="cancha__sacar" action="/equipos/<%= equipo.id %>/plantel/<%= jugador.id %>/sacar" method="POST"
                       data-sacar data-nombre="<%= jugador.nombre %>">
                   <button type="submit" class="cancha__sacar-boton" title="Sacar a <%= jugador.nombre %> del equipo" aria-label="Sacar a <%= jugador.nombre %> del equipo">
@@ -299,7 +272,6 @@
   </div>
 </section>
 
-<!-- Aviso tras aceptar/rechazar (equipo.js lo esconde); dashboard.js también escribe aquí los de "próximamente" -->
 <p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
 
 <%- include('partials/dock', { activo: 'perfil' }) %>

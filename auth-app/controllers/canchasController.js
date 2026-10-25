@@ -1,16 +1,9 @@
-// controllers/canchasController.js
-// Canchas para los usuarios (Fase 3). Solo se ven canchas ACTIVAS de recintos ACTIVOS.
-//  GET /canchas      → DE-002 buscar por nombre de cancha o recinto · DE-003 lista o mapa
-//                      DE-004 filtro región/comuna · DE-005 filtro modalidad (todos combinables)
-//  GET /canchas/:id  → ficha: datos, teléfono del recinto y DE-006 disponibilidad horaria
-
 const canchaModel = require('../models/canchaModel');
 const disponibilidadModel = require('../models/disponibilidadModel');
 const ubicacionModel = require('../models/ubicacionModel');
 const { idValido } = require('../middlewares/validadoresAdmin');
 const { DIAS_SEMANA, LARGO_MINIMO_BUSQUEDA, DIAS_DISPONIBILIDAD, ZONA_HORARIA } = require('../config/canchas');
 
-/** Filtros de la URL, limpios. La búsqueda por nombre se ignora si es muy corta (DE-002). */
 function leerFiltros(query) {
   const textoIngresado = String(query.texto || '').trim().slice(0, 100);
   return {
@@ -20,12 +13,10 @@ function leerFiltros(query) {
     idRegion: idValido(query.id_region),
     idComuna: idValido(query.id_comuna),
     idModalidad: idValido(query.id_modalidad),
-    // DE-003: el mapa se muestra de entrada (con la lista debajo); "lista" deja solo la lista.
     vista: query.vista === 'lista' ? 'lista' : 'mapa',
   };
 }
 
-/** Recintos con coordenadas para los marcadores del mapa (DE-003), con sus canchas filtradas. */
 function recintosParaMapa(canchas) {
   const porRecinto = new Map();
   canchas.forEach((cancha) => {
@@ -45,7 +36,6 @@ function recintosParaMapa(canchas) {
   return [...porRecinto.values()];
 }
 
-// GET /canchas
 async function listar(req, res, next) {
   const filtros = leerFiltros(req.query);
   try {
@@ -53,7 +43,6 @@ async function listar(req, res, next) {
       ubicacionModel.listarRegionesConComunas(),
       canchaModel.listarModalidades(),
     ]);
-    // DE-004: si la comuna no es de la región elegida, se usa solo la región.
     if (filtros.idComuna && filtros.idRegion) {
       const region = regiones.find((r) => r.id === filtros.idRegion);
       if (!region || !region.comunas.some((c) => c.id === filtros.idComuna)) filtros.idComuna = null;
@@ -75,7 +64,6 @@ async function listar(req, res, next) {
       filtros,
       hayFiltros: Boolean(filtros.textoIngresado || filtros.idRegion || filtros.idComuna || filtros.idModalidad),
       largoMinimo: LARGO_MINIMO_BUSQUEDA,
-      // Enlaces "Mapa" y "Lista" que conservan los filtros
       urlMapa: `/canchas?${parametros.toString()}`,
       urlLista: `/canchas?${parametros.toString()}${parametros.toString() ? '&' : ''}vista=lista`,
       recintosMapa: recintosParaMapa(canchas),
@@ -85,7 +73,6 @@ async function listar(req, res, next) {
   }
 }
 
-/** Fecha de hoy en Chile y los siguientes días: [{ fecha: 'AAAA-MM-DD', clave: 'lunes', etiqueta: 'lun 27 oct' }]. */
 function proximosDias(cantidad) {
   const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: ZONA_HORARIA }).format(new Date());
   const [anio, mes, dia] = hoy.split('-').map(Number);
@@ -101,7 +88,6 @@ function proximosDias(cantidad) {
   });
 }
 
-// GET /canchas/:id
 async function ficha(req, res, next) {
   const idCancha = idValido(req.params.id);
   try {
@@ -113,7 +99,6 @@ async function ficha(req, res, next) {
       disponibilidadModel.listarBloques(idCancha),
       canchaModel.reservasConfirmadasProximas(idCancha, DIAS_DISPONIBILIDAD - 1),
     ]);
-    // DE-006: horario semanal (días sin bloques = cerrado) y los próximos días con sus bloques ocupados.
     const horario = DIAS_SEMANA.map((d) => ({ ...d, bloques: bloques.filter((b) => b.dia === d.clave) }));
     const dias = proximosDias(DIAS_DISPONIBILIDAD).map((d) => ({
       ...d,

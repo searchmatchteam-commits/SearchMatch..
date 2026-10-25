@@ -2,8 +2,6 @@
 
 <%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
 
-<!-- NT-002 bandeja (de la más reciente a la más antigua, primero las no leídas) · filtro por tipo
-     NT-003 marcar todas como leídas · NT-004 al abrir una se marca leída y lleva a su elemento. -->
 <%
   const formatoFecha = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', dateStyle: 'medium', timeStyle: 'short' });
   const sinLeer = notificaciones.filter(function (n) { return !n.leida; }).length;
@@ -25,7 +23,6 @@
       <% } %>
     </header>
 
-    <!-- Filtro por tipo (enlaces: funciona sin JavaScript) -->
     <nav class="sm-pestanas" aria-label="Filtrar por tipo">
       <a class="sm-pestanas__item <%= !tipo ? 'sm-pestanas__item--activa' : '' %>" href="/notificaciones">Todas</a>
       <% Object.entries(tipos).forEach(function ([clave, texto]) { %>

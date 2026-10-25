@@ -1,10 +1,3 @@
-/* public/css/auth.css
-   Login y registro "cyber-sport" (solo se carga en páginas con pagina: 'auth', después de cyber.css).
-   Fondo, cursor de luz y ripple están en cyber.css; la base de formularios y alertas, en style.css.
-   Secciones: escena · panel de marca · tarjeta · pestañas · campos · botón principal ·
-   envío en curso · alertas · responsive. */
-
-/* ---------- Escena ---------- */
 .pagina-auth .auth {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -16,7 +9,6 @@
   margin: 0 auto;
 }
 
-/* ---------- Panel de marca (solo escritorio) ---------- */
 .auth-marca {
   display: none;
 }
@@ -122,7 +114,6 @@
   font-size: 0.95rem;
 }
 
-/* ---------- Tarjeta de cristal ---------- */
 .pagina-auth .auth__tarjeta {
   max-width: 460px;
   padding: 28px 22px 30px;
@@ -140,7 +131,6 @@
   max-width: 580px;
 }
 
-/* Filo neón en el borde superior */
 .auth__filo {
   position: absolute;
   top: -1px;
@@ -149,7 +139,7 @@
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--verde), transparent);
   box-shadow: 0 0 12px 1px rgba(var(--verde-rgb), 0.5);
-  clip-path: inset(-20px 0);   /* la luz de "enviando" no se sale por los lados del filo */
+  clip-path: inset(-20px 0);
   pointer-events: none;
 }
 
@@ -169,7 +159,6 @@
   color: var(--verde);
 }
 
-/* ---------- Pestañas Iniciar sesión / Crear cuenta ---------- */
 .auth-pestanas {
   position: relative;
   display: grid;
@@ -181,7 +170,6 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Indicador de la pestaña activa */
 .auth-pestanas__indicador {
   position: absolute;
   top: 4px;
@@ -220,7 +208,6 @@
   color: var(--verde);
 }
 
-/* ---------- Campos ---------- */
 .pagina-auth .auth__tarjeta .campo label {
   color: #c9d1c9;
   font-size: 0.82rem;
@@ -228,7 +215,6 @@
   letter-spacing: 0.02em;
 }
 
-/* Input oscuro con borde sutil; al enfocar brilla por dentro (box-shadow inset) */
 .pagina-auth .auth__tarjeta .campo input {
   padding-top: 14px;
   padding-bottom: 14px;
@@ -266,13 +252,11 @@
   box-shadow: inset 0 0 0 1px rgba(255, 107, 107, 0.3), inset 0 0 20px rgba(255, 107, 107, 0.1);
 }
 
-/* Autocompletado del navegador: sin el fondo amarillo/azul (se congela el color de fondo) */
 .pagina-auth .auth__tarjeta .campo input:-webkit-autofill {
   -webkit-text-fill-color: var(--texto);
   transition: border-color 0.25s ease, box-shadow 0.3s ease, background-color 9999s ease 0s;
 }
 
-/* Línea de escaneo bajo el campo enfocado (solo transform) */
 .pagina-auth .campo__control::after {
   content: "";
   position: absolute;
@@ -306,7 +290,6 @@
   filter: drop-shadow(0 0 5px rgba(var(--verde-rgb), 0.6));
 }
 
-/* ---------- Botón principal: glow expansivo y leve escalado ---------- */
 .pagina-auth .auth-btn {
   position: relative;
   isolation: isolate;
@@ -321,7 +304,6 @@
   transition: transform 0.3s var(--curva), box-shadow 0.3s ease;
 }
 
-/* Halo que se expande al pasar el mouse (solo opacity y scale) */
 .auth-btn__halo {
   position: absolute;
   inset: 0;
@@ -334,7 +316,6 @@
   pointer-events: none;
 }
 
-/* Destello diagonal que cruza el botón */
 .pagina-auth .auth-btn::after {
   content: "";
   position: absolute;
@@ -380,8 +361,6 @@
   transform: scale(1);
 }
 
-/* ---------- Envío en curso (auth.js agrega .auth__tarjeta--enviando) ---------- */
-/* Mientras responde el servidor, una luz recorre el filo superior de la tarjeta (solo transform) */
 .auth__filo::after {
   content: "";
   position: absolute;
@@ -405,13 +384,11 @@
   to { transform: translateX(286%); }
 }
 
-/* Los campos se atenúan un poco: se nota que la acción está en marcha */
 .auth__tarjeta--enviando .campo {
   opacity: 0.6;
   transition: opacity 0.3s ease;
 }
 
-/* ---------- Alertas de cristal ---------- */
 .pagina-auth .alerta {
   border-radius: 14px;
 }
@@ -427,7 +404,6 @@
   box-shadow: inset 0 0 18px rgba(255, 107, 107, 0.06);
 }
 
-/* ---------- Responsive ---------- */
 @media (min-width: 600px) {
   .pagina-auth .auth__tarjeta {
     padding: 36px 40px 38px;
@@ -457,7 +433,6 @@
   }
 }
 
-/* ---------- Crear equipo: tarjeta sola y centrada, con select ---------- */
 @media (min-width: 1024px) {
   .pagina-auth .auth--centrada {
     grid-template-columns: minmax(0, 580px);
@@ -469,7 +444,6 @@
   }
 }
 
-/* El select copia el aspecto de los inputs de la tarjeta, con flecha propia */
 .pagina-auth .auth__tarjeta .campo select {
   width: 100%;
   font: inherit;

@@ -1,20 +1,10 @@
-// models/recintoModel.js
-// Recintos deportivos (tablas "recinto_deportivo" y "direccion") para el panel de administración:
-//  AD-001 registrar · AD-008 editar · AD-004/AD-005 desactivar y activar · AD-011 listado con filtros.
-// Todas las consultas son parametrizadas ($1, $2...).
-
 const { pool } = require('../config/db');
 const { ZONA_HORARIA } = require('../config/canchas');
 
-// Reservas confirmadas que todavía no terminan (fecha y hora de Chile). Usa el alias "r" de reservar_cancha.
 const SQL_RESERVA_FUTURA = `
   EXISTS (SELECT 1 FROM estado_reserva er WHERE er.id = r.id_estado_reserva AND lower(er.nombre) = 'confirmada')
   AND (r.fecha + r.hora_fin) > (now() AT TIME ZONE '${ZONA_HORARIA}')`;
 
-/**
- * AD-011 · Todos los recintos (activos e inactivos) con comuna, región, cantidad de canchas y sus canchas.
- * @param {{texto?: string, idComuna?: number|null, estado?: 'activos'|'inactivos'|''}} filtros
- */
 async function listarRecintos({ texto = '', idComuna = null, estado = '' } = {}) {
   const { rows } = await pool.query(
     `SELECT rd.id, rd.nombre, rd.activo, c.nombre AS comuna, rg.nombre AS region,
@@ -38,16 +28,11 @@ async function listarRecintos({ texto = '', idComuna = null, estado = '' } = {})
   return rows.map((fila) => ({ ...fila, totalCanchas: fila.canchas.length }));
 }
 
-/** ¿Hay al menos un recinto registrado? (para el estado vacío del panel) */
 async function hayRecintos() {
   const { rowCount } = await pool.query('SELECT 1 FROM recinto_deportivo LIMIT 1');
   return rowCount > 0;
 }
 
-/**
- * Un recinto con su dirección, comuna y región, y cuántas reservas confirmadas futuras tienen sus canchas.
- * @returns {Promise<object|null>}
- */
 async function obtenerRecinto(idRecinto) {
   const { rows } = await pool.query(
     `SELECT rd.id, rd.nombre, rd.telefono, rd.latitud, rd.longitud, rd.activo,
@@ -83,11 +68,6 @@ async function obtenerRecinto(idRecinto) {
   };
 }
 
-/**
- * AD-001 · Crea la dirección (asociada a la comuna) y el recinto ACTIVO, en UNA transacción.
- * @param {{nombre, telefono, latitud, longitud, calle, numero, referencias, idComuna}} datos - Ya validados.
- * @returns {Promise<number>} El id del recinto creado.
- */
 async function crearRecinto(datos) {
   const cliente = await pool.connect();
   try {
@@ -111,7 +91,6 @@ async function crearRecinto(datos) {
   }
 }
 
-/** AD-008 · Actualiza el recinto y su dirección, en UNA transacción. @returns {Promise<boolean>} */
 async function editarRecinto(idRecinto, datos) {
   const cliente = await pool.connect();
   try {
@@ -139,11 +118,6 @@ async function editarRecinto(idRecinto, datos) {
   }
 }
 
-/**
- * AD-004 / AD-005 · Cambia el estado del recinto. Solo actúa si el estado es distinto
- * (desactivar uno ya inactivo no hace nada). Las canchas conservan su propio estado.
- * @returns {Promise<boolean>} true si cambió.
- */
 async function cambiarEstadoRecinto(idRecinto, activo) {
   const { rowCount } = await pool.query(
     'UPDATE recinto_deportivo SET activo = $2 WHERE id = $1 AND activo <> $2',

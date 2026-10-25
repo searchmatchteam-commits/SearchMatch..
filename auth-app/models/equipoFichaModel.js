@@ -1,21 +1,10 @@
-// models/equipoFichaModel.js
-// Fase 6 · Equipos:
-//  PE-009 ficha pública · PE-008 comentarios · AD-013 moderarlos · PE-021 posiciones que busca el equipo
-//  PE-017 desactivar y reactivar un equipo · PE-011 solicitudes del jugador (cancelar las pendientes).
-// Capitán = quien creó el equipo (equipo.id_usuario_creador). Todas las consultas son parametrizadas.
-
 const { pool } = require('../config/db');
 const { MAX_EQUIPOS_COMO_CAPITAN } = require('../config/equipo');
 const { ZONA_HORARIA } = require('../config/canchas');
 const desafioModel = require('./desafioModel');
 
-const LARGO_MAXIMO_COMENTARIO = 500; // comentario.mensaje VARCHAR(500)
+const LARGO_MAXIMO_COMENTARIO = 500;
 
-/* =====================================================================
-   PE-009 · Ficha pública
-   ===================================================================== */
-
-/** Datos públicos del equipo (también si está inactivo, para mostrarlo como tal). Nunca el correo de contacto. */
 async function obtenerFicha(idEquipo) {
   const { rows } = await pool.query(
     `SELECT e.id, e.nombre, e.activo, e.puntaje_nivel, e.escudo_actualizado, e.id_usuario_creador, e.id_modalidad,
@@ -31,14 +20,9 @@ async function obtenerFicha(idEquipo) {
   );
   const fila = rows[0];
   if (!fila) return null;
-  // GET /equipos/:id/escudo solo sirve escudos de equipos activos: el inactivo muestra su inicial.
   return { ...fila, escudo: fila.activo && fila.escudo_actualizado ?`/equipos/${fila.id}/escudo?v=${fila.escudo_actualizado.getTime()}` : null };
 }
 
-/**
- * Qué puede hacer la cuenta en la ficha: su relación con el equipo, si ya postuló y
- * qué equipo suyo (activo, misma modalidad) podría desafiarlo.
- */
 async function relacionConFicha(authId, equipo) {
   const { rows } = await pool.query(
     `SELECT u.id AS id_usuario,
@@ -64,7 +48,6 @@ async function relacionConFicha(authId, equipo) {
   };
 }
 
-/** ¿Hay un desafío pendiente entre dos equipos (en cualquier sentido)? */
 async function hayDesafioPendiente(idA, idB) {
   const { rowCount } = await pool.query(
     `SELECT 1 FROM desafio d JOIN estado_desafio ed ON ed.id = d.id_estado_desafio
@@ -75,7 +58,6 @@ async function hayDesafioPendiente(idA, idB) {
   return rowCount > 0;
 }
 
-/** Historial: partidos ya jugados (con resultado) del equipo, el más reciente primero. */
 async function historial(idEquipo) {
   const { rows } = await pool.query(
     `SELECT p.id, to_char(p.fecha, 'YYYY-MM-DD') AS fecha, ea.nombre AS desafiante, eb.nombre AS desafiado,
@@ -97,7 +79,6 @@ async function historial(idEquipo) {
   });
 }
 
-/** Desafíos pendientes y partidos futuros del equipo (PE-017: se advierten antes de desactivar). */
 async function pendientesDeEquipo(idEquipo) {
   const { rows } = await pool.query(
     `SELECT (SELECT count(*)::int FROM desafio d JOIN estado_desafio ed ON ed.id = d.id_estado_desafio
@@ -110,11 +91,6 @@ async function pendientesDeEquipo(idEquipo) {
   return rows[0];
 }
 
-/* =====================================================================
-   PE-008 · Comentarios y AD-013 · Moderación
-   ===================================================================== */
-
-/** Comentarios visibles en orden cronológico (el más antiguo primero), con el apodo o nombre del autor. */
 async function listarComentarios(idEquipo) {
   const { rows } = await pool.query(
     `SELECT c.id, c.mensaje, c.fecha, coalesce(nullif(j.apodo, ''), j.nombre_apodo, 'Usuario') AS autor
@@ -128,7 +104,6 @@ async function listarComentarios(idEquipo) {
   return rows;
 }
 
-/** Publica un comentario (mensaje ya validado). */
 async function crearComentario(authId, idEquipo, mensaje) {
   await pool.query(
     `INSERT INTO comentario (mensaje, id_equipo, id_usuario) SELECT $3, $2, u.id FROM usuario u WHERE u.auth_id = $1`,
@@ -136,7 +111,6 @@ async function crearComentario(authId, idEquipo, mensaje) {
   );
 }
 
-/** AD-013 · Oculta un comentario a todos. @returns {Promise<{idUsuario, idEquipo, equipo}|null>} */
 async function ocultarComentario(idComentario) {
   const { rows } = await pool.query(
     `UPDATE comentario c SET oculto = TRUE, oculto_en = now() FROM equipo e
@@ -147,11 +121,6 @@ async function ocultarComentario(idComentario) {
   return rows[0] ? { idUsuario: rows[0].id_usuario, idEquipo: rows[0].id_equipo, equipo: rows[0].equipo } : null;
 }
 
-/* =====================================================================
-   PE-021 · Posiciones que busca el equipo
-   ===================================================================== */
-
-/** Catálogo de posiciones con las que busca el equipo marcadas. */
 async function posicionesDelEquipo(idEquipo) {
   const { rows } = await pool.query(
     `SELECT p.id, p.nombre, EXISTS (SELECT 1 FROM equipo_posicion_buscada b WHERE b.id_equipo = $1 AND b.id_posicion = p.id) AS buscada
@@ -161,10 +130,6 @@ async function posicionesDelEquipo(idEquipo) {
   return rows;
 }
 
-/**
- * Reemplaza las posiciones buscadas (solo el capitán de un equipo activo).
- * @returns {Promise<boolean>} false si la cuenta no es su capitán.
- */
 async function guardarPosicionesBuscadas(authId, idEquipo, idsPosiciones) {
   const cliente = await pool.connect();
   try {
@@ -193,7 +158,6 @@ async function guardarPosicionesBuscadas(authId, idEquipo, idsPosiciones) {
   }
 }
 
-/** "Equipos disponibles": activos que buscan al menos una posición, con su nivel (PE-021). */
 async function listarEquiposQueBuscan() {
   const { rows } = await pool.query(
     `SELECT e.id, e.nombre, n.nombre AS nivel, m.nombre AS modalidad, coalesce(c.nombre, e.zona) AS comuna,
@@ -211,15 +175,6 @@ async function listarEquiposQueBuscan() {
   return rows;
 }
 
-/* =====================================================================
-   PE-017 · Desactivar y reactivar un equipo
-   ===================================================================== */
-
-/**
- * Desactiva el equipo (solo su capitán), en UNA transacción: cancela sus desafíos pendientes y sus
- * partidos futuros (con sus reservas). El puntaje y el historial no se tocan.
- * @returns {Promise<{resultado: 'desactivado'|'sin-permiso', rivales: number[]}>}
- */
 async function desactivarEquipo(authId, idEquipo) {
   const cliente = await pool.connect();
   try {
@@ -266,10 +221,6 @@ async function desactivarEquipo(authId, idEquipo) {
   }
 }
 
-/**
- * Reactiva el equipo con su puntaje anterior (solo su capitán y sin superar MAX_EQUIPOS_COMO_CAPITAN).
- * @returns {Promise<'reactivado'|'limite'|'sin-permiso'>}
- */
 async function reactivarEquipo(authId, idEquipo) {
   const { rows } = await pool.query(
     `SELECT e.activo, (SELECT count(*)::int FROM equipo x WHERE x.id_usuario_creador = u.id AND x.activo) AS activos
@@ -283,7 +234,6 @@ async function reactivarEquipo(authId, idEquipo) {
   return 'reactivado';
 }
 
-/** Equipos inactivos que creó la cuenta (para reactivarlos desde "Mis equipos"). */
 async function listarInactivosDeCapitan(authId) {
   const { rows } = await pool.query(
     `SELECT e.id, e.nombre, e.puntaje_nivel FROM equipo e JOIN usuario u ON u.id = e.id_usuario_creador
@@ -293,11 +243,6 @@ async function listarInactivosDeCapitan(authId) {
   return rows;
 }
 
-/* =====================================================================
-   PE-011 · Solicitudes del jugador
-   ===================================================================== */
-
-/** Todas las solicitudes que envió la cuenta, con estado y fechas (las pendientes primero). */
 async function listarMisSolicitudes(authId) {
   const { rows } = await pool.query(
     `SELECT s.id, s.fecha_solicitud, s.fecha_respuesta, lower(es.nombre) AS estado, e.id AS id_equipo, e.nombre AS equipo
@@ -313,10 +258,6 @@ async function listarMisSolicitudes(authId) {
   return rows;
 }
 
-/**
- * Cancela una solicitud PENDIENTE propia (deja de verla el capitán; se puede volver a postular).
- * @returns {Promise<boolean>}
- */
 async function cancelarSolicitud(authId, idSolicitud) {
   const { rowCount } = await pool.query(
     `UPDATE solicitud_union_equipo s

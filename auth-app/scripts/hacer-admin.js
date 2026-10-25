@@ -1,8 +1,3 @@
-// scripts/hacer-admin.js
-// AR-004 · Da el rol "Administrador" a una cuenta YA registrada (no hay pantalla para esto a propósito:
-// solo quien tiene acceso al servidor y a la base de datos puede crear administradores).
-// Uso:  node scripts/hacer-admin.js correo@ejemplo.com
-
 const { pool } = require('../config/db');
 
 async function hacerAdmin(correo) {

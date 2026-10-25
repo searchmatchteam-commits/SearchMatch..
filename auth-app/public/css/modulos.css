@@ -1,14 +1,8 @@
-/* public/css/modulos.css
-   Estilos de las funciones nuevas (avance al 75 %). Solo clases nuevas con prefijo "sm-"
-   (y <select>/<textarea> dentro de .campo, que antes no se usaban), así no cambia nada
-   de lo que ya existía. Reutiliza las variables de style.css (colores, radios, fuente). */
-
-/* ---------- Listas desplegables y áreas de texto con el mismo aspecto que .campo input ---------- */
 .campo select,
 .campo textarea {
   width: 100%;
   font: inherit;
-  font-size: 16px; /* evita el zoom de iOS al enfocar */
+  font-size: 16px;
   color: var(--texto);
   background: var(--superficie-campo);
   border: 1px solid var(--borde-fuerte);
@@ -39,7 +33,6 @@
   border-color: var(--error);
 }
 
-/* ---------- Aviso del límite de equipos (regla 5) ---------- */
 .sm-aviso-limite {
   flex-basis: 100%;
   margin: 0;
@@ -51,12 +44,6 @@
   font-size: 0.88rem;
 }
 
-/* ======================================================================
-   Fases 1 a 3: componentes nuevos (prefijo sm-). Reutilizan las variables
-   de style.css y cyber.css (--vidrio, --verde-rgb, --radio-panel...).
-   ====================================================================== */
-
-/* ---------- Contenedores y textos ---------- */
 .sm-angosto { max-width: 720px; }
 .sm-legal { max-width: 860px; }
 .sm-opcional { color: var(--texto-suave); font-weight: 500; font-size: 0.85em; }
@@ -70,12 +57,10 @@
 }
 .sm-resultados { color: var(--texto-suave); font-size: 0.9rem; }
 
-/* Documentos legales (AR-010) */
 .sm-documento { gap: 26px; line-height: 1.65; }
 .sm-documento__seccion { display: flex; flex-direction: column; gap: 10px; }
 .sm-documento__seccion p { color: #d4dad4; }
 
-/* Lista de enlaces con detalle (documentos, seguridad de la cuenta) */
 .sm-lista-docs { list-style: none; display: flex; flex-direction: column; gap: 12px; }
 .sm-lista-docs li {
   display: flex; flex-direction: column; gap: 2px;
@@ -85,11 +70,10 @@
 .sm-lista-docs a { font-weight: 700; }
 .sm-lista-docs span { color: var(--texto-suave); font-size: 0.85rem; }
 
-/* ---------- Formularios ---------- */
 .sm-form { display: flex; flex-direction: column; gap: 16px; }
 .sm-form__acciones { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .sm-form__secundaria { margin-top: 4px; }
-.sm-form .campo__control input { padding-right: 48px; } /* espacio para el ojo de la contraseña */
+.sm-form .campo__control input { padding-right: 48px; }
 .sm-olvido { margin: -6px 0 4px; text-align: right; font-size: 0.86rem; }
 
 .sm-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 0.9rem; line-height: 1.45; }
@@ -110,12 +94,10 @@
   background: rgba(255, 196, 0, 0.08); border-color: rgba(255, 196, 0, 0.4); color: #ffe08a;
 }
 
-/* Enlaces de cuenta en el perfil (AR-012 / AR-010) */
 .sm-perfil-enlaces { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.88rem; }
 .sm-perfil-enlaces a { color: var(--texto-suave); }
 .sm-perfil-enlaces a:hover { color: var(--verde); }
 
-/* ---------- Pestañas (administración y lista/mapa) ---------- */
 .sm-pestanas {
   display: flex; gap: 6px; padding: 5px; width: fit-content; max-width: 100%; overflow-x: auto;
   border-radius: 999px; border: 1px solid var(--borde); background: rgba(255, 255, 255, 0.03);
@@ -128,16 +110,12 @@
 .sm-pestanas__item--activa { color: var(--sobre-verde); background: var(--verde); }
 .sm-pestanas__item--activa:hover { color: var(--sobre-verde); }
 
-/* ---------- Estados vacíos ---------- */
 .sm-vacio { align-items: flex-start; }
 .sm-vacio__titulo { font-weight: 800; font-size: 1.05rem; }
 
-/* ---------- Filtros ---------- */
-/* .dash-panel.sm-filtros: más específico que .dash-panel (dashboard.css se carga después y lo deja en flex) */
 .sm-filtros, .dash-panel.sm-filtros { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .sm-filtros .formulario__fila { margin: 0; }
 
-/* ---------- Tarjetas y filas (listados) ---------- */
 .sm-tarjetas { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .sm-tarjeta { gap: 12px; }
 .sm-tarjeta--inactiva { opacity: 0.7; }
@@ -173,16 +151,13 @@
 .sm-precio small { font-size: 0.75em; color: var(--texto-suave); font-weight: 600; }
 .sm-precio--grande { font-size: 1.5rem; }
 
-/* Datos en pares etiqueta / valor */
 .sm-datos { display: grid; gap: 12px; }
 .sm-datos div { display: grid; gap: 2px; }
 .sm-datos dt { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--texto-suave); }
 .sm-datos dd { overflow-wrap: anywhere; }
 
-/* Dos columnas en escritorio */
 .sm-columnas { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
 
-/* ---------- Horario (AD-003 / DE-006) ---------- */
 .sm-horario, .sm-agenda { list-style: none; display: flex; flex-direction: column; }
 .sm-horario__dia, .sm-agenda__dia {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
@@ -205,7 +180,6 @@
 .sm-bloque--ocupado { color: #ffb4b4; background: rgba(255, 107, 107, 0.08); border-color: rgba(255, 107, 107, 0.3); }
 .sm-bloque--libre { color: var(--texto-suave); background: transparent; border-color: var(--borde); font-weight: 600; }
 
-/* ---------- Catálogos (AD-014) ---------- */
 .sm-catalogo { list-style: none; display: flex; flex-direction: column; }
 .sm-catalogo__fila { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 0; border-top: 1px solid var(--borde); }
 .sm-catalogo__fila:first-child { border-top: 0; }
@@ -218,7 +192,6 @@
 .sm-catalogo__nuevo { padding-top: 14px; border-top: 1px dashed var(--borde-fuerte); align-items: flex-end; }
 .sm-catalogo__nuevo > .btn { align-self: flex-end; margin-bottom: 2px; }
 
-/* ---------- Mapa de canchas (DE-003) ---------- */
 .sm-mapa { width: 100%; height: 460px; border-radius: var(--radio-chico); overflow: hidden; border: 1px solid var(--borde-fuerte); }
 .sm-mapa--ficha { height: 300px; }
 .sm-acciones-canchas { align-items: center; }
@@ -226,7 +199,6 @@
 .sm-mapa .leaflet-popup-content ul { margin: 6px 0 0; padding-left: 16px; }
 .sm-mapa .leaflet-popup-content p { margin: 4px 0; }
 
-/* ---------- Pantallas más anchas ---------- */
 @media (min-width: 760px) {
   .dash-panel.sm-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
   .sm-filtros .formulario__fila { grid-column: 1 / -1; }
@@ -242,11 +214,6 @@
   .sm-mapa { height: 360px; }
 }
 
-/* ======================================================================
-   Fases 4 a 7
-   ====================================================================== */
-
-/* ---------- Barra superior: agenda y campana (NT-003) ---------- */
 .sm-icono-nav {
   position: relative; display: grid; place-items: center; width: 38px; height: 38px; flex: none;
   border-radius: 999px; border: 1px solid var(--borde-fuerte); color: var(--texto);
@@ -263,7 +230,6 @@
   .navbar__nav .btn--chico { padding-left: 10px; padding-right: 10px; }
 }
 
-/* ---------- Notificaciones (NT-002) ---------- */
 .dash-panel.sm-notificaciones { list-style: none; gap: 0; padding: 6px 0; }
 .sm-notificacion + .sm-notificacion { border-top: 1px solid var(--borde); }
 .sm-notificacion__enlace { display: flex; gap: 12px; align-items: flex-start; padding: 14px 22px; color: var(--texto-suave); }
@@ -275,7 +241,6 @@
 .sm-notificacion--nueva .sm-notificacion__mensaje { font-weight: 700; }
 .sm-notificacion--nueva .sm-notificacion__punto { background: var(--verde); box-shadow: 0 0 8px var(--verde); }
 
-/* ---------- Estados de desafíos, solicitudes y reservas ---------- */
 .sm-estado--pendiente { color: #ffe08a; background: rgba(255, 196, 0, 0.08); border: 1px solid rgba(255, 196, 0, 0.35); }
 .sm-estado--aceptado, .sm-estado--aceptada { color: var(--verde); background: var(--verde-tenue); border: 1px solid var(--verde-borde); }
 .sm-estado--rechazado, .sm-estado--rechazada, .sm-estado--cancelado, .sm-estado--cancelada {
@@ -288,7 +253,6 @@
   border-radius: 999px; padding: 9px 14px; color-scheme: dark; max-width: 100%;
 }
 
-/* ---------- Enfrentamiento (desafío y partido) ---------- */
 .sm-versus { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: center; }
 .sm-versus__equipo {
   display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 14px 10px;
@@ -301,7 +265,6 @@
 .sm-versus__vs { font-weight: 900; color: var(--verde); }
 .sm-versus__goles { font-size: 2rem !important; font-weight: 900; color: var(--texto) !important; }
 
-/* ---------- Ficha de equipo: comentarios y zona de peligro ---------- */
 .sm-enlace-ficha { font-size: 0.8rem; font-weight: 700; }
 .sm-comentarios { list-style: none; display: flex; flex-direction: column; gap: 12px; }
 .sm-comentario { padding: 12px 14px; border-radius: var(--radio-chico); border: 1px solid var(--borde); background: rgba(255, 255, 255, 0.02); display: flex; flex-direction: column; gap: 6px; }
@@ -312,11 +275,9 @@
 .sm-chequeos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .sm-chequeo { padding: 12px; border-radius: var(--radio-chico); border: 1px solid var(--borde-fuerte); }
 
-/* ---------- Reservas ---------- */
 .sm-costo { font-size: 1rem; }
 .sm-costo strong { color: var(--verde); }
 
-/* ---------- Agenda (AG-001) ---------- */
 .sm-mes { justify-content: space-between; }
 .sm-mes__titulo { text-transform: capitalize; }
 .sm-calendario { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
@@ -333,7 +294,6 @@
 .sm-calendario__dia--hoy { border-color: var(--texto-suave); }
 .sm-calendario__dia--elegido { outline: 2px solid var(--verde); outline-offset: 1px; }
 
-/* ---------- Inicio: equipo elegido (IN-005) ---------- */
 .sm-selector-equipos { display: flex; flex-wrap: wrap; gap: 8px; }
 .sm-selector-equipos__item {
   display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px;

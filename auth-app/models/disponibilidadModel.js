@@ -1,17 +1,6 @@
-// models/disponibilidadModel.js
-// Horario de funcionamiento de cada cancha (tabla "disponibilidad_cancha"): bloques de día + apertura + cierre.
-//  AD-003 registrar bloques (sin superponerse en el mismo día) · AD-010 eliminar un bloque · DE-006 consultarlo.
-// dia_semana guarda la clave sin tildes de config/canchas.js ('lunes' ... 'domingo').
-// Todas las consultas son parametrizadas ($1, $2...).
-
 const { pool } = require('../config/db');
 const { CLAVES_DIAS_ISO, ZONA_HORARIA } = require('../config/canchas');
 
-/**
- * Bloques de una cancha ordenados por día de la semana y hora, con cuántas reservas confirmadas
- * futuras caen dentro de cada uno (AD-010: se advierte antes de eliminarlo).
- * @returns {Promise<Array<{id, dia, apertura: 'HH:MM', cierre: 'HH:MM', reservasFuturas: number}>>}
- */
 async function listarBloques(idCancha) {
   const { rows } = await pool.query(
     `SELECT dc.id, dc.dia_semana AS dia,
@@ -31,11 +20,6 @@ async function listarBloques(idCancha) {
   return rows.map((fila) => ({ ...fila, reservasFuturas: fila.reservas_futuras }));
 }
 
-/**
- * AD-003 · Agrega un bloque si no se superpone con otro del mismo día en la misma cancha.
- * Dos bloques se superponen si uno empieza antes de que el otro termine (los que solo se tocan, no).
- * @returns {Promise<'creado'|'superpuesto'>}
- */
 async function crearBloque(idCancha, { dia, apertura, cierre }) {
   const choque = await pool.query(
     `SELECT 1 FROM disponibilidad_cancha
@@ -50,10 +34,6 @@ async function crearBloque(idCancha, { dia, apertura, cierre }) {
   return 'creado';
 }
 
-/**
- * AD-010 · Elimina un bloque. Si era el único del día, ese día queda cerrado.
- * @returns {Promise<{idCancha: number, diaCerrado: boolean}|null>} null si el bloque no existía.
- */
 async function eliminarBloque(idBloque) {
   const { rows } = await pool.query(
     'DELETE FROM disponibilidad_cancha WHERE id = $1 RETURNING id_cancha, dia_semana',

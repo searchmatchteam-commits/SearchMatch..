@@ -1,27 +1,16 @@
-// public/js/wizard.js
-// Wizard de perfil de jugador (form[data-wizard]):
-//  1) Muestra un paso a la vez (2: datos personales, 3: perfil deportivo, 4: confirmación)
-//     y actualiza la barra de progreso. El paso 1 (tipo de cuenta) ya está hecho.
-//  2) Valida el paso actual antes de avanzar (mismas reglas que validarPerfilJugador).
-//  3) Llena el resumen del paso 4 y, al confirmar, envía el formulario con estado "cargando".
-// Sin JS el formulario muestra todos los pasos juntos y funciona igual (valida el servidor).
-
 const PRIMER_PASO = 2;
 const ULTIMO_PASO = 4;
 const REGEX_FECHA = /^\d{4}-\d{2}-\d{2}$/;
 const EDAD_MINIMA = 18;
 
-/** Años cumplidos a partir de "AAAA-MM-DD", comparando con el día de hoy. */
 function calcularEdad(valor) {
   const [anio, mes, dia] = valor.split('-').map(Number);
   const hoy = new Date();
   let edad = hoy.getFullYear() - anio;
-  // Aún no cumple años este año
   if (hoy.getMonth() + 1 < mes || (hoy.getMonth() + 1 === mes && hoy.getDate() < dia)) edad -= 1;
   return edad;
 }
 
-// Reglas por paso. Cada una devuelve el mensaje de error o null.
 const REGLAS = {
   2: {
     apodo: (v, input) => {
@@ -44,7 +33,6 @@ const REGLAS = {
   },
 };
 
-/** Número dentro del min/max del input (los mismos rangos que el servidor). */
 function enRango(valor, input, campo, unidad) {
   const numero = Number(String(valor).replace(',', '.'));
   const min = Number(input.min);
@@ -69,20 +57,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let pasoActual = Number(formulario.dataset.pasoInicial) || PRIMER_PASO;
 
-  /* ---------- Validación ---------- */
-
   function valorDe(nombre) {
-    // Casillas (posiciones): los valores marcados separados por coma ('' si ninguno).
     const marcadas = formulario.querySelectorAll(`input[type="checkbox"][name="${nombre}"]`);
     if (marcadas.length > 0) {
       return Array.from(marcadas).filter((casilla) => casilla.checked).map((casilla) => casilla.value).join(',');
     }
     const elemento = formulario.elements[nombre];
-    // RadioNodeList.value es el valor del radio marcado ('' si ninguno).
     return elemento.value === undefined ? '' : elemento.value.trim();
   }
 
-  /** Pinta (o limpia) el error de un campo o grupo de opciones. */
   function marcarError(nombre, mensaje) {
     const elemento = formulario.elements[nombre];
     const contenedor =
@@ -95,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (salida) salida.textContent = mensaje || '';
   }
 
-  /** Valida un paso; devuelve la lista de errores y deja el foco en el primero. */
   function validarPaso(numero, { enfocar = true } = {}) {
     const errores = [];
     let primero = null;
@@ -123,9 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
     alerta.hidden = mensajes.length === 0;
   }
 
-  /* ---------- Resumen del paso 4 ---------- */
-
-  // Radios: la opción marcada; casillas: todas las marcadas separadas por coma.
   function textoDeOpcion(nombre) {
     const marcadas = Array.from(formulario.querySelectorAll(`input[name="${nombre}"]:checked`));
     const textos = marcadas.map((input) => input.closest('label').querySelector('.opcion__nombre').textContent.trim());
@@ -146,8 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* ---------- Navegación ---------- */
-
   function irA(numero, { enfocar = true } = {}) {
     pasoActual = numero;
 
@@ -166,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (numero === ULTIMO_PASO) llenarResumen();
 
     if (enfocar) {
-      // Lleva la vista al inicio del panel (en celulares el paso nuevo queda arriba).
       indicador.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       const activo = pasos.find((paso) => Number(paso.dataset.paso) === numero);
       const primerCampo = activo.querySelector('input:not([type="radio"]), input[type="radio"]');
@@ -181,7 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
     textoContinuar.textContent = cargando ? botonContinuar.dataset.textoCargando : botonContinuar.dataset.textoFinal;
   }
 
-  // "Continuar" es el submit del formulario (así Enter también avanza).
   formulario.addEventListener('submit', (evento) => {
     if (botonContinuar.disabled) {
       evento.preventDefault();
@@ -196,7 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Último paso: se revisan todos los pasos antes de enviar.
     for (let numero = PRIMER_PASO; numero < ULTIMO_PASO; numero++) {
       const errores = validarPaso(numero, { enfocar: false });
       if (errores.length > 0) {
@@ -211,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   botonVolver.addEventListener('click', (evento) => {
-    // En el primer paso del formulario, "Volver" sigue el enlace a /select-role.
     if (pasoActual > PRIMER_PASO) {
       evento.preventDefault();
       mostrarAlerta([]);
@@ -219,7 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Re-valida en vivo lo que ya estaba marcado con error.
   formulario.addEventListener('input', (evento) => {
     const nombre = evento.target.name;
     const regla = REGLAS[pasoActual] && REGLAS[pasoActual][nombre];
@@ -237,7 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (evento.persisted && botonContinuar.disabled) ponerCargando(false);
   });
 
-  // Activa el modo "un paso a la vez" (sin esta clase se ven todos los pasos).
   formulario.classList.add('wizard__form--pasos');
   irA(pasoActual, { enfocar: false });
 });

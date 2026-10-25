@@ -1,15 +1,7 @@
-/* public/css/crear-equipo.css
-   Wizard de equipo (/crear-equipo). Se carga después de style.css y reutiliza la base
-   del wizard de jugador (.wizard, .pasos, .opcion, .opcion--nivel, .wizard__nav).
-   Secciones: base · pasos (3) · panel de marca · identidad de club · campos ·
-   nivel y tipo de fútbol · aviso "Search Match activo" · confirmación · responsive. */
-
-/* ---------- Base ---------- */
 .ceq [hidden] {
   display: none !important;
 }
 
-/* ---------- Pasos: 3 en vez de 4 ---------- */
 .pasos--3 .pasos__lista {
   grid-template-columns: repeat(3, 1fr);
 }
@@ -19,7 +11,6 @@
   right: 16.67%;
 }
 
-/* ---------- Panel de marca ---------- */
 .ceq .wizard__marca {
   display: flex;
   flex-direction: column;
@@ -39,7 +30,6 @@
   color: var(--texto);
 }
 
-/* "Así te verán los rivales" (solo escritorio, como los beneficios) */
 .ceq-vista {
   display: none;
   flex-direction: column;
@@ -90,7 +80,6 @@
   color: var(--texto-suave);
 }
 
-/* Caja del escudo: ícono neón o la imagen elegida */
 .ceq-escudo {
   flex: none;
   display: grid;
@@ -129,7 +118,6 @@
   height: 28px;
 }
 
-/* ---------- Identidad de club (paso 1) ---------- */
 .ceq-identidad {
   display: flex;
   align-items: center;
@@ -190,7 +178,6 @@
   background: var(--verde-tenue);
 }
 
-/* ---------- Campos: etiquetas en mayúsculas e ícono a la izquierda ---------- */
 .ceq .campo label,
 .ceq .grupo-opciones__label {
   font-size: 0.72rem;
@@ -225,8 +212,6 @@
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-/* ---------- Nivel y tipo de fútbol ---------- */
-/* Check verde en la esquina de la opción elegida */
 .ceq-marca {
   position: absolute;
   top: 8px;
@@ -263,7 +248,6 @@
   font-size: 0.95rem;
 }
 
-/* Tipo de fútbol: siempre 3 columnas (son números cortos) */
 .ceq-modalidades {
   grid-template-columns: repeat(3, 1fr);
 }
@@ -290,7 +274,6 @@
   color: var(--texto-suave);
 }
 
-/* ---------- Aviso "Search Match activo" ---------- */
 .ceq-activo {
   display: flex;
   align-items: flex-start;
@@ -320,7 +303,6 @@
   color: var(--texto);
 }
 
-/* ---------- Botones y notas ---------- */
 .ceq .wizard__nav {
   padding-top: 24px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -354,7 +336,6 @@
   font-weight: 700;
 }
 
-/* ---------- Confirmación (paso 3) ---------- */
 .ceq-listo {
   display: flex;
   flex-direction: column;
@@ -397,7 +378,6 @@
   align-self: center;
 }
 
-/* ---------- Responsive ---------- */
 @media (max-width: 479px) {
   .ceq-identidad {
     flex-wrap: wrap;

@@ -1,15 +1,5 @@
-// models/cuentaAdminModel.js
-// AD-012 · Gestión de cuentas por el administrador: buscar por correo o nombre, desactivar y reactivar.
-// Una cuenta desactivada pierde el acceso en su próxima petición (authMiddleware.cargarSesion revisa usuario.activo).
-// Todas las consultas son parametrizadas ($1, $2...).
-
 const { pool } = require('../config/db');
 
-/**
- * Cuentas cuyo correo, nombre, apellido o apodo contiene el texto (máximo 50, las activas primero).
- * Incluye cuántos equipos activos capitanea cada una (para advertirlo al desactivar).
- * @returns {Promise<Array<{id, authId, correo, nombre, rol, activo, equiposCapitan}>>}
- */
 async function buscarCuentas(texto) {
   const { rows } = await pool.query(
     `SELECT u.id, u.auth_id, u.correo, u.activo, r.nombre AS rol,
@@ -37,13 +27,6 @@ async function buscarCuentas(texto) {
   }));
 }
 
-/**
- * Cambia el estado de una cuenta, salvo la del propio administrador (no puede desactivarse a sí mismo aquí).
- * @param {number} idUsuario
- * @param {boolean} activo
- * @param {string} authIdAdmin - auth_id del administrador que hace el cambio.
- * @returns {Promise<'cambiada'|'propia'|'sin-cambio'>}
- */
 async function cambiarEstadoCuenta(idUsuario, activo, authIdAdmin) {
   const { rows } = await pool.query('SELECT auth_id, activo FROM usuario WHERE id = $1', [idUsuario]);
   if (!rows[0] || rows[0].activo === activo) return 'sin-cambio';
