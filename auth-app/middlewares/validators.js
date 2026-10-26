@@ -306,13 +306,22 @@ function validarEdicionPerfil(req, res, next) {
   const erroresStats = [];
   const stats = {};
 
+  // PE-002: nombre y apellido también se editan aquí (obligatorios, máx. LONGITUD_MAXIMA_NOMBRE).
+  const nombre = (req.body.nombre || '').trim().replace(/\s+/g, ' ');
+  const apellido = (req.body.apellido || '').trim().replace(/\s+/g, ' ');
+  const erroresNombre = [];
+  if (!nombre) erroresNombre.push('El nombre es obligatorio.');
+  else if (nombre.length > LONGITUD_MAXIMA_NOMBRE) erroresNombre.push(`El nombre no puede superar los ${LONGITUD_MAXIMA_NOMBRE} caracteres.`);
+  if (!apellido) erroresNombre.push('El apellido es obligatorio.');
+  else if (apellido.length > LONGITUD_MAXIMA_NOMBRE) erroresNombre.push(`El apellido no puede superar los ${LONGITUD_MAXIMA_NOMBRE} caracteres.`);
+
   ESTADISTICAS.forEach(({ clave, nombre }) => {
     stats[clave] = enteroEnRango(req.body[`stat_${clave}`], STAT_RANGO);
     if (stats[clave] === null) erroresStats.push(`${nombre} debe estar entre ${STAT_RANGO.min} y ${STAT_RANGO.max}.`);
   });
 
-  req.datosFormulario = { ...datos, stats };
-  req.erroresPerfil = { errores: [...paso2, ...paso3, ...erroresStats] };
+  req.datosFormulario = { ...datos, nombre, apellido, stats };
+  req.erroresPerfil = { errores: [...erroresNombre, ...paso2, ...paso3, ...erroresStats] };
   return next();
 }
 

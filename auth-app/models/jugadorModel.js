@@ -92,6 +92,11 @@ async function escribirPerfil(idJugador, datos, stats, conservarStats) {
       ]
     );
 
+    // PE-002: el editor también cambia nombre y apellido (el wizard no los envía: se piden en el registro).
+    if (datos.nombre !== undefined) {
+      await cliente.query('UPDATE jugador SET nombre_apodo = $1, apellido = $2 WHERE id = $3', [datos.nombre, datos.apellido, idJugador]);
+    }
+
     await cliente.query('DELETE FROM jugador_posicion WHERE id_jugador = $1', [idJugador]);
     await cliente.query(
       `INSERT INTO jugador_posicion (id_jugador, id_posicion)

@@ -269,6 +269,8 @@ async function mostrarEditor(req, res, next) {
     return renderEditor(res, {
       perfil,
       datos: {
+        nombre: perfil.nombre || '', // PE-002
+        apellido: perfil.apellido || '',
         apodo: perfil.apodo,
         fechaNacimiento: perfil.fechaNacimiento,
         altura: perfil.altura ? Math.round(perfil.altura) : '',
