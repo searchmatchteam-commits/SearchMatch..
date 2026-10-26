@@ -29,6 +29,15 @@
           <small class="campo__error" id="correo-error"><%= erroresCampo.correo || '' %></small>
           <small class="campo__ayuda" id="correo-ayuda">Con este correo inicias sesión. Si lo cambias, te enviaremos un enlace para confirmarlo.</small>
         </div>
+        <% if (verificado !== null) { %>
+          <!-- AR-007: estado de verificación del correo principal (email_confirmed_at de Supabase) -->
+          <p class="sm-verificacion">
+            <span class="sm-estado <%= verificado ? 'sm-estado--activo' : 'sm-estado--pendiente' %>"><%= verificado ? 'Verificado' : 'Pendiente de verificación' %></span>
+            <% if (!verificado) { %>
+              <button type="submit" form="form-reenviar-verificacion" class="btn btn--contorno btn--chico">Reenviar enlace de verificación</button>
+            <% } %>
+          </p>
+        <% } %>
 
         <div class="campo <%= erroresCampo.correo_secundario ? 'campo--error' : '' %>">
           <label for="correo_secundario">Correo secundario <span class="sm-opcional">(opcional)</span></label>
@@ -62,6 +71,11 @@
         </div>
       </form>
     </div>
+
+    <% if (verificado === false) { %>
+      <!-- Formulario aparte (no se puede anidar en el de datos): el botón de arriba lo envía con form="..." -->
+      <form id="form-reenviar-verificacion" action="/cuenta/verificacion" method="POST" hidden></form>
+    <% } %>
 
     <div class="dash-panel eq-panel revelar">
       <header class="dash-panel__cabecera">

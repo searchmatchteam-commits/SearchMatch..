@@ -497,3 +497,7 @@ html[data-theme="light"] .sm-tema__luna { display: block; }
 }
 .sm-proximo small { color: var(--verde); font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.7rem; }
 .sm-proximo span { color: var(--texto-suave); font-size: 0.86rem; text-transform: capitalize; }
+
+/* AR-007: estado de verificación del correo (/cuenta) y "Reenviar enlace" del login */
+.sm-verificacion { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: -4px 0 14px; }
+.sm-reenvio { margin: 0 0 18px; }

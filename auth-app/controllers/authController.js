@@ -138,7 +138,7 @@ async function registrar(req, res, next) {
 function mostrarLogin(req, res) {
   const mensajes = {
     Confirma_tu_correo: 'Te enviamos un correo de confirmación. Ábrelo y luego inicia sesión.',
-    Enlace_invalido: 'El enlace de confirmación no es válido o ya expiró. Inicia sesión para recibir uno nuevo.',
+    Enlace_invalido: 'El enlace de verificación venció o ya se usó. Escribe tu correo y te enviaremos uno nuevo.',
     Debes_iniciar_sesion: 'Debes iniciar sesión para acceder a esa página.',
     Sesion_cerrada: 'Cerraste sesión correctamente.',
     Cuenta_desactivada: MSG_CUENTA_DESACTIVADA,
@@ -151,7 +151,35 @@ function mostrarLogin(req, res) {
     errores: [],
     datos: {},
     aviso: mensajes[req.query.msg] || null,
+    mostrarReenvio: req.query.msg === 'Enlace_invalido', // AR-007
   });
+}
+
+// AR-007: mismo mensaje exista o no la cuenta (no revela qué correos están registrados).
+const MSG_VERIFICACION_REENVIADA = 'Si ese correo tiene una cuenta pendiente de verificación, te enviamos un enlace nuevo. '
+  + 'Revisa tu bandeja de entrada y la carpeta de spam.';
+
+// ---------------------------------------------------------------
+// POST /verificacion/reenviar → nuevo enlace de verificación, sin sesión (AR-007)
+// ---------------------------------------------------------------
+async function reenviarVerificacion(req, res, next) {
+  const { correo } = req.datosFormulario;
+  const renderLogin = (status, extra) => res.status(status).render('login', {
+    pagina: 'auth', titulo: 'Iniciar sesión', errores: [], datos: {}, aviso: null, ...extra,
+  });
+  if (req.erroresCampo.correo) {
+    return renderLogin(400, { mostrarReenvio: true, correoReenvio: correo, errorReenvio: req.erroresCampo.correo });
+  }
+  try {
+    if (await userModel.findByEmail(correo)) {
+      const appUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`;
+      const { error } = await userModel.reenviarVerificacionEnAuth(req.supabase, correo, `${appUrl}/auth/confirmar`);
+      if (error) console.error('⚠️  No se pudo reenviar la verificación:', error.code, error.message);
+    }
+    return renderLogin(200, { aviso: MSG_VERIFICACION_REENVIADA });
+  } catch (err) {
+    return next(err);
+  }
 }
 
 async function confirmarCorreo(req, res, next) {
@@ -224,6 +252,7 @@ module.exports = {
   registrar,
   confirmarCorreo,
   mostrarLogin,
+  reenviarVerificacion,
   iniciarSesion,
   cerrarSesion,
 };

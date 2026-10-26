@@ -29,6 +29,11 @@ function confirmarCorreoEnAuth(supabase, { code, tokenHash, type }) {
   return supabase.auth.exchangeCodeForSession(code);
 }
 
+// AR-007: nuevo enlace de verificación del registro (Supabase no revela si el correo existe).
+function reenviarVerificacionEnAuth(supabase, correo, urlRedireccion) {
+  return supabase.auth.resend({ type: 'signup', email: correo, options: { emailRedirectTo: urlRedireccion } });
+}
+
 function guardarRolInicio(supabase, rol) {
   return supabase.auth.updateUser({ data: { rol_inicio: rol } });
 }
@@ -105,6 +110,7 @@ module.exports = {
   iniciarSesionEnAuth,
   obtenerUsuarioActual,
   confirmarCorreoEnAuth,
+  reenviarVerificacionEnAuth,
   guardarRolInicio,
   cerrarSesionEnAuth,
   eliminarDeAuth,

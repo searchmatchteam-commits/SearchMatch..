@@ -21,6 +21,19 @@
       <div class="alerta alerta--exito" role="status"><%= aviso %></div>
     <% } %>
 
+    <% if (locals.mostrarReenvio) { %>
+      <!-- AR-007: el enlace de verificación venció o ya se usó → pedir uno nuevo (sin sesión) -->
+      <form action="/verificacion/reenviar" method="POST" class="formulario sm-form sm-reenvio" novalidate>
+        <div class="campo <%= locals.errorReenvio ? 'campo--error' : '' %>">
+          <label for="correo_reenvio">Correo de tu cuenta</label>
+          <input type="email" id="correo_reenvio" name="correo" value="<%= locals.correoReenvio || '' %>" maxlength="150"
+                 autocomplete="email" placeholder="tucorreo@ejemplo.com" aria-describedby="correo_reenvio-error" required />
+          <small class="campo__error" id="correo_reenvio-error"><%= locals.errorReenvio || '' %></small>
+        </div>
+        <button type="submit" class="btn btn--contorno btn--bloque">Reenviar enlace</button>
+      </form>
+    <% } %>
+
     <form action="/login" method="POST" class="formulario" data-validar="login" novalidate>
       <div class="campo">
         <label for="correo">Correo</label>
