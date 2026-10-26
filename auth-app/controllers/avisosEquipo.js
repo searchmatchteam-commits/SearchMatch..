@@ -56,4 +56,10 @@ function desafioEnviado(usuario, idRival, idPropio = null) {
   });
 }
 
-module.exports = { solicitudEnviada, solicitudRespondida, invitacionEnviada, invitacionAceptada, desafioEnviado };
+/** PE-016 · El capitán transfirió la capitanía: avisa al nuevo capitán. */
+function capitaniaTransferida(idUsuarioNuevo, equipo, idEquipo) {
+  return seguro(() => notificacionModel.notificarUsuario(idUsuarioNuevo, 'equipo',
+    `Ahora eres el capitán de ${equipo}. Ya puedes administrar su plantel, sus desafíos y sus partidos.`, `/mi-equipo?equipo=${idEquipo}`));
+}
+
+module.exports = { solicitudEnviada, solicitudRespondida, invitacionEnviada, invitacionAceptada, desafioEnviado, capitaniaTransferida };

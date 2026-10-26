@@ -445,6 +445,30 @@
         <p class="dash-panel__nota eq-vacio">Aún no tienes más jugadores en tu plantel. ¡Comparte tu equipo para que se unan!</p>
       <% } %>
     </section>
+
+    <!-- PE-016: transferir la capitanía a un integrante (el capitán anterior sigue como jugador) -->
+    <% const integrantes = equipo.soyCapitan ? plantel.filter(function (j) { return !j.capitan; }) : []; %>
+    <% if (integrantes.length > 0) { %>
+      <details class="dash-panel eq-panel revelar" id="capitania">
+        <summary class="dash-panel__cabecera">
+          <h2 class="dash-panel__titulo">Transferir capitanía</h2>
+        </summary>
+        <p class="dash-panel__nota">El nuevo capitán administrará el plantel, los desafíos pendientes y los partidos programados. Tú seguirás en el equipo como jugador.</p>
+        <ul class="sm-filas">
+          <% integrantes.forEach(function (j) { %>
+            <li class="sm-fila">
+              <a href="/jugadores/<%= j.id %>"><%= j.nombre %><% if (j.nombreCarta && j.nombreCarta !== j.nombre) { %> «<%= j.nombreCarta %>»<% } %></a>
+              <span><%= j.posicion %></span>
+              <form action="/equipos/<%= equipo.id %>/capitania/<%= j.id %>" method="POST"
+                    data-confirmar="<%= j.nombre %><% if (j.nombreCarta && j.nombreCarta !== j.nombre) { %> («<%= j.nombreCarta %>»)<% } %> pasará a ser el capitán de <%= equipo.nombre %> y tú quedarás como jugador. Solo el nuevo capitán podrá devolverte la capitanía."
+                    data-confirmar-titulo="¿Transferir la capitanía?" data-confirmar-boton="Transferir">
+                <button type="submit" class="btn btn--contorno btn--chico">Hacer capitán</button>
+              </form>
+            </li>
+          <% }) %>
+        </ul>
+      </details>
+    <% } %>
   </div>
 </section>
 

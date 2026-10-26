@@ -66,6 +66,7 @@ router.post('/equipos/:id/alineacion', requireAuth, requireRol, equipoController
 router.post('/equipos/:id/modalidades', requireAuth, requireRol, equipoController.actualizarModalidades);
 // Salida del plantel: el capitán saca a un jugador; el jugador sale de un equipo (no si es su capitán).
 router.post('/equipos/:id/plantel/:idJugador/sacar', requireAuth, requireRol, equipoController.sacar);
+router.post('/equipos/:id/capitania/:idJugador', requireAuth, requireRol, equipoController.transferirCapitania); // PE-016
 router.post('/equipos/:id/salir', requireAuth, requireRol, equipoController.salir);
 router.get('/equipos/:id/escudo', requireAuth, equipoController.servirEscudo);
 router.post('/equipos/:id/escudo', requireAuth, requireRol, subirImagen, equipoController.subirEscudo);
