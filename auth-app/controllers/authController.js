@@ -54,6 +54,7 @@ function renderRegistroConError(req, res, status, mensaje) {
       nombre: req.datosFormulario.nombre,
       apellido: req.datosFormulario.apellido,
       correo: req.datosFormulario.correo,
+      correo_secundario: req.datosFormulario.correoSecundario || '',
       telefono: req.body.telefono || '',
       fecha_nacimiento: req.datosFormulario.fechaNacimiento,
       acepto_terminos: req.body.acepto_terminos === 'si',
@@ -71,7 +72,7 @@ function mostrarRegistro(req, res) {
 }
 
 async function registrar(req, res, next) {
-  const { nombre, apellido, correo, telefono, fechaNacimiento } = req.datosFormulario;
+  const { nombre, apellido, correo, correoSecundario, telefono, fechaNacimiento } = req.datosFormulario;
   const password = req.body.password;
 
   try {
@@ -103,6 +104,7 @@ async function registrar(req, res, next) {
         nombre,
         apellido,
         correo,
+        correoSecundario,
         telefono,
         fechaNacimiento,
       });

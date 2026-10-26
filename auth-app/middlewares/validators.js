@@ -12,6 +12,7 @@ const REGEX_CELULAR_CL = /^(?:\+?56)?(9\d{8})$/;
 
 const { POSICIONES, NIVELES, ESTADISTICAS, STAT_RANGO } = require('../config/perfilJugador');
 const { MODALIDADES } = require('../config/equipo');
+const cuentaModel = require('../models/cuentaModel');
 
 const LONGITUD_MINIMA_PASSWORD = 8;
 const LONGITUD_MAXIMA_NOMBRE = 100; // jugador.nombre_apodo / jugador.apellido
@@ -104,10 +105,11 @@ function errorPasswordSegura(password) {
 /**
  * Valida el formulario de REGISTRO.
  */
-function validarRegistro(req, res, next) {
+async function validarRegistro(req, res, next) {
   const nombre = (req.body.nombre || '').trim();
   const apellido = (req.body.apellido || '').trim();
   const correo = (req.body.correo || '').trim().toLowerCase();
+  const correoSecundario = (req.body.correo_secundario || '').trim().toLowerCase();
   const telefonoIngresado = (req.body.telefono || '').trim();
   const fechaNacimiento = (req.body.fecha_nacimiento || '').trim();
   const password = req.body.password || '';
@@ -133,6 +135,23 @@ function validarRegistro(req, res, next) {
     errores.push('El formato del correo no es válido.');
   }
 
+  // AR-001 — correo secundario opcional: formato, distinto del principal y libre en otras cuentas.
+  if (correoSecundario) {
+    if (!REGEX_CORREO.test(correoSecundario) || correoSecundario.length > LONGITUD_MAXIMA_CORREO) {
+      errores.push('El formato del correo secundario no es válido.');
+    } else if (correoSecundario === correo) {
+      errores.push('El correo secundario debe ser distinto del principal.');
+    } else {
+      try {
+        if (await cuentaModel.correoUsadoPorOtraCuenta(correoSecundario, null)) {
+          errores.push('El correo secundario ya está registrado en otra cuenta.');
+        }
+      } catch (err) {
+        return next(err);
+      }
+    }
+  }
+
   const telefono = normalizarTelefono(telefonoIngresado);
   if (!telefonoIngresado) {
     errores.push('El teléfono es obligatorio.');
@@ -155,11 +174,12 @@ function validarRegistro(req, res, next) {
   if (!aceptoTerminos) errores.push('Debes aceptar los términos y condiciones y la política de privacidad.');
 
   // Valores para el controlador (teléfono ya normalizado) y para re-pintar el formulario.
-  req.datosFormulario = { nombre, apellido, correo, telefono, fechaNacimiento };
+  req.datosFormulario = { nombre, apellido, correo, correoSecundario: correoSecundario || null, telefono, fechaNacimiento };
   const datos = {
     nombre,
     apellido,
     correo,
+    correo_secundario: correoSecundario,
     telefono: telefonoIngresado,
     fecha_nacimiento: fechaNacimiento,
     acepto_terminos: aceptoTerminos, // NUEVO: AR-011 (la casilla sigue marcada si hay otros errores)

@@ -78,6 +78,25 @@
         <small class="campo__error" id="correo-error"></small>
       </div>
 
+      <div class="campo">
+        <label for="correo_secundario">Correo secundario <span class="sm-opcional">(opcional)</span></label>
+        <div class="campo__control">
+          <svg class="campo__icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
+          <input
+            type="email"
+            id="correo_secundario"
+            name="correo_secundario"
+            placeholder="otrocorreo@ejemplo.com"
+            value="<%= datos.correo_secundario || '' %>"
+            autocomplete="email"
+            maxlength="150"
+            aria-describedby="correo_secundario-error correo_secundario-ayuda"
+          />
+        </div>
+        <small class="campo__error" id="correo_secundario-error"></small>
+        <small class="campo__ayuda" id="correo_secundario-ayuda">Sirve para recuperar tu cuenta. Debe ser distinto del principal.</small>
+      </div>
+
       <div class="formulario__fila">
         <div class="campo">
           <label for="telefono">Teléfono (WhatsApp)</label>

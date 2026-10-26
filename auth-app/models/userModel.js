@@ -63,7 +63,7 @@ async function findByAuthId(authId) {
   return resultado.rows[0];
 }
 
-async function create({ authId, nombre, apellido, correo, telefono, fechaNacimiento }) {
+async function create({ authId, nombre, apellido, correo, correoSecundario = null, telefono, fechaNacimiento }) {
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
@@ -77,10 +77,10 @@ async function create({ authId, nombre, apellido, correo, telefono, fechaNacimie
     }
 
     const usuario = await cliente.query(
-      `INSERT INTO usuario (auth_id, correo, telefono, id_rol_aplicacion)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO usuario (auth_id, correo, correo_secundario, telefono, id_rol_aplicacion)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [authId, correo, telefono, rol.rows[0].id]
+      [authId, correo, correoSecundario, telefono, rol.rows[0].id]
     );
     const idUsuario = usuario.rows[0].id;
 

@@ -22,6 +22,15 @@ const REGLAS = {
     return null;
   },
 
+  correo_secundario: (valor, formulario) => {
+    if (!valor) return null;
+    if (!REGEX_CORREO.test(valor)) return 'El formato del correo secundario no es válido.';
+    if (valor.toLowerCase() === formulario.elements.correo.value.trim().toLowerCase()) {
+      return 'El correo secundario debe ser distinto del principal.';
+    }
+    return null;
+  },
+
   telefono: (valor) => {
     if (!valor) return 'El teléfono es obligatorio.';
     if (!REGEX_CELULAR_CL.test(valor.replace(/[\s\-().]/g, ''))) {
