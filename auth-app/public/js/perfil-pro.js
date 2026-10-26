@@ -14,6 +14,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const conMouse = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   const ATERRIZAJE_MS = 780; // momento de la caída (52% de 1.5s) en que la carta toca el suelo
 
+  /* ---------- PE-001: estado de carga de la carta ---------- */
+  // El skeleton se quita cuando están listas las fuentes y la foto (cargada o con error).
+  // Tope de 8 s para que nunca quede pegado si algo no responde.
+  const heroe = document.querySelector('[data-heroe-carta]');
+  if (heroe) {
+    const foto = heroe.querySelector('.carta-jugador__foto img[src]');
+    const fotoLista = !foto || foto.complete
+      ? Promise.resolve()
+      : new Promise((listo) => {
+        foto.addEventListener('load', listo, { once: true });
+        foto.addEventListener('error', listo, { once: true });
+      });
+    const fuentesListas = document.fonts ? document.fonts.ready : Promise.resolve();
+    const tope = new Promise((listo) => setTimeout(listo, 8000));
+    Promise.race([Promise.all([fotoLista, fuentesListas]), tope]).then(() => {
+      heroe.removeAttribute('aria-busy');
+      const texto = heroe.querySelector('[data-carta-cargando-texto]');
+      if (texto) texto.textContent = '';
+    });
+  }
+
   /* ---------- 2) Caída desde el centro superior ---------- */
   const caida = document.querySelector('[data-caida]');
   if (caida && !sinMovimiento) {

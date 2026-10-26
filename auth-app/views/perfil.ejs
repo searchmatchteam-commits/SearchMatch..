@@ -27,11 +27,21 @@
 <section class="perfil perfil--pro">
   <!-- ============ IZQUIERDA: EL HÉROE ============ -->
   <div class="perfil__carta">
-    <div class="pp-heroe">
+    <!-- PE-001: aria-busy + skeleton mientras cargan la foto y las fuentes (perfil-pro.js los quita) -->
+    <div class="pp-heroe" aria-busy="true" data-heroe-carta>
       <!-- La caída elástica va en este envoltorio: la carta conserva su transform para el tilt -->
       <div class="pp-heroe__caida" data-caida>
         <%- include('partials/carta-jugador', { jugador, editor: false, tilt: 15 }) %>
       </div>
+      <!-- Fuera de la caída: el skeleton queda quieto donde aterriza la carta -->
+      <div class="pp-carga" data-carta-cargando aria-hidden="true">
+        <span class="skeleton pp-carga__carta">
+          <span class="skeleton skeleton--circulo pp-carga__foto"></span>
+          <span class="skeleton skeleton--linea pp-carga__linea"></span>
+          <span class="skeleton skeleton--linea skeleton--corta pp-carga__linea"></span>
+        </span>
+      </div>
+      <span class="solo-lectores" role="status" data-carta-cargando-texto>Cargando tu carta…</span>
       <span class="pp-heroe__sombra"></span>
     </div>
   </div>
