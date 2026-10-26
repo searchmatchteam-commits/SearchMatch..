@@ -115,3 +115,79 @@ ALTER TABLE partido
 
 ALTER TABLE reservar_cancha
     ADD COLUMN IF NOT EXISTS id_partido INT REFERENCES partido(id);
+
+
+-- ============================================================
+-- F8-1) FORMACIÓN Y ALINEACIÓN DEL EQUIPO (/crear-equipo y /mi-equipo)
+-- ============================================================
+-- Reemplazada por F8-2 (una alineación por modalidad): F8-2 copia estos datos y retira las columnas.
+-- formacion: líneas de jugadores de campo, ej. '4-3-3' (config/equipo.js, FORMACIONES).
+-- NULL = la primera formación de su modalidad.
+-- puesto: índice del puesto titular en la formación (0 = arquero); NULL = suplente.
+-- Cada puesto lo ocupa un solo jugador por equipo.
+ALTER TABLE equipo
+    ADD COLUMN IF NOT EXISTS formacion VARCHAR(10);
+
+ALTER TABLE equipo_jugador
+    ADD COLUMN IF NOT EXISTS puesto SMALLINT CHECK (puesto BETWEEN 0 AND 10);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_equipo_jugador_puesto
+    ON equipo_jugador (id_equipo, puesto) WHERE puesto IS NOT NULL;
+
+
+-- ============================================================
+-- F8-2) VARIAS MODALIDADES POR EQUIPO, ALINEACIÓN DE CADA UNA Y MODALIDAD DEL DESAFÍO
+-- ============================================================
+-- Un equipo puede jugar varias modalidades (ej. Fútbol 7 y Fútbol 11). equipo.id_modalidad
+-- queda como la modalidad principal (una de las de equipo_modalidad).
+-- formacion: líneas de jugadores de campo, ej. '4-3-3' (config/equipo.js, FORMACIONES);
+-- NULL = la primera formación de la modalidad.
+CREATE TABLE IF NOT EXISTS equipo_modalidad (
+    id_equipo    INT NOT NULL REFERENCES equipo(id) ON DELETE CASCADE,
+    id_modalidad INT NOT NULL REFERENCES modalidad(id),
+    formacion    VARCHAR(10),
+    PRIMARY KEY (id_equipo, id_modalidad)
+);
+ALTER TABLE equipo_modalidad ENABLE ROW LEVEL SECURITY;
+
+INSERT INTO equipo_modalidad (id_equipo, id_modalidad)
+SELECT id, id_modalidad FROM equipo WHERE id_modalidad IS NOT NULL
+ON CONFLICT DO NOTHING;
+
+-- Titulares de cada alineación: puesto = índice en la formación (0 = arquero); quien no está aquí es suplente.
+-- Si el jugador sale del plantel o el equipo deja la modalidad, sus puestos se borran solos.
+CREATE TABLE IF NOT EXISTS alineacion_puesto (
+    id_equipo    INT NOT NULL,
+    id_modalidad INT NOT NULL,
+    id_jugador   INT NOT NULL,
+    puesto       SMALLINT NOT NULL CHECK (puesto BETWEEN 0 AND 10),
+    PRIMARY KEY (id_equipo, id_modalidad, id_jugador),
+    UNIQUE (id_equipo, id_modalidad, puesto),
+    FOREIGN KEY (id_equipo, id_modalidad) REFERENCES equipo_modalidad (id_equipo, id_modalidad) ON DELETE CASCADE,
+    FOREIGN KEY (id_jugador, id_equipo) REFERENCES equipo_jugador (id_jugador, id_equipo) ON DELETE CASCADE
+);
+ALTER TABLE alineacion_puesto ENABLE ROW LEVEL SECURITY;
+
+-- Lo guardado con F8-1 (una sola alineación por equipo) pasa a las tablas nuevas y esas columnas se retiran.
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipo' AND column_name = 'formacion') THEN
+        UPDATE equipo_modalidad em SET formacion = e.formacion
+          FROM equipo e WHERE e.id = em.id_equipo AND e.id_modalidad = em.id_modalidad AND e.formacion IS NOT NULL;
+        ALTER TABLE equipo DROP COLUMN formacion;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipo_jugador' AND column_name = 'puesto') THEN
+        INSERT INTO alineacion_puesto (id_equipo, id_modalidad, id_jugador, puesto)
+        SELECT ej.id_equipo, e.id_modalidad, ej.id_jugador, ej.puesto
+          FROM equipo_jugador ej JOIN equipo e ON e.id = ej.id_equipo
+         WHERE ej.puesto IS NOT NULL AND e.id_modalidad IS NOT NULL
+        ON CONFLICT DO NOTHING;
+        DROP INDEX IF EXISTS ux_equipo_jugador_puesto;
+        ALTER TABLE equipo_jugador DROP COLUMN puesto;
+    END IF;
+END $$;
+
+-- En qué modalidad se juega el desafío (una que tengan los dos equipos). NULL en los antiguos:
+-- se usa la modalidad principal del desafiante.
+ALTER TABLE desafio
+    ADD COLUMN IF NOT EXISTS id_modalidad INT REFERENCES modalidad(id);

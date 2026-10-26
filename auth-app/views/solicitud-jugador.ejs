@@ -31,10 +31,10 @@
 
     <% if (solicitud.pendiente) { %>
       <div class="perfil__acciones perfil__acciones--solicitud">
-        <form action="/mi-equipo/solicitudes/<%= solicitud.id %>/aceptar" method="POST">
+        <form action="/mi-equipo/solicitudes/<%= solicitud.id %>/aceptar?equipo=<%= solicitud.equipo.id %>" method="POST">
           <button type="submit" class="btn btn--verde btn--grande">Aceptar</button>
         </form>
-        <form action="/mi-equipo/solicitudes/<%= solicitud.id %>/rechazar" method="POST">
+        <form action="/mi-equipo/solicitudes/<%= solicitud.id %>/rechazar?equipo=<%= solicitud.equipo.id %>" method="POST">
           <button type="submit" class="btn btn--contorno btn--grande">Rechazar</button>
         </form>
       </div>

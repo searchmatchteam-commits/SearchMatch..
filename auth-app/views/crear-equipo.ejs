@@ -1,15 +1,25 @@
 <%- include('partials/header') %>
 <%
+  // Pasos del wizard: 1 y 2 son el formulario; el 3 se muestra al crear el equipo (/crear-equipo/listo).
   const pasos = ['Crea tu equipo', 'Configura tu equipo', 'Confirmación'];
   const iconoEscudo = '<path d="M12 3l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6z" />';
   const iconoCheck = '<path d="M5 12.5l4.2 4.2L19 7" />';
+  // "Fútbol 7 y 11" (mismo texto que models/equipoModel.js y crear-equipo.js)
+  function textoModalidades(lista) {
+    const n = (lista || []).slice().sort(function (a, b) { return a - b; });
+    if (n.length === 0) return '';
+    if (n.length === 1) return catalogos.MODALIDADES[n[0]];
+    return 'Fútbol ' + n.slice(0, -1).join(', ') + ' y ' + n[n.length - 1];
+  }
+  // Vista previa "Así te verán los rivales" con lo que ya se sabe del equipo
   const vista = creado || {
     nombre: datos.nombre,
-    detalle: [catalogos.MODALIDADES[datos.jugadores], catalogos.NIVELES[datos.nivel]].filter(Boolean).join(' · '),
+    detalle: [textoModalidades(datos.modalidades), catalogos.NIVELES[datos.nivel]].filter(Boolean).join(' · '),
   };
 %>
 
 <section class="wizard ceq">
+  <!-- Lado izquierdo: branding y vista previa del club -->
   <aside class="wizard__marca">
     <span class="rol__eyebrow">SEARCH MATCH · EQUIPOS</span>
     <h2 class="wizard__marca-titulo">Lleva a tu equipo al siguiente nivel</h2>
@@ -34,6 +44,7 @@
       </li>
     </ul>
 
+    <!-- crear-equipo.js actualiza nombre, detalle y escudo mientras se escribe -->
     <div class="ceq-vista">
       <span class="ceq-etiqueta">Así te verán los rivales</span>
       <div class="ceq-club">
@@ -46,7 +57,9 @@
     </div>
   </aside>
 
+  <!-- Lado derecho: el formulario -->
   <div class="wizard__panel">
+    <!-- Barra de progreso: crear-equipo.js actualiza las clases y --progreso al cambiar de paso -->
     <div class="pasos pasos--3" data-pasos style="--progreso: <%= (paso - 1) / (pasos.length - 1) %>">
       <div class="pasos__barra" aria-hidden="true"><span></span></div>
       <ol class="pasos__lista">
@@ -64,12 +77,13 @@
     </div>
 
     <% if (creado) { %>
+      <!-- ============ PASO 3: CONFIRMACIÓN ============ -->
       <div class="ceq-listo">
         <span class="ceq-listo__icono" aria-hidden="true"><svg viewBox="0 0 24 24"><%- iconoCheck %></svg></span>
         <h1 class="wizard__titulo">¡Tu equipo está listo!</h1>
         <p class="wizard__subtitulo">Ya eres el capitán de <strong><%= creado.nombre %></strong>: los jugadores ya pueden encontrarlo y pedir unirse.</p>
         <div class="ceq-club ceq-club--grande">
-          <span class="ceq-escudo"><svg viewBox="0 0 24 24" aria-hidden="true"><%- iconoEscudo %></svg></span>
+          <span class="ceq-escudo"><% if (creado.escudo) { %><img src="<%= creado.escudo %>" alt="" /><% } else { %><svg viewBox="0 0 24 24" aria-hidden="true"><%- iconoEscudo %></svg><% } %></span>
           <span class="ceq-club__texto">
             <strong class="ceq-club__nombre"><%= creado.nombre %></strong>
             <span class="ceq-club__detalle"><%= creado.detalle %></span>
@@ -78,24 +92,28 @@
         </div>
         <div class="wizard__nav">
           <a class="btn btn--oscuro btn--grande" href="/equipos">Ver equipos</a>
-          <a class="btn btn--verde btn--grande" href="/mi-equipo">Entrar al panel <span aria-hidden="true">→</span></a>
+          <a class="btn btn--verde btn--grande" href="/mi-equipo?equipo=<%= creado.id %>">Entrar al panel <span aria-hidden="true">→</span></a>
         </div>
       </div>
     <% } else { %>
       <form action="/crear-equipo" method="POST" class="formulario wizard__form" data-wizard-equipo data-paso-inicial="<%= paso %>" novalidate>
+        <!-- ============ PASO 1: IDENTIDAD ============ -->
         <fieldset class="wizard__paso" data-paso="1">
           <legend class="wizard__titulo">Crea tu equipo</legend>
           <p class="wizard__subtitulo">Nombre, escudo, zona y nivel de tu escuadra.</p>
 
           <div class="ceq-identidad">
-            <span class="ceq-escudo ceq-escudo--grande" data-escudo><svg viewBox="0 0 24 24" aria-hidden="true"><%- iconoEscudo %></svg></span>
+            <span class="ceq-escudo ceq-escudo--grande" data-escudo><% if (datos.escudo) { %><img src="<%= datos.escudo %>" alt="" /><% } else { %><svg viewBox="0 0 24 24" aria-hidden="true"><%- iconoEscudo %></svg><% } %></span>
             <span class="ceq-identidad__texto">
               <span class="ceq-etiqueta">Identidad de club</span>
               <strong class="ceq-identidad__nombre <%= datos.nombre ? '' : 'ceq-identidad__nombre--vacio' %>" data-vista-nombre><%= datos.nombre || 'Nombre del Club' %></strong>
+              <!-- El archivo no se envía: crear-equipo.js lo reduce y lo guarda como data URL en el campo oculto "escudo" -->
               <label class="ceq-subir">
                 Subir escudo
-                <input type="file" accept="image/*" class="solo-lectores" data-subir-escudo />
+                <input type="file" accept="image/png,image/jpeg,image/webp" class="solo-lectores" data-subir-escudo />
               </label>
+              <small class="campo__error" data-escudo-error></small>
+              <input type="hidden" name="escudo" value="<%= datos.escudo || '' %>" data-escudo-datos />
             </span>
             <span class="ceq-capitan">Capitán</span>
           </div>
@@ -122,6 +140,7 @@
           </div>
         </fieldset>
 
+        <!-- ============ PASO 2: CONFIGURACIÓN ============ -->
         <fieldset class="wizard__paso" data-paso="2">
           <legend class="wizard__titulo">Configura tu equipo</legend>
           <p class="wizard__subtitulo">Con esto te sugerimos rivales de tu nivel y de tu zona.</p>
@@ -144,6 +163,8 @@
             <small class="campo__error" id="nivel-error"></small>
           </div>
 
+          <%# CORRECCIÓN: regla 11 — región y comuna de la lista (para filtrar y recomendar rivales por ubicación).
+              crear-equipo.js muestra solo las comunas de la región elegida; sin JS se ven todas agrupadas. %>
           <div class="formulario__fila">
             <div class="campo">
               <label for="id_region">Región</label>
@@ -179,18 +200,19 @@
                      autocomplete="address-level2" maxlength="100" aria-describedby="zona-error zona-ayuda" required />
             </div>
             <small class="campo__error" id="zona-error"></small>
-            <small class="campo__ayuda" id="zona-ayuda">El sector o la cancha donde suelen jugar. Los rivales cercanos se buscan por la comuna.</small>
+            <small class="campo__ayuda" id="zona-ayuda">El sector o la cancha donde suelen jugar. Los rivales cercanos se buscan por la comuna.</small><%# CORRECCIÓN: regla 11 %>
           </div>
 
-          <div class="grupo-opciones" role="radiogroup" aria-labelledby="modalidad-label" aria-describedby="modalidad-error" data-grupo="modalidad">
+          <%# Tipos de fútbol: se pueden marcar varios (equipo_modalidad). La formación se elige después, en /mi-equipo. %>
+          <div class="grupo-opciones" role="group" aria-labelledby="modalidad-label" aria-describedby="modalidad-error modalidad-ayuda" data-grupo="modalidad">
             <span class="ceq-fila-label">
-              <span class="grupo-opciones__label" id="modalidad-label">Tipo de fútbol</span>
-              <span class="ceq-chip">Aproximado</span>
+              <span class="grupo-opciones__label" id="modalidad-label">Tipos de fútbol</span>
+              <span class="ceq-chip">Puedes elegir varios</span>
             </span>
             <div class="opciones opciones--3 ceq-modalidades">
               <% Object.keys(catalogos.MODALIDADES).forEach(function (jugadores) { %>
                 <label class="opcion opcion--modalidad">
-                  <input class="opcion__radio" type="radio" name="modalidad" value="<%= jugadores %>" <%= String(datos.jugadores) === jugadores ? 'checked' : '' %>
+                  <input class="opcion__radio" type="checkbox" name="modalidad" value="<%= jugadores %>" <%= (datos.modalidades || []).includes(Number(jugadores)) ? 'checked' : '' %>
                          data-texto="<%= catalogos.MODALIDADES[jugadores] %>" />
                   <span class="ceq-marca" aria-hidden="true"><svg viewBox="0 0 24 24"><%- iconoCheck %></svg></span>
                   <span class="ceq-numero"><%= jugadores %></span>
@@ -199,7 +221,9 @@
               <% }) %>
             </div>
             <small class="campo__error" id="modalidad-error"></small>
+            <small class="campo__ayuda" id="modalidad-ayuda">La formación y la alineación de cada uno las armas después en tu panel.</small>
           </div>
+
 
           <div class="ceq-activo">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg>
@@ -207,6 +231,7 @@
           </div>
         </fieldset>
 
+        <!-- Errores del servidor o de crear-equipo.js -->
         <div class="alerta alerta--error" role="alert" data-alerta-errores <%= errores.length > 0 ? '' : 'hidden' %>>
           <ul>
             <% errores.forEach(function (error) { %><li><%= error %></li><% }) %>
@@ -214,9 +239,11 @@
         </div>
 
         <div class="wizard__nav">
+          <!-- Sin JS vuelve a la selección de rol; crear-equipo.js lo convierte en "paso anterior" -->
           <a class="btn btn--oscuro btn--grande" href="/select-role" data-volver>
             <span aria-hidden="true">←</span> Volver
           </a>
+          <!-- Sin JS los dos pasos se ven juntos y este botón crea el equipo -->
           <button type="submit" class="btn btn--verde btn--grande" data-continuar data-texto-cargando="CREANDO EQUIPO...">
             <span class="btn__spinner" aria-hidden="true"></span>
             <span class="btn__texto">Crear equipo</span>

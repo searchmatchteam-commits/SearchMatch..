@@ -1,0 +1,24 @@
+<%
+  // Carta de un jugador en la alineación de /mi-equipo, en un puesto de la cancha o en el banco. Uso:
+  //   include('partials/ficha-alineacion', { jugador, equipo })
+  // jugador: de equipoController.alineacionEnCancha (con carta). Si equipo.soyCapitan, la carta se mueve
+  // (equipo.js: arrastrar, o tocarla y tocar el destino) y lleva la "X" para sacarlo del plantel.
+  const editable = equipo.soyCapitan;
+%>
+<div class="eq-ficha" data-jugador="<%= jugador.id %>"
+     title="<%= jugador.nombre %> · <%= jugador.posicion %><%= jugador.capitan ? ' · Capitán' : '' %>"
+     <% if (editable) { %>tabindex="0" role="button" aria-pressed="false" data-ficha
+     aria-label="<%= jugador.nombre %>, <%= jugador.posicion %><%= jugador.capitan ? ', capitán' : '' %>. Elegir para moverlo"<% } else { %>
+     aria-label="<%= jugador.nombre %>, <%= jugador.posicion %><%= jugador.capitan ? ', capitán' : '' %>"<% } %>>
+  <%- include('carta-jugador', { jugador: jugador.carta, editor: false, mini: true }) %>
+  <% if (jugador.capitan) { %><span class="cancha__c" aria-hidden="true">C</span><% } %>
+  <% if (editable && !jugador.capitan) { %>
+    <!-- Sacar del plantel (equipo.js pide confirmación y lo envía sin recargar) -->
+    <form class="cancha__sacar" action="/equipos/<%= equipo.id %>/plantel/<%= jugador.id %>/sacar" method="POST"
+          data-sacar data-nombre="<%= jugador.nombre %>">
+      <button type="submit" class="cancha__sacar-boton" title="Sacar a <%= jugador.nombre %> del equipo" aria-label="Sacar a <%= jugador.nombre %> del equipo">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>
+    </form>
+  <% } %>
+</div>

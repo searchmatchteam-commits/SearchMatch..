@@ -1,19 +1,31 @@
+/* public/css/dashboard.css
+   Dashboard "cyber-sport" de SearchMatch (solo se carga en /dashboard, después de cyber.css).
+   Tokens, fondo, cursor de luz y ripple están en cyber.css.
+   Secciones: tokens · hero · CTA y botones · visual con parallax · HUD del remate ·
+   paneles · carta holográfica · stats · skeletons · accesos · aviso · dock · responsive.
+   Rendimiento: todo lo que se anima en bucle usa solo transform y opacity (GPU), ningún
+   elemento usa backdrop-filter y las animaciones se pausan durante el scroll (ver cyber.css). */
+
+/* ---------- Tokens (los compartidos están en cyber.css) ---------- */
 .pagina-dashboard,
 .pagina-equipo,
 .pagina-perfil {
   --alto-dock: 50px;
+  /* Espacio para que el dock flotante no tape el final de la página */
   padding-bottom: calc(var(--alto-dock) + 28px + env(safe-area-inset-bottom));
 }
 
+/* El perfil no carga cyber.css: tokens que usan el dock y el aviso, con el verde de style.css */
 .pagina-perfil {
   --verde-rgb: 57, 255, 20;
   --verde-borde: rgba(var(--verde-rgb), 0.3);
 }
 
+/* ---------- Hero ---------- */
 .dash-hero {
   position: relative;
   padding: 44px 0 24px;
-  overflow-x: clip;
+  overflow-x: clip;          /* la pelota de fondo (celular) no genera scroll horizontal */
 }
 
 .dash-hero__grid {
@@ -74,12 +86,13 @@
   margin-bottom: 0.25em;
 }
 
+/* Nombre con degradado blanco → neón */
 .dash-hero__nombre {
   max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-bottom: 0.1em;
+  padding-bottom: 0.1em;     /* que el "..." no corte los descendentes (g, p, y) */
   color: var(--verde);
   background: linear-gradient(100deg, #ffffff 0%, #d9ffe2 35%, var(--verde) 75%, var(--verde-oscuro) 100%);
   -webkit-background-clip: text;
@@ -103,6 +116,7 @@
   margin-top: 8px;
 }
 
+/* ---------- CTA "Buscar partido": respira y brilla ---------- */
 .dash-cta {
   position: relative;
   isolation: isolate;
@@ -142,6 +156,7 @@
   stroke-linecap: round;
 }
 
+/* Halo que "respira": solo cambian opacity y scale */
 .dash-cta__halo {
   position: absolute;
   inset: 0;
@@ -161,6 +176,7 @@
   }
 }
 
+/* Destello diagonal que cruza el botón al pasar el mouse */
 .dash-cta::after {
   content: "";
   position: absolute;
@@ -190,6 +206,7 @@
   transform: translateY(0) scale(0.97);
 }
 
+/* Botón secundario de vidrio */
 .dash-btn-vidrio {
   position: relative;
   display: inline-flex;
@@ -235,6 +252,7 @@
   }
 }
 
+/* Mini resumen de la carta */
 .dash-resumen {
   display: inline-flex;
   align-items: center;
@@ -292,6 +310,8 @@
   transform: translateX(3px);
 }
 
+/* ---------- Visual: balón 3D con capas de parallax ---------- */
+/* Celular: la pelota queda de fondo tenue detrás del saludo (no empuja el contenido) */
 .dash-hero__visual {
   position: absolute;
   top: -50px;
@@ -303,6 +323,7 @@
   z-index: 0;
 }
 
+/* dashboard.js mueve cada capa según data-profundidad */
 .dash-capa {
   position: absolute;
   inset: 0;
@@ -322,6 +343,7 @@
   max-width: none;
 }
 
+/* Glows del escenario con el verde del dashboard */
 .dash-hero .ball-stage::before {
   background: radial-gradient(circle, rgba(var(--verde-rgb), 0.24) 0%, rgba(var(--verde-rgb), 0.07) 32%, transparent 60%);
 }
@@ -340,6 +362,7 @@
   border-color: rgba(var(--verde-rgb), calc(0.22 + var(--energia) * 0.5));
 }
 
+/* Órbitas que giran detrás de la pelota */
 .dash-orbita {
   position: absolute;
   inset: 4%;
@@ -356,6 +379,7 @@
   animation-direction: reverse;
 }
 
+/* Satélite brillante sobre la órbita */
 .dash-orbita::after {
   content: "";
   position: absolute;
@@ -377,6 +401,7 @@
   background: #e8ffee;
 }
 
+/* Partículas de luz que suben: posición repartida en círculo con sin()/cos() */
 .dash-particula {
   --angulo: calc(var(--i) * 25.7deg);
   --radio: calc(30% + mod(var(--i) * 7, 5) * 4%);
@@ -418,6 +443,7 @@
   display: none;
 }
 
+/* ---------- HUD del remate (ball.js alterna .visible, .golpe y .record) ---------- */
 .ball-hud {
   position: absolute;
   top: 6%;
@@ -485,6 +511,7 @@
   color: var(--texto-suave);
 }
 
+/* ---------- Paneles de vidrio ---------- */
 .dash-paneles {
   padding: 16px 0 40px;
 }
@@ -508,6 +535,7 @@
   box-shadow: var(--sombra-panel);
 }
 
+/* Filo neón en el borde superior */
 .dash-panel::before {
   content: "";
   position: absolute;
@@ -568,6 +596,7 @@
   max-width: 28rem;
 }
 
+/* ---------- Invitaciones de capitanes ---------- */
 .dash-invitaciones {
   list-style: none;
   display: flex;
@@ -598,10 +627,12 @@
   gap: 8px;
 }
 
+/* ---------- Tu carta: silueta + físico y estadísticas ---------- */
 .dash-panel--carta {
   overflow: hidden;
 }
 
+/* ---------- Visualizador corporal (views/partials/visualizador-corporal.ejs) ---------- */
 .vc {
   display: grid;
   place-items: center;
@@ -618,6 +649,7 @@
   font-family: "Barlow Condensed", var(--fuente);
 }
 
+/* visualizador-corporal.js coloca la silueta y los valores: hasta entonces no se muestran */
 html.js .vc:not(.vc--listo) .vc__dinamico {
   visibility: hidden;
 }
@@ -647,7 +679,7 @@ html.js .vc:not(.vc--listo) .vc__dinamico {
 
 .vc__regla text {
   fill: #b7c4b7;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.5px;
   text-anchor: end;
@@ -688,6 +720,15 @@ html.js .vc:not(.vc--listo) .vc__dinamico {
   dominant-baseline: central;
 }
 
+/* Guía punteada de la cintura a la etiqueta del peso */
+.vc__peso-guia {
+  stroke: #39ff14;
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  opacity: 0.6;
+}
+
+/* ---------- Altura y peso (sobre las barras) ---------- */
 .dash-fisico {
   display: flex;
   flex-direction: column;
@@ -727,6 +768,7 @@ html.js .vc:not(.vc--listo) .vc__dinamico {
   color: var(--verde);
 }
 
+/* ---------- Barras de estadísticas ---------- */
 .dash-stats {
   list-style: none;
   display: grid;
@@ -763,6 +805,7 @@ html.js .vc:not(.vc--listo) .vc__dinamico {
   overflow: hidden;
 }
 
+/* Se llena al aparecer el panel (scaleX: solo GPU) */
 .dash-stat__relleno {
   position: absolute;
   inset: 0;
@@ -784,6 +827,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
 .dash-stat:nth-child(5) .dash-stat__relleno { transition-delay: 0.32s; }
 .dash-stat:nth-child(6) .dash-stat__relleno { transition-delay: 0.4s; }
 
+/* ---------- Mis equipos ---------- */
 .dash-equipos {
   list-style: none;
   display: flex;
@@ -791,6 +835,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   gap: 10px;
 }
 
+/* El equipo (desplegable) y, si es capitán, "Administrar" a su lado */
 .dash-equipo {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -798,6 +843,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   gap: 10px;
 }
 
+/* Sin "Administrar", el equipo ocupa toda la fila */
 .dash-equipo__detalle:only-child {
   grid-column: 1 / -1;
 }
@@ -826,6 +872,11 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Fila sin desplegable (lista de equipos del capitán en /mi-equipo) */
+.dash-equipo__resumen--fija {
+  cursor: default;
+}
+
 .dash-equipo__resumen::-webkit-details-marker {
   display: none;
 }
@@ -836,6 +887,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   border-radius: 16px;
 }
 
+/* Imagen del escudo (partials/escudo-equipo.ejs): cabe entera en el recuadro del escudo */
 .escudo-equipo__img {
   width: 100%;
   height: 100%;
@@ -899,7 +951,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
 .dash-equipo__admin {
   display: inline-flex;
   align-items: center;
-  min-height: 66px;
+  min-height: 66px;          /* misma altura que la fila del equipo */
   padding: 0 18px;
   border-radius: 16px;
   border: 1px solid var(--verde-borde);
@@ -920,8 +972,9 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   padding: 0 14px 14px;
 }
 
+/* "Salir del equipo": gris discreto que se vuelve rojo al pasar el mouse */
 .dash-equipo__salir-boton {
-  min-height: 66px;
+  min-height: 66px;          /* misma altura que la fila del equipo */
   padding: 0 16px;
   border-radius: 16px;
   font: inherit;
@@ -946,6 +999,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   opacity: 0.6;
 }
 
+/* Celular: "Administrar" pasa debajo del equipo, a todo el ancho */
 @media (max-width: 559px) {
   .dash-equipo {
     grid-template-columns: minmax(0, 1fr);
@@ -963,6 +1017,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   }
 }
 
+/* Plantel al desplegar el equipo */
 .dash-plantel {
   list-style: none;
   display: flex;
@@ -999,6 +1054,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   color: var(--texto-suave);
 }
 
+/* ---------- Skeletons con shimmer ---------- */
 .dash-skeletons {
   list-style: none;
   display: flex;
@@ -1071,6 +1127,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   border-radius: 999px;
 }
 
+/* ---------- Aviso flotante de "próximamente" (encima del dock) ---------- */
 .panel-aviso {
   position: fixed;
   left: 50%;
@@ -1096,15 +1153,17 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   transform: translate(-50%, 0);
 }
 
+/* ---------- Dock: barra de navegación inferior flotante ---------- */
 .dock {
   position: fixed;
   left: 50%;
   bottom: calc(14px + env(safe-area-inset-bottom));
   z-index: 50;
-  width: min(calc(100% - 24px), 420px);
+  width: min(calc(100% - 24px), 480px);   /* 7 ítems (8 con Administración) */
   transform: translateX(-50%);
   padding: 5px;
   border-radius: 999px;
+  /* Sin backdrop-filter: el desenfoque se recalcularía en cada cuadro del scroll */
   background: linear-gradient(160deg, rgba(20, 28, 20, 0.94), rgba(8, 11, 8, 0.94));
   border: 1px solid rgba(255, 255, 255, 0.09);
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -1113,7 +1172,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
 .dock__lista {
   list-style: none;
   display: grid;
-  grid-auto-flow: column;
+  grid-auto-flow: column;    /* un ítem por columna, sin importar cuántos haya */
   grid-auto-columns: 1fr;
   gap: 4px;
 }
@@ -1125,7 +1184,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   align-items: center;
   width: 100%;
   padding: 9px 6px 13px;
-  border: 0;
+  border: 0;                 /* Canchas y Equipos son <button>: sin estilos del navegador */
   border-radius: 999px;
   background: transparent;
   font: inherit;
@@ -1155,6 +1214,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   stroke-linejoin: round;
 }
 
+/* Pestaña actual: ícono neón con resplandor y un punto debajo */
 .dock__item--activo {
   color: var(--verde);
 }
@@ -1181,6 +1241,118 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   box-shadow: 0 0 8px 2px rgba(var(--verde-rgb), 0.6);
 }
 
+/* ---------- Calendario (solo la vista del mes, sin eventos) ---------- */
+.dash-panel--calendario {
+  background: #121212;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dash-panel--calendario .dash-panel__titulo::first-letter {
+  text-transform: uppercase;
+}
+
+.sm-cal__flechas {
+  display: flex;
+  gap: 6px;
+}
+
+.sm-cal__flecha {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #1a1a1a;
+  color: var(--texto);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sm-cal__flecha svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sm-cal__flecha:hover,
+.sm-cal__flecha:focus-visible {
+  color: var(--verde);
+  border-color: var(--verde-borde);
+  box-shadow: 0 0 12px rgba(var(--verde-rgb), 0.3);
+}
+
+.sm-cal__semana,
+.sm-cal__dias {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  text-align: center;
+}
+
+.sm-cal__semana {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.sm-cal__dia {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--texto);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.sm-cal__dia:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sm-cal__dia:focus-visible {
+  outline: 2px solid var(--verde-borde);
+  outline-offset: 1px;
+}
+
+/* Día elegido: anillo verde (hoy mantiene su relleno verde) */
+.sm-cal__dia[aria-pressed="true"] {
+  border-color: var(--verde);
+  background: rgba(var(--verde-rgb), 0.12);
+  color: var(--verde);
+  font-weight: 800;
+}
+
+.sm-cal__dia--hoy,
+.sm-cal__dia--hoy:hover,
+.sm-cal__dia--hoy[aria-pressed="true"] {
+  background: var(--verde);
+  color: var(--sobre-verde);
+  font-weight: 800;
+  box-shadow: 0 0 14px rgba(var(--verde-rgb), 0.55);
+}
+
+/* Hoy elegido: anillo blanco para que se note sobre el verde */
+.sm-cal__dia--hoy[aria-pressed="true"] {
+  border-color: #fff;
+}
+
+/* ---------- Responsive ---------- */
 @media (min-width: 760px) {
   .dash-paneles__grid {
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
@@ -1191,6 +1363,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
     grid-column: 1 / -1;
   }
 
+  /* Silueta a la izquierda; altura, peso y estadísticas a la derecha */
   .dash-panel--carta {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -1254,6 +1427,7 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   }
 }
 
+/* Celular: menos capas animadas detrás del texto */
 @media (max-width: 899px) {
   .dash-capa--particulas,
   .ball-hud {

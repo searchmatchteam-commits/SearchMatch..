@@ -1,0 +1,1134 @@
+/* public/css/tema-claro.css
+   Modo claro de SearchMatch. El oscuro es el predeterminado: aquí TODO va bajo html[data-theme="light"]
+   (lo pone el script del <head> en partials/header.ejs y el botón del navbar, main.js).
+   Se carga después de las demás hojas: el prefijo html[data-theme="light"] suma especificidad, así que
+   gana sin !important y las hojas originales no cambian.
+   Idea del modo claro ("soft light"): fondo gris suave #E5E7EB (nunca blanco puro), tarjetas blanco humo
+   #F9FAFB con bordes grises sutiles, texto gris muy oscuro #111827.
+   El neón NO se usa en claro: sobre fondo claro es ilegible (contraste ~1.3:1) y sus resplandores se ven
+   sucios. Acentos y botones principales pasan a un verde sólido oscuro (#15803D) con texto blanco encima
+   (--neon y --verde valen eso aquí), y los brillos verdes se apagan (sección final "Sin brillos neón").
+   Secciones: tokens · transición del cambio · base y navbar · botones y rellenos · superficies ·
+   formularios · fondos de página · landing · wizard y registro · carta de jugador · dashboard y dock ·
+   equipo y modales · mapa · módulos (sm-*) · estados y alertas · sin brillos neón. */
+
+/* ---------- Tokens ---------- */
+/* En :root y en body: las páginas "cyber" y el perfil redefinen los tokens en la clase del body (.pagina-*) */
+html[data-theme="light"],
+html[data-theme="light"] body {
+  color-scheme: light;
+  --fondo: #e5e7eb;                 /* gris suave: el blanco puro encandila y hace "flotar" las tarjetas */
+  --fondo-verde: #e3e7e4;
+  --superficie: #f9fafb;            /* tarjetas: blanco humo */
+  --superficie-campo: #ffffff;
+  --borde: #d1d5db;                 /* bordes grises sutiles */
+  --borde-fuerte: #9ca3af;
+  --texto: #111827;
+  --texto-suave: #4b5563;
+  /* Acento: verde sólido oscuro en vez de neón (texto blanco encima: contraste 5:1) */
+  --verde: #15803d;
+  --verde-rgb: 21, 128, 61;
+  --verde-hover: #166534;
+  --verde-oscuro: #14532d;
+  --verde-tenue: rgba(21, 128, 61, 0.08);
+  --verde-borde: rgba(21, 128, 61, 0.3);
+  /* Los rellenos que en oscuro son neón (botones, pestañas activas, pasos) usan --neon: aquí, el verde sólido */
+  --neon: #15803d;
+  --neon-hover: #166534;
+  --neon-rgb: 21, 128, 61;
+  --sobre-verde: #ffffff;
+  --error: #dc2626;
+  --sombra-suave: 0 1px 2px rgba(17, 24, 39, 0.06), 0 2px 8px rgba(17, 24, 39, 0.05);
+  --sombra-media: 0 1px 3px rgba(17, 24, 39, 0.08), 0 6px 16px rgba(17, 24, 39, 0.07);
+  --sombra-alta: 0 4px 10px rgba(17, 24, 39, 0.08), 0 16px 36px rgba(17, 24, 39, 0.12);
+  /* cyber.css: los paneles de "vidrio" son tarjetas sólidas blanco humo */
+  --vidrio: #f9fafb;
+  --vidrio-borde: #d1d5db;
+  --sombra-panel: var(--sombra-media);
+  /* páginas de autenticación, wizard y perfil */
+  --auth-fondo: #e5e7eb;
+  --auth-resplandor: #eef0f2;
+  --auth-linea: rgba(17, 24, 39, 0.05);
+  /* bento y torneos: sin halo verde */
+  --glow-borde: rgba(17, 24, 39, 0.12);
+  --bracket-linea: rgba(21, 128, 61, 0.45);
+}
+
+/* ---------- Transición del cambio de tema ---------- */
+/* Solo mientras dura el cambio (main.js pone y quita .tema-transicion): así el fondo y los textos se
+   funden en 300 ms en vez de parpadear, sin volver lentos los hover del resto del tiempo. */
+html.tema-transicion,
+html.tema-transicion *,
+html.tema-transicion *::before,
+html.tema-transicion *::after {
+  transition: background-color 0.3s ease, background 0.3s ease, color 0.3s ease, border-color 0.3s ease,
+    fill 0.3s ease, stroke 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+/* ---------- Base y navbar ---------- */
+/* Sin resplandor verde de fondo: el gris liso se ve limpio */
+html[data-theme="light"] body::before {
+  background: none;
+}
+
+html[data-theme="light"] .texto-verde {
+  text-shadow: none;
+}
+
+html[data-theme="light"] .navbar,
+html[data-theme="light"] .pagina-dashboard .navbar,
+html[data-theme="light"] .pagina-equipo .navbar,
+html[data-theme="light"] .pagina-auth .navbar {
+  background: rgba(249, 250, 251, 0.92);
+  border-bottom-color: var(--borde);
+  box-shadow: 0 1px 0 rgba(17, 24, 39, 0.03), 0 6px 20px rgba(17, 24, 39, 0.04);
+}
+
+/* El balón del logo en verde sólido, sin halo */
+html[data-theme="light"] .logo__icono {
+  color: var(--verde);
+  filter: none;
+}
+
+html[data-theme="light"] .pie,
+html[data-theme="light"] .pagina-auth .pie,
+html[data-theme="light"] .pagina-rol .pie,
+html[data-theme="light"] .pagina-wizard .pie,
+html[data-theme="light"] .pagina-perfil .pie,
+html[data-theme="light"] .pagina-dashboard .pie,
+html[data-theme="light"] .pagina-equipo .pie {
+  background: transparent;
+  border-top-color: var(--borde);
+}
+
+html[data-theme="light"] .scroll-oscuro {
+  scrollbar-color: #c4c9d0 transparent;
+}
+
+html[data-theme="light"] .scroll-oscuro::-webkit-scrollbar-thumb {
+  background: #c4c9d0;
+}
+
+/* ---------- Botones y rellenos: verde sólido oscuro con texto blanco (en oscuro son neón) ---------- */
+html[data-theme="light"] .btn--verde,
+html[data-theme="light"] .aviso__boton--aceptar,
+html[data-theme="light"] .carta-jugador__subir,
+html[data-theme="light"] .sm-pestanas__item--activa,
+html[data-theme="light"] .sm-pestanas--vista .sm-pestanas__item--activa,
+html[data-theme="light"] .sm-pestanas--vista .sm-pestanas__item--activa:hover,
+html[data-theme="light"] .sm-globo__consultar,
+html[data-theme="light"] .sm-icono-nav__contador,
+html[data-theme="light"] .pasos__item--hecho .pasos__marca,
+html[data-theme="light"] .rol-tarjeta:has(.rol-tarjeta__radio:checked) .rol-tarjeta__check,
+html[data-theme="light"] .timeline__numero.encendido,
+html[data-theme="light"] .sm-cal__dia--hoy,
+html[data-theme="light"] .sm-cal__dia--hoy:hover,
+html[data-theme="light"] .sm-cal__dia--hoy[aria-pressed="true"],
+html[data-theme="light"] .eq-filtro-modalidad__opcion--activa,
+html[data-theme="light"] .eq-filtro-modalidad__opcion--activa:hover {
+  background: var(--neon);
+  color: var(--sobre-verde);
+}
+
+/* Sombra neutra y corta (no halo verde) */
+html[data-theme="light"] .btn--verde {
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.15);
+}
+
+html[data-theme="light"] .btn--verde:hover {
+  background: var(--neon-hover);
+  box-shadow: 0 2px 6px rgba(17, 24, 39, 0.18);
+}
+
+html[data-theme="light"] .sm-pestanas--vista .sm-pestanas__item--activa {
+  box-shadow: none;
+}
+
+html[data-theme="light"] .btn--contorno {
+  background: #f9fafb;
+}
+
+html[data-theme="light"] .btn--contorno:hover {
+  background: var(--verde-tenue);
+}
+
+html[data-theme="light"] .btn--oscuro {
+  background: #f9fafb;
+  color: var(--texto);
+  border-color: var(--borde-fuerte);
+  box-shadow: var(--sombra-suave);
+}
+
+html[data-theme="light"] .btn--oscuro:hover {
+  background: #f3f4f6;
+}
+
+html[data-theme="light"] .btn__spinner {
+  border-color: rgba(10, 26, 5, 0.25);
+}
+
+/* Botón de tema y demás íconos redondos del navbar */
+html[data-theme="light"] .sm-icono-nav {
+  background: #f9fafb;
+}
+
+html[data-theme="light"] .boton-volver {
+  background: #f9fafb;
+  border-color: var(--borde-fuerte);
+  box-shadow: var(--sombra-suave);
+}
+
+html[data-theme="light"] .boton-volver:hover .boton-volver__flecha,
+html[data-theme="light"] .boton-volver:focus-visible .boton-volver__flecha {
+  color: var(--verde);
+}
+
+/* ---------- Superficies: tarjetas blancas con sombra ---------- */
+html[data-theme="light"] .rol-tarjeta,
+html[data-theme="light"] .perfil__tarjeta,
+html[data-theme="light"] .wizard__panel,
+html[data-theme="light"] .wizard .wizard__panel,
+html[data-theme="light"] .auth__tarjeta,
+html[data-theme="light"] .pagina-auth .auth__tarjeta,
+html[data-theme="light"] .confirmar__caja,
+html[data-theme="light"] .modal__caja,
+html[data-theme="light"] .modal__caja--ancha,
+html[data-theme="light"] .dash-panel--calendario {
+  background: #f9fafb;
+  border-color: var(--borde);
+  box-shadow: var(--sombra-media);
+}
+
+html[data-theme="light"] .rol-tarjeta {
+  border: 1.5px solid var(--borde);
+}
+
+html[data-theme="light"] .rol-tarjeta:has(.rol-tarjeta__radio:checked) {
+  background: #f3fbf4;
+  border-color: var(--verde);
+  box-shadow: 0 0 0 1px var(--verde), 0 10px 30px rgba(21, 128, 61, 0.12);
+}
+
+html[data-theme="light"] .rol-tarjeta--apagada:hover {
+  border-color: var(--borde);
+}
+
+html[data-theme="light"] .rol-tarjeta__check {
+  border-color: rgba(17, 24, 39, 0.2);
+}
+
+/* Celdas y cajas "hundidas" dentro de una tarjeta: gris perla */
+html[data-theme="light"] .resumen div,
+html[data-theme="light"] .wizard .resumen div,
+html[data-theme="light"] .opcion,
+html[data-theme="light"] .wizard .opcion,
+html[data-theme="light"] .editor__seccion .opcion,
+html[data-theme="light"] .wizard-escudo,
+html[data-theme="light"] .ceq-identidad,
+html[data-theme="light"] .ceq-club--grande {
+  background: #f8f9fa;
+  border-color: var(--borde);
+}
+
+html[data-theme="light"] .opcion {
+  border: 1.5px solid var(--borde);
+}
+
+html[data-theme="light"] .opcion:has(.opcion__radio:checked),
+html[data-theme="light"] .wizard .opcion:has(.opcion__radio:checked),
+html[data-theme="light"] .editor__seccion .opcion:has(.opcion__radio:checked) {
+  background: #f0faf2;
+  border-color: var(--verde);
+  box-shadow: 0 0 0 1px rgba(21, 128, 61, 0.15);
+}
+
+html[data-theme="light"] .opcion__cancha,
+html[data-theme="light"] .wizard .opcion__cancha {
+  stroke: rgba(17, 24, 39, 0.2);
+}
+
+html[data-theme="light"] .opcion__barras span,
+html[data-theme="light"] .barras__track {
+  background: #d1d5db;
+}
+
+html[data-theme="light"] .opcion__barras .llena {
+  background: #6b7280;
+}
+
+html[data-theme="light"] .chip,
+html[data-theme="light"] .sm-lista-docs li,
+html[data-theme="light"] .sm-versus__equipo,
+html[data-theme="light"] .sm-comentario,
+html[data-theme="light"] .sm-calendario__dia,
+html[data-theme="light"] .dash-invitacion,
+html[data-theme="light"] .dash-equipo__detalle,
+html[data-theme="light"] .eq-solicitud,
+html[data-theme="light"] .eq-tipos,
+html[data-theme="light"] .eq-banco__lista {
+  background: #f8f9fa;
+}
+
+html[data-theme="light"] .ceq-vista {
+  background: rgba(249, 250, 251, 0.9);
+  border-color: var(--borde);
+}
+
+html[data-theme="light"] .ceq-chip,
+html[data-theme="light"] .eq-tipos,
+html[data-theme="light"] .eq-tipos__opcion,
+html[data-theme="light"] .eq-filtro-modalidad__opcion,
+html[data-theme="light"] .eq-modalidad,
+html[data-theme="light"] .eq-banco__lista {
+  border-color: var(--borde-fuerte);
+}
+
+html[data-theme="light"] .ceq-identidad__nombre--vacio {
+  color: #9ca3af;
+}
+
+html[data-theme="light"] .ceq .wizard__nav,
+html[data-theme="light"] .eq-invitar__cabecera,
+html[data-theme="light"] .eq-invitar__pie,
+html[data-theme="light"] .dash-plantel__jugador {
+  border-color: var(--borde);
+}
+
+/* ---------- Formularios ---------- */
+html[data-theme="light"] .wizard__panel .campo input,
+html[data-theme="light"] .wizard .wizard__panel .campo input,
+html[data-theme="light"] .editor__seccion .campo input,
+html[data-theme="light"] .auth__tarjeta .campo input,
+html[data-theme="light"] .pagina-auth .auth__tarjeta .campo input,
+html[data-theme="light"] .modal__campo input,
+html[data-theme="light"] .modal__campo select,
+html[data-theme="light"] .modal__campo textarea,
+html[data-theme="light"] .eq-buscador--chico {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+html[data-theme="light"] .auth__tarjeta .campo input:hover,
+html[data-theme="light"] .pagina-auth .auth__tarjeta .campo input:hover,
+html[data-theme="light"] .pagina-auth .auth__tarjeta .campo select:hover {
+  border-color: #9ca3af;
+}
+
+html[data-theme="light"] .pagina-auth .auth__tarjeta .campo input:focus {
+  background: #f9fafb;
+}
+
+html[data-theme="light"] .pagina-auth .auth__tarjeta .campo--error input:focus {
+  background: #fff5f5;
+}
+
+html[data-theme="light"] .pagina-auth .auth__tarjeta .campo select {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+      no-repeat right 14px center / 18px,
+    #f9fafb;
+  border-color: #d1d5db;
+}
+
+html[data-theme="light"] .auth__tarjeta .campo label,
+html[data-theme="light"] .pagina-auth .auth__tarjeta .campo label {
+  color: #374151;
+}
+
+html[data-theme="light"] .campo__ojo:hover {
+  background: rgba(17, 24, 39, 0.06);
+}
+
+/* Deslizadores del editor de perfil */
+html[data-theme="light"] .editor__rango::-webkit-slider-runnable-track {
+  background: linear-gradient(var(--verde), var(--verde)) 0 / var(--relleno) 100% no-repeat, #d1d5db;
+}
+
+html[data-theme="light"] .editor__rango::-moz-range-track {
+  background: linear-gradient(var(--verde), var(--verde)) 0 / var(--relleno) 100% no-repeat, #d1d5db;
+}
+
+html[data-theme="light"] .editor__rango::-webkit-slider-thumb {
+  border-color: #ffffff;
+  background: var(--verde);
+}
+
+html[data-theme="light"] .editor__rango::-moz-range-thumb {
+  border-color: #ffffff;
+  background: var(--verde);
+}
+
+/* ---------- Fondos de página ---------- */
+html[data-theme="light"] .pagina-auth::after,
+html[data-theme="light"] .pagina-rol::after,
+html[data-theme="light"] .pagina-wizard::after,
+html[data-theme="light"] .pagina-perfil::after {
+  background: radial-gradient(ellipse 70% 60% at 50% 50%, var(--auth-resplandor) 0%, var(--auth-fondo) 100%);
+}
+
+/* Fondo "cyber" (dashboard, equipo, login): la aurora y la cancha táctica siguen, más suaves */
+html[data-theme="light"] .cyber-fondo__aurora {
+  opacity: 0.7;
+}
+
+html[data-theme="light"] .cyber-fondo__cancha .rival {
+  stroke: rgba(17, 24, 39, 0.14);
+}
+
+html[data-theme="light"] [data-ripple="claro"] .ripple {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 70%);
+}
+
+/* ---------- Landing ---------- */
+/* Pelota 3D: detrás, un disco gris oscuro suave en vez del halo neón, para que el balón mantenga su
+   contraste sobre el fondo claro; debajo, una sombra neutra. */
+html[data-theme="light"] .ball-stage::before,
+html[data-theme="light"] .dash-hero .ball-stage::before {
+  background: radial-gradient(circle, rgba(17, 24, 39, 0.16) 0%, rgba(17, 24, 39, 0.07) 34%, transparent 60%);
+}
+
+html[data-theme="light"] .ball-stage::after,
+html[data-theme="light"] .dash-hero .ball-stage::after {
+  background: radial-gradient(ellipse at center, rgba(17, 24, 39, 0.35), rgba(17, 24, 39, 0.12) 45%, transparent 72%);
+}
+
+html[data-theme="light"] .ball-cuadricula,
+html[data-theme="light"] .dash-hero .ball-cuadricula {
+  background-image:
+    linear-gradient(rgba(17, 24, 39, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 24, 39, 0.06) 1px, transparent 1px);
+}
+
+html[data-theme="light"] .ball-anillo::before,
+html[data-theme="light"] .dash-hero .ball-anillo::before {
+  border-color: rgba(21, 128, 61, calc(0.25 + var(--energia) * 0.4));
+}
+
+html[data-theme="light"] .ball-anillo,
+html[data-theme="light"] .dash-orbita--2 {
+  border-color: rgba(17, 24, 39, 0.08);
+}
+
+html[data-theme="light"] .bento__tarjeta {
+  background: #f9fafb;
+  box-shadow: var(--sombra-suave);
+}
+
+html[data-theme="light"] .bento__tarjeta::after {
+  background:
+    radial-gradient(260px circle at var(--mx) var(--my), var(--glow-borde), transparent 60%),
+    linear-gradient(160deg, rgba(17, 24, 39, 0.1), rgba(17, 24, 39, 0.04) 45%, rgba(21, 128, 61, 0.18));
+}
+
+html[data-theme="light"] .bento__tarjeta:hover {
+  box-shadow: var(--sombra-alta);
+}
+
+html[data-theme="light"] .timeline__linea {
+  background: rgba(17, 24, 39, 0.1);
+}
+
+html[data-theme="light"] .timeline__numero {
+  background: #f9fafb;
+  border-color: rgba(17, 24, 39, 0.16);
+}
+
+html[data-theme="light"] .cta {
+  background: #f9fafb;
+  border: 1px solid var(--borde);
+  box-shadow: var(--sombra-media);
+}
+
+html[data-theme="light"] .aviso__escudo {
+  background: linear-gradient(160deg, #dff3e3, #c8e8cf);
+}
+
+html[data-theme="light"] .equipo__avatares span { background: #d7e5d9; }
+html[data-theme="light"] .equipo__avatares span:nth-child(2) { background: #e8e1d2; }
+html[data-theme="light"] .equipo__avatares span:nth-child(3) { background: #d5dfea; }
+html[data-theme="light"] .equipo__avatares span:nth-child(4) { background: #ead7e3; }
+html[data-theme="light"] .equipo__avatares .equipo__mas { background: #d4ecd8; }
+
+html[data-theme="light"] .agenda__bloque--reservado span {
+  background: repeating-linear-gradient(135deg, rgba(17, 24, 39, 0.05) 0 6px, transparent 6px 12px);
+}
+
+/* ---------- Wizard y registro ---------- */
+html[data-theme="light"] .wizard__marca,
+html[data-theme="light"] .wizard .wizard__marca {
+  background: #f9fafb;
+  border-color: var(--borde);
+}
+
+html[data-theme="light"] .pasos__barra {
+  background: #e5e7eb;
+}
+
+html[data-theme="light"] .pasos__marca {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+html[data-theme="light"] .pasos__item--activo .pasos__marca {
+  box-shadow: 0 0 0 4px rgba(var(--verde-rgb), 0.15);
+}
+
+/* ---------- Carta de jugador: plata con detalles en verde ---------- */
+/* Silueta SVG (partials/carta-jugador.ejs): el CSS gana a los atributos de presentación */
+html[data-theme="light"] #carta-escudo-fondo stop:nth-child(1) { stop-color: #fdfefd; }
+html[data-theme="light"] #carta-escudo-fondo stop:nth-child(2) { stop-color: #e6eae7; }
+html[data-theme="light"] #carta-escudo-fondo stop:nth-child(3) { stop-color: #c7cec9; }
+html[data-theme="light"] #carta-escudo-borde stop:nth-child(1) { stop-color: #16a34a; }
+html[data-theme="light"] #carta-escudo-borde stop:nth-child(2) { stop-color: #15803d; }
+html[data-theme="light"] #carta-escudo-rayas rect { fill: rgba(17, 24, 39, 0.05); }
+html[data-theme="light"] #carta-escudo-rayas rect:nth-child(n + 3) { fill: rgba(255, 255, 255, 0.35); }
+html[data-theme="light"] .carta-jugador__grosor use { stroke-opacity: 0.22; }
+html[data-theme="light"] .carta-jugador__silueta use[stroke="#39ff14"] { stroke: #15803d; }
+html[data-theme="light"] .carta-jugador__filos { stroke: #15803d; }
+
+/* Carta: sombra neutra que sigue la silueta, sin halo verde */
+html[data-theme="light"] .carta-jugador--perfil {
+  filter: drop-shadow(0 12px 20px rgba(17, 24, 39, 0.22));
+}
+
+html[data-theme="light"] .carta-jugador--perfil.inclinando {
+  filter: drop-shadow(0 18px 28px rgba(17, 24, 39, 0.26));
+}
+
+html[data-theme="light"] .eq-ficha .carta-jugador--perfil {
+  filter: drop-shadow(0 3px 6px rgba(17, 24, 39, 0.2));
+}
+
+html[data-theme="light"] .eq-ficha--elegida .carta-jugador,
+html[data-theme="light"] .eq-destino > .eq-ficha .carta-jugador,
+html[data-theme="light"] .eq-ficha--fantasma .carta-jugador {
+  /* contorno verde fino (dos drop-shadow pegados) + sombra neutra; drop-shadow no tiene "spread" */
+  filter: drop-shadow(0 0 1px var(--verde)) drop-shadow(0 0 1px var(--verde)) drop-shadow(0 10px 16px rgba(17, 24, 39, 0.28));
+}
+
+html[data-theme="light"] .carta-jugador--perfil .carta-jugador__cuerpo::before {
+  background: linear-gradient(90deg, transparent, #15803d, transparent);
+}
+
+html[data-theme="light"] .carta-jugador--perfil .carta-jugador__numero {
+  color: #15803d;
+  text-shadow: none;
+}
+
+/* Nombre: degradado oscuro (el blanco desaparecería sobre la plata) con un filo claro debajo */
+html[data-theme="light"] .carta-jugador--perfil .carta-jugador__nombre {
+  background-image: linear-gradient(180deg, #111827 30%, #374151);
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.8));
+}
+
+html[data-theme="light"] .carta-jugador--perfil .carta-jugador__stats div {
+  background: rgba(17, 24, 39, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(21, 128, 61, 0.18);
+}
+
+html[data-theme="light"] .carta-jugador--perfil .carta-jugador__stats dt {
+  color: #4b5563;
+  opacity: 1;
+}
+
+html[data-theme="light"] .carta-jugador--perfil .carta-jugador__stats dd {
+  color: #0b5f1f;
+  text-shadow: none;
+}
+
+/* Sobre un fondo claro "screen" dejaría la foto casi blanca */
+html[data-theme="light"] .carta-jugador--perfil .carta-jugador__foto img {
+  mix-blend-mode: normal;
+}
+
+html[data-theme="light"] .carta-jugador--perfil .carta-jugador__foto::after {
+  border-color: #15803d;
+  box-shadow: inset 0 0 calc(8 * var(--u)) rgba(17, 24, 39, 0.15);
+}
+
+html[data-theme="light"] .carta-jugador__foto,
+html[data-theme="light"] .carta-jugador--perfil .carta-jugador__foto::before,
+html[data-theme="light"] .carta-jugador__avatar {
+  background: radial-gradient(circle at 50% 35%, #f4f6f5, #cfd6d1 70%);
+}
+
+html[data-theme="light"] .carta-jugador__foto > svg,
+html[data-theme="light"] .carta-jugador__avatar svg {
+  stroke: rgba(17, 24, 39, 0.35);
+}
+
+html[data-theme="light"] .carta-jugador__bandera {
+  box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.15);
+}
+
+html[data-theme="light"] .carta-jugador__subir {
+  box-shadow: 0 6px 16px rgba(17, 24, 39, 0.2);
+}
+
+/* Carta clásica (sin silueta SVG) */
+html[data-theme="light"] .carta-jugador__marco {
+  background: linear-gradient(150deg, var(--carta-color), color-mix(in srgb, var(--carta-color) 30%, #fff) 42%,
+    color-mix(in srgb, var(--carta-color) 30%, #fff) 60%, var(--carta-color));
+}
+
+html[data-theme="light"] .carta-jugador__cuerpo {
+  background:
+    radial-gradient(120% 55% at 50% 0%, color-mix(in srgb, var(--carta-color) 14%, transparent), transparent 65%),
+    repeating-linear-gradient(135deg, rgba(17, 24, 39, 0.03) 0 2px, transparent 2px 7px),
+    linear-gradient(180deg, #fbfcfb, #dfe4e0);
+}
+
+html[data-theme="light"] .carta-jugador--perfil .carta-jugador__cuerpo {
+  background: none;
+}
+
+html[data-theme="light"] .carta-jugador__stats div:nth-child(n + 4) {
+  border-left-color: rgba(17, 24, 39, 0.12);
+}
+
+html[data-theme="light"] .carta-jugador__brillo {
+  background:
+    radial-gradient(circle at var(--brillo-x) var(--brillo-y), rgba(255, 255, 255, 0.6), transparent 38%),
+    radial-gradient(circle at var(--brillo-x) var(--brillo-y), rgba(255, 255, 255, 0.15), transparent 65%);
+}
+
+/* ---------- Dashboard y dock ---------- */
+html[data-theme="light"] .dash-panel {
+  box-shadow: var(--sombra-media);
+}
+
+html[data-theme="light"] .dash-chip {
+  background: rgba(var(--verde-rgb), 0.07);
+  border-color: rgba(var(--verde-rgb), 0.25);
+}
+
+html[data-theme="light"] .dash-chip .badge__punto,
+html[data-theme="light"] .badge__punto {
+  background: var(--verde);
+  box-shadow: none;
+}
+
+html[data-theme="light"] .dash-btn-vidrio {
+  background: #f9fafb;
+  box-shadow: var(--sombra-suave);
+}
+
+html[data-theme="light"] .dash-resumen {
+  background: rgba(249, 250, 251, 0.9);
+  box-shadow: var(--sombra-suave);
+}
+
+html[data-theme="light"] .dash-cta,
+html[data-theme="light"] .pagina-auth .auth-btn {
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.15), 0 4px 10px rgba(17, 24, 39, 0.1);
+}
+
+html[data-theme="light"] .dash-stat__barra,
+html[data-theme="light"] .skeleton {
+  background: rgba(17, 24, 39, 0.07);
+}
+
+html[data-theme="light"] .dash-skeleton {
+  background: rgba(17, 24, 39, 0.03);
+  border-color: var(--borde);
+}
+
+html[data-theme="light"] .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(21, 128, 61, 0.06) 40%, rgba(255, 255, 255, 0.8) 50%, transparent 70%);
+}
+
+html[data-theme="light"] .dash-hero__pista {
+  color: rgba(17, 24, 39, 0.45);
+}
+
+html[data-theme="light"] .vc__regla text {
+  fill: #4b5563;
+}
+
+html[data-theme="light"] .panel-aviso {
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--sombra-alta);
+}
+
+html[data-theme="light"] .dock {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: var(--borde);
+  box-shadow: 0 12px 34px rgba(17, 24, 39, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html[data-theme="light"] .dock__item {
+  color: #4b5563;
+}
+
+html[data-theme="light"] .dock__item:hover {
+  background: rgba(17, 24, 39, 0.05);
+}
+
+html[data-theme="light"] .sm-cal__flecha {
+  background: #f9fafb;
+  border-color: var(--borde-fuerte);
+}
+
+html[data-theme="light"] .sm-cal__dia:hover {
+  background: rgba(17, 24, 39, 0.06);
+}
+
+/* ---------- Equipo y modales ---------- */
+html[data-theme="light"] .eq-escudo__cambiar {
+  box-shadow: 0 4px 12px rgba(17, 24, 39, 0.2);
+}
+
+/* Cancha de la alineación: césped claro con franjas */
+html[data-theme="light"] .cancha {
+  background:
+    repeating-linear-gradient(180deg, rgba(21, 128, 61, 0.05) 0 10%, transparent 10% 20%),
+    linear-gradient(180deg, #e3f3e6, #d4ead8);
+  box-shadow: inset 0 0 30px rgba(21, 128, 61, 0.12);
+}
+
+html[data-theme="light"] .cancha__vacio {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+html[data-theme="light"] .cancha__sacar-boton {
+  background: #fee2e2;
+}
+
+html[data-theme="light"] .eq-alineacion__titulares strong {
+  color: #b45309;
+}
+
+html[data-theme="light"] .eq-club__boton:disabled,
+html[data-theme="light"] .eq-invitar:disabled {
+  background: rgba(17, 24, 39, 0.06);
+}
+
+html[data-theme="light"] .modal,
+html[data-theme="light"] .modal--vidrio,
+html[data-theme="light"] .confirmar {
+  background: rgba(17, 24, 39, 0.45);
+}
+
+html[data-theme="light"] .eq-invitar__marco::before {
+  background: linear-gradient(to bottom, #ffffff, transparent);
+}
+
+html[data-theme="light"] .eq-invitar__marco::after {
+  background: linear-gradient(to top, #ffffff, transparent);
+}
+
+html[data-theme="light"] .eq-invitable {
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+  border-color: var(--borde);
+  box-shadow: var(--sombra-suave);
+}
+
+html[data-theme="light"] .eq-invitable:hover {
+  border-color: var(--borde-fuerte);
+}
+
+html[data-theme="light"] .eq-invitable--destacado {
+  border-color: var(--verde-borde);
+  box-shadow: var(--sombra-suave);
+}
+
+html[data-theme="light"] .eq-avatar--chico {
+  border-color: rgba(17, 24, 39, 0.1);
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.05);
+}
+
+html[data-theme="light"] .eq-ovr {
+  background: radial-gradient(circle at 50% 35%, #ffffff, #e5e7eb);
+  border-color: #d1d5db;
+}
+
+html[data-theme="light"] .eq-ovr__numero {
+  color: var(--texto);
+}
+
+html[data-theme="light"] .eq-ovr--alto {
+  background: #dcfce7;
+  border-color: var(--verde);
+}
+
+html[data-theme="light"] .eq-ovr--vacio {
+  border-color: #e5e7eb;
+}
+
+html[data-theme="light"] .eq-ovr--vacio .eq-ovr__numero,
+html[data-theme="light"] .eq-barras--vacias dt,
+html[data-theme="light"] .eq-barras--vacias .eq-barra__numero {
+  color: #9ca3af;
+}
+
+html[data-theme="light"] .eq-etiqueta--libre {
+  background: #dcfce7;
+  color: #166534;
+}
+
+html[data-theme="light"] .eq-etiqueta--equipo {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+html[data-theme="light"] .eq-barras {
+  background: rgba(17, 24, 39, 0.04);
+}
+
+html[data-theme="light"] .eq-barra dd::before {
+  background: rgba(17, 24, 39, 0.1);
+}
+
+/* ---------- Mapa (Leaflet) ---------- */
+/* En oscuro los tiles de OpenStreetMap se invierten con un filtro (modulos.css); en claro se ven tal cual:
+   el cambio es instantáneo, sin recargar capas ni cambiar de proveedor. */
+html[data-theme="light"] .sm-mapa .leaflet-tile-pane {
+  filter: none;
+}
+
+html[data-theme="light"] .sm-mapa,
+html[data-theme="light"] .sm-mapa.leaflet-container {
+  background: #e5e7eb;
+}
+
+html[data-theme="light"] .sm-pin path {
+  fill: var(--neon);
+  stroke: #0b4d19;
+}
+
+html[data-theme="light"] .sm-pin circle {
+  fill: #0b4d19;
+}
+
+html[data-theme="light"] .sm-mapa .leaflet-bar a,
+html[data-theme="light"] .sm-mapa .leaflet-bar a:hover {
+  background: #f9fafb;
+  color: var(--texto);
+}
+
+html[data-theme="light"] .sm-mapa .leaflet-bar a.leaflet-disabled {
+  color: #9ca3af;
+}
+
+html[data-theme="light"] .sm-mapa-modal {
+  background: rgba(243, 244, 246, 0.95);
+}
+
+html[data-theme="light"] .sm-mapa.sm-mapa--expandido {
+  box-shadow: var(--sombra-alta);
+}
+
+html[data-theme="light"] .sm-mapa__aviso,
+html[data-theme="light"] .sm-mapa .leaflet-popup-content-wrapper,
+html[data-theme="light"] .sm-mapa .leaflet-popup-tip {
+  background: #f9fafb;
+  color: var(--texto);
+  box-shadow: var(--sombra-media);
+}
+
+html[data-theme="light"] .sm-mapa .leaflet-control-attribution {
+  background: rgba(249, 250, 251, 0.9);
+}
+
+html[data-theme="light"] .sm-mapa .leaflet-popup-content a.sm-globo__cancha {
+  background: #f8f9fa;
+}
+
+/* ---------- Módulos (sm-*) ---------- */
+html[data-theme="light"] .sm-pestanas {
+  background: #f9fafb;
+}
+
+html[data-theme="light"] .sm-pestanas--vista {
+  background: #f9fafb;
+  border-color: #e5e7eb;
+  box-shadow: var(--sombra-suave);
+}
+
+html[data-theme="light"] .sm-pestanas--vista .sm-pestanas__item {
+  color: #6b7280;
+}
+
+html[data-theme="light"] .sm-pestanas--vista .sm-pestanas__item:hover {
+  color: var(--texto);
+  background: rgba(17, 24, 39, 0.05);
+}
+
+html[data-theme="light"] .sm-pestanas--vista .sm-pestanas__item--activa,
+html[data-theme="light"] .sm-pestanas--vista .sm-pestanas__item--activa:hover {
+  color: var(--sobre-verde);
+}
+
+/* /mi-equipo: tarjeta del equipo y pestañas subrayadas (equipo.css) */
+html[data-theme="light"] .eq-hero {
+  background: #f9fafb;
+  border-color: #e5e7eb;
+  box-shadow: var(--sombra-media);
+}
+
+html[data-theme="light"] .eq-hero__enlaces {
+  border-top-color: #e5e7eb;
+}
+
+html[data-theme="light"] .sm-pestanas--vista.eq-vista {
+  background: transparent;
+  border-color: #e5e7eb;
+  box-shadow: none;
+}
+
+html[data-theme="light"] .sm-pestanas--vista.eq-vista .sm-pestanas__item:hover {
+  background: transparent;
+}
+
+html[data-theme="light"] .sm-pestanas--vista.eq-vista .sm-pestanas__item--activa,
+html[data-theme="light"] .sm-pestanas--vista.eq-vista .sm-pestanas__item--activa:hover {
+  color: var(--verde);
+  background: transparent;
+  box-shadow: none;
+}
+
+html[data-theme="light"] .sm-fila > .sm-rol,
+html[data-theme="light"] .sm-rol {
+  background: rgba(17, 24, 39, 0.06);
+}
+
+html[data-theme="light"] .sm-notificacion__enlace:hover {
+  background: rgba(17, 24, 39, 0.03);
+}
+
+html[data-theme="light"] .sm-notificacion--nueva .sm-notificacion__punto {
+  background: var(--verde);
+  box-shadow: none;
+}
+
+html[data-theme="light"] .sm-documento__seccion p,
+html[data-theme="light"] .sm-comentario__texto {
+  color: #374151;
+}
+
+/* ---------- Estados y alertas: tonos oscuros legibles sobre claro ---------- */
+html[data-theme="light"] .alerta--error,
+html[data-theme="light"] .sm-btn-peligro,
+html[data-theme="light"] .sm-fila > .sm-estado--inactivo,
+html[data-theme="light"] .sm-estado--inactivo,
+html[data-theme="light"] .sm-horario__cerrado,
+html[data-theme="light"] .sm-bloque--ocupado,
+html[data-theme="light"] .sm-estado--rechazado,
+html[data-theme="light"] .sm-estado--rechazada,
+html[data-theme="light"] .sm-estado--cancelado,
+html[data-theme="light"] .sm-estado--cancelada {
+  color: #b91c1c;
+}
+
+html[data-theme="light"] .alerta--exito,
+html[data-theme="light"] .pagina-auth .alerta--exito {
+  color: #166534;
+}
+
+html[data-theme="light"] .sm-alerta-advertencia,
+html[data-theme="light"] .sm-estado--pendiente {
+  color: #92400e;
+}
+
+/* ---------- Sin brillos neón ---------- */
+/* Sobre fondo claro un resplandor verde no ilumina: ensucia. Aquí se apagan los de las hojas base
+   (style.css, dashboard.css, auth.css, equipo.css, crear-equipo.css, modulos.css, cyber.css).
+   Los anillos de foco se quedan, como anillo verde sólido y fino (accesibilidad). */
+
+/* Ningún texto brilla en claro (los text-shadow del sitio son todos halos neón) */
+html[data-theme="light"] *,
+html[data-theme="light"] *::before,
+html[data-theme="light"] *::after {
+  text-shadow: none !important;
+}
+
+/* Halos y destellos decorativos: fuera */
+html[data-theme="light"] .btn--glow,
+html[data-theme="light"] .btn--glow:hover,
+html[data-theme="light"] .auth__tarjeta .formulario .btn--verde:hover,
+html[data-theme="light"] .pagina-auth .auth__tarjeta .formulario .auth-btn:hover,
+html[data-theme="light"] .rol__boton,
+html[data-theme="light"] .auth-marca__chip .badge__punto,
+html[data-theme="light"] .auth__filo,
+html[data-theme="light"] .auth__filo::after,
+html[data-theme="light"] .auth-pestanas__indicador,
+html[data-theme="light"] .pagina-auth .campo__control::after,
+html[data-theme="light"] .pagina-auth .alerta--exito,
+html[data-theme="light"] .cursor-luz__punto,
+html[data-theme="light"].cursor-luz-activo .cursor-luz,
+html[data-theme="light"] .dash-btn-vidrio:hover,
+html[data-theme="light"] .dash-resumen:hover,
+html[data-theme="light"] .dash-orbita::after,
+html[data-theme="light"] .dash-particula,
+html[data-theme="light"] .dash-stat__relleno,
+html[data-theme="light"] .dash-equipo__admin:hover,
+html[data-theme="light"] .dock__item--activo::after,
+html[data-theme="light"] .sm-cal__flecha:hover,
+html[data-theme="light"] .sm-cal__flecha:focus-visible,
+html[data-theme="light"] .sm-cal__dia--hoy,
+html[data-theme="light"] .sm-cal__dia--hoy:hover,
+html[data-theme="light"] .sm-cal__dia--hoy[aria-pressed="true"],
+html[data-theme="light"] .sm-pestanas--vista .sm-pestanas__item--activa:hover,
+html[data-theme="light"] .sm-pestanas--vista.eq-vista .sm-pestanas__item--activa::after,
+html[data-theme="light"] .eq-contador,
+html[data-theme="light"] .cancha__c,
+html[data-theme="light"] .eq-ovr--alto,
+html[data-theme="light"] .eq-barra__relleno,
+html[data-theme="light"] .ceq-marca,
+html[data-theme="light"] .bracket__partido--final,
+html[data-theme="light"] .timeline__progreso,
+html[data-theme="light"] .rol-tarjeta:has(.rol-tarjeta__radio:checked) .rol-tarjeta__check,
+html[data-theme="light"] .pasos__barra span,
+html[data-theme="light"] .barras__relleno,
+html[data-theme="light"] .agenda__bloque--libre span::before,
+html[data-theme="light"] .carta-jugador__foto {
+  box-shadow: none;
+}
+
+/* Botones principales del dashboard y del login: verde sólido, sin el destello neón del degradado */
+html[data-theme="light"] .dash-cta,
+html[data-theme="light"] .pagina-auth .auth-btn,
+html[data-theme="light"] .pagina-auth .auth__tarjeta .formulario .auth-btn {
+  background: var(--verde);
+  color: #ffffff;
+}
+
+html[data-theme="light"] .dash-cta:hover,
+html[data-theme="light"] .pagina-auth .auth__tarjeta .formulario .auth-btn:hover {
+  background: var(--verde-hover);
+}
+
+/* Halos que son un elemento propio (detrás de los botones principales) */
+html[data-theme="light"] .dash-cta__halo,
+html[data-theme="light"] .auth-btn__halo {
+  display: none;
+}
+
+/* Paso activo / completado: anillo fino en vez de halo */
+html[data-theme="light"] .timeline__numero.encendido,
+html[data-theme="light"]:not(.js) .timeline__numero,
+html[data-theme="light"] .ceq-listo__icono {
+  box-shadow: 0 0 0 4px rgba(var(--verde-rgb), 0.15);
+}
+
+/* Anillos de foco: verde sólido y fino, sin difuminado */
+html[data-theme="light"] .campo input:focus,
+html[data-theme="light"] .campo select:focus,
+html[data-theme="light"] .campo textarea:focus,
+html[data-theme="light"] .auth__tarjeta .campo input:focus,
+html[data-theme="light"] .pagina-auth .auth__tarjeta .campo input:focus,
+html[data-theme="light"] .pagina-auth .auth__tarjeta .campo select:focus,
+html[data-theme="light"] .ceq .wizard__panel .campo input:focus,
+html[data-theme="light"] .modal__campo input:focus,
+html[data-theme="light"] .modal__campo select:focus,
+html[data-theme="light"] .modal__campo textarea:focus,
+html[data-theme="light"] .eq-buscador:focus-within,
+html[data-theme="light"] .eq-buscador--chico:focus-within {
+  box-shadow: 0 0 0 3px rgba(var(--verde-rgb), 0.18);
+}
+
+/* Íconos y figuras con drop-shadow verde: sin halo */
+html[data-theme="light"] .auth-marca__titulo em,
+html[data-theme="light"] .auth-marca__item svg,
+html[data-theme="light"] .pagina-auth .campo__control:focus-within .campo__icono,
+html[data-theme="light"] .pagina-auth .campo__ojo[aria-pressed="true"],
+html[data-theme="light"] .dash-hero__nombre,
+html[data-theme="light"] .dock__item--activo .dock__icono,
+html[data-theme="light"] .vc__figura,
+html[data-theme="light"] .ceq-escudo svg,
+html[data-theme="light"] .ceq-activo svg,
+html[data-theme="light"] .opcion:has(.opcion__radio:checked) .opcion__punto,
+html[data-theme="light"] .carta-jugador--perfil .carta-jugador__foto img,
+html[data-theme="light"] .carta-jugador--perfil .carta-jugador__foto > svg {
+  filter: none;
+}
+
+/* Brillos de fondo que siguen al mouse en las tarjetas: gris tenue */
+html[data-theme="light"] .bento__tarjeta::before {
+  background: radial-gradient(420px circle at var(--mx) var(--my), rgba(17, 24, 39, 0.04), transparent 45%);
+}
+
+/* Degradados neón en barras: relleno sólido */
+html[data-theme="light"] .barras__relleno,
+html[data-theme="light"] .dash-stat__relleno,
+html[data-theme="light"] .eq-barra__relleno {
+  background: var(--verde);
+}
+
+/* Bordes y fondos con tinte neón */
+html[data-theme="light"] .ceq-activo {
+  background: var(--verde-tenue);
+  border-color: var(--verde-borde);
+}
+
+html[data-theme="light"] .rol-tarjeta:hover,
+html[data-theme="light"] .opcion:hover {
+  border-color: var(--verde-borde);
+}
+
+html[data-theme="light"] .carta-jugador__foto {
+  border-color: var(--verde-borde);
+}
+
+/* Figura de medidas del perfil (dashboard): trazos en verde sólido */
+html[data-theme="light"] .vc__linea { stroke: rgba(17, 24, 39, 0.08); }
+html[data-theme="light"] .vc__linea--fina { stroke: rgba(17, 24, 39, 0.04); }
+html[data-theme="light"] .vc__piso,
+html[data-theme="light"] .vc__regla line,
+html[data-theme="light"] .vc__regla .vc__regla-eje { stroke: rgba(var(--verde-rgb), 0.5); }
+html[data-theme="light"] .vc__silueta,
+html[data-theme="light"] .vc__altura line,
+html[data-theme="light"] .vc__peso-guia { stroke: var(--verde); }
+html[data-theme="light"] .vc__silueta { fill: rgba(var(--verde-rgb), 0.1); }
+html[data-theme="light"] .vc__altura text,
+html[data-theme="light"] .vc__valor { fill: var(--verde); }
+
+/* Opciones del wizard (cancha dibujada) */
+html[data-theme="light"] .opcion:has(.opcion__radio:checked) .opcion__cancha,
+html[data-theme="light"] .wizard .opcion:has(.opcion__radio:checked) .opcion__cancha {
+  stroke: rgba(var(--verde-rgb), 0.45);
+}
+
+/* Agrupación de pines del mapa: relleno sólido con número blanco legible */
+html[data-theme="light"] .sm-grupo span {
+  background: var(--verde);
+  border-color: #f9fafb;
+}
+
+/* Deslizadores del editor: perilla sin halo */
+html[data-theme="light"] .editor__rango::-webkit-slider-thumb {
+  box-shadow: 0 1px 3px rgba(17, 24, 39, 0.3);
+}
+
+html[data-theme="light"] .editor__rango::-moz-range-thumb {
+  box-shadow: 0 1px 3px rgba(17, 24, 39, 0.3);
+}
+
+/* Pelota de respaldo (sin WebGL): sin halo verde */
+html[data-theme="light"] .ball-fallback {
+  box-shadow: inset 0 0 0 2px var(--verde), inset -18px -22px 40px rgba(0, 0, 0, 0.6), 0 12px 24px rgba(17, 24, 39, 0.2);
+}
+
+/* Mis equipos: tarjetas claras con rayas suaves; el capitán mantiene su borde verde */
+html[data-theme="light"] .eq-mis {
+  border-color: #d1d5db;
+  background:
+    repeating-linear-gradient(135deg, rgba(17, 24, 39, 0.03) 0 1px, transparent 1px 8px),
+    linear-gradient(135deg, #ffffff, #f3f4f6);
+}
+
+html[data-theme="light"] .eq-mis--capitan {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.2), 0 8px 24px rgba(22, 163, 74, 0.15);
+}
+
+html[data-theme="light"] .eq-mis__nombre { color: var(--texto); }
+html[data-theme="light"] .eq-mis__rol { background: #f3f4f6; border-color: #d1d5db; color: #4b5563; }
+html[data-theme="light"] .eq-mis__rol--capitan { background: #dcfce7; border-color: #86efac; color: #15803d; }
+html[data-theme="light"] .eq-mis__escudo,
+html[data-theme="light"] .eq-mis__datos svg,
+html[data-theme="light"] .eq-mis__plantel[open] summary svg { color: #15803d; }
+html[data-theme="light"] .eq-mis__accion--principal { background: #16a34a; color: #fff; box-shadow: none; }
+html[data-theme="light"] .eq-mis__accion--principal:hover { background: #15803d; }
+html[data-theme="light"] .eq-mis__accion--secundaria { background: #fff; color: var(--texto); border-color: #d1d5db; }
+html[data-theme="light"] .eq-focos { display: none; }

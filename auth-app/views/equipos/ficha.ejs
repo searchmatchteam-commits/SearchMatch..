@@ -50,7 +50,7 @@
           <% } %>
           <% if (relacion.tieneEquipoPropio) { %>
             <% if (!equipo.activo || !relacion.idEquipoParaDesafiar) { %>
-              <button type="button" class="btn btn--grande" disabled title="<%= equipo.activo ? 'Solo se desafía a equipos de tu misma modalidad' : 'El equipo está inactivo' %>">Desafiar</button>
+              <button type="button" class="btn btn--grande" disabled title="<%= equipo.activo ? 'Solo se desafía a equipos que jueguen alguna de tus modalidades' : 'El equipo está inactivo' %>">Desafiar</button>
             <% } else if (desafioPendiente) { %>
               <button type="button" class="btn btn--grande" disabled>Desafío pendiente</button>
             <% } else { %>
@@ -77,8 +77,22 @@
       </form>
     <% } %>
     <% if (equipo.activo && relacion.idEquipoParaDesafiar && !desafioPendiente && !relacion.esIntegrante) { %>
-      <form class="dash-panel eq-panel sm-form" id="desafiar" action="/mi-equipo/desafios/<%= equipo.id %>" method="POST">
+      <form class="dash-panel eq-panel sm-form" id="desafiar" action="/mi-equipo/desafios/<%= equipo.id %>?equipo=<%= relacion.idEquipoParaDesafiar %>" method="POST">
         <h2 class="dash-panel__titulo">Desafiar a <%= equipo.nombre %></h2>
+        <%# Modalidad del partido: una de las que juegan los dos equipos (equipoFichaModel.relacionConFicha) %>
+        <% if (relacion.modalidadesParaDesafiar.length > 1) { %>
+          <div class="campo">
+            <label for="modalidad-desafio">Modalidad del partido</label>
+            <select id="modalidad-desafio" name="modalidad">
+              <% relacion.modalidadesParaDesafiar.forEach(function (n) { %>
+                <option value="<%= n %>">Fútbol <%= n %></option>
+              <% }) %>
+            </select>
+          </div>
+        <% } else if (relacion.modalidadesParaDesafiar.length === 1) { %>
+          <input type="hidden" name="modalidad" value="<%= relacion.modalidadesParaDesafiar[0] %>" />
+          <p class="dash-panel__nota">Modalidad del partido: <strong>Fútbol <%= relacion.modalidadesParaDesafiar[0] %></strong></p>
+        <% } %>
         <div class="campo">
           <label for="mensaje-desafio">Mensaje <span class="sm-opcional">(opcional)</span></label>
           <textarea id="mensaje-desafio" name="mensaje" maxlength="200" placeholder="Ej. ¿Jugamos el sábado en la tarde?"></textarea>

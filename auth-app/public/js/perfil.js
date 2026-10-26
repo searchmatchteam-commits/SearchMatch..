@@ -1,10 +1,24 @@
+// public/js/perfil.js
+// Página /perfil (carta de jugador). La foto se sube en /perfil/editar (editar-perfil.js).
+//  1) "Descargar carta": dibuja la carta (con la foto guardada) en un <canvas> y la descarga como PNG.
+//  2) "Compartir carta": comparte el PNG con el menú nativo del dispositivo
+//     (Web Share); si el navegador no lo permite, la descarga.
+
+// La carta descargada tiene la proporción de la silueta (320x520): 600 x 975 px.
 const ANCHO = 600;
-const ALTO = 862;
+const ALTO = 975;
 const ESCALA = ANCHO / 320;
 const VERDE = '#39ff14';
 
-const ESCUDO = new Path2D('M14 6 L2 24 L2 300 C2 372 72 424 160 452 C248 424 318 372 318 300 L318 24 L306 6 C262 6 214 22 160 22 C106 22 58 6 14 6 Z');
+// Silueta de cresta angular: el mismo path que svg.carta-jugador__silueta (views/partials/carta-jugador.ejs).
+const ESCUDO = new Path2D('M160 16 L194 2 L288 2 L318 32 L318 160 L308 172 L318 184 L318 404 L236 476 L178 494 L160 518 L142 494 L84 476 L2 404 L2 184 L12 172 L2 160 L2 32 L32 2 L126 2 Z');
+const FILOS = new Path2D('M146 28 L160 36 L174 28 M142 458 L160 472 L178 458 M18 172 H30 M290 172 H302');
+// Inter, como en la página: números y nombre en 800, siglas en 600
+const fuente = (tamano, peso = 800) => `${peso} ${tamano}px Inter, system-ui, sans-serif`;
+// El apodo, igual que en la página: Oswald 700
+const fuenteApodo = (tamano) => `700 ${tamano}px Oswald, "Arial Narrow", Impact, sans-serif`;
 
+/** Rellena o traza la silueta en coordenadas del viewBox 320x520. */
 function conSilueta(ctx, dibujar) {
   ctx.save();
   ctx.scale(ESCALA, ESCALA);
@@ -20,6 +34,7 @@ function dibujarBandera(ctx, x, y, ancho) {
   ctx.fillRect(x, y + alto / 2, ancho, alto / 2);
   ctx.fillStyle = '#0039a6';
   ctx.fillRect(x, y, ancho / 3, alto / 2);
+  // Estrella de 5 puntas
   const cx = x + ancho / 6;
   const cy = y + alto / 4;
   const r = alto / 6;
@@ -33,6 +48,7 @@ function dibujarBandera(ctx, x, y, ancho) {
   ctx.fill();
 }
 
+/** Foto circular (recorte "cover") o la silueta por defecto. */
 function dibujarFoto(ctx, foto, cx, cy, radio) {
   ctx.save();
   ctx.beginPath();
@@ -65,9 +81,15 @@ function dibujarFoto(ctx, foto, cx, cy, radio) {
   ctx.stroke();
 }
 
+/** Dibuja la carta completa y devuelve el canvas. */
 async function dibujarCarta(datos, foto) {
+  // Las fuentes deben estar cargadas antes de escribir en el canvas.
   if (document.fonts) {
-    await Promise.all([document.fonts.load('900 64px Inter'), document.fonts.load('700 28px Inter')]).catch(() => {});
+    await Promise.all([
+      document.fonts.load(fuente(64)),
+      document.fonts.load(fuente(26, 600)),
+      document.fonts.load(fuenteApodo(64)),
+    ]).catch(() => {});
   }
 
   const canvas = document.createElement('canvas');
@@ -75,8 +97,9 @@ async function dibujarCarta(datos, foto) {
   canvas.height = ALTO;
   const ctx = canvas.getContext('2d');
 
+  // Silueta igual a la de la página: fondo con degradado, rayas a 45° y borde doble
   conSilueta(ctx, () => {
-    const fondo = ctx.createLinearGradient(0, 0, 0, 460);
+    const fondo = ctx.createLinearGradient(0, 0, 0, 520);
     fondo.addColorStop(0, '#0f1a0f');
     fondo.addColorStop(0.55, '#080b08');
     fondo.addColorStop(1, '#030403');
@@ -87,82 +110,93 @@ async function dibujarCarta(datos, foto) {
     ctx.clip(ESCUDO);
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
     ctx.lineWidth = 2;
-    for (let d = -460; d < 320; d += 7) {
+    for (let d = -520; d < 320; d += 7) {
       ctx.beginPath();
-      ctx.moveTo(d, 460);
-      ctx.lineTo(d + 460, 0);
+      ctx.moveTo(d, 520);
+      ctx.lineTo(d + 520, 0);
       ctx.stroke();
     }
     ctx.restore();
 
-    const borde = ctx.createLinearGradient(0, 0, 0, 460);
+    const borde = ctx.createLinearGradient(0, 0, 0, 520);
     borde.addColorStop(0, VERDE);
     borde.addColorStop(1, '#0d5c05');
     ctx.strokeStyle = borde;
     ctx.lineWidth = 3.5;
-    ctx.lineJoin = 'round';
+    ctx.lineJoin = 'miter';
     ctx.stroke(ESCUDO);
 
-    ctx.translate(10.5, 15.5);
-    ctx.scale(0.934, 0.934);
+    ctx.strokeStyle = 'rgba(57, 255, 20, 0.7)';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'square';
+    ctx.stroke(FILOS);
+
+    ctx.translate(9.6, 15.6);
+    ctx.scale(0.94, 0.94);
     ctx.strokeStyle = 'rgba(57, 255, 20, 0.45)';
     ctx.lineWidth = 1;
     ctx.stroke(ESCUDO);
   });
 
+  // Columna izquierda: media, posición, bandera
   ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'left';
   ctx.shadowColor = 'rgba(57, 255, 20, 0.55)';
   ctx.shadowBlur = 24;
   ctx.fillStyle = VERDE;
-  ctx.font = '900 128px Inter, system-ui, sans-serif';
-  ctx.fillText(String(datos.media), 52, 150);
+  ctx.font = fuente(124);
+  ctx.fillText(String(datos.media), 56, 168);
   ctx.shadowBlur = 0;
 
   ctx.fillStyle = '#f2f5f2';
-  ctx.font = '800 38px Inter, system-ui, sans-serif';
-  ctx.fillText(datos.posicion, 58, 202);
+  ctx.font = fuente(34, 700);
+  ctx.fillText(datos.posicion, 62, 212);
   dibujarBandera(ctx, 58, 226, 60);
 
+  // Foto
   dibujarFoto(ctx, foto, 380, 205, 140);
 
+  // Nombre
   ctx.textAlign = 'center';
   ctx.fillStyle = '#f2f5f2';
-  ctx.font = '900 64px Inter, system-ui, sans-serif';
+  ctx.font = fuenteApodo(92);
   let nombre = datos.nombre.toUpperCase();
   while (ctx.measureText(nombre).width > ANCHO - 100 && nombre.length > 3) nombre = nombre.slice(0, -1);
-  ctx.fillText(nombre, ANCHO / 2, 398);
+  ctx.fillText(nombre, ANCHO / 2, 470);
 
   ctx.strokeStyle = 'rgba(57, 255, 20, 0.35)';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(70, 422);
-  ctx.lineTo(ANCHO - 70, 422);
+  ctx.moveTo(70, 518);
+  ctx.lineTo(ANCHO - 70, 518);
   ctx.stroke();
 
+  // Estadísticas: dos columnas de tres (RIT TIR PAS | REG DEF FIS)
   ctx.textAlign = 'left';
   datos.estadisticas.forEach(([sigla, valor], i) => {
     const columna = Math.floor(i / 3);
     const fila = i % 3;
     const x = columna === 0 ? 120 : 340;
-    const y = 468 + fila * 44;
+    const y = 584 + fila * 72;
     ctx.fillStyle = '#f2f5f2';
-    ctx.font = '900 50px Inter, system-ui, sans-serif';
+    ctx.font = fuente(46, 800);
     ctx.fillText(String(valor), x, y);
-    ctx.fillStyle = '#a2aaa2';
-    ctx.font = '700 30px Inter, system-ui, sans-serif';
-    ctx.fillText(sigla, x + 72, y);
+    const anchoValor = ctx.measureText(String(valor)).width;
+    ctx.fillStyle = VERDE;
+    ctx.font = fuente(22, 600);
+    ctx.fillText(sigla, x + anchoValor + 12, y - 2);
   });
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
   ctx.beginPath();
-  ctx.moveTo(ANCHO / 2, 432);
-  ctx.lineTo(ANCHO / 2, 562);
+  ctx.moveTo(ANCHO / 2, 540);
+  ctx.lineTo(ANCHO / 2, 744);
   ctx.stroke();
 
+  // Marca
   ctx.textAlign = 'center';
   ctx.fillStyle = VERDE;
-  ctx.font = '900 22px Inter, system-ui, sans-serif';
-  ctx.fillText('SEARCHMATCH', ANCHO / 2, 730);
+  ctx.font = fuente(22);
+  ctx.fillText('SEARCHMATCH', ANCHO / 2, 830); // sobre el chevron de la punta
 
   return canvas;
 }
@@ -205,9 +239,11 @@ document.addEventListener('DOMContentLoaded', () => {
         foto.addEventListener('error', resolve, { once: true });
       });
     }
+    // Si la foto no cargó (naturalWidth 0) se dibuja la silueta
     return aBlob(await dibujarCarta(datos, foto && foto.naturalWidth ? foto : null));
   }
 
+  /* ---------- 1) Descargar ---------- */
   document.querySelector('[data-descargar]').addEventListener('click', async () => {
     try {
       descargarBlob(await generarImagen(), nombreArchivo);
@@ -217,6 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  /* ---------- 2) Compartir ---------- */
   document.querySelector('[data-compartir]').addEventListener('click', async () => {
     try {
       const blob = await generarImagen();
@@ -234,6 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         avisar('Tu navegador no permite compartir imágenes directamente: descargamos la carta para que la compartas.');
       }
     } catch (err) {
+      // AbortError = el usuario cerró el menú de compartir: no es un error.
       if (err.name !== 'AbortError') avisar('No pudimos compartir tu carta. Prueba con "Descargar carta".');
     }
   });

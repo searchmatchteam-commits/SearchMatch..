@@ -1,8 +1,14 @@
+/* public/css/modulos.css
+   Estilos de las funciones nuevas (avance al 75 %). Solo clases nuevas con prefijo "sm-"
+   (y <select>/<textarea> dentro de .campo, que antes no se usaban), así no cambia nada
+   de lo que ya existía. Reutiliza las variables de style.css (colores, radios, fuente). */
+
+/* ---------- Listas desplegables y áreas de texto con el mismo aspecto que .campo input ---------- */
 .campo select,
 .campo textarea {
   width: 100%;
   font: inherit;
-  font-size: 16px;
+  font-size: 16px; /* evita el zoom de iOS al enfocar */
   color: var(--texto);
   background: var(--superficie-campo);
   border: 1px solid var(--borde-fuerte);
@@ -33,6 +39,7 @@
   border-color: var(--error);
 }
 
+/* ---------- Aviso del límite de equipos (regla 5) ---------- */
 .sm-aviso-limite {
   flex-basis: 100%;
   margin: 0;
@@ -44,6 +51,12 @@
   font-size: 0.88rem;
 }
 
+/* ======================================================================
+   Fases 1 a 3: componentes nuevos (prefijo sm-). Reutilizan las variables
+   de style.css y cyber.css (--vidrio, --verde-rgb, --radio-panel...).
+   ====================================================================== */
+
+/* ---------- Contenedores y textos ---------- */
 .sm-angosto { max-width: 720px; }
 .sm-legal { max-width: 860px; }
 .sm-opcional { color: var(--texto-suave); font-weight: 500; font-size: 0.85em; }
@@ -56,11 +69,15 @@
   color: var(--texto-suave);
 }
 .sm-resultados { color: var(--texto-suave); font-size: 0.9rem; }
+.sm-cargar-mas { display: flex; justify-content: center; margin-top: 8px; }
+.sm-tarjeta:focus { outline: none; } /* foco por código al cargar más; no es un control */
 
+/* Documentos legales (AR-010) */
 .sm-documento { gap: 26px; line-height: 1.65; }
 .sm-documento__seccion { display: flex; flex-direction: column; gap: 10px; }
 .sm-documento__seccion p { color: #d4dad4; }
 
+/* Lista de enlaces con detalle (documentos, seguridad de la cuenta) */
 .sm-lista-docs { list-style: none; display: flex; flex-direction: column; gap: 12px; }
 .sm-lista-docs li {
   display: flex; flex-direction: column; gap: 2px;
@@ -70,10 +87,11 @@
 .sm-lista-docs a { font-weight: 700; }
 .sm-lista-docs span { color: var(--texto-suave); font-size: 0.85rem; }
 
+/* ---------- Formularios ---------- */
 .sm-form { display: flex; flex-direction: column; gap: 16px; }
 .sm-form__acciones { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .sm-form__secundaria { margin-top: 4px; }
-.sm-form .campo__control input { padding-right: 48px; }
+.sm-form .campo__control input { padding-right: 48px; } /* espacio para el ojo de la contraseña */
 .sm-olvido { margin: -6px 0 4px; text-align: right; font-size: 0.86rem; }
 
 .sm-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 0.9rem; line-height: 1.45; }
@@ -94,10 +112,12 @@
   background: rgba(255, 196, 0, 0.08); border-color: rgba(255, 196, 0, 0.4); color: #ffe08a;
 }
 
+/* Enlaces de cuenta en el perfil (AR-012 / AR-010) */
 .sm-perfil-enlaces { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.88rem; }
 .sm-perfil-enlaces a { color: var(--texto-suave); }
 .sm-perfil-enlaces a:hover { color: var(--verde); }
 
+/* ---------- Pestañas (administración y lista/mapa) ---------- */
 .sm-pestanas {
   display: flex; gap: 6px; padding: 5px; width: fit-content; max-width: 100%; overflow-x: auto;
   border-radius: 999px; border: 1px solid var(--borde); background: rgba(255, 255, 255, 0.03);
@@ -110,12 +130,47 @@
 .sm-pestanas__item--activa { color: var(--sobre-verde); background: var(--verde); }
 .sm-pestanas__item--activa:hover { color: var(--sobre-verde); }
 
+/* Capitán: control segmentado "Mi carta" / "Mi equipo" (partials/pestanas-capitan.ejs) en /perfil y /mi-equipo.
+   Solo dos opciones cortas: no necesita desplazarse. Sin overflow (el de .sm-pestanas recortaba el brillo
+   de la opción activa y Windows dibujaba una barra de desplazamiento gris) y del ancho de su contenido. */
+.sm-pestanas--vista {
+  display: inline-flex; flex: none; gap: 4px; padding: 4px; margin: 10px 0 14px;
+  width: max-content; max-width: none; overflow: visible;
+  background: #0a0a0a; border: 1px solid #222222;
+}
+.sm-pestanas--vista .sm-pestanas__item {
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px;
+  font-size: 0.85rem; letter-spacing: 0.01em; color: #a3a3a3;
+  transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.25s ease;
+}
+.sm-pestanas--vista .sm-pestanas__item:hover { color: var(--texto); background: rgba(255, 255, 255, 0.05); }
+.sm-pestanas--vista .sm-pestanas__item--activa,
+.sm-pestanas--vista .sm-pestanas__item--activa:hover {
+  color: var(--sobre-verde); background: var(--verde); box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+}
+.sm-pestanas--vista .sm-pestanas__item:focus-visible { outline: 2px solid var(--verde); outline-offset: 2px; }
+/* El ícono usa el color del texto: gris tenue inactivo, negro sobre el verde activo */
+.sm-pestanas__icono {
+  width: 16px; height: 16px; flex: none; opacity: 0.75; transition: opacity 0.2s ease;
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.sm-pestanas__item:hover .sm-pestanas__icono,
+.sm-pestanas__item--activa .sm-pestanas__icono { opacity: 1; }
+/* Alineado a la izquierda con el chip y el título (la cabecera del equipo ya separa con gap) */
+.eq-cabecera__texto .sm-pestanas--vista { margin: 0; align-self: flex-start; }
+.perfil__cabecera .sm-pestanas--vista { display: flex; margin-inline: auto; } /* centrada como el texto en celulares */
+@media (min-width: 900px) { .perfil__cabecera .sm-pestanas--vista { margin-inline: 0; } }
+
+/* ---------- Estados vacíos ---------- */
 .sm-vacio { align-items: flex-start; }
 .sm-vacio__titulo { font-weight: 800; font-size: 1.05rem; }
 
+/* ---------- Filtros ---------- */
+/* .dash-panel.sm-filtros: más específico que .dash-panel (dashboard.css se carga después y lo deja en flex) */
 .sm-filtros, .dash-panel.sm-filtros { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .sm-filtros .formulario__fila { margin: 0; }
 
+/* ---------- Tarjetas y filas (listados) ---------- */
 .sm-tarjetas { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .sm-tarjeta { gap: 12px; }
 .sm-tarjeta--inactiva { opacity: 0.7; }
@@ -151,13 +206,16 @@
 .sm-precio small { font-size: 0.75em; color: var(--texto-suave); font-weight: 600; }
 .sm-precio--grande { font-size: 1.5rem; }
 
+/* Datos en pares etiqueta / valor */
 .sm-datos { display: grid; gap: 12px; }
 .sm-datos div { display: grid; gap: 2px; }
 .sm-datos dt { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--texto-suave); }
 .sm-datos dd { overflow-wrap: anywhere; }
 
+/* Dos columnas en escritorio */
 .sm-columnas { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
 
+/* ---------- Horario (AD-003 / DE-006) ---------- */
 .sm-horario, .sm-agenda { list-style: none; display: flex; flex-direction: column; }
 .sm-horario__dia, .sm-agenda__dia {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
@@ -180,6 +238,7 @@
 .sm-bloque--ocupado { color: #ffb4b4; background: rgba(255, 107, 107, 0.08); border-color: rgba(255, 107, 107, 0.3); }
 .sm-bloque--libre { color: var(--texto-suave); background: transparent; border-color: var(--borde); font-weight: 600; }
 
+/* ---------- Catálogos (AD-014) ---------- */
 .sm-catalogo { list-style: none; display: flex; flex-direction: column; }
 .sm-catalogo__fila { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 0; border-top: 1px solid var(--borde); }
 .sm-catalogo__fila:first-child { border-top: 0; }
@@ -192,13 +251,118 @@
 .sm-catalogo__nuevo { padding-top: 14px; border-top: 1px dashed var(--borde-fuerte); align-items: flex-end; }
 .sm-catalogo__nuevo > .btn { align-self: flex-end; margin-bottom: 2px; }
 
-.sm-mapa { width: 100%; height: 460px; border-radius: var(--radio-chico); overflow: hidden; border: 1px solid var(--borde-fuerte); }
+/* ---------- Mapa de canchas (DE-003) ---------- */
+.sm-mapa {
+  width: 100%; height: 460px; border-radius: var(--radio-chico); overflow: hidden;
+  border: 1px solid var(--borde-fuerte); background: #0a0a0a;
+}
 .sm-mapa--ficha { height: 300px; }
 .sm-acciones-canchas { align-items: center; }
-.sm-mapa .leaflet-popup-content { color: #111; font-family: var(--fuente); }
-.sm-mapa .leaflet-popup-content ul { margin: 6px 0 0; padding-left: 16px; }
+
+/* Modo oscuro de los tiles de OSM (solo la capa de tiles: pines y globos no se invierten) */
+.sm-mapa .leaflet-tile-pane { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
+
+/* Pin verde neón con brillo */
+.sm-pin { background: none; border: none; }
+.sm-pin svg { display: block; overflow: visible; filter: drop-shadow(0 0 6px rgba(var(--verde-rgb, 57, 255, 20), 0.85)); }
+.sm-pin path { fill: var(--verde); stroke: #0a0a0a; stroke-width: 1.5; }
+.sm-pin circle { fill: #0a0a0a; }
+
+/* Controles de zoom oscuros */
+.sm-mapa .leaflet-bar { border: 1px solid var(--borde-fuerte); border-radius: 10px; overflow: hidden; box-shadow: none; }
+.sm-mapa .leaflet-bar a { background: #1a1a1a; color: #fff; border-bottom-color: var(--borde); transition: color 0.2s, background 0.2s, box-shadow 0.2s; }
+.sm-mapa .leaflet-bar a:hover { background: #1a1a1a; color: var(--verde); box-shadow: inset 0 0 12px rgba(var(--verde-rgb, 57, 255, 20), 0.35); }
+.sm-mapa .leaflet-bar a.leaflet-disabled { color: #555; box-shadow: none; }
+
+/* Grupos de pines (leaflet.markercluster) */
+.sm-grupo { background: none; border: none; }
+.sm-grupo span {
+  display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%;
+  background: rgba(var(--verde-rgb, 57, 255, 20), 0.3); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  border: 2px solid var(--verde); color: #fff; font-weight: 800; font-size: 0.85rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 14px rgba(var(--verde-rgb, 57, 255, 20), 0.55), inset 0 0 10px rgba(var(--verde-rgb, 57, 255, 20), 0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.sm-grupo--grande span { font-size: 0.95rem; }
+.sm-grupo:hover span { transform: scale(1.08); box-shadow: 0 0 22px rgba(var(--verde-rgb, 57, 255, 20), 0.85); }
+
+/* Fondo de Leaflet oscuro (leaflet.css lo deja gris claro y se ve mientras cargan los tiles) */
+.sm-mapa.leaflet-container { background: #0a0a0a; }
+
+/* Mapa expandido: capa hija de <body> con el mapa centrado (grande, pero no pantalla completa) */
+.sm-mapa-modal {
+  position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.sm-mapa-modal[hidden] { display: none; }
+.sm-mapa.sm-mapa--expandido {
+  width: min(90vw, 72rem); height: 85vh; flex: none;
+  border-radius: 18px; border-color: var(--verde-borde); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+}
+.sm-sin-scroll { overflow: hidden; }
+.sm-mapa .leaflet-bar a.sm-expandir { display: grid; place-items: center; }
+
+/* Botón "mi ubicación" */
+.sm-mapa .leaflet-bar a.sm-ubicar { display: grid; place-items: center; color: var(--verde); }
+.sm-mapa .leaflet-bar a.sm-ubicar:hover { filter: drop-shadow(0 0 6px rgba(var(--verde-rgb, 57, 255, 20), 0.8)); }
+.sm-ubicar--cargando svg { animation: sm-girar 1s linear infinite; }
+@keyframes sm-girar { to { transform: rotate(360deg); } }
+
+/* Punto del usuario con pulso */
+.sm-yo { background: none; border: none; }
+.sm-yo span {
+  position: relative; display: block; width: 18px; height: 18px; border-radius: 50%;
+  background: #3b82f6; border: 3px solid #fff; box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+}
+.sm-yo span::after {
+  content: ""; position: absolute; inset: -3px; border-radius: 50%;
+  background: rgba(59, 130, 246, 0.45); animation: sm-pulso 2s ease-out infinite;
+}
+@keyframes sm-pulso { from { transform: scale(1); opacity: 1; } to { transform: scale(3.2); opacity: 0; } }
+
+/* Aviso breve sobre el mapa (errores de ubicación) */
+.sm-mapa__aviso {
+  position: absolute; z-index: 1000; left: 50%; bottom: 28px; transform: translateX(-50%);
+  max-width: calc(100% - 32px); padding: 10px 14px; border-radius: 10px;
+  background: #1a1a1a; color: var(--texto); border: 1px solid var(--borde-fuerte);
+  font-size: 0.85rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sm-yo span::after, .sm-ubicar--cargando svg { animation: none; }
+}
+
+/* Globos y atribución oscuros */
+.sm-mapa .leaflet-popup-content-wrapper,
+.sm-mapa .leaflet-popup-tip { background: #1a1a1a; color: var(--texto); border: 1px solid var(--borde-fuerte); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+.sm-mapa .leaflet-popup-content { color: var(--texto); font-family: var(--fuente); }
+.sm-mapa .leaflet-popup-content a { color: var(--verde); }
+.sm-mapa a.leaflet-popup-close-button { color: var(--texto-suave); }
+.sm-mapa .leaflet-control-attribution { background: rgba(10, 10, 10, 0.75); color: var(--texto-suave); }
+.sm-mapa .leaflet-control-attribution a { color: var(--texto-suave); }
 .sm-mapa .leaflet-popup-content p { margin: 4px 0; }
 
+/* Globo de un recinto: una fila de arriendo por cancha */
+.sm-globo { display: grid; gap: 8px; min-width: 220px; }
+.sm-globo__titulo { font-size: 1rem; }
+.sm-mapa .leaflet-popup-content .sm-globo__direccion { margin: 0 0 2px; color: var(--texto-suave); font-size: 0.8rem; }
+.sm-mapa .leaflet-popup-content a.sm-globo__cancha {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 8px 10px; border-radius: 10px; border: 1px solid var(--borde); color: var(--texto);
+  background: rgba(255, 255, 255, 0.03); transition: border-color 0.2s, background 0.2s;
+}
+.sm-mapa .leaflet-popup-content a.sm-globo__cancha:hover { border-color: var(--verde-borde); background: var(--verde-tenue); }
+.sm-globo__datos { display: grid; gap: 1px; }
+.sm-globo__nombre { font-weight: 700; font-size: 0.85rem; }
+.sm-globo__modalidad { color: var(--texto-suave); font-size: 0.75rem; }
+.sm-globo__precio { color: var(--verde); font-weight: 800; font-size: 1.15rem; white-space: nowrap; }
+.sm-globo__precio small { color: var(--texto-suave); font-weight: 600; font-size: 0.7rem; margin-left: 2px; }
+.sm-globo__consultar {
+  padding: 6px 10px; border-radius: 999px; white-space: nowrap;
+  background: var(--verde); color: var(--sobre-verde); font-weight: 700; font-size: 0.75rem;
+}
+
+/* ---------- Pantallas más anchas ---------- */
 @media (min-width: 760px) {
   .dash-panel.sm-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
   .sm-filtros .formulario__fila { grid-column: 1 / -1; }
@@ -214,6 +378,11 @@
   .sm-mapa { height: 360px; }
 }
 
+/* ======================================================================
+   Fases 4 a 7
+   ====================================================================== */
+
+/* ---------- Barra superior: agenda y campana (NT-003) ---------- */
 .sm-icono-nav {
   position: relative; display: grid; place-items: center; width: 38px; height: 38px; flex: none;
   border-radius: 999px; border: 1px solid var(--borde-fuerte); color: var(--texto);
@@ -229,7 +398,22 @@
   .navbar__nav { gap: 6px; }
   .navbar__nav .btn--chico { padding-left: 10px; padding-right: 10px; }
 }
+/* Con el botón de tema, el nombre de la marca no cabe junto a los íconos hasta 500px: queda solo el balón */
+@media (max-width: 500px) { .logo__texto { display: none; } }
 
+/* Botón modo claro / oscuro: se ve el ícono del modo al que se cambia (sol en oscuro, luna en claro) */
+.sm-tema {
+  padding: 0; background: transparent; cursor: pointer; font: inherit;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+.sm-tema:hover { background: var(--verde-tenue); }
+.sm-tema svg { transition: transform 0.45s var(--curva); }
+.sm-tema:hover svg { transform: rotate(-25deg) scale(1.08); }
+.sm-tema__luna { display: none; }
+html[data-theme="light"] .sm-tema__sol { display: none; }
+html[data-theme="light"] .sm-tema__luna { display: block; }
+
+/* ---------- Notificaciones (NT-002) ---------- */
 .dash-panel.sm-notificaciones { list-style: none; gap: 0; padding: 6px 0; }
 .sm-notificacion + .sm-notificacion { border-top: 1px solid var(--borde); }
 .sm-notificacion__enlace { display: flex; gap: 12px; align-items: flex-start; padding: 14px 22px; color: var(--texto-suave); }
@@ -241,6 +425,7 @@
 .sm-notificacion--nueva .sm-notificacion__mensaje { font-weight: 700; }
 .sm-notificacion--nueva .sm-notificacion__punto { background: var(--verde); box-shadow: 0 0 8px var(--verde); }
 
+/* ---------- Estados de desafíos, solicitudes y reservas ---------- */
 .sm-estado--pendiente { color: #ffe08a; background: rgba(255, 196, 0, 0.08); border: 1px solid rgba(255, 196, 0, 0.35); }
 .sm-estado--aceptado, .sm-estado--aceptada { color: var(--verde); background: var(--verde-tenue); border: 1px solid var(--verde-borde); }
 .sm-estado--rechazado, .sm-estado--rechazada, .sm-estado--cancelado, .sm-estado--cancelada {
@@ -253,6 +438,7 @@
   border-radius: 999px; padding: 9px 14px; color-scheme: dark; max-width: 100%;
 }
 
+/* ---------- Enfrentamiento (desafío y partido) ---------- */
 .sm-versus { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: center; }
 .sm-versus__equipo {
   display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 14px 10px;
@@ -265,6 +451,7 @@
 .sm-versus__vs { font-weight: 900; color: var(--verde); }
 .sm-versus__goles { font-size: 2rem !important; font-weight: 900; color: var(--texto) !important; }
 
+/* ---------- Ficha de equipo: comentarios y zona de peligro ---------- */
 .sm-enlace-ficha { font-size: 0.8rem; font-weight: 700; }
 .sm-comentarios { list-style: none; display: flex; flex-direction: column; gap: 12px; }
 .sm-comentario { padding: 12px 14px; border-radius: var(--radio-chico); border: 1px solid var(--borde); background: rgba(255, 255, 255, 0.02); display: flex; flex-direction: column; gap: 6px; }
@@ -275,9 +462,11 @@
 .sm-chequeos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .sm-chequeo { padding: 12px; border-radius: var(--radio-chico); border: 1px solid var(--borde-fuerte); }
 
+/* ---------- Reservas ---------- */
 .sm-costo { font-size: 1rem; }
 .sm-costo strong { color: var(--verde); }
 
+/* ---------- Agenda (AG-001) ---------- */
 .sm-mes { justify-content: space-between; }
 .sm-mes__titulo { text-transform: capitalize; }
 .sm-calendario { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
@@ -294,6 +483,7 @@
 .sm-calendario__dia--hoy { border-color: var(--texto-suave); }
 .sm-calendario__dia--elegido { outline: 2px solid var(--verde); outline-offset: 1px; }
 
+/* ---------- Inicio: equipo elegido (IN-005) ---------- */
 .sm-selector-equipos { display: flex; flex-wrap: wrap; gap: 8px; }
 .sm-selector-equipos__item {
   display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px;

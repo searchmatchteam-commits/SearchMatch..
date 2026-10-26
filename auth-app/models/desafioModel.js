@@ -6,7 +6,7 @@ const SQL_DESAFIO = `
   SELECT d.id, d.mensaje, d.fecha_solicitud, d.fecha_respuesta, lower(ed.nombre) AS estado,
          d.id_equipo_desafiante, ea.nombre AS desafiante, na.nombre AS nivel_desafiante, ea.activo AS desafiante_activo,
          d.id_equipo_desafiado, eb.nombre AS desafiado, nb.nombre AS nivel_desafiado, eb.activo AS desafiado_activo,
-         ea.id_modalidad, m.nombre AS modalidad, m.cantidad_de_jugadores AS jugadores,
+         coalesce(d.id_modalidad, ea.id_modalidad) AS id_modalidad, m.nombre AS modalidad, m.cantidad_de_jugadores AS jugadores,
          (SELECT p.id FROM partido p WHERE p.id_desafio = d.id) AS id_partido
     FROM desafio d
     JOIN estado_desafio ed ON ed.id = d.id_estado_desafio
@@ -14,7 +14,8 @@ const SQL_DESAFIO = `
     JOIN equipo eb ON eb.id = d.id_equipo_desafiado
     LEFT JOIN nivel na ON na.id = ea.id_nivel
     LEFT JOIN nivel nb ON nb.id = eb.id_nivel
-    LEFT JOIN modalidad m ON m.id = ea.id_modalidad`;
+    -- La modalidad elegida al desafiar; los desafíos antiguos, la principal del desafiante
+    LEFT JOIN modalidad m ON m.id = coalesce(d.id_modalidad, ea.id_modalidad)`;
 
 async function listarEnviados(idEquipo, estado = null) {
   const { rows } = await pool.query(

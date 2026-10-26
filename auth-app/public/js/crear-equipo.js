@@ -1,9 +1,53 @@
+// public/js/crear-equipo.js
+// Wizard de equipo (form[data-wizard-equipo] en views/crear-equipo.ejs):
+//  1) Muestra un paso a la vez (1: identidad, 2: configuración) y actualiza la barra de progreso.
+//  2) Valida el paso actual antes de avanzar (mismas reglas que validarEquipo en el servidor).
+//  3) Vista previa en vivo: nombre, tipo de fútbol · nivel y escudo (reducido y enviado en el campo oculto "escudo").
+//  Los tipos de fútbol son casillas: se puede marcar más de uno (la vista previa dice "Fútbol 7 y 11").
+//  4) Al crear: revisa los dos pasos y pone el botón en "cargando".
+// Sin JS el formulario muestra los dos pasos juntos y funciona igual (valida el servidor).
+
 const PRIMER_PASO_EQUIPO = 1;
 const ULTIMO_PASO_EQUIPO = 2;
 const REGEX_CORREO_EQUIPO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const NOMBRE_VACIO = 'Nombre del Club';
 const DETALLE_VACIO = 'Tipo de fútbol · Nivel';
+// El formulario viaja como urlencoded (límite de 100 KB en el servidor): el escudo debe quedar bajo esto.
+const TIPOS_ESCUDO = ['image/png', 'image/jpeg', 'image/webp'];
+const LADOS_ESCUDO = [256, 192, 128];
+const LARGO_MAXIMO_ESCUDO = 80000;
 
+/** La imagen entera dentro de un cuadrado de "lado" px, como data URL (WebP si el navegador puede; si no, PNG). */
+function escudoComoDataUrl(imagen, lado) {
+  const escala = Math.min(1, lado / Math.max(imagen.naturalWidth, imagen.naturalHeight));
+  const ancho = Math.round(imagen.naturalWidth * escala);
+  const alto = Math.round(imagen.naturalHeight * escala);
+  const canvas = document.createElement('canvas');
+  canvas.width = lado;
+  canvas.height = lado;
+  canvas.getContext('2d').drawImage(imagen, (lado - ancho) / 2, (lado - alto) / 2, ancho, alto);
+  const webp = canvas.toDataURL('image/webp', 0.85);
+  return webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/png');
+}
+
+/** Reduce el archivo hasta que quepa en el formulario; null si no se logra. */
+async function reducirEscudo(archivo) {
+  const url = URL.createObjectURL(archivo);
+  try {
+    const imagen = new Image();
+    imagen.src = url;
+    await imagen.decode();
+    for (const lado of LADOS_ESCUDO) {
+      const datos = escudoComoDataUrl(imagen, lado);
+      if (datos.length <= LARGO_MAXIMO_ESCUDO) return datos;
+    }
+    return null;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+// Reglas por paso. Cada una devuelve el mensaje de error o null.
 const REGLAS_EQUIPO = {
   1: {
     nombre_equipo: (v) => (v ? null : 'El nombre de la escuadra es obligatorio.'),
@@ -15,9 +59,9 @@ const REGLAS_EQUIPO = {
   },
   2: {
     nivel: (v) => (v ? null : 'Elige el nivel de juego del equipo.'),
-    id_comuna: (v) => (v ? null : 'Elige la región y la comuna de tu equipo.'),
+    id_comuna: (v) => (v ? null : 'Elige la región y la comuna de tu equipo.'), // CORRECCIÓN: regla 11
     zona: (v) => (v ? null : 'Escribe la zona habitual de juego.'),
-    modalidad: (v) => (v ? null : 'Elige el tipo de fútbol.'),
+    modalidad: (v) => (v ? null : 'Elige al menos un tipo de fútbol.'),
   },
 };
 
@@ -38,11 +82,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let pasoActual = Number(formulario.dataset.pasoInicial) || PRIMER_PASO_EQUIPO;
 
+  /* ---------- Validación ---------- */
+
   function valorDe(nombre) {
     const elemento = formulario.elements[nombre];
+    // Casillas (tipos de fútbol): los valores marcados separados por coma ('' si ninguno)
+    if (elemento instanceof RadioNodeList && elemento[0].type === 'checkbox') {
+      return Array.from(elemento).filter((casilla) => casilla.checked).map((casilla) => casilla.value).join(',');
+    }
+    // RadioNodeList.value es el valor del radio marcado ('' si ninguno).
     return elemento.value === undefined ? '' : elemento.value.trim();
   }
 
+  /** Pinta (o limpia) el error de un campo o grupo de opciones. */
   function marcarError(nombre, mensaje) {
     const elemento = formulario.elements[nombre];
     const esGrupo = elemento instanceof RadioNodeList;
@@ -52,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formulario.querySelector(`#${nombre}-error`).textContent = mensaje || '';
   }
 
+  /** Valida un paso; devuelve la lista de errores y deja el foco en el primero. */
   function validarPaso(numero, { enfocar = true } = {}) {
     const errores = [];
     let primero = null;
@@ -79,10 +132,19 @@ document.addEventListener('DOMContentLoaded', () => {
     alerta.hidden = mensajes.length === 0;
   }
 
+  /* ---------- Vista previa en vivo ---------- */
+
   function textoMarcado(nombre) {
     const marcado = formulario.querySelector(`input[name="${nombre}"]:checked`);
     if (!marcado) return '';
     return marcado.dataset.texto || marcado.closest('label').querySelector('.opcion__nombre').textContent.trim();
+  }
+
+  /** 'Fútbol 7 y 11' con los tipos marcados (mismo texto que el servidor). */
+  function textoModalidades() {
+    const marcadas = valorDe('modalidad').split(',').filter(Boolean);
+    if (marcadas.length <= 1) return textoMarcado('modalidad');
+    return `Fútbol ${marcadas.slice(0, -1).join(', ')} y ${marcadas[marcadas.length - 1]}`;
   }
 
   function actualizarVista() {
@@ -91,24 +153,48 @@ document.addEventListener('DOMContentLoaded', () => {
       el.textContent = nombre || NOMBRE_VACIO;
       el.classList.toggle('ceq-identidad__nombre--vacio', !nombre);
     });
-    const detalle = [textoMarcado('modalidad'), textoMarcado('nivel')].filter(Boolean).join(' · ');
+    const detalle = [textoModalidades(), textoMarcado('nivel')].filter(Boolean).join(' · ');
     document.querySelector('[data-vista-detalle]').textContent = detalle || DETALLE_VACIO;
   }
 
-  let urlEscudo = null;
-  formulario.querySelector('[data-subir-escudo]').addEventListener('change', (evento) => {
-    const archivo = evento.target.files[0];
-    if (!archivo || !archivo.type.startsWith('image/')) return;
-    if (urlEscudo) URL.revokeObjectURL(urlEscudo);
-    urlEscudo = URL.createObjectURL(archivo);
+  // Escudo: se reduce y viaja como data URL en el campo oculto "escudo" (el input de archivo no tiene name).
+  const datosEscudo = formulario.querySelector('[data-escudo-datos]');
+  const errorEscudo = formulario.querySelector('[data-escudo-error]');
+
+  function pintarEscudo(src) {
     document.querySelectorAll('[data-escudo]').forEach((caja) => {
       const imagen = document.createElement('img');
-      imagen.src = urlEscudo;
+      imagen.src = src;
       imagen.alt = '';
       caja.replaceChildren(imagen);
     });
+  }
+
+  // Si el servidor devolvió el formulario con errores, el escudo elegido sigue en el campo oculto.
+  if (datosEscudo.value) pintarEscudo(datosEscudo.value);
+
+  formulario.querySelector('[data-subir-escudo]').addEventListener('change', async (evento) => {
+    const archivo = evento.target.files[0];
+    evento.target.value = '';
+    errorEscudo.textContent = '';
+    if (!archivo) return;
+    if (!TIPOS_ESCUDO.includes(archivo.type)) {
+      errorEscudo.textContent = 'El escudo debe ser JPG, PNG o WebP.';
+      return;
+    }
+    try {
+      const datos = await reducirEscudo(archivo);
+      if (!datos) throw new Error('demasiado grande');
+      datosEscudo.value = datos;
+      pintarEscudo(datos);
+    } catch (err) {
+      console.error('No se pudo preparar el escudo:', err);
+      errorEscudo.textContent = 'No pudimos usar esa imagen: prueba con otra.';
+    }
   });
 
+  /* ---------- CORRECCIÓN: regla 11 — Región y comuna ---------- */
+  // Solo se ven las comunas de la región elegida (cada <optgroup> lleva data-region).
   const selectRegion = formulario.querySelector('[data-select-region]');
   const selectComuna = formulario.querySelector('[data-select-comuna]');
   if (selectRegion && selectComuna) {
@@ -121,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         grupo.hidden = !visible;
         grupo.disabled = !visible;
       });
+      // Si la comuna marcada no es de esta región, se limpia
       const marcada = selectComuna.selectedOptions[0];
       if (marcada && marcada.parentElement.tagName === 'OPTGROUP' && marcada.parentElement.disabled) selectComuna.value = '';
       selectComuna.disabled = !region;
@@ -129,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selectRegion.addEventListener('change', filtrarComunas);
     filtrarComunas();
 
+    // La zona parte con el nombre de la comuna si el capitán aún no escribió una
     selectComuna.addEventListener('change', () => {
       const zona = formulario.elements.zona;
       const opcion = selectComuna.selectedOptions[0];
@@ -136,6 +224,8 @@ document.addEventListener('DOMContentLoaded', () => {
       marcarError('id_comuna', null);
     });
   }
+
+  /* ---------- Navegación ---------- */
 
   function irA(numero, { enfocar = true } = {}) {
     pasoActual = numero;
@@ -150,6 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     indicador.style.setProperty('--progreso', String((numero - 1) / (items.length - 1)));
 
+    // Paso 1: "Continuar →"; paso 2: "Crear equipo ✓" con la nota debajo
     const esUltimo = numero === ULTIMO_PASO_EQUIPO;
     textoContinuar.textContent = esUltimo ? 'Crear equipo' : 'Continuar';
     iconoFinal.hidden = !esUltimo;
@@ -172,6 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
     iconoFinal.hidden = cargando;
   }
 
+  // "Continuar" es el submit del formulario (así Enter también avanza).
   formulario.addEventListener('submit', (evento) => {
     if (botonContinuar.disabled) {
       evento.preventDefault();
@@ -186,6 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Último paso: se revisan los dos pasos antes de enviar.
     for (let numero = PRIMER_PASO_EQUIPO; numero <= ULTIMO_PASO_EQUIPO; numero++) {
       const errores = validarPaso(numero, { enfocar: false });
       if (errores.length > 0) {
@@ -200,6 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   botonVolver.addEventListener('click', (evento) => {
+    // En el primer paso, "Volver" sigue el enlace a /select-role.
     if (pasoActual > PRIMER_PASO_EQUIPO) {
       evento.preventDefault();
       mostrarAlerta([]);
@@ -209,13 +303,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   formulario.addEventListener('input', (evento) => {
     actualizarVista();
+    // Re-valida en vivo lo que ya estaba marcado con error.
     const nombre = evento.target.name;
     const regla = REGLAS_EQUIPO[pasoActual] && REGLAS_EQUIPO[pasoActual][nombre];
     if (regla && evento.target.closest('.campo--error, .grupo-opciones--error')) marcarError(nombre, regla(valorDe(nombre)));
   });
 
   formulario.addEventListener('change', (evento) => {
-    if (evento.target.type === 'radio') marcarError(evento.target.name, null);
+    if (evento.target.type === 'radio' || evento.target.type === 'checkbox') marcarError(evento.target.name, null);
     actualizarVista();
   });
 
@@ -223,6 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (evento.persisted && botonContinuar.disabled) ponerCargando(false);
   });
 
+  // Activa el modo "un paso a la vez" (sin esta clase se ven los dos pasos).
   formulario.classList.add('wizard__form--pasos');
   irA(pasoActual, { enfocar: false });
   actualizarVista();

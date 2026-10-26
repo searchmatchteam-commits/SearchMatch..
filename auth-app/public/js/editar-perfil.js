@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const mediaCarta = carta.querySelector('[data-carta-media]');
   const mediaEditor = formulario.querySelector('[data-editor-media]');
 
+  // Media = suma de las 6 estadísticas / 6, redondeada (igual que calcularMedia en config/perfilJugador.js)
   function actualizarMedia() {
     const suma = rangos.reduce((total, rango) => total + Number(rango.value), 0);
     const media = String(Math.round(suma / rangos.length));

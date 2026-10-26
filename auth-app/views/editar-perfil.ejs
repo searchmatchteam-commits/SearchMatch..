@@ -1,13 +1,16 @@
 <%- include('partials/header') %>
 <%
+  // Altura de la marca en la mini cancha de cada posición (0 = arco rival, 32 = arco propio).
   const alturaPosicion = { arquero: 27, defensa: 21, mediocampista: 15, delantero: 7 };
   const hoy = new Date().toISOString().slice(0, 10);
 %>
 
 <section class="perfil editor">
+  <!-- ============ COLUMNA IZQUIERDA: VISTA PREVIA DE LA CARTA + FOTO ============ -->
   <div class="perfil__carta">
     <%- include('partials/carta-jugador', { jugador, editor: true }) %>
 
+    <!-- La foto se guarda junto con el formulario (editar-perfil.js la envía a POST /perfil/foto) -->
     <div class="editor__foto">
       <label class="btn btn--contorno" for="foto">
         <svg class="btn__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
@@ -22,6 +25,8 @@
     <input type="file" id="foto" accept="image/jpeg,image/png,image/webp" class="solo-lectores" data-foto-input />
   </div>
 
+  <!-- ============ COLUMNA DERECHA: FORMULARIO ============ -->
+  <!-- Encabezado aparte: en escritorio va sobre la columna derecha y la carta queda al nivel de la primera tarjeta -->
   <header class="perfil__cabecera">
     <div class="perfil__volver"><%- include('partials/boton-volver', { fallbackUrl: '/perfil' }) %></div>
     <span class="rol__eyebrow">SEARCH MATCH · PERFIL</span>
@@ -31,15 +36,18 @@
 
   <div class="perfil__info">
     <form action="/perfil/editar" method="POST" class="formulario editor__form" data-editor>
+      <!-- Errores del servidor o de editar-perfil.js -->
       <div class="alerta alerta--error" role="alert" data-alerta-errores <%= errores.length > 0 ? '' : 'hidden' %>>
         <ul>
           <% errores.forEach(function (error) { %><li><%= error %></li><% }) %>
         </ul>
       </div>
 
+      <!-- ============ DATOS PERSONALES ============ -->
       <fieldset class="perfil__tarjeta editor__seccion">
         <legend class="perfil__tarjeta-titulo">Datos personales</legend>
 
+        <!-- Nombre y apellido se piden solo al crear la cuenta -->
         <div class="campo">
           <label for="apodo">Apodo</label>
           <input type="text" id="apodo" name="apodo" value="<%= datos.apodo || '' %>" placeholder="Ej. El Niño Maravilla"
@@ -71,6 +79,7 @@
         </div>
       </fieldset>
 
+      <!-- ============ PERFIL DEPORTIVO ============ -->
       <fieldset class="perfil__tarjeta editor__seccion">
         <legend class="perfil__tarjeta-titulo">Perfil deportivo</legend>
 
@@ -96,24 +105,28 @@
         </div>
       </fieldset>
 
+      <!-- ============ ESTADÍSTICAS ============ -->
       <fieldset class="perfil__tarjeta editor__seccion">
         <legend class="perfil__tarjeta-titulo">Estadísticas</legend>
         <p class="perfil__nota editor__nota">
           Media actual: <strong class="texto-verde" data-editor-media><%= jugador.media %></strong> · promedio de las 6 estadísticas.
         </p>
 
-        <ul class="barras">
+        <!-- Deslizadores editables (1–99): editar-perfil.js actualiza el número, la carta y la media en vivo.
+             Se guardan con "Guardar cambios" (POST /perfil/editar). -->
+        <ul class="editor__stats">
           <% jugador.estadisticas.forEach(function (s) { %>
-            <li class="barras__item">
-              <span class="barras__sigla" title="<%= s.nombre %>"><%= s.sigla %></span>
-              <span class="barras__track" role="meter" aria-label="<%= s.nombre %>" aria-valuemin="0" aria-valuemax="99" aria-valuenow="<%= s.valor %>">
-                <span class="barras__relleno" style="--valor: <%= s.valor %>"></span>
-                <span class="barras__valor"><%= s.valor %></span>
-              </span>
+            <li class="editor__stat">
+              <label class="editor__stat-nombre" for="stat_<%= s.clave %>">
+                <span class="barras__sigla"><%= s.sigla %></span> <%= s.nombre %>
+              </label>
+              <input class="editor__rango" type="range" id="stat_<%= s.clave %>" name="stat_<%= s.clave %>"
+                     min="<%= rangos.STAT.min %>" max="<%= rangos.STAT.max %>" step="1" value="<%= s.valor %>"
+                     style="--valor: <%= s.valor %>" data-editor-stat="<%= s.clave %>" />
+              <output class="barras__valor" for="stat_<%= s.clave %>" data-editor-valor="<%= s.clave %>"><%= s.valor %></output>
             </li>
           <% }) %>
         </ul>
-        <p class="perfil__nota">Tus estadísticas cambian con las valoraciones de otros jugadores después de cada partido.</p>
       </fieldset>
 
       <div class="perfil__acciones">

@@ -1,0 +1,19 @@
+<%# Tarjetas de cancha (un lote). La usan canchas/index y la respuesta parcial de "Cargar más canchas".
+    inicio = posición de la primera tarjeta del lote, para el id="tarjeta-N" (ancla y foco). %>
+<%
+  const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+%>
+<% canchas.forEach(function (c, i) { %>
+  <li class="dash-panel sm-tarjeta" id="tarjeta-<%= inicio + i + 1 %>" tabindex="-1">
+    <header class="sm-tarjeta__cabecera">
+      <div>
+        <h2 class="sm-tarjeta__titulo"><a href="/canchas/<%= c.id %>"><%= c.nombre %></a></h2>
+        <p class="sm-tarjeta__meta"><%= c.recinto %></p>
+      </div>
+      <span class="sm-precio"><%= pesos.format(c.precio) %><small>/hora</small></span>
+    </header>
+    <p class="sm-tarjeta__linea"><%= c.direccion %>, <%= c.comuna %></p>
+    <p class="sm-tarjeta__linea"><span class="sm-rol"><%= c.modalidad %> · <%= c.jugadores %> jugadores</span></p>
+    <a class="sm-tarjeta__enlace" href="/canchas/<%= c.id %>">Ver ficha y horarios →</a>
+  </li>
+<% }) %>

@@ -1,9 +1,16 @@
+// controllers/avisosEquipo.js
+// NT-001 · Notificaciones de los flujos de equipos que ya existían (equipoController los llama con una
+// sola línea marcada "NUEVO"). Cada función arma el mensaje y usa notificacionModel.
+// Nunca lanzan error: si algo falla, la acción del usuario ya se hizo y solo se registra en la consola.
+
 const notificacionModel = require('../models/notificacionModel');
 
+/** Ejecuta un aviso sin dejar que un error interrumpa la respuesta. */
 function seguro(tarea) {
   return tarea().catch((err) => console.error('⚠️  No se pudo notificar:', err.message));
 }
 
+/** PE-004 · El jugador envió una solicitud: avisa al capitán. */
 function solicitudEnviada(usuario, idEquipo) {
   return seguro(async () => {
     const equipo = await notificacionModel.nombreEquipo(idEquipo);
@@ -12,6 +19,7 @@ function solicitudEnviada(usuario, idEquipo) {
   });
 }
 
+/** PE-005 · El capitán respondió una solicitud: avisa al jugador. */
 function solicitudRespondida(idSolicitud, resultado) {
   return seguro(async () => {
     const datos = await notificacionModel.datosSolicitud(idSolicitud);
@@ -21,6 +29,7 @@ function solicitudRespondida(idSolicitud, resultado) {
   });
 }
 
+/** PE-022 · El capitán invitó a un jugador: avisa al jugador. */
 function invitacionEnviada(idEquipo, idJugador) {
   return seguro(async () => {
     const equipo = await notificacionModel.nombreEquipo(idEquipo);
@@ -28,6 +37,7 @@ function invitacionEnviada(idEquipo, idJugador) {
   });
 }
 
+/** PE-023 · El jugador aceptó la invitación: avisa al capitán. */
 function invitacionAceptada(idInvitacion) {
   return seguro(async () => {
     const datos = await notificacionModel.datosInvitacion(idInvitacion);
@@ -37,9 +47,10 @@ function invitacionAceptada(idInvitacion) {
   });
 }
 
-function desafioEnviado(usuario, idRival) {
+/** DE-008 · Un capitán desafió a otro equipo: avisa al capitán desafiado. */
+function desafioEnviado(usuario, idRival, idPropio = null) {
   return seguro(async () => {
-    const propio = await notificacionModel.equipoDeCapitan(usuario.idAuth);
+    const propio = await notificacionModel.equipoDeCapitan(usuario.idAuth, idPropio);
     await notificacionModel.notificarCapitan(idRival, 'desafio',
       `${propio ? propio.nombre : 'Un equipo'} desafió a tu equipo. Acepta o rechaza el desafío.`, `/desafios?equipo=${idRival}&ver=recibidos`);
   });

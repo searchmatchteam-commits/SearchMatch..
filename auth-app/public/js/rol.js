@@ -1,7 +1,7 @@
-const TEXTOS_BOTON = {
-  jugador: 'Continuar como jugador',
-  equipo: 'Continuar como equipo',
-};
+// public/js/rol.js
+// Pantalla de bienvenida al registro (form[data-seleccion-rol]):
+//  - Al enviar, muestra "Cargando..." y evita el doble envío.
+// El servidor guarda el rol y redirige a los datos del jugador (rolController.guardarSeleccion).
 
 document.addEventListener('DOMContentLoaded', () => {
   const formulario = document.querySelector('form[data-seleccion-rol]');
@@ -9,36 +9,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const boton = formulario.querySelector('[data-boton-rol]');
   const texto = boton.querySelector('.btn__texto');
-
-  function rolElegido() {
-    const marcado = formulario.querySelector('input[name="rol"]:checked');
-    return marcado ? marcado.value : null;
-  }
-
-  function actualizarBoton() {
-    const rol = rolElegido();
-    boton.disabled = !rol;
-    texto.textContent = rol ? TEXTOS_BOTON[rol] : 'Elige una opción';
-  }
-
-  formulario.addEventListener('change', actualizarBoton);
+  const textoOriginal = texto.textContent;
 
   formulario.addEventListener('submit', (evento) => {
-    if (!rolElegido() || boton.dataset.enviando) {
+    if (boton.dataset.enviando) {
       evento.preventDefault();
       return;
     }
     boton.dataset.enviando = 'true';
     boton.setAttribute('aria-busy', 'true');
-    texto.textContent = 'Guardando...';
+    texto.textContent = 'Cargando...';
   });
 
+  // Al volver con "Atrás" desde la caché del navegador, el botón queda listo otra vez.
   window.addEventListener('pageshow', (evento) => {
     if (!evento.persisted) return;
     delete boton.dataset.enviando;
     boton.removeAttribute('aria-busy');
-    actualizarBoton();
+    texto.textContent = textoOriginal;
   });
-
-  actualizarBoton();
 });
