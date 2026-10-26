@@ -175,6 +175,29 @@ async function listarMisEquipos(authId) {
 }
 
 /**
+ * PE-010 — Equipos activos en que juega un jugador (los que creó y los de su plantel), para su perfil público.
+ * @returns {Promise<Array<{id, nombre, zona, nivel, escudo: string|null, capitan: boolean}>>}
+ */
+async function listarEquiposActivosDeJugador(idJugador) {
+  const { rows } = await pool.query(
+    `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, n.nombre AS nivel,
+            e.id_usuario_creador = j.id_usuario AS capitan
+       FROM jugador j
+       JOIN equipo e ON e.activo
+        AND (e.id_usuario_creador = j.id_usuario
+             OR EXISTS (SELECT 1 FROM equipo_jugador x WHERE x.id_equipo = e.id AND x.id_jugador = j.id))
+       LEFT JOIN comunas cz ON cz.id = e.id_comuna
+       LEFT JOIN nivel n ON n.id = e.id_nivel
+      WHERE j.id = $1
+      ORDER BY capitan DESC, e.nombre`,
+    [idJugador]
+  );
+  return rows.map((fila) => ({
+    id: fila.id, nombre: fila.nombre, zona: fila.zona, nivel: fila.nivel, escudo: urlEscudo(fila), capitan: fila.capitan,
+  }));
+}
+
+/**
  * "Mis equipos" (dashboard y /mis-equipos): los equipos de la cuenta, cada uno con su plantel.
  * @param {string} authId - UUID de auth.users.
  * @returns {Promise<Array<{id, nombre, zona, detalle, soyCapitan: boolean, plantel: Array}>>}
@@ -1108,6 +1131,7 @@ module.exports = {
   obtenerMiEquipo,
   listarMisEquipos,
   listarMisEquiposConPlantel,
+  listarEquiposActivosDeJugador, // PE-010
   listarPlantel,
   guardarAlineacion,
   actualizarModalidades,

@@ -271,7 +271,7 @@
                       <% if (jugador.foto) { %><img src="<%= jugador.foto %>" alt="" loading="lazy"><% } else { %><%= jugador.nombre.charAt(0).toUpperCase() %><% } %>
                     </span>
                     <span class="eq-invitable__datos">
-                      <span class="eq-nombre eq-invitable__nombre"><%= jugador.nombre %></span>
+                      <a class="eq-nombre eq-invitable__nombre" href="/jugadores/<%= jugador.id %>"><%= jugador.nombre %></a><%# PE-010: perfil público %>
                       <span class="eq-invitable__linea">
                         <span class="eq-posicion <%= jugador.sinPosicion ? 'eq-posicion--vacia' : '' %>"><%= jugador.sinPosicion ? 'Sin posición' : jugador.posicion %></span>
                         <span class="eq-etiqueta <%= jugador.libre ? 'eq-etiqueta--libre' : 'eq-etiqueta--equipo' %>"

@@ -236,6 +236,46 @@ async function mostrarPerfil(req, res, next) {
   }
 }
 
+// ---------------------------------------------------------------
+// GET /jugadores/:id → perfil público de otro jugador (PE-010). Nunca correo, teléfono ni fecha de
+// nacimiento: jugadorParaVista solo entrega la edad calculada.
+// ---------------------------------------------------------------
+function perfilNoDisponible(res) {
+  return res.status(404).render('mensaje', {
+    titulo: 'Perfil no disponible',
+    pagina: 'equipo',
+    mensaje: 'Este perfil no está disponible',
+    enlace: { href: '/equipos', texto: 'Ver equipos' },
+  });
+}
+
+async function perfilPublico(req, res, next) {
+  const idJugador = Number(req.params.id);
+  try {
+    if (!Number.isInteger(idJugador) || idJugador <= 0) return perfilNoDisponible(res);
+    const cuenta = await jugadorModel.cuentaDeJugador(idJugador);
+    if (!cuenta || !cuenta.activo) return perfilNoDisponible(res);
+    if (cuenta.authId === req.usuario.idAuth) return res.redirect('/perfil');
+
+    const [perfil, equipos] = await Promise.all([
+      jugadorModel.obtenerPerfilPorId(idJugador),
+      equipoModel.listarEquiposActivosDeJugador(idJugador),
+    ]);
+    if (!perfil || !perfil.perfilCompleto) return perfilNoDisponible(res);
+
+    const foto = perfil.fotoVersion ? `/jugadores/${idJugador}/foto?v=${perfil.fotoVersion}` : null;
+    return res.render('jugador-publico', {
+      titulo: nombreEnCarta(perfil),
+      pagina: 'perfil',
+      perfilAjeno: true, // sin descargar/compartir carta (perfil.js)
+      jugador: jugadorParaVista(perfil, foto),
+      equipos,
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 function renderEditor(res, { status = 200, perfil, datos, errores = [] }) {
   // La carta muestra la posición principal: la primera marcada
   const posicion = POSICIONES[datos.posiciones[0]] || { sigla: '—' };
@@ -403,6 +443,7 @@ module.exports = {
   mostrarWizard,
   guardarWizard,
   mostrarPerfil,
+  perfilPublico, // PE-010
   mostrarEditor,
   guardarEditor,
   subirFoto,

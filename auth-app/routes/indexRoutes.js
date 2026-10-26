@@ -41,6 +41,7 @@ router.post('/perfil/foto', requireAuth, requireRol, subirImagen, jugadorControl
 router.post('/perfil/foto/eliminar', requireAuth, requireRol, jugadorController.eliminarFoto);
 // Foto de la carta de cualquier jugador (las cartas del plantel en /mi-equipo).
 router.get('/jugadores/:id/foto', requireAuth, jugadorController.servirFotoJugador);
+router.get('/jugadores/:id', requireAuth, requireRol, jugadorController.perfilPublico); // PE-010
 
 // Equipos: wizard para crear el equipo, panel del capitán, mis equipos y directorio con solicitudes.
 // Cualquier cuenta puede crear su equipo (queda como capitán); desafiar lo comprueba el modelo.
