@@ -338,13 +338,22 @@ async function panel(req, res, next) {
     // Sin equipo (el capitán sin equipos ya vio la lista vacía): el jugador busca uno al que unirse.
     if (!equipo) return res.redirect('/equipos');
 
-    const [plantel, solicitudes, rivales, invitables, equiposCapitan] = await Promise.all([
+    // DE-007: filtros de región y comuna de los rivales. Una comuna de otra región (o inexistente) se descarta;
+    // una comuna sin región toma la suya.
+    const filtros = { ...(req.filtrosRivales || {}) };
+    if (filtros.idComuna) {
+      const comuna = await ubicacionModel.obtenerComuna(filtros.idComuna);
+      if (!comuna || (filtros.idRegion && comuna.idRegion !== filtros.idRegion)) filtros.idComuna = null;
+      else filtros.idRegion = comuna.idRegion;
+    }
+    const [plantel, solicitudes, rivales, invitables, equiposCapitan, regiones] = await Promise.all([
       equipoModel.listarPlantel(equipo.id),
       equipo.soyCapitan ? equipoModel.listarSolicitudesPendientes(equipo.id) : [],
-      equipo.soyCapitan ? equipoModel.listarRivales(equipo.id) : [],
+      equipo.soyCapitan ? equipoModel.listarRivales(equipo.id, filtros) : [],
       equipo.soyCapitan ? equipoModel.listarJugadoresParaInvitar(equipo.id) : [],
       // Selector para pasar de un equipo a otro (solo si capitanea más de uno)
       equipo.soyCapitan ? equipoModel.listarMisEquipos(req.usuario.idAuth).then((lista) => lista.filter((e) => e.soyCapitan)) : [],
+      equipo.soyCapitan ? ubicacionModel.listarRegionesConComunas() : [], // DE-007
     ]);
     return res.render('equipo-panel', {
       titulo: 'Mi equipo',
@@ -361,6 +370,8 @@ async function panel(req, res, next) {
       capitan: plantel.find((jugador) => jugador.capitan) || null,
       solicitudes,
       rivales,
+      regiones,
+      filtrosRivales: filtros, // DE-007
       invitables: invitables.map(jugadorInvitable),
       aviso: AVISOS_PANEL[req.query.aviso] || AVISOS_DESAFIO[req.query.desafio] || AVISOS_INVITACION[req.query.invitacion]
         || AVISOS_SACAR[req.query.sacar] || null,

@@ -540,9 +540,14 @@ async function responderSolicitud(authId, idSolicitud, aceptar) {
  * @returns {Promise<Array<{id, nombre, zona, nivel, modalidad, modalidades: number[], comunes: number[],
  *          desafio: 'enviado'|'recibido'|null}>>} modalidades y comunes: cantidades de jugadores (ej. [7, 11]).
  */
-async function listarRivales(idEquipo) {
+/**
+ * DE-007 — Rivales recomendados para un equipo: activos, del MISMO nivel (id_nivel), de otro capitán y que
+ * jueguen alguna de sus modalidades (regla 12). Primero los de puntaje_nivel más cercano; en empate, por nombre.
+ * @param {{ idRegion?: number|null, idComuna?: number|null }} [filtros] - Ya validados (la comuna es de la región).
+ */
+async function listarRivales(idEquipo, { idRegion = null, idComuna = null } = {}) {
   const { rows } = await pool.query(
-    `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel,
+    `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel, e.puntaje_nivel,
             EXISTS (SELECT 1 FROM desafio d JOIN estado_desafio ed ON ed.id = d.id_estado_desafio
                      WHERE d.id_equipo_desafiante = $1 AND d.id_equipo_desafiado = e.id
                        AND lower(ed.nombre) = $2) AS enviado,
@@ -555,24 +560,30 @@ async function listarRivales(idEquipo) {
                JOIN modalidad mc ON mc.id = r.id_modalidad
               WHERE r.id_equipo = e.id) AS comunes
        FROM equipo e
+       JOIN equipo propio ON propio.id = $1 -- DE-007: nivel y puntaje del equipo del capitán
        LEFT JOIN modalidad m ON m.id = e.id_modalidad
        LEFT JOIN comunas cz ON cz.id = e.id_comuna -- CORRECCIÓN: regla 11 (se muestra la comuna; equipos antiguos, su zona)
        LEFT JOIN nivel n ON n.id = e.id_nivel
       WHERE e.activo AND e.id <> $1
         -- El capitán puede tener varios equipos: no se desafía a sí mismo
-        AND e.id_usuario_creador <> (SELECT id_usuario_creador FROM equipo WHERE id = $1)
+        AND e.id_usuario_creador <> propio.id_usuario_creador
+        -- DE-007: solo equipos del mismo nivel, con filtros opcionales de región y comuna
+        AND e.id_nivel = propio.id_nivel
+        AND ($3::int IS NULL OR cz.id_region = $3)
+        AND ($4::int IS NULL OR e.id_comuna = $4)
         -- CORRECCIÓN: regla 12 — solo rivales que juegan al menos una modalidad del equipo del capitán
         AND EXISTS (SELECT 1 FROM equipo_modalidad r
                       JOIN equipo_modalidad propia ON propia.id_modalidad = r.id_modalidad AND propia.id_equipo = $1
                      WHERE r.id_equipo = e.id)
-      ORDER BY e.nombre`,
-    [idEquipo, ESTADO_DESAFIO_PENDIENTE]
+      ORDER BY abs(e.puntaje_nivel - propio.puntaje_nivel), e.nombre`,
+    [idEquipo, ESTADO_DESAFIO_PENDIENTE, idRegion, idComuna]
   );
   return rows.map((fila) => ({
     id: fila.id,
     nombre: fila.nombre,
     zona: fila.zona,
     nivel: fila.nivel,
+    puntaje: fila.puntaje_nivel, // DE-007
     modalidad: modalidadesDe(fila),
     modalidades: fila.modalidades || [],
     comunes: fila.comunes || [],

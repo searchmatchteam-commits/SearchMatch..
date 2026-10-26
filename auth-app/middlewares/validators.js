@@ -414,6 +414,17 @@ function validarEdicionEquipo(req, res, next) {
   return next();
 }
 
+/**
+ * DE-007 — Filtros de región y comuna de los rivales (GET /mi-equipo?id_region=&id_comuna=).
+ * Solo revisa el formato: que la comuna sea de la región lo comprueba el controlador con ubicacionModel.
+ * Deja req.filtrosRivales = { idRegion, idComuna } (null = sin filtro).
+ */
+function leerFiltrosRivales(req, res, next) {
+  const id = (valor) => (/^[1-9]\d{0,8}$/.test(String(valor || '')) ? Number(valor) : null);
+  req.filtrosRivales = { idRegion: id(req.query.id_region), idComuna: id(req.query.id_comuna) };
+  return next();
+}
+
 /** Fecha de hoy en Chile como AAAA-MM-DD (para comparar con el input type="date"). */
 function hoyEnChile() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
@@ -485,6 +496,7 @@ module.exports = {
   validarEdicionPerfil,
   validarEquipo,
   validarEdicionEquipo,
+  leerFiltrosRivales,
   leerModalidades,
   validarDesafio,
   validarSolicitudUnion,

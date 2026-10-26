@@ -16,6 +16,7 @@ const {
   validarEquipo,
   validarDesafio,
   validarSolicitudUnion,
+  leerFiltrosRivales,
 } = require('../middlewares/validators');
 
 // Cuerpo binario de la foto. Pesa ~100 KB tras reducirla; el tope evita cargas enormes.
@@ -46,7 +47,7 @@ router.get('/jugadores/:id/foto', requireAuth, jugadorController.servirFotoJugad
 router.get('/crear-equipo', requireAuth, requireRol, equipoController.mostrarCrear);
 router.post('/crear-equipo', requireAuth, requireRol, validarEquipo, equipoController.crear);
 router.get('/crear-equipo/listo', requireAuth, requireRol, equipoController.confirmacion);
-router.get('/mi-equipo', requireAuth, requireRol, equipoController.panel);
+router.get('/mi-equipo', requireAuth, requireRol, leerFiltrosRivales, equipoController.panel);
 router.post('/mi-equipo/solicitudes/:id/:accion', requireAuth, requireRol, equipoController.responder);
 // Perfil (carta, datos y mensaje) de quien pidió unirse; solo el capitán que creó ese equipo.
 router.get('/mi-equipo/solicitudes/:id', requireAuth, requireRol, equipoController.verSolicitud);
