@@ -115,6 +115,7 @@ function etiquetaPosicion(nombreDb) {
 // $2: un equipo en particular (o null para todos). Primero los que capitanea.
 const SQL_MIS_EQUIPOS = `
   SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel,
+         e.puntaje_nivel, -- IN-001: puntaje y nivel en el inicio
          e.id_usuario_creador = u.id AS soy_capitan,
          (SELECT json_agg(json_build_object('jugadores', mm.cantidad_de_jugadores, 'formacion', em.formacion)
                           ORDER BY mm.cantidad_de_jugadores)
@@ -136,6 +137,8 @@ function filaMiEquipo(fila) {
     nombre: fila.nombre,
     zona: fila.zona,
     detalle: detalleEquipo(fila),
+    nivel: fila.nivel || null,
+    puntaje: fila.puntaje_nivel, // IN-001
     escudo: urlEscudo(fila),
     soyCapitan: Boolean(fila.soy_capitan),
     // Una alineación por modalidad que juega, de la más chica a la más grande: cuántos titulares

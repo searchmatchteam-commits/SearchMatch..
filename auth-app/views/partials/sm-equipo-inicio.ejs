@@ -20,6 +20,7 @@
     <% } %>
     <p class="sm-tarjeta__titulo"><a href="/equipos/<%= e.id %>"><%= e.nombre %></a></p>
     <p class="dash-panel__nota"><%= e.detalle || 'Sin datos' %> · <%= e.soyCapitan ? 'Capitán' : 'Jugador' %></p>
+    <p class="dash-panel__nota">Nivel: <strong><%= e.nivel || 'Sin nivel' %></strong> · <strong><%= e.puntaje ?? 0 %></strong> pts</p>
     <% if (p) { %>
       <a class="sm-proximo" href="/partidos/<%= p.id %>">
         <small>Próximo partido</small>
@@ -27,7 +28,7 @@
         <span><%= formatoDia.format(new Date(p.fecha + 'T00:00:00Z')) %> · <%= p.hora %> · <%= p.cancha %></span>
       </a>
     <% } else { %>
-      <p class="dash-panel__nota">No hay partidos programados. <a href="/desafios?equipo=<%= e.id %>">Revisa sus desafíos</a>.</p>
+      <p class="dash-panel__nota">Todavía no tienes partidos programados. <a href="/desafios?equipo=<%= e.id %>">Explorar partidos</a></p>
     <% } %>
   </article>
 <% } %>
