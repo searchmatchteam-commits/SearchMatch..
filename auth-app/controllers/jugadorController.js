@@ -221,11 +221,15 @@ async function mostrarPerfil(req, res, next) {
       return res.redirect('/perfil-jugador');
     }
 
+    // PE-013: acceso "Crear equipo" solo si la cuenta puede crear uno. Se carga aquí porque
+    // equipoController importa este archivo (un require arriba sería circular).
+    const { estadoCreacionEquipo } = require('./equipoController');
     return res.render('perfil', {
       titulo: 'Tu carta de jugador',
       pagina: 'perfil',
       perfilPro: true, // escena "cyber-gamer": fondo con partículas, carta 3D por capas y radar (perfil-pro.css/js)
       jugador: jugadorParaVista(perfil, urlFoto(perfil)),
+      puedeCrearEquipo: (await estadoCreacionEquipo(req.usuario)) === 'puede',
     });
   } catch (err) {
     return next(err);

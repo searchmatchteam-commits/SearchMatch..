@@ -717,6 +717,7 @@ module.exports = {
   fotoSolicitud,
   guardarAlineacion,
   actualizarModalidades,
+  estadoCreacionEquipo, // PE-013: el perfil muestra "Crear equipo" solo si es 'puede'
   subirEscudo,
   servirEscudo,
   desafiar,
