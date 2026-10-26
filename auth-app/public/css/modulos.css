@@ -501,3 +501,8 @@ html[data-theme="light"] .sm-tema__luna { display: block; }
 /* AR-007: estado de verificación del correo (/cuenta) y "Reenviar enlace" del login */
 .sm-verificacion { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: -4px 0 14px; }
 .sm-reenvio { margin: 0 0 18px; }
+
+/* DE-001: aviso de mínimo de letras y estado vacío del directorio de equipos */
+.eq-aviso-minimo { margin: 6px 0 0; }
+div.eq-sin-resultados:not([hidden]) { display: grid; justify-items: center; gap: 8px; text-align: center; }
+div.eq-sin-resultados p { margin: 0; }

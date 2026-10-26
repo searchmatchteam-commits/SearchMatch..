@@ -50,8 +50,11 @@
       <label class="eq-buscador revelar">
         <svg class="eq-buscador__icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2" /></svg>
         <span class="solo-lectores">Buscar equipo</span>
-        <input class="eq-buscador__input" type="search" placeholder="Buscar por nombre o comuna" autocomplete="off" data-buscar-equipo>
+        <input class="eq-buscador__input" type="search" placeholder="Buscar por nombre o comuna" autocomplete="off" data-buscar-equipo
+               data-minimo-busqueda="3" aria-describedby="aviso-minimo-busqueda">
       </label>
+      <!-- DE-001: con 1 o 2 letras no se filtra -->
+      <p class="dash-panel__nota eq-aviso-minimo" id="aviso-minimo-busqueda" data-aviso-minimo hidden>Escribe al menos 3 letras para buscar</p>
 
       <!-- Mismas tarjetas que Mis equipos (.eq-mis en equipo.css): el equipo del capitán brilla en verde -->
       <ul class="eq-mis-grilla eq-mis-grilla--directorio">
@@ -99,7 +102,11 @@
           </li>
         <% }) %>
       </ul>
-      <p class="dash-panel__nota eq-sin-resultados" data-sin-resultados hidden>No hay equipos que coincidan con tu búsqueda.</p>
+      <div class="dash-panel__nota eq-sin-resultados" data-sin-resultados hidden>
+        <p>No hay equipos que coincidan con tu búsqueda.</p>
+        <p>Revisa cómo lo escribiste o prueba con el nombre de la comuna.</p>
+        <button type="button" class="btn btn--contorno btn--chico" data-limpiar-busqueda>Limpiar búsqueda</button>
+      </div>
     <% } %>
   </div>
 </section>
