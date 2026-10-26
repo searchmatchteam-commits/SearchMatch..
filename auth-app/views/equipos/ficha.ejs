@@ -29,6 +29,7 @@
         <% if (relacion.esCapitan) { %>
           <% if (equipo.activo) { %>
             <a class="btn btn--verde btn--grande" href="/mi-equipo?equipo=<%= equipo.id %>">Administrar</a>
+            <a class="btn btn--contorno btn--grande" href="/equipos/<%= equipo.id %>/editar">Editar equipo</a>
             <a class="btn btn--contorno btn--grande" href="/equipos/<%= equipo.id %>/posiciones">Posiciones que buscamos</a>
           <% } else { %>
             <form action="/equipos/<%= equipo.id %>/reactivar" method="POST" data-confirmar="Volverá a aparecer en búsquedas con su puntaje anterior (<%= equipo.puntaje_nivel %> pts)." data-confirmar-titulo="¿Reactivar <%= equipo.nombre %>?" data-confirmar-boton="Reactivar">

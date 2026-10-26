@@ -4,8 +4,12 @@ const cuentaModel = require('../models/cuentaModel');
 const notificacionModel = require('../models/notificacionModel');
 const userModel = require('../models/userModel');
 const { idValido } = require('../middlewares/validadoresAdmin');
+const ubicacionModel = require('../models/ubicacionModel');
+const { leerEscudo } = require('./jugadorController');
+const { NIVELES } = require('../config/perfilJugador');
 
 const AVISOS = {
+  editado: 'Datos del equipo actualizados.',
   comentado: 'Comentario publicado.',
   retirado: 'Comentario retirado por moderación: ya nadie lo ve.',
   posiciones: 'Posiciones buscadas actualizadas.',
@@ -130,6 +134,71 @@ async function formularioPosiciones(req, res, next) {
   }
 }
 
+/** Clave de NIVELES ('intermedio') a partir del nombre guardado en la tabla nivel ('Intermedio'). */
+function claveNivel(nombre) {
+  return Object.keys(NIVELES).find((clave) => NIVELES[clave].toLowerCase() === String(nombre || '').toLowerCase()) || '';
+}
+
+async function renderEditar(res, equipo, { status = 200, datos, errores = [] }) {
+  return res.status(status).render('equipos/editar', {
+    titulo: 'Editar equipo',
+    pagina: 'equipo',
+    editarEquipo: true,
+    equipo,
+    datos,
+    errores,
+    niveles: NIVELES,
+    regiones: await ubicacionModel.listarRegionesConComunas(),
+  });
+}
+
+async function formularioEditar(req, res, next) {
+  try {
+    const equipo = await equipoDelCapitan(req);
+    if (!equipo || !equipo.activo) return res.redirect(`/equipos/${idValido(req.params.id) || ''}?aviso=sin-permiso`);
+    const actuales = await equipoFichaModel.datosParaEditar(equipo.id);
+    return await renderEditar(res, equipo, {
+      datos: {
+        nombre: actuales.nombre,
+        correo: actuales.correo_contacto || '',
+        nivel: claveNivel(actuales.nivel),
+        idRegion: actuales.id_region,
+        idComuna: actuales.id_comuna,
+        escudo: '',
+      },
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+async function guardarEdicion(req, res, next) {
+  const datos = req.datosFormulario;
+  const errores = [...req.erroresEquipo.errores];
+  try {
+    const equipo = await equipoDelCapitan(req);
+    if (!equipo || !equipo.activo) return res.redirect(`/equipos/${idValido(req.params.id) || ''}?aviso=sin-permiso`);
+
+    const comuna = datos.idComuna ? await ubicacionModel.obtenerComuna(datos.idComuna) : null;
+    if (datos.idComuna && !comuna) errores.push('La comuna elegida no es válida.');
+    // Escudo opcional: crear-equipo.js lo reduce y lo manda como data URL; vacío = se mantiene el actual.
+    const escudo = leerEscudo(req.body.escudo);
+    if (req.body.escudo && !escudo) errores.push('El escudo debe ser una imagen JPG, PNG o WebP de hasta 512 KB.');
+    if (errores.length > 0) {
+      return await renderEditar(res, equipo, { status: 400, datos: { ...datos, escudo: escudo ? req.body.escudo : '' }, errores });
+    }
+
+    const actualizado = await equipoFichaModel.actualizarDatos(req.usuario.idAuth, equipo.id, {
+      ...datos, nivel: NIVELES[datos.nivel], zona: comuna.nombre,
+    });
+    if (!actualizado) return res.redirect(`/equipos/${equipo.id}?aviso=sin-permiso`);
+    if (escudo) await equipoModel.guardarEscudo(req.usuario.idAuth, equipo.id, escudo.datos, escudo.tipo);
+    return res.redirect(`/equipos/${equipo.id}?aviso=editado`);
+  } catch (err) {
+    return next(err);
+  }
+}
+
 async function guardarPosiciones(req, res, next) {
   const idEquipo = idValido(req.params.id);
   const ids = [].concat(req.body.posicion || []).map(Number).filter((id) => Number.isInteger(id) && id > 0);
@@ -232,6 +301,8 @@ module.exports = {
   ocultarComentario,
   formularioPosiciones,
   guardarPosiciones,
+  formularioEditar,
+  guardarEdicion,
   desactivar,
   reactivar,
   misSolicitudes,

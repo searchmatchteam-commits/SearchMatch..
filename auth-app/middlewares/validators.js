@@ -338,7 +338,9 @@ function leerModalidades(valor) {
  * @returns {{ datos: object, paso1: string[], paso2: string[] }}
  *          paso1 = identidad (nombre y correo), paso2 = configuración (nivel, zona, comuna, tipos de fútbol).
  */
-function revisarDatosEquipo(body, { conContacto = true } = {}) {
+// PE-012: la edición del equipo usa conZona: false (la zona sale de la comuna) y conModalidades: false
+// (los tipos de fútbol se cambian aparte, en el panel del capitán).
+function revisarDatosEquipo(body, { conContacto = true, conZona = conContacto, conModalidades = true } = {}) {
   const nombre = (body.nombre_equipo || '').trim();
   const correo = (body.correo_contacto || '').trim().toLowerCase();
   const nivel = body.nivel || '';
@@ -358,12 +360,12 @@ function revisarDatosEquipo(body, { conContacto = true } = {}) {
 
   if (!NIVELES[nivel]) paso2.push('Elige el nivel de juego del equipo.');
 
-  if (conContacto) {
+  if (conZona) {
     if (!zona) paso2.push('Escribe la zona habitual de juego.');
     else if (zona.length > LONGITUD_MAXIMA_ZONA) paso2.push(`La zona no puede superar los ${LONGITUD_MAXIMA_ZONA} caracteres.`);
   }
 
-  if (modalidades.length === 0) paso2.push('Elige al menos un tipo de fútbol.');
+  if (conModalidades && modalidades.length === 0) paso2.push('Elige al menos un tipo de fútbol.');
 
   // CORRECCIÓN: regla 11 — comuna de la lista (para filtrar y recomendar rivales por ubicación).
   // Que exista la revisa el controlador con ubicacionModel.obtenerComuna.
@@ -389,6 +391,17 @@ function validarEquipo(req, res, next) {
     errores: [...paso1, ...paso2],
     paso: paso1.length > 0 ? 1 : 2,
   };
+  return next();
+}
+
+/**
+ * PE-012 — Valida EDITAR EQUIPO (/equipos/:id/editar): nombre, correo de contacto, nivel y comuna.
+ * No corta la petición: deja req.datosFormulario y req.erroresEquipo = { errores: [...] }.
+ */
+function validarEdicionEquipo(req, res, next) {
+  const { datos, paso1, paso2 } = revisarDatosEquipo(req.body, { conZona: false, conModalidades: false });
+  req.datosFormulario = datos;
+  req.erroresEquipo = { errores: [...paso1, ...paso2] };
   return next();
 }
 
@@ -462,6 +475,7 @@ module.exports = {
   validarPerfilJugador,
   validarEdicionPerfil,
   validarEquipo,
+  validarEdicionEquipo,
   leerModalidades,
   validarDesafio,
   validarSolicitudUnion,

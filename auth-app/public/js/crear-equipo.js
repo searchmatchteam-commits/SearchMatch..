@@ -47,6 +47,53 @@ async function reducirEscudo(archivo) {
   }
 }
 
+/**
+ * Escudo: se reduce y viaja como data URL en el campo oculto "escudo" (el input de archivo no tiene name).
+ * Lo usan el wizard de crear equipo y el formulario de editar equipo (PE-012).
+ */
+function conectarEscudo(formulario) {
+  const datosEscudo = formulario.querySelector('[data-escudo-datos]');
+  const errorEscudo = formulario.querySelector('[data-escudo-error]');
+
+  function pintarEscudo(src) {
+    document.querySelectorAll('[data-escudo]').forEach((caja) => {
+      const imagen = document.createElement('img');
+      imagen.src = src;
+      imagen.alt = '';
+      caja.replaceChildren(imagen);
+    });
+  }
+
+  // Si el servidor devolvió el formulario con errores, el escudo elegido sigue en el campo oculto.
+  if (datosEscudo.value) pintarEscudo(datosEscudo.value);
+
+  formulario.querySelector('[data-subir-escudo]').addEventListener('change', async (evento) => {
+    const archivo = evento.target.files[0];
+    evento.target.value = '';
+    errorEscudo.textContent = '';
+    if (!archivo) return;
+    if (!TIPOS_ESCUDO.includes(archivo.type)) {
+      errorEscudo.textContent = 'El escudo debe ser JPG, PNG o WebP.';
+      return;
+    }
+    try {
+      const datos = await reducirEscudo(archivo);
+      if (!datos) throw new Error('demasiado grande');
+      datosEscudo.value = datos;
+      pintarEscudo(datos);
+    } catch (err) {
+      console.error('No se pudo preparar el escudo:', err);
+      errorEscudo.textContent = 'No pudimos usar esa imagen: prueba con otra.';
+    }
+  });
+}
+
+// PE-012: el formulario de editar equipo solo necesita el escudo (región y comuna las maneja sm-formularios.js).
+document.addEventListener('DOMContentLoaded', () => {
+  const formulario = document.querySelector('form[data-editar-equipo]');
+  if (formulario) conectarEscudo(formulario);
+});
+
 // Reglas por paso. Cada una devuelve el mensaje de error o null.
 const REGLAS_EQUIPO = {
   1: {
@@ -157,41 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('[data-vista-detalle]').textContent = detalle || DETALLE_VACIO;
   }
 
-  // Escudo: se reduce y viaja como data URL en el campo oculto "escudo" (el input de archivo no tiene name).
-  const datosEscudo = formulario.querySelector('[data-escudo-datos]');
-  const errorEscudo = formulario.querySelector('[data-escudo-error]');
-
-  function pintarEscudo(src) {
-    document.querySelectorAll('[data-escudo]').forEach((caja) => {
-      const imagen = document.createElement('img');
-      imagen.src = src;
-      imagen.alt = '';
-      caja.replaceChildren(imagen);
-    });
-  }
-
-  // Si el servidor devolvió el formulario con errores, el escudo elegido sigue en el campo oculto.
-  if (datosEscudo.value) pintarEscudo(datosEscudo.value);
-
-  formulario.querySelector('[data-subir-escudo]').addEventListener('change', async (evento) => {
-    const archivo = evento.target.files[0];
-    evento.target.value = '';
-    errorEscudo.textContent = '';
-    if (!archivo) return;
-    if (!TIPOS_ESCUDO.includes(archivo.type)) {
-      errorEscudo.textContent = 'El escudo debe ser JPG, PNG o WebP.';
-      return;
-    }
-    try {
-      const datos = await reducirEscudo(archivo);
-      if (!datos) throw new Error('demasiado grande');
-      datosEscudo.value = datos;
-      pintarEscudo(datos);
-    } catch (err) {
-      console.error('No se pudo preparar el escudo:', err);
-      errorEscudo.textContent = 'No pudimos usar esa imagen: prueba con otra.';
-    }
-  });
+  conectarEscudo(formulario);
 
   /* ---------- CORRECCIÓN: regla 11 — Región y comuna ---------- */
   // Solo se ven las comunas de la región elegida (cada <optgroup> lleva data-region).

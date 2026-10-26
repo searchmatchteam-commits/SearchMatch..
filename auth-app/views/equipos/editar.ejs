@@ -1,0 +1,77 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<section class="eq">
+  <div class="contenedor sm-angosto">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: `/equipos/${equipo.id}` }) %>
+        <h1 class="eq-cabecera__titulo">Editar equipo</h1>
+        <p class="eq-cabecera__stats"><%= equipo.nombre %> · El puntaje y el historial de partidos no cambian.</p>
+      </div>
+    </header>
+
+    <div class="dash-panel eq-panel revelar">
+      <% if (errores.length > 0) { %>
+        <div class="alerta alerta--error" role="alert">
+          <ul>
+            <% errores.forEach(function (error) { %><li><%= error %></li><% }) %>
+          </ul>
+        </div>
+      <% } %>
+
+      <form action="/equipos/<%= equipo.id %>/editar" method="POST" class="formulario sm-form" novalidate data-sm-validar data-editar-equipo>
+        <div class="ceq-identidad">
+          <span class="ceq-escudo ceq-escudo--grande" data-escudo><% if (datos.escudo) { %><img src="<%= datos.escudo %>" alt="" /><% } else { %><%- include('../partials/escudo-equipo', { equipo }) %><% } %></span>
+          <span class="ceq-identidad__texto">
+            <span class="ceq-etiqueta">Escudo</span>
+            <!-- El archivo no se envía: crear-equipo.js lo reduce y lo guarda como data URL en el campo oculto "escudo" -->
+            <label class="ceq-subir">
+              Cambiar escudo
+              <input type="file" accept="image/png,image/jpeg,image/webp" class="solo-lectores" data-subir-escudo />
+            </label>
+            <small class="campo__error" data-escudo-error></small>
+            <input type="hidden" name="escudo" value="<%= datos.escudo || '' %>" data-escudo-datos />
+          </span>
+        </div>
+
+        <div class="campo">
+          <label for="nombre_equipo">Nombre del equipo</label>
+          <input type="text" id="nombre_equipo" name="nombre_equipo" value="<%= datos.nombre || '' %>" maxlength="100"
+                 aria-describedby="nombre_equipo-error" required data-mensaje="El nombre del equipo es obligatorio." />
+          <small class="campo__error" id="nombre_equipo-error"></small>
+        </div>
+
+        <div class="campo">
+          <label for="correo_contacto">Correo de contacto</label>
+          <input type="email" id="correo_contacto" name="correo_contacto" value="<%= datos.correo || '' %>" maxlength="150"
+                 autocomplete="email" aria-describedby="correo_contacto-error" required data-mensaje="El correo de contacto es obligatorio." />
+          <small class="campo__error" id="correo_contacto-error"></small>
+        </div>
+
+        <div class="campo">
+          <label for="nivel">Nivel de juego</label>
+          <select id="nivel" name="nivel" aria-describedby="nivel-error" required data-mensaje="Elige el nivel de juego del equipo.">
+            <option value="">Elige el nivel</option>
+            <% Object.keys(niveles).forEach(function (clave) { %>
+              <option value="<%= clave %>" <%= datos.nivel === clave ? 'selected' : '' %>><%= niveles[clave] %></option>
+            <% }) %>
+          </select>
+          <small class="campo__error" id="nivel-error"></small>
+        </div>
+
+        <%- include('../partials/sm-ubicacion', { regiones, idRegion: datos.idRegion, idComuna: datos.idComuna, obligatorio: true }) %>
+
+        <div class="sm-form__acciones">
+          <button type="submit" class="btn btn--verde btn--grande">Guardar cambios</button>
+          <a class="btn btn--contorno btn--grande" href="/equipos/<%= equipo.id %>">Salir sin guardar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/dock', { activo: 'mis-equipos' }) %>
+
+<%- include('../partials/footer') %>

@@ -355,9 +355,46 @@ async function cancelarSolicitud(authId, idSolicitud) {
   return rowCount > 0;
 }
 
+/* =====================================================================
+   PE-012 · Editar datos del equipo
+   ===================================================================== */
+
+/** Valores actuales del formulario de edición (incluye el correo de contacto: solo lo ve el capitán). */
+async function datosParaEditar(idEquipo) {
+  const { rows } = await pool.query(
+    `SELECT e.nombre, e.correo_contacto, n.nombre AS nivel, e.id_comuna, c.id_region
+       FROM equipo e
+       LEFT JOIN nivel n ON n.id = e.id_nivel
+       LEFT JOIN comunas c ON c.id = e.id_comuna
+      WHERE e.id = $1`,
+    [idEquipo]
+  );
+  return rows[0] || null;
+}
+
+/**
+ * El capitán (creador) cambia nombre, correo de contacto, nivel y comuna de su equipo activo.
+ * No toca puntaje_nivel ni los partidos: el historial sigue ligado al id del equipo.
+ * @param {{ nombre: string, correo: string, nivel: string, idComuna: number, zona: string }} datos - nivel = nombre del catálogo.
+ * @returns {Promise<boolean>} false si el equipo no es de esta cuenta o está inactivo.
+ */
+async function actualizarDatos(authId, idEquipo, { nombre, correo, nivel, idComuna, zona }) {
+  const { rowCount } = await pool.query(
+    `UPDATE equipo e
+        SET nombre = $3, correo_contacto = $4, id_nivel = n.id, id_comuna = $6, zona = $7
+       FROM usuario u, nivel n
+      WHERE e.id = $2 AND e.activo AND u.id = e.id_usuario_creador AND u.auth_id = $1
+        AND lower(n.nombre) = lower($5)`,
+    [authId, idEquipo, nombre, correo, nivel, idComuna, zona]
+  );
+  return rowCount > 0;
+}
+
 module.exports = {
   LARGO_MAXIMO_COMENTARIO,
   obtenerFicha,
+  datosParaEditar,
+  actualizarDatos,
   relacionConFicha,
   hayDesafioPendiente,
   historial,
