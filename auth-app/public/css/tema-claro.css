@@ -3,8 +3,8 @@
    (lo pone el script del <head> en partials/header.ejs y el botón del navbar, main.js).
    Se carga después de las demás hojas: el prefijo html[data-theme="light"] suma especificidad, así que
    gana sin !important y las hojas originales no cambian.
-   Idea del modo claro ("soft light"): fondo gris suave #E5E7EB (nunca blanco puro), tarjetas blanco humo
-   #F9FAFB con bordes grises sutiles, texto gris muy oscuro #111827.
+   Idea del modo claro ("clean white"): fondo y tarjetas #FFFFFF, controles y superficies internas #F8FAFC,
+   bordes fríos #E2E8F0 y texto muy oscuro #0F172A. La profundidad viene de bordes y sombras, no del gris.
    El neón NO se usa en claro: sobre fondo claro es ilegible (contraste ~1.3:1) y sus resplandores se ven
    sucios. Acentos y botones principales pasan a un verde sólido oscuro (#15803D) con texto blanco encima
    (--neon y --verde valen eso aquí), y los brillos verdes se apagan (sección final "Sin brillos neón").
@@ -17,14 +17,14 @@
 html[data-theme="light"],
 html[data-theme="light"] body {
   color-scheme: light;
-  --fondo: #e5e7eb;                 /* gris suave: el blanco puro encandila y hace "flotar" las tarjetas */
-  --fondo-verde: #e3e7e4;
-  --superficie: #f9fafb;            /* tarjetas: blanco humo */
-  --superficie-campo: #ffffff;
-  --borde: #d1d5db;                 /* bordes grises sutiles */
-  --borde-fuerte: #9ca3af;
-  --texto: #111827;
-  --texto-suave: #4b5563;
+  --fondo: #ffffff;
+  --fondo-verde: #f8fafc;
+  --superficie: #ffffff;
+  --superficie-campo: #f8fafc;
+  --borde: #e2e8f0;
+  --borde-fuerte: #cbd5e1;
+  --texto: #0f172a;
+  --texto-suave: #475569;
   /* Acento: verde sólido oscuro en vez de neón (texto blanco encima: contraste 5:1) */
   --verde: #15803d;
   --verde-rgb: 21, 128, 61;
@@ -38,20 +38,20 @@ html[data-theme="light"] body {
   --neon-rgb: 21, 128, 61;
   --sobre-verde: #ffffff;
   --error: #dc2626;
-  --sombra-suave: 0 1px 2px rgba(17, 24, 39, 0.06), 0 2px 8px rgba(17, 24, 39, 0.05);
-  --sombra-media: 0 1px 3px rgba(17, 24, 39, 0.08), 0 6px 16px rgba(17, 24, 39, 0.07);
-  --sombra-alta: 0 4px 10px rgba(17, 24, 39, 0.08), 0 16px 36px rgba(17, 24, 39, 0.12);
-  /* cyber.css: los paneles de "vidrio" son tarjetas sólidas blanco humo */
-  --vidrio: #f9fafb;
-  --vidrio-borde: #d1d5db;
+  --sombra-suave: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --sombra-media: 0 1px 3px rgba(15, 23, 42, 0.05), 0 14px 34px rgba(15, 23, 42, 0.08);
+  --sombra-alta: 0 6px 16px rgba(15, 23, 42, 0.06), 0 24px 48px rgba(15, 23, 42, 0.10);
+  /* cyber.css: los paneles de "vidrio" son tarjetas blancas */
+  --vidrio: #ffffff;
+  --vidrio-borde: #e2e8f0;
   --sombra-panel: var(--sombra-media);
   /* páginas de autenticación, wizard y perfil */
-  --auth-fondo: #e5e7eb;
-  --auth-resplandor: #eef0f2;
-  --auth-linea: rgba(17, 24, 39, 0.05);
-  /* bento y torneos: sin halo verde */
-  --glow-borde: rgba(17, 24, 39, 0.12);
-  --bracket-linea: rgba(21, 128, 61, 0.45);
+  --auth-fondo: #ffffff;
+  --auth-resplandor: #f8fafc;
+  --auth-linea: rgba(15, 23, 42, 0.05);
+  /* bento y torneos: halo verde muy suave, sin neón */
+  --glow-borde: rgba(21, 128, 61, 0.22);
+  --bracket-linea: rgba(21, 128, 61, 0.35);
 }
 
 /* ---------- Transición del cambio de tema ---------- */
@@ -75,13 +75,18 @@ html[data-theme="light"] .texto-verde {
   text-shadow: none;
 }
 
+html[data-theme="light"] .rol__eyebrow,
+html[data-theme="light"] .error__codigo {
+  text-shadow: none;
+}
+
 html[data-theme="light"] .navbar,
 html[data-theme="light"] .pagina-dashboard .navbar,
 html[data-theme="light"] .pagina-equipo .navbar,
 html[data-theme="light"] .pagina-auth .navbar {
-  background: rgba(249, 250, 251, 0.92);
+  background: rgba(255, 255, 255, 0.92);
   border-bottom-color: var(--borde);
-  box-shadow: 0 1px 0 rgba(17, 24, 39, 0.03), 0 6px 20px rgba(17, 24, 39, 0.04);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03), 0 6px 20px rgba(15, 23, 42, 0.04);
 }
 
 /* El balón del logo en verde sólido, sin halo */
@@ -109,6 +114,11 @@ html[data-theme="light"] .scroll-oscuro::-webkit-scrollbar-thumb {
   background: #c4c9d0;
 }
 
+html[data-theme="light"] .scroll-oscuro::-webkit-scrollbar-thumb:hover,
+html[data-theme="light"] .scroll-oscuro::-webkit-scrollbar-thumb:active {
+  background: #94a3b8;
+}
+
 /* ---------- Botones y rellenos: verde sólido oscuro con texto blanco (en oscuro son neón) ---------- */
 html[data-theme="light"] .btn--verde,
 html[data-theme="light"] .aviso__boton--aceptar,
@@ -130,14 +140,14 @@ html[data-theme="light"] .eq-filtro-modalidad__opcion--activa:hover {
   color: var(--sobre-verde);
 }
 
-/* Sombra neutra y corta (no halo verde) */
+/* Sombra verde suave y corta (no halo neón) */
 html[data-theme="light"] .btn--verde {
-  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.15);
+  box-shadow: 0 1px 2px rgba(21, 128, 61, 0.18), 0 8px 18px rgba(21, 128, 61, 0.16);
 }
 
 html[data-theme="light"] .btn--verde:hover {
   background: var(--neon-hover);
-  box-shadow: 0 2px 6px rgba(17, 24, 39, 0.18);
+  box-shadow: 0 2px 4px rgba(21, 128, 61, 0.2), 0 10px 22px rgba(21, 128, 61, 0.18);
 }
 
 html[data-theme="light"] .sm-pestanas--vista .sm-pestanas__item--activa {
@@ -145,7 +155,7 @@ html[data-theme="light"] .sm-pestanas--vista .sm-pestanas__item--activa {
 }
 
 html[data-theme="light"] .btn--contorno {
-  background: #f9fafb;
+  background: #ffffff;
 }
 
 html[data-theme="light"] .btn--contorno:hover {
@@ -153,14 +163,14 @@ html[data-theme="light"] .btn--contorno:hover {
 }
 
 html[data-theme="light"] .btn--oscuro {
-  background: #f9fafb;
+  background: #ffffff;
   color: var(--texto);
   border-color: var(--borde-fuerte);
   box-shadow: var(--sombra-suave);
 }
 
 html[data-theme="light"] .btn--oscuro:hover {
-  background: #f3f4f6;
+  background: #f1f5f9;
 }
 
 html[data-theme="light"] .btn__spinner {
@@ -169,11 +179,11 @@ html[data-theme="light"] .btn__spinner {
 
 /* Botón de tema y demás íconos redondos del navbar */
 html[data-theme="light"] .sm-icono-nav {
-  background: #f9fafb;
+  background: #ffffff;
 }
 
 html[data-theme="light"] .boton-volver {
-  background: #f9fafb;
+  background: #ffffff;
   border-color: var(--borde-fuerte);
   box-shadow: var(--sombra-suave);
 }
@@ -181,6 +191,13 @@ html[data-theme="light"] .boton-volver {
 html[data-theme="light"] .boton-volver:hover .boton-volver__flecha,
 html[data-theme="light"] .boton-volver:focus-visible .boton-volver__flecha {
   color: var(--verde);
+}
+
+html[data-theme="light"] .boton-volver:hover,
+html[data-theme="light"] .boton-volver:focus-visible {
+  color: var(--texto);
+  border-color: var(--verde-borde);
+  box-shadow: var(--sombra-suave);
 }
 
 /* ---------- Superficies: tarjetas blancas con sombra ---------- */
@@ -194,7 +211,7 @@ html[data-theme="light"] .confirmar__caja,
 html[data-theme="light"] .modal__caja,
 html[data-theme="light"] .modal__caja--ancha,
 html[data-theme="light"] .dash-panel--calendario {
-  background: #f9fafb;
+  background: #ffffff;
   border-color: var(--borde);
   box-shadow: var(--sombra-media);
 }
@@ -226,7 +243,7 @@ html[data-theme="light"] .editor__seccion .opcion,
 html[data-theme="light"] .wizard-escudo,
 html[data-theme="light"] .ceq-identidad,
 html[data-theme="light"] .ceq-club--grande {
-  background: #f8f9fa;
+  background: #f8fafc;
   border-color: var(--borde);
 }
 
@@ -249,11 +266,11 @@ html[data-theme="light"] .wizard .opcion__cancha {
 
 html[data-theme="light"] .opcion__barras span,
 html[data-theme="light"] .barras__track {
-  background: #d1d5db;
+  background: #e2e8f0;
 }
 
 html[data-theme="light"] .opcion__barras .llena {
-  background: #6b7280;
+  background: #64748b;
 }
 
 html[data-theme="light"] .chip,
@@ -266,11 +283,11 @@ html[data-theme="light"] .dash-equipo__detalle,
 html[data-theme="light"] .eq-solicitud,
 html[data-theme="light"] .eq-tipos,
 html[data-theme="light"] .eq-banco__lista {
-  background: #f8f9fa;
+  background: #f8fafc;
 }
 
 html[data-theme="light"] .ceq-vista {
-  background: rgba(249, 250, 251, 0.9);
+  background: rgba(255, 255, 255, 0.9);
   border-color: var(--borde);
 }
 
@@ -284,7 +301,7 @@ html[data-theme="light"] .eq-banco__lista {
 }
 
 html[data-theme="light"] .ceq-identidad__nombre--vacio {
-  color: #9ca3af;
+  color: #94a3b8;
 }
 
 html[data-theme="light"] .ceq .wizard__nav,
@@ -304,18 +321,18 @@ html[data-theme="light"] .modal__campo input,
 html[data-theme="light"] .modal__campo select,
 html[data-theme="light"] .modal__campo textarea,
 html[data-theme="light"] .eq-buscador--chico {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: #f8fafc;
+  border-color: #e2e8f0;
 }
 
 html[data-theme="light"] .auth__tarjeta .campo input:hover,
 html[data-theme="light"] .pagina-auth .auth__tarjeta .campo input:hover,
 html[data-theme="light"] .pagina-auth .auth__tarjeta .campo select:hover {
-  border-color: #9ca3af;
+  border-color: #cbd5e1;
 }
 
 html[data-theme="light"] .pagina-auth .auth__tarjeta .campo input:focus {
-  background: #f9fafb;
+  background: #f8fafc;
 }
 
 html[data-theme="light"] .pagina-auth .auth__tarjeta .campo--error input:focus {
@@ -326,13 +343,13 @@ html[data-theme="light"] .pagina-auth .auth__tarjeta .campo select {
   background:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
       no-repeat right 14px center / 18px,
-    #f9fafb;
-  border-color: #d1d5db;
+    #f8fafc;
+  border-color: #e2e8f0;
 }
 
 html[data-theme="light"] .auth__tarjeta .campo label,
 html[data-theme="light"] .pagina-auth .auth__tarjeta .campo label {
-  color: #374151;
+  color: #334155;
 }
 
 html[data-theme="light"] .campo__ojo:hover {
@@ -341,11 +358,11 @@ html[data-theme="light"] .campo__ojo:hover {
 
 /* Deslizadores del editor de perfil */
 html[data-theme="light"] .editor__rango::-webkit-slider-runnable-track {
-  background: linear-gradient(var(--verde), var(--verde)) 0 / var(--relleno) 100% no-repeat, #d1d5db;
+  background: linear-gradient(var(--verde), var(--verde)) 0 / var(--relleno) 100% no-repeat, #e2e8f0;
 }
 
 html[data-theme="light"] .editor__rango::-moz-range-track {
-  background: linear-gradient(var(--verde), var(--verde)) 0 / var(--relleno) 100% no-repeat, #d1d5db;
+  background: linear-gradient(var(--verde), var(--verde)) 0 / var(--relleno) 100% no-repeat, #e2e8f0;
 }
 
 html[data-theme="light"] .editor__rango::-webkit-slider-thumb {
@@ -366,9 +383,33 @@ html[data-theme="light"] .pagina-perfil::after {
   background: radial-gradient(ellipse 70% 60% at 50% 50%, var(--auth-resplandor) 0%, var(--auth-fondo) 100%);
 }
 
+/* Anillos de cancha del fondo: el SVG base usa neón; en claro, verde oscuro muy tenue */
+html[data-theme="light"] .pagina-auth::before,
+html[data-theme="light"] .pagina-rol::before,
+html[data-theme="light"] .pagina-wizard::before,
+html[data-theme="light"] .pagina-perfil::before {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000' fill='none' stroke='%2315803d'%3E%3Ccircle cx='500' cy='500' r='250' stroke-opacity='0.05' stroke-width='2'/%3E%3Ccircle cx='500' cy='500' r='470' stroke-opacity='0.03' stroke-width='2'/%3E%3Ccircle cx='500' cy='500' r='5' fill='%2315803d' fill-opacity='0.06' stroke='none'/%3E%3C/svg%3E")
+      center / min(150vw, 1100px) no-repeat,
+    linear-gradient(
+      transparent calc(50% - 1px),
+      var(--auth-linea) calc(50% - 1px),
+      var(--auth-linea) calc(50% + 1px),
+      transparent calc(50% + 1px)
+    );
+}
+
 /* Fondo "cyber" (dashboard, equipo, login): la aurora y la cancha táctica siguen, más suaves */
 html[data-theme="light"] .cyber-fondo__aurora {
-  opacity: 0.7;
+  opacity: 0.45;
+}
+
+html[data-theme="light"] .auth__filo::after {
+  background: linear-gradient(90deg, transparent, rgba(21, 128, 61, 0.5), transparent);
+}
+
+html[data-theme="light"] .cyber-fondo__ruido {
+  opacity: 0.03;
 }
 
 html[data-theme="light"] .cyber-fondo__cancha .rival {
@@ -409,8 +450,12 @@ html[data-theme="light"] .dash-orbita--2 {
   border-color: rgba(17, 24, 39, 0.08);
 }
 
+html[data-theme="light"] .dash-particula:nth-child(3n) {
+  background: rgba(21, 128, 61, 0.35);
+}
+
 html[data-theme="light"] .bento__tarjeta {
-  background: #f9fafb;
+  background: #ffffff;
   box-shadow: var(--sombra-suave);
 }
 
@@ -425,16 +470,16 @@ html[data-theme="light"] .bento__tarjeta:hover {
 }
 
 html[data-theme="light"] .timeline__linea {
-  background: rgba(17, 24, 39, 0.1);
+  background: #e2e8f0;
 }
 
 html[data-theme="light"] .timeline__numero {
-  background: #f9fafb;
-  border-color: rgba(17, 24, 39, 0.16);
+  background: #ffffff;
+  border-color: #cbd5e1;
 }
 
 html[data-theme="light"] .cta {
-  background: #f9fafb;
+  background: #ffffff;
   border: 1px solid var(--borde);
   box-shadow: var(--sombra-media);
 }
@@ -456,17 +501,17 @@ html[data-theme="light"] .agenda__bloque--reservado span {
 /* ---------- Wizard y registro ---------- */
 html[data-theme="light"] .wizard__marca,
 html[data-theme="light"] .wizard .wizard__marca {
-  background: #f9fafb;
+  background: #ffffff;
   border-color: var(--borde);
 }
 
 html[data-theme="light"] .pasos__barra {
-  background: #e5e7eb;
+  background: #e2e8f0;
 }
 
 html[data-theme="light"] .pasos__marca {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: #ffffff;
+  border-color: #cbd5e1;
 }
 
 html[data-theme="light"] .pasos__item--activo .pasos__marca {
@@ -517,7 +562,7 @@ html[data-theme="light"] .carta-jugador--perfil .carta-jugador__numero {
 
 /* Nombre: degradado oscuro (el blanco desaparecería sobre la plata) con un filo claro debajo */
 html[data-theme="light"] .carta-jugador--perfil .carta-jugador__nombre {
-  background-image: linear-gradient(180deg, #111827 30%, #374151);
+  background-image: linear-gradient(180deg, #0f172a 30%, #334155);
   filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.8));
 }
 
@@ -527,7 +572,7 @@ html[data-theme="light"] .carta-jugador--perfil .carta-jugador__stats div {
 }
 
 html[data-theme="light"] .carta-jugador--perfil .carta-jugador__stats dt {
-  color: #4b5563;
+  color: #475569;
   opacity: 1;
 }
 
@@ -609,18 +654,18 @@ html[data-theme="light"] .badge__punto {
 }
 
 html[data-theme="light"] .dash-btn-vidrio {
-  background: #f9fafb;
+  background: #ffffff;
   box-shadow: var(--sombra-suave);
 }
 
 html[data-theme="light"] .dash-resumen {
-  background: rgba(249, 250, 251, 0.9);
+  background: rgba(255, 255, 255, 0.9);
   box-shadow: var(--sombra-suave);
 }
 
 html[data-theme="light"] .dash-cta,
 html[data-theme="light"] .pagina-auth .auth-btn {
-  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.15), 0 4px 10px rgba(17, 24, 39, 0.1);
+  box-shadow: 0 1px 2px rgba(21, 128, 61, 0.18), 0 8px 18px rgba(21, 128, 61, 0.16);
 }
 
 html[data-theme="light"] .dash-stat__barra,
@@ -638,11 +683,11 @@ html[data-theme="light"] .skeleton::after {
 }
 
 html[data-theme="light"] .dash-hero__pista {
-  color: rgba(17, 24, 39, 0.45);
+  color: #64748b;
 }
 
 html[data-theme="light"] .vc__regla text {
-  fill: #4b5563;
+  fill: #475569;
 }
 
 html[data-theme="light"] .panel-aviso {
@@ -657,7 +702,7 @@ html[data-theme="light"] .dock {
 }
 
 html[data-theme="light"] .dock__item {
-  color: #4b5563;
+  color: #475569;
 }
 
 html[data-theme="light"] .dock__item:hover {
@@ -665,12 +710,16 @@ html[data-theme="light"] .dock__item:hover {
 }
 
 html[data-theme="light"] .sm-cal__flecha {
-  background: #f9fafb;
+  background: #ffffff;
   border-color: var(--borde-fuerte);
 }
 
 html[data-theme="light"] .sm-cal__dia:hover {
   background: rgba(17, 24, 39, 0.06);
+}
+
+html[data-theme="light"] .sm-cal__dia:focus-visible {
+  outline-color: var(--verde);
 }
 
 /* ---------- Equipo y modales ---------- */
@@ -704,6 +753,7 @@ html[data-theme="light"] .eq-invitar:disabled {
 }
 
 html[data-theme="light"] .modal,
+html[data-theme="light"] .modal,
 html[data-theme="light"] .modal--vidrio,
 html[data-theme="light"] .confirmar {
   background: rgba(17, 24, 39, 0.45);
@@ -718,7 +768,7 @@ html[data-theme="light"] .eq-invitar__marco::after {
 }
 
 html[data-theme="light"] .eq-invitable {
-  background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border-color: var(--borde);
   box-shadow: var(--sombra-suave);
 }
@@ -738,8 +788,8 @@ html[data-theme="light"] .eq-avatar--chico {
 }
 
 html[data-theme="light"] .eq-ovr {
-  background: radial-gradient(circle at 50% 35%, #ffffff, #e5e7eb);
-  border-color: #d1d5db;
+  background: radial-gradient(circle at 50% 35%, #ffffff, #f1f5f9);
+  border-color: #e2e8f0;
 }
 
 html[data-theme="light"] .eq-ovr__numero {
@@ -752,13 +802,13 @@ html[data-theme="light"] .eq-ovr--alto {
 }
 
 html[data-theme="light"] .eq-ovr--vacio {
-  border-color: #e5e7eb;
+  border-color: #e2e8f0;
 }
 
 html[data-theme="light"] .eq-ovr--vacio .eq-ovr__numero,
 html[data-theme="light"] .eq-barras--vacias dt,
 html[data-theme="light"] .eq-barras--vacias .eq-barra__numero {
-  color: #9ca3af;
+  color: #64748b;
 }
 
 html[data-theme="light"] .eq-etiqueta--libre {
@@ -788,7 +838,7 @@ html[data-theme="light"] .sm-mapa .leaflet-tile-pane {
 
 html[data-theme="light"] .sm-mapa,
 html[data-theme="light"] .sm-mapa.leaflet-container {
-  background: #e5e7eb;
+  background: #f1f5f9;
 }
 
 html[data-theme="light"] .sm-pin path {
@@ -802,16 +852,16 @@ html[data-theme="light"] .sm-pin circle {
 
 html[data-theme="light"] .sm-mapa .leaflet-bar a,
 html[data-theme="light"] .sm-mapa .leaflet-bar a:hover {
-  background: #f9fafb;
+  background: #ffffff;
   color: var(--texto);
 }
 
 html[data-theme="light"] .sm-mapa .leaflet-bar a.leaflet-disabled {
-  color: #9ca3af;
+  color: #94a3b8;
 }
 
 html[data-theme="light"] .sm-mapa-modal {
-  background: rgba(243, 244, 246, 0.95);
+  background: rgba(248, 250, 252, 0.96);
 }
 
 html[data-theme="light"] .sm-mapa.sm-mapa--expandido {
@@ -821,32 +871,32 @@ html[data-theme="light"] .sm-mapa.sm-mapa--expandido {
 html[data-theme="light"] .sm-mapa__aviso,
 html[data-theme="light"] .sm-mapa .leaflet-popup-content-wrapper,
 html[data-theme="light"] .sm-mapa .leaflet-popup-tip {
-  background: #f9fafb;
+  background: #ffffff;
   color: var(--texto);
   box-shadow: var(--sombra-media);
 }
 
 html[data-theme="light"] .sm-mapa .leaflet-control-attribution {
-  background: rgba(249, 250, 251, 0.9);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 html[data-theme="light"] .sm-mapa .leaflet-popup-content a.sm-globo__cancha {
-  background: #f8f9fa;
+  background: #f8fafc;
 }
 
 /* ---------- Módulos (sm-*) ---------- */
 html[data-theme="light"] .sm-pestanas {
-  background: #f9fafb;
+  background: #f8fafc;
 }
 
 html[data-theme="light"] .sm-pestanas--vista {
-  background: #f9fafb;
-  border-color: #e5e7eb;
+  background: #ffffff;
+  border-color: #e2e8f0;
   box-shadow: var(--sombra-suave);
 }
 
 html[data-theme="light"] .sm-pestanas--vista .sm-pestanas__item {
-  color: #6b7280;
+  color: #475569;
 }
 
 html[data-theme="light"] .sm-pestanas--vista .sm-pestanas__item:hover {
@@ -861,18 +911,18 @@ html[data-theme="light"] .sm-pestanas--vista .sm-pestanas__item--activa:hover {
 
 /* /mi-equipo: tarjeta del equipo y pestañas subrayadas (equipo.css) */
 html[data-theme="light"] .eq-hero {
-  background: #f9fafb;
-  border-color: #e5e7eb;
+  background: #ffffff;
+  border-color: #e2e8f0;
   box-shadow: var(--sombra-media);
 }
 
 html[data-theme="light"] .eq-hero__enlaces {
-  border-top-color: #e5e7eb;
+  border-top-color: #e2e8f0;
 }
 
 html[data-theme="light"] .sm-pestanas--vista.eq-vista {
   background: transparent;
-  border-color: #e5e7eb;
+  border-color: #e2e8f0;
   box-shadow: none;
 }
 
@@ -903,7 +953,7 @@ html[data-theme="light"] .sm-notificacion--nueva .sm-notificacion__punto {
 
 html[data-theme="light"] .sm-documento__seccion p,
 html[data-theme="light"] .sm-comentario__texto {
-  color: #374151;
+  color: #334155;
 }
 
 /* ---------- Estados y alertas: tonos oscuros legibles sobre claro ---------- */
@@ -994,7 +1044,8 @@ html[data-theme="light"] .pagina-auth .auth__tarjeta .formulario .auth-btn {
 }
 
 html[data-theme="light"] .dash-cta:hover,
-html[data-theme="light"] .pagina-auth .auth__tarjeta .formulario .auth-btn:hover {
+html[data-theme="light"] .pagina-auth .auth__tarjeta .formulario .auth-btn:hover,
+html[data-theme="light"] .auth__tarjeta .formulario .btn--verde:hover {
   background: var(--verde-hover);
 }
 
@@ -1092,7 +1143,14 @@ html[data-theme="light"] .wizard .opcion:has(.opcion__radio:checked) .opcion__ca
 /* Agrupación de pines del mapa: relleno sólido con número blanco legible */
 html[data-theme="light"] .sm-grupo span {
   background: var(--verde);
-  border-color: #f9fafb;
+  border-color: #ffffff;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+html[data-theme="light"] .sm-grupo:hover span {
+  box-shadow: none;
 }
 
 /* Deslizadores del editor: perilla sin halo */
@@ -1104,6 +1162,10 @@ html[data-theme="light"] .editor__rango::-moz-range-thumb {
   box-shadow: 0 1px 3px rgba(17, 24, 39, 0.3);
 }
 
+html[data-theme="light"] .editor__rango:focus-visible {
+  outline-color: var(--verde);
+}
+
 /* Pelota de respaldo (sin WebGL): sin halo verde */
 html[data-theme="light"] .ball-fallback {
   box-shadow: inset 0 0 0 2px var(--verde), inset -18px -22px 40px rgba(0, 0, 0, 0.6), 0 12px 24px rgba(17, 24, 39, 0.2);
@@ -1111,24 +1173,158 @@ html[data-theme="light"] .ball-fallback {
 
 /* Mis equipos: tarjetas claras con rayas suaves; el capitán mantiene su borde verde */
 html[data-theme="light"] .eq-mis {
-  border-color: #d1d5db;
+  border-color: #e2e8f0;
   background:
     repeating-linear-gradient(135deg, rgba(17, 24, 39, 0.03) 0 1px, transparent 1px 8px),
-    linear-gradient(135deg, #ffffff, #f3f4f6);
+    linear-gradient(135deg, #ffffff, #f8fafc);
 }
 
 html[data-theme="light"] .eq-mis--capitan {
-  border-color: #16a34a;
-  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.2), 0 8px 24px rgba(22, 163, 74, 0.15);
+  border-color: #15803d;
+  box-shadow: 0 0 0 1px rgba(21, 128, 61, 0.18), 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
 html[data-theme="light"] .eq-mis__nombre { color: var(--texto); }
-html[data-theme="light"] .eq-mis__rol { background: #f3f4f6; border-color: #d1d5db; color: #4b5563; }
+html[data-theme="light"] .eq-mis__rol { background: #f1f5f9; border-color: #e2e8f0; color: #475569; }
 html[data-theme="light"] .eq-mis__rol--capitan { background: #dcfce7; border-color: #86efac; color: #15803d; }
+html[data-theme="light"] .eq-mis--capitan .eq-mis__escudo { box-shadow: none; }
 html[data-theme="light"] .eq-mis__escudo,
 html[data-theme="light"] .eq-mis__datos svg,
 html[data-theme="light"] .eq-mis__plantel[open] summary svg { color: #15803d; }
-html[data-theme="light"] .eq-mis__accion--principal { background: #16a34a; color: #fff; box-shadow: none; }
-html[data-theme="light"] .eq-mis__accion--principal:hover { background: #15803d; }
-html[data-theme="light"] .eq-mis__accion--secundaria { background: #fff; color: var(--texto); border-color: #d1d5db; }
+html[data-theme="light"] .eq-mis__accion--principal {
+  background: #15803d;
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(21, 128, 61, 0.18), 0 8px 18px rgba(21, 128, 61, 0.16);
+}
+html[data-theme="light"] .eq-mis__accion--principal:hover { background: #166534; }
+html[data-theme="light"] .eq-mis__accion--secundaria { background: #fff; color: var(--texto); border-color: #cbd5e1; box-shadow: var(--sombra-suave); }
+html[data-theme="light"] .eq-mis__emblema,
+html[data-theme="light"] .eq-mis--hero:hover .eq-mis__emblema {
+  filter: none;
+}
+html[data-theme="light"] .eq-mis__halo { display: none; }
 html[data-theme="light"] .eq-focos { display: none; }
+
+/* ---------- Ajustes finales del modo blanco ---------- */
+/* Pestañas de acceso: el fondo oscuro de auth.css no puede quedar sobre blanco */
+html[data-theme="light"] .auth-pestanas {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+html[data-theme="light"] .auth-pestanas__indicador {
+  background: #ffffff;
+  border-color: rgba(21, 128, 61, 0.22);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme="light"] .auth-pestanas__item {
+  color: #475569;
+}
+
+html[data-theme="light"] .auth-pestanas__item:hover {
+  color: #0f172a;
+}
+
+html[data-theme="light"] .auth-pestanas__item--activa,
+html[data-theme="light"] .auth-pestanas__item--activa:hover {
+  color: #15803d;
+}
+
+/* Títulos con degradado: los originales empiezan en blanco y desaparecen sobre claro */
+html[data-theme="light"] .dash-hero__nombre {
+  background-image: linear-gradient(100deg, #0f172a 0%, #334155 45%, #15803d 100%);
+  filter: none;
+}
+
+html[data-theme="light"] .auth-marca__titulo em {
+  background-image: linear-gradient(100deg, #15803d 0%, #166534 55%, #14532d 100%);
+}
+
+/* Controles nativos: sin esto el calendario, reloj y flechas de select siguen en oscuro */
+html[data-theme="light"] .campo input,
+html[data-theme="light"] .campo select,
+html[data-theme="light"] .campo textarea,
+html[data-theme="light"] .pagina-auth .auth__tarjeta .campo select,
+html[data-theme="light"] .modal__campo input,
+html[data-theme="light"] .modal__campo select,
+html[data-theme="light"] .modal__campo textarea,
+html[data-theme="light"] .sm-selector-equipo select {
+  color-scheme: light;
+}
+
+html[data-theme="light"] .campo input::placeholder,
+html[data-theme="light"] .campo textarea::placeholder,
+html[data-theme="light"] .auth__tarjeta .campo input::placeholder,
+html[data-theme="light"] .pagina-auth .auth__tarjeta .campo input::placeholder {
+  color: #64748b;
+}
+
+/* El bracket redefine su propio token en style.css: hay que ganarle en su selector */
+html[data-theme="light"] .bracket {
+  --bracket-linea: rgba(21, 128, 61, 0.35);
+}
+
+/* El hover de bento también redefine el glow en style.css */
+html[data-theme="light"] .bento__tarjeta:hover {
+  --glow-borde: rgba(21, 128, 61, 0.28);
+}
+
+html[data-theme="light"] .tarjeta {
+  box-shadow: var(--sombra-suave);
+}
+
+/* El hover del botón de auth es más específico que .btn--verde:hover: se fija aquí */
+html[data-theme="light"] .auth__tarjeta .formulario .btn--verde,
+html[data-theme="light"] .auth__tarjeta .formulario .btn--verde:hover {
+  background: var(--verde);
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(21, 128, 61, 0.18), 0 8px 18px rgba(21, 128, 61, 0.16);
+}
+
+html[data-theme="light"] .auth__tarjeta .formulario .btn--verde:hover {
+  background: var(--verde-hover);
+  box-shadow: 0 2px 4px rgba(21, 128, 61, 0.2), 0 10px 22px rgba(21, 128, 61, 0.18);
+}
+
+html[data-theme="light"] .eq-mis__accion:disabled {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  box-shadow: none;
+}
+
+/* Rojos legibles: #FF6B6B tiene poco contraste sobre blanco */
+html[data-theme="light"] .dash-equipo__salir-boton {
+  color: #b91c1c;
+}
+
+html[data-theme="light"] .dash-equipo__salir-boton:hover,
+html[data-theme="light"] .dash-equipo__salir-boton:focus-visible {
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, 0.35);
+  background: #fef2f2;
+}
+
+html[data-theme="light"] .cancha__sacar-boton {
+  color: #b91c1c;
+}
+
+html[data-theme="light"] .cancha__sacar-boton:hover,
+html[data-theme="light"] .cancha__sacar-boton:focus-visible {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+html[data-theme="light"] .modal__error {
+  color: #b91c1c;
+}
+
+html[data-theme="light"] .sm-mapa .leaflet-bar a:hover {
+  box-shadow: none;
+}
+
+/* El cursor de luz es decorativo: sobre blanco solo distrae */
+html[data-theme="light"] .cursor-luz {
+  display: none;
+}

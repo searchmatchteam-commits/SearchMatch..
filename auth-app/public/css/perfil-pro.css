@@ -920,27 +920,57 @@
   }
 }
 
-/* ---------- Modo claro: misma escena en "laboratorio" claro; la carta conserva su 3D ---------- */
+/* ---------- Modo claro: escena blanca con malla verde muy suave; la carta conserva su 3D ---------- */
 html[data-theme="light"] .perfil-pro {
-  --pp-cristal: rgba(255, 255, 255, 0.55);
-  --pp-cristal-borde: rgba(17, 24, 39, 0.1);
-  --pp-cristal-neon: rgba(21, 128, 61, 0.35);
-  --pp-plata: #4b5563;
-  background: #eef1ef;
+  --pp-abismo: #ffffff;
+  --pp-fondo: #ffffff;
+  --pp-neon: #15803d;
+  --pp-neon-rgb: 21, 128, 61;
+  --pp-plata: #475569;
+  --pp-texto: #475569;
+  --pp-cristal: rgba(255, 255, 255, 0.86);
+  --pp-cristal-borde: #e2e8f0;
+  --pp-cristal-neon: rgba(21, 128, 61, 0.25);
+  background: #ffffff;
 }
 
 html[data-theme="light"] .pp-fondo {
-  background: radial-gradient(ellipse 120% 90% at 50% 0%, #f7faf8 0%, #e3e8e4 70%);
+  background: radial-gradient(ellipse 120% 90% at 50% 0%, #ffffff 0%, #f8fafc 70%);
 }
 
 html[data-theme="light"] .pp-fondo__malla {
-  opacity: 0.45;
+  opacity: 0.15;
+}
+
+html[data-theme="light"] .pp-fondo__malla span:nth-child(1) {
+  background: radial-gradient(circle, rgba(21, 128, 61, 0.22), transparent 65%);
+}
+
+html[data-theme="light"] .pp-fondo__malla span:nth-child(2) {
+  background: radial-gradient(circle, rgba(203, 213, 225, 0.35), transparent 65%);
+}
+
+html[data-theme="light"] .pp-fondo__malla span:nth-child(3) {
+  background: radial-gradient(circle, rgba(21, 128, 61, 0.16), transparent 65%);
+}
+
+html[data-theme="light"] .pp-fondo__malla span:nth-child(4) {
+  background: radial-gradient(circle, rgba(21, 128, 61, 0.1), transparent 65%);
 }
 
 html[data-theme="light"] .pp-fondo__reticula {
   background-image:
-    linear-gradient(rgba(21, 128, 61, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(21, 128, 61, 0.1) 1px, transparent 1px);
+    linear-gradient(rgba(21, 128, 61, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(21, 128, 61, 0.07) 1px, transparent 1px);
+}
+
+html[data-theme="light"] .pp-fondo__grano {
+  opacity: 0.025;
+}
+
+html[data-theme="light"] .pp-fondo__particulas {
+  opacity: 0.18;
+  filter: grayscale(1);
 }
 
 html[data-theme="light"] .pp-eyebrow,
@@ -952,7 +982,7 @@ html[data-theme="light"] .pp-metrica__unidad {
 }
 
 html[data-theme="light"] .pp-titulo {
-  background-image: linear-gradient(100deg, #111827 0%, #1f2937 45%, #15803d 100%);
+  background-image: linear-gradient(100deg, #0f172a 0%, #334155 45%, #15803d 100%);
   filter: none;
 }
 
@@ -960,17 +990,30 @@ html[data-theme="light"] .pp-identidad__nombre,
 html[data-theme="light"] .pp-metrica__valor,
 html[data-theme="light"] .pp-leyenda__valor,
 html[data-theme="light"] .pp-panel__media strong {
-  color: #111827;
+  color: #0f172a;
   text-shadow: none;
 }
 
 html[data-theme="light"] .pp-panel {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 18px 44px rgba(17, 24, 39, 0.12);
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 14px 34px rgba(15, 23, 42, 0.08);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+html[data-theme="light"] .pp-panel::before {
+  box-shadow: none;
+  opacity: 0.35;
 }
 
 html[data-theme="light"] .pp-metrica {
-  background: rgba(255, 255, 255, 0.6);
-  border-color: rgba(17, 24, 39, 0.08);
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+html[data-theme="light"] .pp-metrica:hover {
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
 }
 
 html[data-theme="light"] .pp-metrica dt,
@@ -978,20 +1021,62 @@ html[data-theme="light"] .pp-panel__codigo,
 html[data-theme="light"] .pp-panel__media,
 html[data-theme="light"] .pp-leyenda__nombre,
 html[data-theme="light"] .pp-nota {
-  color: #6b7280;
+  color: #475569;
 }
 
 html[data-theme="light"] .pp-radar__rejilla polygon,
 html[data-theme="light"] .pp-radar__rejilla line {
-  stroke: rgba(17, 24, 39, 0.14);
+  stroke: #cbd5e1;
 }
 
 html[data-theme="light"] .pp-radar__valor {
-  fill: #111827;
+  fill: #0f172a;
 }
 
 html[data-theme="light"] .pp-radar__sigla {
   fill: #15803d;
+}
+
+html[data-theme="light"] .pp-radar__linea,
+html[data-theme="light"] .pp-radar__vertice {
+  filter: none;
+}
+
+html[data-theme="light"] .pp-radar__vertice {
+  fill: #ffffff;
+}
+
+html[data-theme="light"] #pp-radar-relleno stop,
+html[data-theme="light"] #pp-radar-suelo stop {
+  stop-color: #15803d;
+}
+
+html[data-theme="light"] .pp-eyebrow__punto {
+  box-shadow: none;
+}
+
+html[data-theme="light"] .pp-panel__titulo {
+  text-shadow: none;
+}
+
+html[data-theme="light"] .pp-heroe__sombra {
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.05) 45%, transparent 70%);
+}
+
+html[data-theme="light"] .pp-leyenda__barra {
+  background: rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme="light"] .pp-leyenda__barra span {
+  box-shadow: none;
+}
+
+html[data-theme="light"] .pp-boton {
+  box-shadow: 0 1px 2px rgba(21, 128, 61, 0.18), 0 8px 18px rgba(21, 128, 61, 0.16);
+}
+
+html[data-theme="light"] .pp-boton:hover {
+  box-shadow: 0 2px 4px rgba(21, 128, 61, 0.2), 0 10px 22px rgba(21, 128, 61, 0.18);
 }
 
 html[data-theme="light"] .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini),
@@ -1004,12 +1089,24 @@ html[data-theme="light"] .perfil-pro .carta-jugador--perfil:not(.carta-jugador--
 }
 
 html[data-theme="light"] .perfil-pro .dock {
-  background: rgba(255, 255, 255, 0.6);
-  border-color: rgba(17, 24, 39, 0.1);
+  background: rgba(255, 255, 255, 0.94);
+  border-color: #e2e8f0;
+  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 html[data-theme="light"] .perfil-pro .dock__item--activo {
   color: #15803d;
-  background: rgba(21, 128, 61, 0.12);
-  box-shadow: 0 0 0 1px rgba(21, 128, 61, 0.35), 0 10px 18px rgba(17, 24, 39, 0.15);
+  background: #f0fdf4;
+  box-shadow: 0 0 0 1px rgba(21, 128, 61, 0.25), 0 10px 18px rgba(15, 23, 42, 0.1);
+}
+
+html[data-theme="light"] .perfil-pro .dock__item--activo .dock__icono {
+  filter: none;
+}
+
+html[data-theme="light"] .modo-liviano .pp-panel,
+html[data-theme="light"] .modo-liviano .perfil-pro .dock {
+  background-color: #ffffff;
 }

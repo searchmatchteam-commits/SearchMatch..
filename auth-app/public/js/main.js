@@ -13,7 +13,7 @@
 //     El tema guardado se aplica antes del primer pintado (script del <head> en partials/header.ejs).
 // La validación de login/registro está en auth.js (y la real, en el servidor).
 
-const COLOR_BARRA = { light: '#e5e7eb', dark: '#0b0d0b' }; // <meta name="theme-color"> (barra del navegador en celulares)
+const COLOR_BARRA = { light: '#ffffff', dark: '#0b0d0b' }; // <meta name="theme-color"> (barra del navegador en celulares)
 const DURACION_CAMBIO_TEMA = 350;
 
 /** Tema actual: 'light' | 'dark'. */
