@@ -1,53 +1,154 @@
 <%- include('partials/header') %>
 
-<%- include('partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<%
+  // Separa el monto del texto de premios ("1er lugar $500.000" → "$500.000" y "1er lugar")
+  function partirPremio(texto) {
+    // Con o sin "$": "$500.000", "500.000" o "$80000"
+    const m = texto.match(/\$\s?\d[\d.]*|\d{1,3}(?:\.\d{3})+/);
+    if (!m) return { monto: '', resto: texto };
+    return { monto: '$' + m[0].replace(/[\s$]/g, ''), resto: texto.replace(m[0], '').replace(/\(?\s*CLP\s*\)?/i, '').replace(/^[\s+·,:-]+|[\s+·,:-]+$/g, '') };
+  }
+  // Iniciales para la imagen de un torneo sin foto: "Copa de Verano" → "CV"
+  function iniciales(nombre) {
+    const palabras = nombre.split(/\s+/).filter((p) => p && !/^(de|del|la|las|el|los|y)$/i.test(p));
+    if (palabras.length === 0) return '?';
+    if (palabras.length === 1) return palabras[0].slice(0, 2).toUpperCase();
+    return (palabras[0][0] + palabras[1][0]).toUpperCase();
+  }
+  const proximos = torneos.filter((t) => t.estado === 'inscripcion').length;
+  const mios = torneos.filter((t) => misTorneos.includes(t.id)).length;
+  // Opciones del menú "Filtrar por": formatos y modalidades presentes en la lista
+  const formatos = [...new Map(torneos.map((t) => [t.formato, t.formatoTexto])).entries()];
+  const modalidadesLista = [...new Set(torneos.map((t) => t.modalidad))].sort();
+%>
+<%- include('partials/fondo-hex') %>
 
-<section class="eq">
+<section class="eq tl">
   <div class="contenedor">
-    <header class="eq-cabecera revelar">
-      <div class="eq-cabecera__texto">
-        <%- include('partials/boton-volver') %>
-        <h1 class="eq-cabecera__titulo">Torneos</h1>
-        <p class="eq-cabecera__stats">Inscribe a tu equipo y compite por la copa</p>
-      </div>
+    <header class="tl-cabecera">
+      <%- include('partials/boton-volver') %>
+      <h1 class="tl-cabecera__titulo">Torneos</h1>
+      <p class="tl-cabecera__texto">Inscribe a tu equipo y compite por la copa</p>
     </header>
 
     <% if (torneos.length === 0) { %>
-      <div class="dash-panel eq-panel sm-vacio revelar">
-        <p class="sm-vacio__titulo">Aún no hay torneos</p>
-        <p class="dash-panel__nota">Cuando SearchMatch organice uno, aparecerá aquí para que inscribas a tu equipo.</p>
+      <div class="tl-vacio">
+        <p class="tl-vacio__titulo">Aún no hay torneos</p>
+        <p>Cuando SearchMatch organice uno, aparecerá aquí para que inscribas a tu equipo.</p>
       </div>
     <% } else { %>
-      <ul class="sm-torneos">
-        <% torneos.forEach(function (t) { %>
-          <li class="dash-panel eq-panel sm-torneo-tarjeta revelar">
-            <a class="sm-torneo-tarjeta__enlace" href="/torneos/<%= t.id %>">
-              <% if (t.foto) { %><img class="sm-torneo-tarjeta__foto" src="<%= t.foto %>" alt="" loading="lazy" /><% } %>
-              <span class="sm-torneo-tarjeta__cuerpo">
-                <span class="sm-torneo-ficha__etiquetas">
-                  <span class="sm-rol"><%= t.formatoTexto %></span>
-                  <span class="sm-estado sm-estado--torneo-<%= t.estado %>"><%= t.estadoTexto %></span>
-                </span>
-                <strong class="sm-torneo-tarjeta__titulo"><%= t.nombre %></strong>
-                <small><%= t.modalidad %> · <%= t.recinto %><%= t.comuna ? `, ${t.comuna}` : '' %></small>
-                <% if (t.estado === 'inscripcion') { %>
-                  <small><strong><%= t.cuposLibres %></strong> de <%= t.cantidadEquipos %> cupos libres</small>
-                <% } else if (t.campeon) { %>
-                  <small>🏆 Campeón: <%= t.campeon.nombre %></small>
-                <% } else { %>
-                  <small><%= t.cantidadEquipos %> equipos</small>
-                <% } %>
-                <% if (t.premios) { %><small>Premios: <%= t.premios %></small><% } %>
-                <% if (t.patrocinadores.length > 0) { %>
-                  <span class="sm-patrocinadores sm-patrocinadores--mini" aria-label="Patrocinadores">
-                    <% t.patrocinadores.forEach(function (p) { %><img class="sm-patrocinador__logo" src="<%= p.logo %>" alt="<%= p.nombre %>" title="<%= p.nombre %>" loading="lazy" /><% }) %>
-                  </span>
-                <% } %>
+      <div class="tl-barra">
+        <!-- Filtros (los aplica torneos-lista.js sin recargar la página) -->
+        <div class="tl-filtros" role="tablist" aria-label="Filtrar torneos" data-filtros-torneos>
+          <% [['todos', 'Todos', torneos.length], ['mios', 'Mis torneos', mios], ['proximos', 'Próximos', proximos]].forEach(function ([clave, texto, cuenta], i) { %>
+            <button type="button" class="tl-filtro" role="tab" data-filtro="<%= clave %>" aria-selected="<%= i === 0 %>" tabindex="<%= i === 0 ? 0 : -1 %>">
+              <%= texto %> <span class="tl-filtro__cuenta tl-num"><%= cuenta %></span>
+            </button>
+          <% }) %>
+        </div>
+
+        <div class="tl-acciones">
+          <label class="tl-filtrar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" /></svg>
+            <span class="solo-lectores">Filtrar por</span>
+            <select data-filtro-extra>
+              <option value="">Filtrar por</option>
+              <optgroup label="Formato">
+                <% formatos.forEach(function ([clave, texto]) { %><option value="formato:<%= clave %>"><%= texto %></option><% }) %>
+              </optgroup>
+              <optgroup label="Modalidad">
+                <% modalidadesLista.forEach(function (m) { %><option value="modalidad:<%= m %>"><%= m %></option><% }) %>
+              </optgroup>
+            </select>
+          </label>
+          <button type="button" class="tl-flecha" data-carrusel-mover="-1" aria-label="Torneos anteriores">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+          </button>
+          <button type="button" class="tl-flecha" data-carrusel-mover="1" aria-label="Más torneos">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+          </button>
+        </div>
+      </div>
+
+      <ul class="tl-carrusel" data-galeria-torneos>
+        <% torneos.forEach(function (t) {
+             const mio = misTorneos.includes(t.id);
+             const abierto = t.estado === 'inscripcion';
+             const porcentaje = Math.round(100 * t.inscritos / t.cantidadEquipos);
+             const premio = t.premios ? partirPremio(t.premios) : null;
+             let cta = { texto: 'Ver resultados', href: `/torneos/${t.id}` };
+             if (mio && abierto) cta = { texto: 'Ver mi inscripción', href: `/torneos/${t.id}#inscripcion` };
+             else if (abierto && t.cuposLibres > 0) cta = { texto: 'Inscribir equipo', href: `/torneos/${t.id}#inscripcion` };
+             else if (abierto) cta = { texto: 'Ver torneo', href: `/torneos/${t.id}` };
+             else if (t.estado === 'en_curso') cta = { texto: 'Ver cuadrante', href: `/torneos/${t.id}` }; %>
+          <li class="tl-carta" data-estado="<%= t.estado %>" data-mio="<%= mio %>" data-formato="<%= t.formato %>" data-modalidad="<%= t.modalidad %>">
+            <div class="tl-carta__media">
+              <!-- Las iniciales quedan debajo: se ven si no hay foto o si no carga -->
+              <span class="tl-carta__iniciales" aria-hidden="true"><%= iniciales(t.nombre) %></span>
+              <% if (t.foto) { %><img class="tl-carta__foto" src="<%= t.foto %>" alt="" loading="lazy" data-foto-torneo /><% } %>
+              <span class="tl-badge tl-badge--formato">
+                <span aria-hidden="true"><%= t.formato === 'relampago' ? '⚡' : '📅' %></span><span class="tl-badge__texto"><%= t.formatoTexto %></span>
               </span>
-            </a>
+              <% if (mio) { %><span class="tl-badge tl-badge--mio">Mi equipo</span><% } %>
+            </div>
+
+            <div class="tl-carta__cuerpo">
+              <span class="tl-estado tl-estado--<%= t.estado %>"><%= abierto ? 'Inscripciones abiertas' : t.estadoTexto %></span>
+              <h2 class="tl-carta__titulo"><a class="tl-carta__enlace" href="/torneos/<%= t.id %>"><%= t.nombre %></a></h2>
+
+              <p class="tl-carta__meta">
+                <% if (t.comuna) { %>
+                  <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" /><circle cx="12" cy="10" r="2.4" /></svg><%= t.comuna %></span>
+                <% } %>
+                <span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5l3.8 2.8-1.5 4.4H9.7l-1.5-4.4zM12 3.5v4M20.2 9.6l-4.4.7M16.9 19l-2.6-4.3M7.1 19l2.6-4.3M3.8 9.6l4.4.7" /></svg><%= t.modalidad %></span>
+              </p>
+
+              <div class="tl-cupos">
+                <div class="tl-cupos__texto">
+                  <small>Cupos</small>
+                  <strong>
+                    <% if (t.campeon) { %>Campeón: <%= t.campeon.nombre %>
+                    <% } else if (!abierto) { %><%= t.cantidadEquipos %> equipos compitiendo
+                    <% } else if (t.cuposLibres === 0) { %>Cupos completos
+                    <% } else { %><%= t.cuposLibres === 1 ? 'Queda 1 cupo' : `Quedan ${t.cuposLibres} cupos` %><% } %>
+                  </strong>
+                </div>
+                <div class="tl-anillo" role="img" aria-label="<%= t.inscritos %> de <%= t.cantidadEquipos %> equipos inscritos">
+                  <svg viewBox="0 0 64 64" aria-hidden="true">
+                    <circle class="tl-anillo__pista" cx="32" cy="32" r="27" pathLength="100" />
+                    <circle class="tl-anillo__valor" cx="32" cy="32" r="27" pathLength="100" stroke-dasharray="<%= porcentaje %> 100" />
+                  </svg>
+                  <span class="tl-anillo__texto tl-num"><%= t.inscritos %>/<%= t.cantidadEquipos %></span>
+                </div>
+              </div>
+
+              <% if (premio) { %>
+                <div class="tl-premio">
+                  <svg class="tl-premio__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4v3h-4z" /></svg>
+                  <div class="tl-premio__texto">
+                    <small><%= premio.monto ? (premio.resto || 'Premio') : 'Premio' %></small>
+                    <% if (premio.monto) { %>
+                      <strong class="tl-num"><%= premio.monto %> <span>(CLP)</span></strong>
+                    <% } else { %>
+                      <strong><%= premio.resto %></strong>
+                    <% } %>
+                  </div>
+                </div>
+              <% } %>
+
+              <a class="tl-cta <%= mio ? 'tl-cta--principal' : '' %>" href="<%= cta.href %>">
+                <%= cta.texto %>
+                <svg class="tl-cta__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </a>
+            </div>
           </li>
         <% }) %>
       </ul>
+
+      <div class="tl-vacio" data-sin-resultados hidden>
+        <p class="tl-vacio__titulo">No hay torneos aquí</p>
+        <p data-sin-resultados-nota></p>
+      </div>
     <% } %>
   </div>
 </section>

@@ -41,6 +41,14 @@
   <% } %>
   <!-- Modo claro: todas sus reglas van bajo html[data-theme="light"]; va al final para ganarle a las hojas de cada página -->
   <link rel="stylesheet" href="/css/tema-claro.css?v=<%= versionAssets %>" />
+  <% if (locals.torneoLista) { %>
+    <!-- /torneos: galería de cartas (después de tema-claro: trae sus reglas de modo claro) -->
+    <link rel="stylesheet" href="/css/torneos-lista.css?v=<%= versionAssets %>" />
+  <% } %>
+  <% if (locals.torneoDetalle) { %>
+    <!-- /torneos/:id: dos columnas, pestañas y cuadrante (después de tema-claro: trae sus reglas de modo claro) -->
+    <link rel="stylesheet" href="/css/torneo-detalle.css?v=<%= versionAssets %>" />
+  <% } %>
   <% if (locals.perfilPro) { %>
     <!-- /perfil: escena "cyber-gamer" (después de tema-claro: también trae sus reglas de modo claro) -->
     <link rel="stylesheet" href="/css/perfil-pro.css?v=<%= versionAssets %>" />

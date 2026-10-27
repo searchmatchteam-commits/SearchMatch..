@@ -38,7 +38,7 @@
 
 <div class="dash-panel eq-panel">
   <h2 class="dash-panel__titulo"><%= esLlave ? 'Llave del torneo' : 'Fixture' %></h2>
-  <div class="<%= esLlave ? 'sm-llave' : 'sm-fechas' %>">
+  <div class="<%= esLlave ? 'sm-llave' : 'sm-fechas' %>" <%- esLlave ? 'data-llave' : '' %>>
     <% torneo.rondas.forEach(function (ronda) { %>
       <section class="sm-ronda" aria-label="<%= ronda.nombre %>">
         <h3 class="sm-ronda__titulo"><%= ronda.nombre %></h3>
@@ -47,12 +47,12 @@
                const gano = (e) => p.jugado && esLlave && e && p.idGanador === e.id;
                const penales = p.jugado && esLlave && p.golesLocal === p.golesVisita; %>
             <li class="sm-partido <%= (p.local && resaltar.includes(p.local.id)) || (p.visita && resaltar.includes(p.visita.id)) ? 'sm-partido--mio' : '' %>" id="partido-<%= p.id %>">
-              <span class="sm-partido__equipo <%= gano(p.local) ? 'sm-partido__equipo--gano' : '' %>"><%= nombreEquipo(p.local) %></span>
+              <span class="sm-partido__equipo <%= gano(p.local) ? 'sm-partido__equipo--gano' : '' %>" <%- p.local ? `data-equipo="${p.local.id}"` : '' %>><%= nombreEquipo(p.local) %></span>
               <span class="sm-partido__marcador">
                 <%= p.jugado ? `${p.golesLocal} - ${p.golesVisita}` : 'vs' %>
                 <% if (penales) { %><small>(penales)</small><% } %>
               </span>
-              <span class="sm-partido__equipo sm-partido__equipo--visita <%= gano(p.visita) ? 'sm-partido__equipo--gano' : '' %>"><%= nombreEquipo(p.visita) %></span>
+              <span class="sm-partido__equipo sm-partido__equipo--visita <%= gano(p.visita) ? 'sm-partido__equipo--gano' : '' %>" <%- p.visita ? `data-equipo="${p.visita.id}"` : '' %>><%= nombreEquipo(p.visita) %></span>
               <% if (admin && p.editable && torneo.estado !== 'inscripcion') { %>
                 <form class="sm-resultado" method="POST" action="/admin/super/torneos/<%= torneo.id %>/partidos/<%= p.id %>">
                   <label class="solo-lectores" for="gl-<%= p.id %>">Goles de <%= nombreEquipo(p.local) %></label>

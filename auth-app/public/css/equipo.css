@@ -2197,20 +2197,81 @@ button.eq-mis__accion {
   }
 }
 
+/* ---------- Directorio: el escudo como protagonista (.eq-mis--escudo) ---------- */
+/* Igual que el hero de Mis equipos pero sin salirse de la tarjeta: aire arriba (pt-10),
+   escudo grande centrado y todo el texto alineado al centro.
+   Del verde oscuro arriba al negro abajo; el capitán irradia más luz. */
+.eq-mis--escudo {
+  align-items: center;
+  padding: 40px 18px 18px;
+  text-align: center;
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 8px),
+    linear-gradient(180deg, #121a14 0%, #0a0a0a 55%);
+}
+
+.eq-mis--escudo.eq-mis--capitan {
+  background:
+    repeating-linear-gradient(135deg, rgba(var(--verde-rgb), 0.03) 0 1px, transparent 1px 8px),
+    radial-gradient(ellipse 80% 45% at 50% 0%, rgba(var(--verde-rgb), 0.22), transparent 75%),
+    linear-gradient(180deg, #0c2a14 0%, #0a0a0a 60%);
+}
+
+/* "Ver ficha": enlace discreto arriba a la derecha, por sobre el escudo */
+.eq-mis--escudo .eq-mis__enlace {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+/* El escudo flota dentro de la tarjeta (sin el margen negativo del hero) */
+.eq-mis--escudo .eq-mis__trofeo {
+  margin-top: 0;
+}
+
+/* Luz detrás del escudo: intensa si es tu equipo, tenue en los demás */
+.eq-mis--escudo:not(.eq-mis--capitan) .eq-mis__halo {
+  opacity: 0.35;
+}
+
+.eq-mis--escudo:hover .eq-mis__emblema {
+  transform: scale(1.06);
+  filter: drop-shadow(0 0 26px rgba(var(--verde-rgb), 0.85));
+}
+
+.eq-mis--escudo:hover .eq-mis__halo {
+  opacity: 1;
+  transform: scale(1.12);
+}
+
+/* Nombre y rol centrados bajo el escudo; los datos, en fila centrada */
+.eq-mis--escudo .eq-mis__nombre {
+  max-width: 100%;
+  font-size: 1.5rem;
+}
+
+.eq-mis--escudo .eq-mis__datos {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 16px;
+}
+
+/* La acción a todo el ancho se mantiene centrada con el contenido */
+.eq-mis--escudo .eq-mis__form,
+.eq-mis--escudo .eq-mis__accion {
+  align-self: stretch;
+}
+
 /* El buscador del directorio esconde las tarjetas con hidden (display: flex lo pisaría) */
 .eq-mis[hidden] {
   display: none;
 }
 
-/* El directorio tiene muchos equipos: usa todo el ancho y 3 columnas en pantallas grandes */
+/* El directorio tiene muchos equipos: usa todo el ancho (1 col en móvil, 2 en escritorio) */
 .eq-mis-grilla--directorio {
   max-width: none;
-}
-
-@media (min-width: 1024px) {
-  .eq-mis-grilla--directorio {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
 
 @media (min-width: 768px) {

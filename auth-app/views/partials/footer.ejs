@@ -68,6 +68,12 @@
   <% if (locals.pagina === 'equipo') { %>
     <script src="/js/equipo.js?v=<%= versionAssets %>" defer></script>
   <% } %>
+  <% if (locals.torneoLista) { %>
+    <script src="/js/torneos-lista.js?v=<%= versionAssets %>" defer></script>
+  <% } %>
+  <% if (locals.torneoDetalle) { %>
+    <script src="/js/torneo-detalle.js?v=<%= versionAssets %>" defer></script>
+  <% } %>
   <% if (locals.torneoForm) { %>
     <script src="/js/torneo-form.js?v=<%= versionAssets %>" defer></script>
   <% } %>

@@ -258,6 +258,22 @@ async function equiposDelCapitan(authId, idTorneo) {
   return rows.map((f) => ({ id: f.id, nombre: f.nombre, juegaModalidad: f.juega_modalidad, inscrito: f.inscrito }));
 }
 
+/** Ids de los torneos donde juega algún equipo de la cuenta (lo creó o está en su plantel). Pestaña "Mis torneos". */
+async function idsMisTorneos(authId) {
+  const { rows } = await pool.query(
+    `SELECT DISTINCT te.id_torneo
+       FROM usuario u
+       LEFT JOIN jugador j ON j.id_usuario = u.id
+       JOIN equipo e ON e.activo
+        AND (e.id_usuario_creador = u.id
+             OR EXISTS (SELECT 1 FROM equipo_jugador x WHERE x.id_equipo = e.id AND x.id_jugador = j.id))
+       JOIN torneo_equipo te ON te.id_equipo = e.id
+      WHERE u.auth_id = $1`,
+    [authId]
+  );
+  return rows.map((f) => f.id_torneo);
+}
+
 /**
  * Inscribe un equipo del capitán. El torneo se bloquea (FOR UPDATE) para que dos inscripciones
  * simultáneas no superen los cupos.
@@ -392,5 +408,5 @@ async function registrarResultado(idTorneo, idPartido, golesLocal, golesVisita, 
 
 module.exports = {
   listar, obtener, modalidades, canchasDisponibles, canchaParaTorneo, crear, editar, eliminar,
-  obtenerFoto, obtenerLogo, equiposDelCapitan, inscribir, retirar, empezar, registrarResultado,
+  obtenerFoto, obtenerLogo, equiposDelCapitan, idsMisTorneos, inscribir, retirar, empezar, registrarResultado,
 };

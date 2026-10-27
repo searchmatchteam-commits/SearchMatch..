@@ -21,7 +21,9 @@ async function listar(req, res, next) {
     return res.render('torneos', {
       titulo: 'Torneos',
       pagina: 'equipo',
+      torneoLista: true, // carga torneos-lista.css/.js (cartas, pestañas, foto con fondo blanco)
       torneos: await torneoModel.listar(),
+      misTorneos: await torneoModel.idsMisTorneos(req.usuario.idAuth),
       aviso: AVISOS[req.query.aviso] || null,
     });
   } catch (err) {
@@ -36,6 +38,7 @@ async function detalle(req, res, next) {
     return res.render('torneos/detalle', {
       titulo: torneo.nombre,
       pagina: 'equipo',
+      torneoDetalle: true, // carga torneo-detalle.css/.js (pestañas, cuadrante, rejilla)
       torneo,
       misEquipos: await torneoModel.equiposDelCapitan(req.usuario.idAuth, torneo.id),
       aviso: AVISOS[req.query.aviso] || null,

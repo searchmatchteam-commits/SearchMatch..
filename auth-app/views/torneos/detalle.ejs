@@ -1,76 +1,140 @@
 <%- include('../partials/header') %>
 
-<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<%- include('../partials/fondo-hex') %>
 
 <%
   const inscritos = misEquipos.filter((e) => e.inscrito);
   const disponibles = misEquipos.filter((e) => !e.inscrito && e.juegaModalidad);
   const otraModalidad = misEquipos.filter((e) => !e.inscrito && !e.juegaModalidad);
+  const enInscripcion = torneo.estado === 'inscripcion';
+  const esLlave = torneo.formato === 'relampago';
+  const porcentaje = Math.round(100 * torneo.inscritos / torneo.cantidadEquipos);
+  const faltan = torneo.cuposLibres;
+  // Pestaña por defecto: el cuadrante (vacío mientras se llenan los cupos, con resultados después)
+  const pestanaInicial = 'cuadrante';
 %>
-<section class="eq">
+<section class="eq trn">
   <div class="contenedor">
-    <header class="eq-cabecera revelar">
-      <div class="eq-cabecera__texto">
+    <div class="trn-grid">
+      <!-- Columna izquierda: resumen e inscripción -->
+      <aside class="trn-lateral revelar">
         <%- include('../partials/boton-volver', { fallbackUrl: '/torneos' }) %>
-        <h1 class="eq-cabecera__titulo"><%= torneo.nombre %></h1>
-        <p class="eq-cabecera__stats"><%= torneo.formatoTexto %> · <%= torneo.modalidad %></p>
-      </div>
-    </header>
+        <h1 class="trn-titulo"><%= torneo.nombre %></h1>
+        <p class="trn-etiquetas">
+          <span class="sm-rol"><%= torneo.formatoTexto %></span>
+          <span class="sm-rol"><%= torneo.modalidad %></span>
+          <span class="sm-estado sm-estado--torneo-<%= torneo.estado %>"><%= torneo.estadoTexto %></span>
+        </p>
 
-    <%- include('../partials/torneo-ficha', { torneo }) %>
-
-    <% if (torneo.estado === 'inscripcion') { %>
-      <div class="dash-panel eq-panel">
-        <h2 class="dash-panel__titulo">Inscripciones (<%= torneo.inscritos %>/<%= torneo.cantidadEquipos %>)</h2>
-        <div class="sm-cupos" role="progressbar" aria-valuemin="0" aria-valuemax="<%= torneo.cantidadEquipos %>" aria-valuenow="<%= torneo.inscritos %>" aria-label="Cupos llenos">
-          <span class="sm-cupos__relleno" style="width: <%= Math.round(100 * torneo.inscritos / torneo.cantidadEquipos) %>%"></span>
-        </div>
-        <p class="dash-panel__nota">El torneo empieza cuando se llenen los <%= torneo.cantidadEquipos %> cupos.</p>
-
-        <% inscritos.forEach(function (e) { %>
-          <form class="sm-inscripcion" action="/torneos/<%= torneo.id %>/retirar/<%= e.id %>" method="POST"
-                data-confirmar="Su cupo quedará libre para otro equipo." data-confirmar-titulo="¿Retirar a <%= e.nombre %> del torneo?" data-confirmar-boton="Retirar">
-            <span>✅ <strong><%= e.nombre %></strong> está inscrito.</span>
-            <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Retirar</button>
-          </form>
-        <% }) %>
-
-        <% if (torneo.cuposLibres === 0) { %>
-          <p class="dash-panel__nota">No quedan cupos.</p>
-        <% } else if (disponibles.length > 0) { %>
-          <form class="sm-inscripcion" action="/torneos/<%= torneo.id %>/inscribir" method="POST">
-            <% if (disponibles.length === 1) { %>
-              <input type="hidden" name="id_equipo" value="<%= disponibles[0].id %>" />
-              <button type="submit" class="btn btn--verde">Inscribir a <%= disponibles[0].nombre %></button>
+        <div class="dash-panel eq-panel trn-energia" id="inscripcion">
+          <div class="trn-energia__cabecera">
+            <span class="trn-energia__etiqueta">Cupos</span>
+            <span class="trn-num trn-energia__cuenta"><strong><%= torneo.inscritos %></strong>/<%= torneo.cantidadEquipos %></span>
+          </div>
+          <div class="trn-energia__barra <%= enInscripcion ? 'trn-energia__barra--cargando' : '' %>" role="progressbar"
+               aria-valuemin="0" aria-valuemax="<%= torneo.cantidadEquipos %>" aria-valuenow="<%= torneo.inscritos %>" aria-label="Cupos llenos"
+               style="--segmentos: <%= torneo.cantidadEquipos %>">
+            <span class="trn-energia__relleno" style="width: <%= porcentaje %>%"></span>
+          </div>
+          <p class="trn-energia__texto">
+            <% if (!enInscripcion) { %>
+              Cupos completos · <%= torneo.estadoTexto %>
+            <% } else if (faltan === 0) { %>
+              ¡Cupos completos! El torneo está por comenzar
             <% } else { %>
-              <label for="id_equipo">Equipo</label>
-              <select id="id_equipo" name="id_equipo" required>
-                <% disponibles.forEach(function (e) { %><option value="<%= e.id %>"><%= e.nombre %></option><% }) %>
-              </select>
-              <button type="submit" class="btn btn--verde">Inscribir equipo</button>
+              <span class="trn-num"><%= faltan === 1 ? 'Falta 1 equipo' : `Faltan ${faltan} equipos` %></span> para el inicio
             <% } %>
-          </form>
-        <% } else if (otraModalidad.length > 0) { %>
-          <p class="dash-panel__nota">Tus equipos no juegan <%= torneo.modalidad %>. Agrega esa modalidad en el panel de tu equipo para inscribirlo.</p>
-        <% } else if (misEquipos.length === 0) { %>
-          <p class="dash-panel__nota">Solo el capitán puede inscribir a su equipo. <a href="/crear-equipo">Crea un equipo</a> o pídele a tu capitán que lo inscriba.</p>
-        <% } %>
+          </p>
 
-        <% if (torneo.equipos.length > 0) { %>
-          <h3 class="sm-subtitulo">Equipos inscritos</h3>
-          <ul class="sm-equipos-torneo">
-            <% torneo.equipos.forEach(function (e) { %>
-              <li>
-                <span class="dash-equipo__escudo" aria-hidden="true"><%- include('../partials/escudo-equipo', { equipo: e }) %></span>
-                <a href="/equipos/<%= e.id %>"><%= e.nombre %></a>
-              </li>
-            <% }) %>
-          </ul>
-        <% } %>
+          <% inscritos.forEach(function (e) { %>
+            <form class="trn-mi-equipo" action="/torneos/<%= torneo.id %>/retirar/<%= e.id %>" method="POST"
+                  data-confirmar="Su cupo quedará libre para otro equipo." data-confirmar-titulo="¿Retirar a <%= e.nombre %> del torneo?" data-confirmar-boton="Retirar">
+              <span class="trn-mi-equipo__check" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+              </span>
+              <span class="trn-mi-equipo__nombre"><strong><%= e.nombre %></strong><small>Inscrito</small></span>
+              <% if (enInscripcion) { %>
+                <button type="submit" class="trn-btn-retirar">Retirar</button>
+              <% } %>
+            </form>
+          <% }) %>
+
+          <% if (enInscripcion) { %>
+            <% if (faltan === 0) { %>
+              <p class="dash-panel__nota">No quedan cupos.</p>
+            <% } else if (disponibles.length > 0) { %>
+              <form class="sm-inscripcion" action="/torneos/<%= torneo.id %>/inscribir" method="POST">
+                <% if (disponibles.length === 1) { %>
+                  <input type="hidden" name="id_equipo" value="<%= disponibles[0].id %>" />
+                  <button type="submit" class="btn btn--verde">Inscribir a <%= disponibles[0].nombre %></button>
+                <% } else { %>
+                  <label for="id_equipo">Equipo</label>
+                  <select id="id_equipo" name="id_equipo" required>
+                    <% disponibles.forEach(function (e) { %><option value="<%= e.id %>"><%= e.nombre %></option><% }) %>
+                  </select>
+                  <button type="submit" class="btn btn--verde">Inscribir equipo</button>
+                <% } %>
+              </form>
+            <% } else if (otraModalidad.length > 0) { %>
+              <p class="dash-panel__nota"><%= inscritos.length > 0 ? 'Tus otros equipos' : 'Tus equipos' %> no juegan <%= torneo.modalidad %>. Agrega esa modalidad en el panel de tu equipo para inscribirlo.</p>
+            <% } else if (misEquipos.length === 0) { %>
+              <p class="dash-panel__nota">Solo el capitán puede inscribir a su equipo. <a href="/crear-equipo">Crea un equipo</a> o pídele a tu capitán que lo inscriba.</p>
+            <% } %>
+          <% } %>
+        </div>
+      </aside>
+
+      <!-- Columna derecha: pestañas (Información | Equipos inscritos | Cuadrante) -->
+      <div class="trn-principal revelar" data-pestanas>
+        <div class="trn-pestanas" role="tablist" aria-label="Secciones del torneo">
+          <% [['informacion', 'Información'], ['equipos', 'Equipos inscritos'], ['cuadrante', 'Cuadrante']].forEach(function ([clave, texto]) { %>
+            <button type="button" class="trn-pestana" role="tab" id="pestana-<%= clave %>" aria-controls="panel-<%= clave %>"
+                    aria-selected="<%= clave === pestanaInicial %>" tabindex="<%= clave === pestanaInicial ? 0 : -1 %>">
+              <%= texto %><% if (clave === 'equipos') { %> <span class="trn-num trn-pestana__cuenta"><%= torneo.inscritos %></span><% } %>
+            </button>
+          <% }) %>
+        </div>
+
+        <div class="trn-panel" role="tabpanel" id="panel-informacion" aria-labelledby="pestana-informacion" <%= pestanaInicial === 'informacion' ? '' : 'hidden' %>>
+          <%- include('../partials/torneo-ficha', { torneo }) %>
+        </div>
+
+        <div class="trn-panel" role="tabpanel" id="panel-equipos" aria-labelledby="pestana-equipos" hidden>
+          <% if (torneo.equipos.length > 0) { %>
+            <ul class="sm-equipos-torneo trn-equipos">
+              <% torneo.equipos.forEach(function (e) { %>
+                <li class="<%= misEquipos.some((m) => m.id === e.id) ? 'trn-equipos__mio' : '' %>">
+                  <span class="dash-equipo__escudo" aria-hidden="true"><%- include('../partials/escudo-equipo', { equipo: e }) %></span>
+                  <a href="/equipos/<%= e.id %>"><%= e.nombre %></a>
+                </li>
+              <% }) %>
+            </ul>
+          <% } else { %>
+            <p class="dash-panel__nota">Todavía no hay equipos inscritos. ¡Sé el primero!</p>
+          <% } %>
+        </div>
+
+        <div class="trn-panel trn-panel--cuadrante" role="tabpanel" id="panel-cuadrante" aria-labelledby="pestana-cuadrante" <%= pestanaInicial === 'cuadrante' ? '' : 'hidden' %>>
+          <% if (enInscripcion && esLlave) { %>
+            <%- include('../partials/torneo-cuadrante', { torneo, resaltar: misEquipos.map((e) => e.id) }) %>
+          <% } else if (enInscripcion) { %>
+            <div class="trn-vacio">
+              <div class="trn-vacio__tabla" aria-hidden="true">
+                <% for (let c = 0; c < Math.min(torneo.cantidadEquipos, 8); c++) { %>
+                  <span class="trn-vacio__cupo <%= c < torneo.inscritos ? 'trn-vacio__cupo--lleno' : '' %>" style="--i: <%= c %>"></span>
+                <% } %>
+              </div>
+              <p class="trn-vacio__texto">
+                El fixture se generará automáticamente cuando se llenen los
+                <span class="trn-num"><%= torneo.cantidadEquipos %></span> cupos
+              </p>
+            </div>
+          <% } else { %>
+            <%- include('../partials/torneo-competencia', { torneo, admin: false, resaltar: misEquipos.map((e) => e.id) }) %>
+          <% } %>
+        </div>
       </div>
-    <% } else { %>
-      <%- include('../partials/torneo-competencia', { torneo, admin: false, resaltar: misEquipos.map((e) => e.id) }) %>
-    <% } %>
+    </div>
   </div>
 </section>
 

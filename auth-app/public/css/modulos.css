@@ -573,3 +573,30 @@ html[data-theme="light"] .sm-tema__luna { display: block; }
 .sm-resultado { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; }
 .sm-resultado input { width: 56px; text-align: center; }
 .sm-resultado select { max-width: 100%; }
+
+/* ---------- Fondo de hexágonos de los torneos (partials/fondo-hex) ---------- */
+.pagina-equipo:has(.tl-fondo) { background: #0a0a0a; }
+
+.tl-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Luces de estadio en las esquinas superiores + un resplandor suave al centro */
+  background:
+    radial-gradient(ellipse 55% 50% at 0% 0%, rgba(34, 197, 94, 0.2), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 100% 0%, rgba(34, 197, 94, 0.2), transparent 70%),
+    radial-gradient(ellipse 70% 45% at 50% 0%, rgba(22, 101, 52, 0.22), transparent 70%);
+}
+
+.tl-fondo__hex {
+  position: absolute;
+  inset: 0;
+  color: rgba(74, 222, 128, 0.09);
+  /* Solo el lado izquierdo: se desvanece hacia el centro */
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, 0.5) 22%, transparent 45%);
+  mask-image: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, 0.5) 22%, transparent 45%);
+}
+html[data-theme="light"] .pagina-equipo:has(.tl-fondo) { background: #f9fafb; }
+html[data-theme="light"] .tl-fondo { background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(22, 163, 74, 0.1), transparent 70%); }
+html[data-theme="light"] .tl-fondo__hex { color: rgba(22, 163, 74, 0.12); }

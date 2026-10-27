@@ -1,0 +1,19 @@
+<%
+  // Fondo de las páginas de torneos: luces verdes en las esquinas superiores, hexágonos a la
+  // izquierda y los focos del estadio de "Mis equipos". Uso: include('partials/fondo-hex').
+  // Estilos: .tl-fondo en modulos.css, .eq-focos en equipo.css.
+%>
+<div class="tl-fondo" aria-hidden="true">
+  <svg class="tl-fondo__hex" width="100%" height="100%">
+    <defs>
+      <pattern id="tl-hex" width="56" height="97" patternUnits="userSpaceOnUse" patternTransform="scale(0.9)">
+        <path d="M28 0l28 16.2v32.3L28 64.7 0 48.5V16.2zM28 64.7V97" fill="none" stroke="currentColor" stroke-width="1" />
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#tl-hex)" />
+  </svg>
+</div>
+<div class="eq-focos" aria-hidden="true">
+  <span class="eq-focos__torre eq-focos__torre--izq"></span>
+  <span class="eq-focos__torre eq-focos__torre--der"></span>
+</div>

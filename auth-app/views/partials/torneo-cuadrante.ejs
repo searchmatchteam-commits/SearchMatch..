@@ -1,0 +1,75 @@
+<%
+  // Cuadrante (llave) de un torneo que aún no empieza: los equipos inscritos ocupan los primeros
+  // cupos de la primera ronda y el resto queda "Esperando...". Solo interfaz: no consulta nada,
+  // usa los equipos que ya trae el torneo. Uso: include('partials/torneo-cuadrante', { torneo, resaltar })
+  //   resaltar: ids de equipos a destacar (los del jugador)
+  // Líneas: cada columna se divide en celdas de igual alto (flex: 1), así el centro de cada cupo
+  // queda exactamente a la altura del punto medio del par que lo alimenta (estilos: .cq-* en torneo-detalle.css).
+  const resaltarCq = locals.resaltar || [];
+  // Cupos de la primera ronda: potencia de 2 (12 equipos → 16 cupos, los sobrantes pasan directo)
+  let cuposPrimera = 2;
+  while (cuposPrimera < torneo.cantidadEquipos) cuposPrimera *= 2;
+  const NOMBRES = { 32: 'Dieciseisavos', 16: 'Octavos de final', 8: 'Cuartos de final', 4: 'Semifinal' };
+  // Columnas antes de la final: 16 → [16, 8, 4]; 8 → [8, 4]; 4 → [4]
+  const columnas = [];
+  for (let n = cuposPrimera; n >= 4; n /= 2) columnas.push(n);
+  function equipoEn(columna, i) { return columna === 0 ? torneo.equipos[i] || null : null; }
+  const porcentaje = Math.round(100 * torneo.inscritos / torneo.cantidadEquipos);
+%>
+<div class="cq">
+  <div class="cq-llave">
+    <% columnas.forEach(function (cupos, c) { %>
+      <section class="cq-columna <%= c > 0 ? 'cq-columna--entrada' : '' %>" aria-label="<%= NOMBRES[cupos] || `Ronda de ${cupos}` %>">
+        <h3 class="cq-columna__titulo"><%= NOMBRES[cupos] || `Ronda de ${cupos}` %></h3>
+        <div class="cq-columna__cuerpo">
+          <% for (let p = 0; p < cupos / 2; p++) { %>
+            <div class="cq-par">
+              <% [2 * p, 2 * p + 1].forEach(function (i) { const e = equipoEn(c, i); %>
+                <div class="cq-celda">
+                  <% if (e) { %>
+                    <a class="cq-equipo <%= resaltarCq.includes(e.id) ? 'cq-equipo--mio' : '' %>" href="/equipos/<%= e.id %>">
+                      <span class="cq-equipo__escudo" aria-hidden="true"><%- include('escudo-equipo', { equipo: e }) %></span>
+                      <span class="cq-equipo__nombre" title="<%= e.nombre %>"><%= e.nombre %></span>
+                    </a>
+                  <% } else { %>
+                    <span class="cq-equipo cq-equipo--esperando">Esperando...</span>
+                  <% } %>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    <% }) %>
+
+    <!-- Final: las dos líneas de las semifinales entran a la caja del campeonato -->
+    <section class="cq-columna cq-columna--entrada cq-columna--final" aria-label="Final">
+      <h3 class="cq-columna__titulo">Final</h3>
+      <div class="cq-columna__cuerpo">
+        <div class="cq-celda"></div>
+        <div class="cq-celda"></div>
+        <div class="cq-final">
+          <span class="cq-final__titulo">Gran final</span>
+          <span class="cq-equipo cq-equipo--esperando">Esperando...</span>
+          <!-- Emblema SearchMatch: escudo geométrico con estrella (trazo, escala con el contenedor) -->
+          <svg class="cq-final__emblema" viewBox="0 0 64 72" aria-hidden="true">
+            <path d="M32 3 58 13v20c0 17.5-11 30-26 36C17 63 6 50.5 6 33V13z" />
+            <path class="cq-final__emblema-interior" d="M32 11.5 50 18.5v14.5c0 12.5-7.6 21.6-18 26.4C21.6 54.6 14 45.5 14 33V18.5z" />
+            <path class="cq-final__estrella" d="M32 22.5l3.9 8 8.8 1.2-6.4 6.1 1.6 8.7L32 42.4l-7.9 4.1 1.6-8.7-6.4-6.1 8.8-1.2z" />
+          </svg>
+          <span class="cq-equipo cq-equipo--esperando">Esperando...</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="cq-progreso">
+    <p>
+      Equipos inscritos: <strong class="trn-num"><%= torneo.inscritos %>/<%= torneo.cantidadEquipos %></strong>
+      <span class="cq-progreso__nota">El cuadrante se completa cuando se llenen los cupos</span>
+    </p>
+    <span class="cq-progreso__barra" role="progressbar" aria-valuemin="0" aria-valuemax="<%= torneo.cantidadEquipos %>" aria-valuenow="<%= torneo.inscritos %>" aria-label="Cupos llenos">
+      <span class="cq-progreso__relleno" style="width: <%= porcentaje %>%"></span>
+    </span>
+  </div>
+</div>

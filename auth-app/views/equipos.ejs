@@ -53,21 +53,28 @@
         <input class="eq-buscador__input" type="search" placeholder="Buscar por nombre o comuna" autocomplete="off" data-buscar-equipo>
       </label>
 
-      <!-- Mismas tarjetas que Mis equipos (.eq-mis en equipo.css): el equipo del capitán brilla en verde -->
+      <!-- Tarjetas con el escudo como protagonista (.eq-mis--escudo en equipo.css): silueta neón
+           centrada arriba, texto centrado debajo y la acción a todo el ancho.
+           El equipo del capitán brilla en verde -->
       <ul class="eq-mis-grilla eq-mis-grilla--directorio">
         <% equipos.forEach(function (equipo) { const capitan = equipo.relacion === 'capitan'; %>
-          <li class="eq-mis <%= capitan ? 'eq-mis--capitan' : '' %>" data-busqueda="<%= [equipo.nombre, equipo.zona].filter(Boolean).join(' ') %>">
-            <div class="eq-mis__arriba">
-              <span class="eq-mis__escudo" aria-hidden="true"><%- include('partials/escudo-equipo', { equipo }) %></span>
+          <li class="eq-mis eq-mis--escudo <%= capitan ? 'eq-mis--capitan' : '' %>" data-busqueda="<%= [equipo.nombre, equipo.zona].filter(Boolean).join(' ') %>">
+            <a class="eq-mis__enlace" href="/equipos/<%= equipo.id %>">Ver ficha</a><%# NUEVO: PE-009 %>
+
+            <!-- Escudo: la imagen que subió el capitán o, sin imagen, la inicial dentro de la silueta -->
+            <div class="eq-mis__trofeo" aria-hidden="true">
+              <span class="eq-mis__halo"></span>
+              <span class="eq-mis__emblema <%= equipo.escudo ? 'eq-mis__emblema--imagen' : '' %>"><%- include('partials/escudo-equipo', { equipo }) %></span>
+            </div>
+
+            <div class="eq-mis__titulo">
+              <h2 class="eq-mis__nombre" title="<%= equipo.nombre %>"><%= equipo.nombre %></h2>
               <% if (capitan) { %>
                 <span class="eq-mis__rol eq-mis__rol--capitan">Capitán</span>
               <% } else if (equipo.relacion === 'miembro') { %>
                 <span class="eq-mis__rol">Jugador</span>
               <% } %>
-              <a class="eq-mis__enlace" href="/equipos/<%= equipo.id %>">Ver ficha</a><%# NUEVO: PE-009 %>
             </div>
-
-            <h2 class="eq-mis__nombre" title="<%= equipo.nombre %>"><%= equipo.nombre %></h2>
 
             <ul class="eq-mis__datos">
               <li>

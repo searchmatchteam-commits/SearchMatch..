@@ -1,0 +1,562 @@
+/* public/css/torneos-lista.css
+   Galería de torneos (/torneos): carrusel horizontal de cartas sobre un fondo de hexágonos.
+   Se carga después de tema-claro.css, así que sus reglas de modo claro van al final.
+   Secciones: tokens · fondo · cabecera · barra (filtros, filtrar por, flechas) · carrusel · carta ·
+   cupos · premio · CTA · modo claro. */
+
+/* ---------- Tokens ---------- */
+.tl {
+  --tl-fondo: #0a0a0a;
+  --tl-carta-arriba: #1a1a1a;
+  --tl-carta-abajo: #0f0f0f;
+  --tl-superficie: rgba(255, 255, 255, 0.04);
+  --tl-borde: #1f2937;         /* gray-800 */
+  --tl-neon: #4ade80;
+  --tl-neon-rgb: 74, 222, 128;
+  --tl-texto: #f5f5f5;
+  --tl-gris: #9ca3af;
+}
+
+.tl {
+  position: relative;
+  z-index: 1;
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--tl-texto);
+}
+
+.tl-num { font-variant-numeric: tabular-nums; }
+
+/* ---------- Cabecera ---------- */
+.tl-cabecera { margin-bottom: 22px; }
+
+.tl-cabecera__titulo {
+  margin-top: 14px;
+  font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.tl-cabecera__texto { margin-top: 6px; color: var(--tl-gris); }
+
+.tl .boton-volver {
+  padding: 4px 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--tl-gris);
+  font-weight: 600;
+}
+
+.tl .boton-volver:hover,
+.tl .boton-volver:focus-visible { border: 0; box-shadow: none; color: var(--tl-neon); }
+
+/* ---------- Barra: filtros a la izquierda, "Filtrar por" y flechas a la derecha ---------- */
+.tl-barra {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tl-filtros {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tl-filtros::-webkit-scrollbar { display: none; }
+
+.tl-filtro {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--tl-borde);
+  background: rgba(18, 18, 18, 0.8);
+  color: var(--tl-gris);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.tl-filtro:hover { color: var(--tl-texto); border-color: #374151; }
+
+.tl-filtro[aria-selected="true"] {
+  color: #000;
+  background: var(--tl-neon);
+  border-color: var(--tl-neon);
+}
+
+.tl-filtro__cuenta {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tl-filtro[aria-selected="true"] .tl-filtro__cuenta { background: rgba(0, 0, 0, 0.15); }
+
+.tl-acciones { display: flex; align-items: center; gap: 8px; }
+
+.tl-filtrar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tl-filtrar svg {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--tl-gris);
+  stroke-width: 2;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.tl-filtrar select {
+  appearance: none;
+  padding: 9px 34px 9px 36px;
+  border-radius: 999px;
+  border: 1px solid var(--tl-borde);
+  background: rgba(18, 18, 18, 0.8) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center / 14px;
+  color: var(--tl-texto);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tl-filtrar select:hover { border-color: #374151; }
+.tl-filtrar select option,
+.tl-filtrar select optgroup { background: #121212; color: var(--tl-texto); }
+
+.tl-flecha {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--tl-borde);
+  background: rgba(18, 18, 18, 0.8);
+  color: var(--tl-texto);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.tl-flecha:hover { border-color: var(--tl-neon); color: var(--tl-neon); }
+.tl-flecha:disabled { opacity: 0.35; cursor: default; border-color: var(--tl-borde); color: var(--tl-texto); }
+
+.tl-flecha svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* En pantallas táctiles se desliza con el dedo: las flechas sobran */
+@media (hover: none) { .tl-flecha { display: none; } }
+
+/* ---------- Carrusel horizontal ---------- */
+.tl-carrusel {
+  list-style: none;
+  display: flex;
+  gap: 24px;
+  padding: 4px 4px 32px;
+  margin: 0 -4px 64px; /* el margen inferior deja libre el dock */
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.tl-carrusel::-webkit-scrollbar { display: none; }
+
+/* ---------- Carta ---------- */
+.tl-carta {
+  position: relative;
+  flex: 0 0 320px;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  scroll-snap-align: center;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--tl-carta-arriba), var(--tl-carta-abajo));
+  border: 1px solid rgba(var(--tl-neon-rgb), 0.55);
+  box-shadow: 0 0 15px rgba(var(--tl-neon-rgb), 0.2);
+  transition: border-color 0.25s ease, transform 0.25s var(--curva), box-shadow 0.25s ease;
+}
+
+@media (max-width: 380px) { .tl-carta { flex-basis: 85vw; min-width: 85vw; } }
+
+.tl-carta[hidden] { display: none; }
+.tl-carta:hover {
+  border-color: var(--tl-neon);
+  transform: translateY(-6px);
+  box-shadow: 0 0 28px rgba(var(--tl-neon-rgb), 0.4), 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+.tl-carta:has(.tl-carta__enlace:focus-visible) { outline: 2px solid var(--tl-neon); outline-offset: 2px; }
+
+/* Imagen superior a todo el ancho, fundida hacia la carta */
+.tl-carta__media {
+  position: relative;
+  height: 180px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 45%, #1f2a1f, var(--tl-carta-arriba) 70%);
+  isolation: isolate;
+}
+
+.tl-carta__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 40%, rgba(22, 22, 22, 0.7) 75%, #161616 100%);
+}
+
+.tl-carta__iniciales {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--tl-neon);
+}
+
+.tl-carta__foto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease, opacity 0.2s ease;
+}
+
+.tl-carta:hover .tl-carta__foto { transform: scale(1.04); }
+
+/* Con foto, las iniciales de abajo sobran (con screen se transparentarían) */
+.tl-carta__media:has(.tl-carta__foto--lista) .tl-carta__iniciales { display: none; }
+
+/* Con JS la foto aparece recién cuando se revisó su fondo (evita el destello blanco) */
+.js .tl-carta__foto { opacity: 0; }
+.js .tl-carta__foto--lista { opacity: 1; }
+
+/* Foto con fondo blanco (la detecta torneos-lista.js): invertida queda con fondo negro y el
+   dibujo claro; hue-rotate recupera los colores, contrast lleva a negro puro los grises casi
+   blancos del fondo y screen hace desaparecer ese negro. La máscara borra el borde del recorte. */
+.tl-carta__foto--fondo-claro {
+  object-fit: contain;
+  padding: 14px 0 26px;
+  filter: invert(1) hue-rotate(180deg) contrast(1.6) brightness(1.05);
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(ellipse 60% 65% at 50% 45%, #000 55%, transparent 100%);
+  mask-image: radial-gradient(ellipse 60% 65% at 50% 45%, #000 55%, transparent 100%);
+}
+
+/* ---------- Badges sobre la imagen ---------- */
+.tl-badge {
+  position: absolute;
+  top: 12px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(10, 10, 10, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.tl-badge--formato { left: 12px; max-width: calc(100% - 130px); color: var(--tl-texto); }
+.tl-badge__texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-carta:not(:has(.tl-badge--mio)) .tl-badge--formato { max-width: calc(100% - 24px); }
+.tl-badge--mio { right: 12px; color: var(--tl-neon); border-color: rgba(var(--tl-neon-rgb), 0.4); }
+
+/* ---------- Cuerpo ---------- */
+.tl-carta__cuerpo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 18px 18px;
+  /* Sin position: el enlace del título se estira sobre toda la carta */
+}
+
+.tl-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tl-gris);
+}
+
+.tl-estado::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.tl-estado--inscripcion { color: var(--tl-neon); }
+.tl-estado--inscripcion::before { box-shadow: 0 0 8px var(--tl-neon); animation: tl-pulso 1.8s ease-in-out infinite; }
+.tl-estado--en_curso { color: #fbbf24; }
+
+@keyframes tl-pulso { 50% { opacity: 0.35; } }
+
+.tl-carta__titulo {
+  font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+
+.tl-carta__enlace { color: #fff; text-decoration: none; }
+.tl-carta__enlace:hover { text-decoration: none; }
+.tl-carta__enlace:focus-visible { outline: none; }
+
+/* Toda la carta lleva al detalle (el CTA queda encima con su propio enlace) */
+.tl-carta__enlace::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.tl-carta__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 0.88rem;
+  color: var(--tl-gris);
+}
+
+.tl-carta__meta span { display: inline-flex; align-items: center; gap: 6px; }
+
+.tl-carta__meta svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: var(--tl-neon);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- Cupos: texto a la izquierda, círculo a la derecha ---------- */
+.tl-cupos {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--tl-borde);
+}
+
+.tl-cupos__texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.tl-cupos__texto small {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tl-gris);
+}
+
+.tl-cupos__texto strong { font-size: 1rem; font-weight: 700; color: var(--tl-texto); }
+
+.tl-anillo {
+  position: relative;
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+}
+
+.tl-anillo svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.tl-anillo circle { fill: none; stroke-width: 5; }
+.tl-anillo__pista { stroke: rgba(255, 255, 255, 0.08); }
+
+.tl-anillo__valor {
+  stroke: var(--tl-neon);
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 4px rgba(var(--tl-neon-rgb), 0.6));
+}
+
+.tl-anillo__texto {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--tl-texto);
+}
+
+/* ---------- Premio ---------- */
+.tl-premio {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--tl-superficie);
+  border: 1px solid var(--tl-borde);
+}
+
+.tl-premio__icono {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: var(--tl-neon);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tl-premio__texto { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+
+.tl-premio__texto small {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--tl-gris);
+  text-transform: capitalize;
+}
+
+.tl-premio__texto strong {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--tl-texto);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-premio__texto strong span { font-size: 0.75rem; font-weight: 600; color: var(--tl-gris); }
+
+/* ---------- CTA: verde si el usuario ya está inscrito, gris con borde si no ---------- */
+.tl-cta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--tl-texto);
+  background: #1a1a1a;
+  border: 1px solid #374151;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.tl-cta:hover { text-decoration: none; color: var(--tl-texto); border-color: var(--tl-neon); }
+.tl-cta:active { transform: scale(0.98); }
+
+.tl-cta__icono {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.15s ease;
+}
+
+.tl-cta:hover .tl-cta__icono { transform: translateX(3px); }
+
+.tl-cta--principal {
+  color: #000;
+  background: var(--tl-neon);
+  border-color: var(--tl-neon);
+  box-shadow: 0 0 20px rgba(var(--tl-neon-rgb), 0.5);
+}
+
+.tl-cta--principal:hover {
+  color: #000;
+  background: #86efac;
+  border-color: #86efac;
+  box-shadow: 0 0 30px rgba(var(--tl-neon-rgb), 0.75);
+}
+
+/* ---------- Estado vacío ---------- */
+.tl-vacio {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--tl-gris);
+  border: 1px dashed var(--tl-borde);
+  border-radius: 16px;
+  background: rgba(10, 10, 10, 0.6);
+}
+
+.tl-vacio__titulo { margin-bottom: 4px; font-weight: 800; color: var(--tl-texto); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tl-carrusel { scroll-behavior: auto; }
+  .tl-carta, .tl-carta__foto, .tl-cta, .tl-cta__icono { transition: none; }
+  .tl-estado--inscripcion::before { animation: none; }
+}
+
+/* ---------- Modo claro ---------- */
+html[data-theme="light"] .tl {
+  --tl-carta-arriba: #ffffff;
+  --tl-carta-abajo: #f9fafb;
+  --tl-superficie: #f3f4f6;
+  --tl-borde: #e5e7eb;
+  --tl-neon: #16a34a;
+  --tl-neon-rgb: 22, 163, 74;
+  --tl-texto: #111827;
+  --tl-gris: #6b7280;
+}
+html[data-theme="light"] .tl-filtro,
+html[data-theme="light"] .tl-filtrar select,
+html[data-theme="light"] .tl-flecha { background-color: #fff; }
+html[data-theme="light"] .tl-filtrar select option,
+html[data-theme="light"] .tl-filtrar select optgroup { background: #fff; }
+html[data-theme="light"] .tl-filtro[aria-selected="true"] { color: #fff; }
+html[data-theme="light"] .tl-filtro__cuenta { background: rgba(17, 24, 39, 0.08); }
+html[data-theme="light"] .tl-carta__media { background: #f3f4f6; }
+html[data-theme="light"] .tl-carta { box-shadow: 0 8px 24px rgba(17, 24, 39, 0.08); }
+html[data-theme="light"] .tl-carta:hover { box-shadow: 0 0 0 1px var(--tl-neon), 0 14px 30px rgba(17, 24, 39, 0.12); }
+html[data-theme="light"] .tl-cta--principal { box-shadow: none; }
+html[data-theme="light"] .tl-carta__media::after { background: linear-gradient(180deg, transparent 50%, rgba(255, 255, 255, 0.7) 80%, #fff 100%); }
+/* En claro el fondo blanco ya combina: sin invertir */
+html[data-theme="light"] .tl-carta__foto--fondo-claro { filter: none; mix-blend-mode: multiply; -webkit-mask-image: none; mask-image: none; }
+html[data-theme="light"] .tl-carta__enlace { color: #111827; }
+html[data-theme="light"] .tl-badge { background: rgba(255, 255, 255, 0.9); border-color: var(--tl-borde); }
+html[data-theme="light"] .tl-anillo__pista { stroke: #e5e7eb; }
+html[data-theme="light"] .tl-anillo__valor { filter: none; }
+html[data-theme="light"] .tl-cta { background: #fff; border-color: #d1d5db; }
+html[data-theme="light"] .tl-cta--principal { color: #fff; background: var(--tl-neon); border-color: var(--tl-neon); }
+html[data-theme="light"] .tl-cta--principal:hover { color: #fff; background: #15803d; border-color: #15803d; }
