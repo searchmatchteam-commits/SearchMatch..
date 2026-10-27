@@ -1,0 +1,34 @@
+<%
+  // Foto, datos, premios y patrocinadores de un torneo. Uso: include('partials/torneo-ficha', { torneo })
+%>
+<div class="dash-panel eq-panel sm-torneo-ficha">
+  <% if (torneo.foto) { %>
+    <img class="sm-torneo-ficha__foto" src="<%= torneo.foto %>" alt="Foto del torneo <%= torneo.nombre %>" />
+  <% } %>
+  <div class="sm-torneo-ficha__datos">
+    <p class="sm-torneo-ficha__etiquetas">
+      <span class="sm-rol"><%= torneo.formatoTexto %></span>
+      <span class="sm-estado sm-estado--torneo-<%= torneo.estado %>"><%= torneo.estadoTexto %></span>
+    </p>
+    <% if (torneo.campeon) { %>
+      <p class="sm-torneo-ficha__campeon">🏆 Campeón: <strong><%= torneo.campeon.nombre %></strong></p>
+    <% } %>
+    <dl class="sm-credenciales">
+      <div><dt>Modalidad</dt><dd><%= torneo.modalidad %></dd></div>
+      <div><dt>Equipos</dt><dd><%= torneo.inscritos %> de <%= torneo.cantidadEquipos %> inscritos</dd></div>
+      <div><dt>Cancha</dt><dd><%= torneo.recinto %> · <%= torneo.cancha %><%= torneo.comuna ? ` (${torneo.comuna})` : '' %></dd></div>
+      <div><dt>Premios</dt><dd><%= torneo.premios || 'Sin premios' %></dd></div>
+    </dl>
+    <% if (torneo.patrocinadores.length > 0) { %>
+      <h2 class="sm-subtitulo">Patrocinadores</h2>
+      <ul class="sm-patrocinadores">
+        <% torneo.patrocinadores.forEach(function (p) { %>
+          <li class="sm-patrocinador">
+            <img class="sm-patrocinador__logo" src="<%= p.logo %>" alt="" loading="lazy" />
+            <span><%= p.nombre %></span>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </div>
+</div>

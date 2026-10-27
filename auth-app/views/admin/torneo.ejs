@@ -1,0 +1,81 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<%
+  const lleno = torneo.inscritos >= torneo.cantidadEquipos;
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: '/admin/super/torneos' }) %>
+        <h1 class="eq-cabecera__titulo"><%= torneo.nombre %></h1>
+        <p class="eq-cabecera__stats"><%= torneo.formatoTexto %> · <%= torneo.modalidad %> · <%= torneo.estadoTexto %></p>
+      </div>
+      <div class="eq-cabecera__acciones">
+        <a class="btn btn--contorno" href="/admin/super/torneos/<%= torneo.id %>/editar">Editar</a>
+        <form action="/admin/super/torneos/<%= torneo.id %>/eliminar" method="POST"
+              data-confirmar="Se borran sus inscripciones, partidos y resultados. Esta acción no se puede deshacer."
+              data-confirmar-titulo="¿Eliminar el torneo <%= torneo.nombre %>?" data-confirmar-boton="Eliminar">
+          <button type="submit" class="btn btn--contorno sm-btn-peligro">Eliminar</button>
+        </form>
+      </div>
+    </header>
+
+    <%- include('../partials/admin-nav', { seccion }) %>
+
+    <%- include('../partials/torneo-ficha', { torneo }) %>
+
+    <% if (torneo.estado === 'inscripcion') { %>
+      <div class="dash-panel eq-panel">
+        <header class="dash-panel__cabecera">
+          <h2 class="dash-panel__titulo">Equipos inscritos (<%= torneo.inscritos %>/<%= torneo.cantidadEquipos %>)</h2>
+        </header>
+        <div class="sm-cupos" role="progressbar" aria-valuemin="0" aria-valuemax="<%= torneo.cantidadEquipos %>" aria-valuenow="<%= torneo.inscritos %>"
+             aria-label="Cupos llenos">
+          <span class="sm-cupos__relleno" style="width: <%= Math.round(100 * torneo.inscritos / torneo.cantidadEquipos) %>%"></span>
+        </div>
+
+        <% if (torneo.equipos.length === 0) { %>
+          <p class="dash-panel__nota">Aún no se inscribe ningún equipo. Los capitanes lo hacen desde la sección Torneos.</p>
+        <% } else { %>
+          <ul class="sm-filas">
+            <% torneo.equipos.forEach(function (e) { %>
+              <li class="sm-fila">
+                <span class="dash-equipo__escudo" aria-hidden="true"><%- include('../partials/escudo-equipo', { equipo: e }) %></span>
+                <span class="sm-fila__principal"><strong><%= e.nombre %></strong></span>
+                <span class="sm-fila__accion">
+                  <form action="/admin/super/torneos/<%= torneo.id %>/equipos/<%= e.id %>/quitar" method="POST"
+                        data-confirmar="Se avisará a sus integrantes y su cupo quedará libre."
+                        data-confirmar-titulo="¿Quitar a <%= e.nombre %> del torneo?" data-confirmar-boton="Quitar">
+                    <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Quitar</button>
+                  </form>
+                </span>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+
+        <div class="sm-form__acciones">
+          <form action="/admin/super/torneos/<%= torneo.id %>/empezar" method="POST"
+                data-confirmar="<%= torneo.formato === 'liga' ? 'Se arma el fixture de todos contra todos.' : 'Se sortean los cruces de la primera ronda.' %> Después ya no se podrán inscribir ni quitar equipos."
+                data-confirmar-titulo="¿Empezar <%= torneo.nombre %>?" data-confirmar-boton="Empezar">
+            <button type="submit" class="btn btn--verde btn--grande" <%= lleno ? '' : 'disabled' %>>Empezar torneo</button>
+          </form>
+          <% if (!lleno) { %>
+            <p class="dash-panel__nota">Se habilita cuando se llenen todos los cupos: <%= torneo.cuposLibres === 1 ? 'falta 1 equipo' : `faltan ${torneo.cuposLibres} equipos` %>.</p>
+          <% } %>
+        </div>
+      </div>
+    <% } else { %>
+      <%- include('../partials/torneo-competencia', { torneo, admin: true }) %>
+    <% } %>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: 'admin' }) %>
+
+<%- include('../partials/footer') %>

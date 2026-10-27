@@ -10,31 +10,49 @@
         <h1 class="eq-cabecera__titulo">Torneos</h1>
         <p class="eq-cabecera__stats">Inscribe a tu equipo y compite por la copa</p>
       </div>
-      <div class="eq-cabecera__acciones">
-        <span class="dash-etiqueta">Próximamente</span>
-      </div>
     </header>
 
-    <div class="dash-panel eq-panel revelar">
-      <header class="dash-panel__cabecera">
-        <h2 class="dash-panel__titulo">Torneos cerca de ti</h2>
-      </header>
-      <ul class="dash-skeletons" aria-hidden="true">
-        <% for (let i = 0; i < 3; i++) { %>
-          <li class="dash-skeleton">
-            <span class="skeleton skeleton--circulo"></span>
-            <span class="dash-skeleton__lineas">
-              <span class="skeleton skeleton--linea"></span>
-              <span class="skeleton skeleton--linea skeleton--corta"></span>
-            </span>
-            <span class="skeleton skeleton--pildora"></span>
+    <% if (torneos.length === 0) { %>
+      <div class="dash-panel eq-panel sm-vacio revelar">
+        <p class="sm-vacio__titulo">Aún no hay torneos</p>
+        <p class="dash-panel__nota">Cuando SearchMatch organice uno, aparecerá aquí para que inscribas a tu equipo.</p>
+      </div>
+    <% } else { %>
+      <ul class="sm-torneos">
+        <% torneos.forEach(function (t) { %>
+          <li class="dash-panel eq-panel sm-torneo-tarjeta revelar">
+            <a class="sm-torneo-tarjeta__enlace" href="/torneos/<%= t.id %>">
+              <% if (t.foto) { %><img class="sm-torneo-tarjeta__foto" src="<%= t.foto %>" alt="" loading="lazy" /><% } %>
+              <span class="sm-torneo-tarjeta__cuerpo">
+                <span class="sm-torneo-ficha__etiquetas">
+                  <span class="sm-rol"><%= t.formatoTexto %></span>
+                  <span class="sm-estado sm-estado--torneo-<%= t.estado %>"><%= t.estadoTexto %></span>
+                </span>
+                <strong class="sm-torneo-tarjeta__titulo"><%= t.nombre %></strong>
+                <small><%= t.modalidad %> · <%= t.recinto %><%= t.comuna ? `, ${t.comuna}` : '' %></small>
+                <% if (t.estado === 'inscripcion') { %>
+                  <small><strong><%= t.cuposLibres %></strong> de <%= t.cantidadEquipos %> cupos libres</small>
+                <% } else if (t.campeon) { %>
+                  <small>🏆 Campeón: <%= t.campeon.nombre %></small>
+                <% } else { %>
+                  <small><%= t.cantidadEquipos %> equipos</small>
+                <% } %>
+                <% if (t.premios) { %><small>Premios: <%= t.premios %></small><% } %>
+                <% if (t.patrocinadores.length > 0) { %>
+                  <span class="sm-patrocinadores sm-patrocinadores--mini" aria-label="Patrocinadores">
+                    <% t.patrocinadores.forEach(function (p) { %><img class="sm-patrocinador__logo" src="<%= p.logo %>" alt="<%= p.nombre %>" title="<%= p.nombre %>" loading="lazy" /><% }) %>
+                  </span>
+                <% } %>
+              </span>
+            </a>
           </li>
-        <% } %>
+        <% }) %>
       </ul>
-      <p class="dash-panel__nota">Estamos preparando los torneos por comuna, modalidad y nivel. Muy pronto podrás inscribir a tu equipo.</p>
-    </div>
+    <% } %>
   </div>
 </section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
 
 <%- include('partials/dock', { activo: 'torneos' }) %>
 

@@ -4,6 +4,15 @@
     { clave: 'cuentas', texto: 'Cuentas', href: '/admin/cuentas' },
     { clave: 'catalogos', texto: 'Catálogos', href: '/admin/catalogos' },
   ];
+  if (usuario.esSuperAdmin) {
+    pestanas.splice(pestanas.findIndex((p) => p.clave === 'cuentas'), 1); // sus cuentas están en "Jugadores"
+    pestanas.unshift({ clave: 'super', texto: 'Resumen', href: '/admin/super' });
+    pestanas.push(
+      { clave: 'super-equipos', texto: 'Equipos', href: '/admin/super/equipos' },
+      { clave: 'super-jugadores', texto: 'Jugadores', href: '/admin/super/jugadores' },
+      { clave: 'super-torneos', texto: 'Torneos', href: '/admin/super/torneos' }
+    );
+  }
 %>
 <nav class="sm-pestanas" aria-label="Secciones de administración">
   <% pestanas.forEach(function (p) { %>

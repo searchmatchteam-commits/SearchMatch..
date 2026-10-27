@@ -31,7 +31,7 @@ function renderAceptar(res, { status = 200, error = null } = {}) {
 }
 
 function mostrarAceptar(req, res) {
-  if (aceptoVersionesVigentes(req.usuario)) return res.redirect(rutaDeInicio(req.usuario.rolInicio));
+  if (aceptoVersionesVigentes(req.usuario)) return res.redirect(rutaDeInicio(req.usuario.rolInicio, req.usuario.esSuperAdmin));
   return renderAceptar(res);
 }
 
@@ -41,7 +41,7 @@ async function aceptar(req, res, next) {
   }
   try {
     await cuentaModel.guardarAceptacion(req.usuario.idAuth, { terminos: TERMINOS.version, privacidad: PRIVACIDAD.version });
-    return res.redirect(rutaDeInicio(req.usuario.rolInicio));
+    return res.redirect(rutaDeInicio(req.usuario.rolInicio, req.usuario.esSuperAdmin));
   } catch (err) {
     return next(err);
   }

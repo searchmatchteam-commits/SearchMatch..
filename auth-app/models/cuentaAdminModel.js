@@ -21,16 +21,20 @@ async function buscarCuentas(texto) {
     correo: fila.correo,
     nombre: fila.nombre || '—',
     apodo: fila.apodo || '',
-    rol: /^administrador$/i.test(fila.rol) ? 'Administrador' : 'Usuario estándar',
+    rol: /^superadministrador$/i.test(fila.rol) ? 'Superadministrador' : /^administrador$/i.test(fila.rol) ? 'Administrador' : 'Usuario estándar',
     activo: fila.activo,
     equiposCapitan: fila.equipos_capitan,
   }));
 }
 
 async function cambiarEstadoCuenta(idUsuario, activo, authIdAdmin) {
-  const { rows } = await pool.query('SELECT auth_id, activo FROM usuario WHERE id = $1', [idUsuario]);
+  const { rows } = await pool.query(
+    `SELECT u.auth_id, u.activo, r.nombre AS rol FROM usuario u JOIN rol_aplicacion r ON r.id = u.id_rol_aplicacion WHERE u.id = $1`,
+    [idUsuario]
+  );
   if (!rows[0] || rows[0].activo === activo) return 'sin-cambio';
   if (rows[0].auth_id === authIdAdmin) return 'propia';
+  if (/^superadministrador$/i.test(rows[0].rol)) return 'protegida';
   await pool.query('UPDATE usuario SET activo = $2 WHERE id = $1', [idUsuario, activo]);
   return 'cambiada';
 }

@@ -104,6 +104,10 @@
         </button>
         <% if (usuario) { %>
           <!-- Usuario con sesión activa. Las páginas con dock ya llevan a Inicio desde la barra inferior -->
+          <% if (usuario.esSuperAdmin) { %>
+            <!-- El superadministrador no participa como jugador: solo su panel -->
+            <a class="btn btn--contorno btn--chico" href="/admin/super">Panel</a>
+          <% } else { %>
           <% if (!['dashboard', 'equipo', 'perfil'].includes(locals.pagina)) { %>
             <a class="btn btn--contorno btn--chico" href="/dashboard">Mi panel</a>
           <% } %>
@@ -116,7 +120,8 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 20a2 2 0 0 0 4 0" /></svg>
             <% if (locals.notificacionesSinLeer) { %><span class="sm-icono-nav__contador"><%= notificacionesSinLeer > 99 ? '99+' : notificacionesSinLeer %></span><% } %>
           </a>
-          <% if (usuario.esAdmin) { %>
+          <% } %>
+          <% if (usuario.esAdmin && !usuario.esSuperAdmin) { %>
             <!-- NUEVO: AR-004 — acceso al módulo de administración, solo para administradores -->
             <a class="btn btn--contorno btn--chico" href="/admin">Admin</a>
           <% } %>

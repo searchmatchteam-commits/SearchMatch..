@@ -47,6 +47,8 @@
               <span class="sm-fila__accion">
                 <% if (esPropia) { %>
                   <span class="sm-opcional">Tu cuenta</span>
+                <% } else if (c.rol === 'Superadministrador') { %>
+                  <span class="sm-opcional">Protegida</span>
                 <% } else if (c.activo) { %>
                   <form action="/admin/cuentas/<%= c.id %>/desactivar" method="POST"
                         data-confirmar="Perderá el acceso de inmediato (se cierra su sesión) y no podrá volver a entrar hasta que la reactives.<%= avisoCapitan %>"

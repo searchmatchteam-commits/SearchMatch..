@@ -45,7 +45,8 @@ async function construirUsuario(usuarioAuth) {
     correo: usuarioAuth.email,
     rolInicio: ROLES_INICIO[meta.rol_inicio] ? meta.rol_inicio : null,
     activo: !perfil || perfil.activo !== false, // CORRECCIÓN: regla 7 (sin fila en la BD se asume activa)
-    esAdmin: Boolean(perfil && /^administrador$/i.test(perfil.rol || '')), // NUEVO: AR-004
+    esAdmin: Boolean(perfil && /^(super)?administrador$/i.test(perfil.rol || '')), // NUEVO: AR-004 (el superadministrador también lo es)
+    esSuperAdmin: Boolean(perfil && /^superadministrador$/i.test(perfil.rol || '')),
     terminosVersion: perfil ? perfil.terminos_version : null, // NUEVO: AR-011
     privacidadVersion: perfil ? perfil.privacidad_version : null, // NUEVO: AR-011
     correoGuardado: perfil ? perfil.correo : null, // NUEVO: AR-012 (para sincronizar un cambio de correo)
@@ -115,11 +116,13 @@ function requireAuth(req, res, next) {
 }
 
 /**
- * Página de inicio de un usuario autenticado: la selección de rol si aún no
- * eligió uno, o el dashboard si ya lo hizo.
+ * Página de inicio de un usuario autenticado: el panel de superadministración si
+ * es el superadministrador; si no, la selección de rol si aún no eligió uno, o el dashboard.
  * @param {string|null|undefined} rolInicio - user_metadata.rol_inicio
+ * @param {boolean} [esSuperAdmin]
  */
-function rutaDeInicio(rolInicio) {
+function rutaDeInicio(rolInicio, esSuperAdmin = false) {
+  if (esSuperAdmin) return '/admin/super';
   return ROLES_INICIO[rolInicio] ? '/dashboard' : '/select-role';
 }
 
@@ -128,6 +131,7 @@ function rutaDeInicio(rolInicio) {
  *   router.get('/dashboard', requireAuth, requireRol, pageController.dashboard);
  */
 function requireRol(req, res, next) {
+  if (req.usuario.esSuperAdmin) return res.redirect('/admin/super'); // no participa como jugador
   if (!req.usuario.rolInicio) {
     return res.redirect('/select-role');
   }
@@ -137,7 +141,7 @@ function requireRol(req, res, next) {
 /** Redirige a su inicio si el usuario ya tiene sesión. Se aplica a /login y /registro. */
 function redirectIfAuthenticated(req, res, next) {
   if (req.usuario) {
-    return res.redirect(rutaDeInicio(req.usuario.rolInicio));
+    return res.redirect(rutaDeInicio(req.usuario.rolInicio, req.usuario.esSuperAdmin));
   }
   return next();
 }

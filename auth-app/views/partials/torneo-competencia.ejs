@@ -1,0 +1,79 @@
+<%
+  // Fixture, tabla de posiciones (liga) y llave (relámpago) de un torneo ya empezado. Uso:
+  //   include('partials/torneo-competencia', { torneo, admin: true })  → con formularios de resultado
+  //   include('partials/torneo-competencia', { torneo, admin: false }) → solo lectura (jugadores)
+  //   resaltar: ids de equipos a destacar (los del jugador)
+  const resaltar = locals.resaltar || [];
+  const esLlave = torneo.formato === 'relampago';
+  function nombreEquipo(e) { return e ? e.nombre : 'Equipo eliminado'; }
+%>
+<% if (torneo.formato === 'liga') { %>
+  <div class="dash-panel eq-panel">
+    <h2 class="dash-panel__titulo">Tabla de posiciones</h2>
+    <div class="sm-tabla-contenedor">
+      <table class="sm-tabla">
+        <thead>
+          <tr>
+            <th scope="col">#</th><th scope="col" class="sm-tabla__equipo">Equipo</th>
+            <th scope="col"><abbr title="Partidos jugados">PJ</abbr></th><th scope="col"><abbr title="Ganados">G</abbr></th>
+            <th scope="col"><abbr title="Empatados">E</abbr></th><th scope="col"><abbr title="Perdidos">P</abbr></th>
+            <th scope="col"><abbr title="Goles a favor">GF</abbr></th><th scope="col"><abbr title="Goles en contra">GC</abbr></th>
+            <th scope="col"><abbr title="Diferencia de goles">DG</abbr></th><th scope="col"><abbr title="Puntos">Pts</abbr></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% torneo.tabla.forEach(function (f, i) { %>
+            <tr class="<%= resaltar.includes(f.id) ? 'sm-tabla__fila--mia' : '' %>">
+              <td><%= i + 1 %></td><td class="sm-tabla__equipo"><%= f.nombre %></td>
+              <td><%= f.pj %></td><td><%= f.pg %></td><td><%= f.pe %></td><td><%= f.pp %></td>
+              <td><%= f.gf %></td><td><%= f.gc %></td><td><%= f.dg > 0 ? `+${f.dg}` : f.dg %></td><td><strong><%= f.pts %></strong></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <p class="dash-panel__nota">Victoria 3 puntos, empate 1. Desempate: diferencia de goles y luego goles a favor.<%= torneo.descansos ? ' Con un número impar de equipos, en cada fecha uno descansa.' : '' %></p>
+  </div>
+<% } %>
+
+<div class="dash-panel eq-panel">
+  <h2 class="dash-panel__titulo"><%= esLlave ? 'Llave del torneo' : 'Fixture' %></h2>
+  <div class="<%= esLlave ? 'sm-llave' : 'sm-fechas' %>">
+    <% torneo.rondas.forEach(function (ronda) { %>
+      <section class="sm-ronda" aria-label="<%= ronda.nombre %>">
+        <h3 class="sm-ronda__titulo"><%= ronda.nombre %></h3>
+        <ul class="sm-partidos">
+          <% ronda.partidos.forEach(function (p) {
+               const gano = (e) => p.jugado && esLlave && e && p.idGanador === e.id;
+               const penales = p.jugado && esLlave && p.golesLocal === p.golesVisita; %>
+            <li class="sm-partido <%= (p.local && resaltar.includes(p.local.id)) || (p.visita && resaltar.includes(p.visita.id)) ? 'sm-partido--mio' : '' %>" id="partido-<%= p.id %>">
+              <span class="sm-partido__equipo <%= gano(p.local) ? 'sm-partido__equipo--gano' : '' %>"><%= nombreEquipo(p.local) %></span>
+              <span class="sm-partido__marcador">
+                <%= p.jugado ? `${p.golesLocal} - ${p.golesVisita}` : 'vs' %>
+                <% if (penales) { %><small>(penales)</small><% } %>
+              </span>
+              <span class="sm-partido__equipo sm-partido__equipo--visita <%= gano(p.visita) ? 'sm-partido__equipo--gano' : '' %>"><%= nombreEquipo(p.visita) %></span>
+              <% if (admin && p.editable && torneo.estado !== 'inscripcion') { %>
+                <form class="sm-resultado" method="POST" action="/admin/super/torneos/<%= torneo.id %>/partidos/<%= p.id %>">
+                  <label class="solo-lectores" for="gl-<%= p.id %>">Goles de <%= nombreEquipo(p.local) %></label>
+                  <input type="number" id="gl-<%= p.id %>" name="goles_local" min="0" max="99" value="<%= p.golesLocal ?? '' %>" required />
+                  <span aria-hidden="true">-</span>
+                  <label class="solo-lectores" for="gv-<%= p.id %>">Goles de <%= nombreEquipo(p.visita) %></label>
+                  <input type="number" id="gv-<%= p.id %>" name="goles_visita" min="0" max="99" value="<%= p.golesVisita ?? '' %>" required />
+                  <% if (esLlave) { %>
+                    <select name="ganador_penales" aria-label="Si empatan, quién ganó por penales" title="Si empatan, quién ganó por penales">
+                      <option value="">Penales: —</option>
+                      <option value="local" <%= penales && p.local && p.idGanador === p.local.id ? 'selected' : '' %>>Penales: <%= nombreEquipo(p.local) %></option>
+                      <option value="visita" <%= penales && p.visita && p.idGanador === p.visita.id ? 'selected' : '' %>>Penales: <%= nombreEquipo(p.visita) %></option>
+                    </select>
+                  <% } %>
+                  <button type="submit" class="btn btn--verde btn--chico"><%= p.jugado ? 'Corregir' : 'Guardar' %></button>
+                </form>
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+      </section>
+    <% }) %>
+  </div>
+</div>

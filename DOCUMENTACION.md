@@ -121,7 +121,7 @@ Si la cuenta no aceptó la versión vigente de los términos y de la privacidad,
 
 ### 4.3 `rolMiddleware.js` — administradores (AR-004)
 
-`requireAdmin` deja pasar solo a cuentas con rol "Administrador". Sin sesión → login; con sesión pero sin el rol → página 403 que no revela qué hay dentro. Se aplica a todo el router `/admin`.
+`requireAdmin` deja pasar solo a cuentas con rol "Administrador". Sin sesión → login; con sesión pero sin el rol → página 403 que no revela qué hay dentro. Se aplica a todo el router `/admin`. El rol "Superadministrador" también cuenta como administrador (`req.usuario.esAdmin`); además tiene `req.usuario.esSuperAdmin`, que exige `requireSuperAdmin` en las rutas `/admin/super/*`.
 
 ### 4.4 `errorHandler.js` — errores
 
@@ -254,6 +254,18 @@ Cada módulo combina controlador, modelo y vistas. Están ordenados de forma par
 - **Disponibilidad:** bloques de horario por día de la semana (apertura y cierre), que no se pueden superponer el mismo día.
 - **Cuentas:** buscar por correo o nombre, desactivar y reactivar.
 - **Catálogos:** modalidades, posiciones y niveles. Se pueden agregar, editar y eliminar, pero solo si no están en uso (se indica dónde se usan). Los elementos "protegidos" (los que el código busca por nombre, como "Portero" o "Principiante") se pueden editar pero no renombrar ni eliminar. Los nombres de tabla salen de una lista fija del código, nunca de lo que escribe el usuario.
+
+**Superadministración** (`/admin/super`, solo rol "Superadministrador"; `controllers/superAdminController.js`, `models/superAdminModel.js`, vistas `admin/super-*`):
+
+- **Resumen:** cuentas, jugadores, equipos, partidos próximos y conectados en las últimas 24 h / 7 días (según `auth.users.last_sign_in_at` de Supabase), más las 10 últimas conexiones.
+- **Equipos:** buscar y **eliminar definitivamente** un equipo. En una transacción se borran sus desafíos y partidos (también del historial del rival), sus solicitudes y participaciones; las reservas ligadas a esos partidos se conservan sin el vínculo. Se notifica a los integrantes (tipo "moderacion").
+- **Jugadores:** buscar y filtrar (todos, conectados últimos 7 días, cuentas activas, desactivadas) y **eliminar la cuenta completa** (perfil, solicitudes, comentarios, reservas, notificaciones, fila `usuario` y usuario de Supabase Auth). No se puede eliminar la propia cuenta, a otro superadministrador ni a quien creó equipos (hay que eliminar sus equipos primero). Si falla el borrado en Supabase Auth, se hace `ROLLBACK` y no se borra nada.
+- **Torneos** (`controllers/adminTorneosController.js`, `models/torneoModel.js`, reglas puras en `config/torneos.js`; tablas `torneo`, `torneo_patrocinador`, `torneo_equipo` y `torneo_partido` en `sql/nuevas_tablas.sql` SA-2/SA-3):
+  - **Crear/editar:** nombre, foto (obligatoria), tipo, modalidad, cantidad de equipos, cancha, premios y patrocinadores (cada uno con nombre y logo). El formulario es multipart: `subirImagenesTorneo` (multer, en memoria, 2 MB por imagen) y luego `validarTorneo`. Las imágenes se guardan en la base (BYTEA) y se sirven en `/torneos/:id/foto` y `/torneos/patrocinadores/:id/logo`. La cancha se elige con un `<datalist>` cuyo texto termina en `[#id]`.
+  - **Cantidad:** relámpago 4, 8, 16 o 32 (llaves de eliminación directa: cada ronda deja a la mitad); liga 3 a 20, también impar (cada fecha descansa uno).
+  - **Estados:** `inscripcion` → `en_curso` → `finalizado`. Los capitanes inscriben sus equipos (que jueguen la modalidad) desde `/torneos/:id`; la inscripción bloquea el torneo (`FOR UPDATE`) para no pasarse de los cupos. **Empezar torneo** solo se habilita con todos los cupos llenos: arma el fixture de liga (método del círculo) o sortea la primera ronda de la llave, y avisa a los integrantes.
+  - **Resultados:** los carga el superadmin en el panel del torneo. Liga: tabla de posiciones (3/1/0; desempate por diferencia y goles a favor) y finaliza al jugarse todo. Relámpago: sin empates (si empatan se indica quién ganó por penales); al completar una ronda se crea la siguiente con los ganadores, y la final define al campeón. Un resultado de la llave solo se corrige mientras no exista la ronda siguiente. Tras empezar, el formato, la modalidad y la cantidad quedan fijos.
+  - **Jugadores:** `/torneos` (tarjetas) y `/torneos/:id` (ficha, inscripción, tabla, fixture o llave), en `controllers/torneoController.js` y `routes/torneoRoutes.js`.
 
 ### 6.7 Canchas para usuarios (complejidad media)
 
@@ -414,7 +426,7 @@ EJS escapa el texto con `<%= %>` (seguro frente a HTML del usuario); `<%- %>` se
 | Script | Uso |
 |---|---|
 | `ejecutar-sql.js` | `node scripts/ejecutar-sql.js sql/nuevas_tablas.sql` — ejecuta un archivo `.sql` completo en **una transacción**: si una sentencia falla, se deshace todo. |
-| `hacer-admin.js` | `node scripts/hacer-admin.js correo@ejemplo.com` — da el rol "Administrador" a una cuenta ya registrada. No hay pantalla para esto a propósito: solo quien tiene acceso al servidor puede crear administradores. |
+| `hacer-admin.js` | `node scripts/hacer-admin.js correo@ejemplo.com` — da el rol "Administrador" a una cuenta ya registrada; con `--super` da "Superadministrador" (y crea el rol si no existe). No hay pantalla para esto a propósito: solo quien tiene acceso al servidor puede crear administradores. |
 
 ---
 

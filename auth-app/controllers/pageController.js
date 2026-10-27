@@ -52,13 +52,6 @@ function resumenCarta(perfil) {
   };
 }
 
-function torneos(req, res) {
-  res.render('torneos', {
-    titulo: 'Torneos',
-    pagina: 'equipo',
-  });
-}
-
 async function dashboard(req, res, next) {
   try {
     const [perfil, miEquipo, misEquipos, invitaciones] = await Promise.all([
@@ -85,4 +78,4 @@ async function dashboard(req, res, next) {
   }
 }
 
-module.exports = { landing, dashboard, torneos };
+module.exports = { landing, dashboard };

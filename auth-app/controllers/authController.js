@@ -204,7 +204,8 @@ async function iniciarSesion(req, res, next) {
       });
     }
 
-    return res.redirect(rutaDeInicio(data.user.user_metadata && data.user.user_metadata.rol_inicio));
+    const esSuperAdmin = Boolean(perfil && /^superadministrador$/i.test(perfil.rol || ''));
+    return res.redirect(rutaDeInicio(data.user.user_metadata && data.user.user_metadata.rol_inicio, esSuperAdmin));
   } catch (err) {
     return next(err);
   }

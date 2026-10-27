@@ -1,0 +1,114 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<%
+  const fechaHora = new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Santiago' });
+  const fecha = new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeZone: 'America/Santiago' });
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Superadministración</span>
+        <h1 class="eq-cabecera__titulo">Jugadores</h1>
+        <p class="eq-cabecera__stats">Cada jugador con sus credenciales de usuario. Desactiva para bloquear el acceso, o elimina la cuenta de forma definitiva.</p>
+      </div>
+    </header>
+
+    <%- include('../partials/admin-nav', { seccion }) %>
+
+    <form class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/super/jugadores" role="search">
+      <div class="campo">
+        <label for="texto">Buscar por correo o nombre</label>
+        <input type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. juan@correo.cl o Juan Pérez" />
+      </div>
+      <div class="campo">
+        <label for="filtro">Mostrar</label>
+        <select id="filtro" name="filtro">
+          <% filtros.forEach(function (f) { %>
+            <option value="<%= f.clave %>" <%= f.clave === filtro ? 'selected' : '' %>><%= f.texto %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="sm-form__acciones">
+        <button type="submit" class="btn btn--verde">Buscar</button>
+        <% if (texto || filtro !== 'todos') { %><a class="btn btn--contorno" href="/admin/super/jugadores">Ver todos</a><% } %>
+      </div>
+    </form>
+
+    <% if (jugadores.length === 0) { %>
+      <div class="dash-panel eq-panel sm-vacio">
+        <p class="sm-vacio__titulo">No hay jugadores con esos criterios</p>
+        <a class="btn btn--contorno" href="/admin/super/jugadores">Ver todos</a>
+      </div>
+    <% } else { %>
+      <div class="dash-panel eq-panel">
+        <ul class="sm-filas sm-filas--cuentas">
+          <% jugadores.forEach(function (j) {
+               const esPropia = j.authId === miAuthId; %>
+            <li class="sm-fila <%= j.activo ? '' : 'sm-fila--inactiva' %>">
+              <span class="sm-fila__principal">
+                <strong><%= j.nombre %></strong><% if (j.apodo) { %> <span class="sm-opcional">“<%= j.apodo %>”</span><% } %>
+                <dl class="sm-credenciales">
+                  <div><dt>Correo</dt><dd><%= j.correo %><% if (!j.correoConfirmado) { %> <span class="sm-opcional">(sin confirmar)</span><% } %></dd></div>
+                  <% if (j.correoSecundario) { %><div><dt>Correo secundario</dt><dd><%= j.correoSecundario %></dd></div><% } %>
+                  <div><dt>Teléfono</dt><dd><%= j.telefono || '—' %></dd></div>
+                  <div><dt>Registro</dt><dd><%= j.registro ? fecha.format(j.registro) : '—' %></dd></div>
+                  <div><dt>Última conexión</dt><dd><%= j.ultimaConexion ? fechaHora.format(j.ultimaConexion) : 'nunca' %></dd></div>
+                  <div><dt>Equipos</dt><dd><%= j.equipos %></dd></div>
+                </dl>
+              </span>
+              <% if (j.rol !== 'Usuario estándar') { %><span class="sm-rol"><%= j.rol %></span><% } %>
+              <span class="sm-estado <%= j.activo ? 'sm-estado--activo' : 'sm-estado--inactivo' %>"><%= j.activo ? 'Activa' : 'Inactiva' %></span>
+              <span class="sm-fila__accion sm-fila__acciones">
+                <% if (esPropia) { %>
+                  <span class="sm-opcional">Tu cuenta</span>
+                <% } else if (j.esSuper) { %>
+                  <span class="sm-opcional">Protegida</span>
+                <% } else { %>
+                  <% if (j.activo) { %>
+                    <form action="/admin/super/jugadores/<%= j.id %>/desactivar" method="POST"
+                          data-confirmar="Perderá el acceso de inmediato (se cierra su sesión) hasta que la reactives."
+                          data-confirmar-titulo="¿Desactivar la cuenta de <%= j.correo %>?" data-confirmar-boton="Desactivar">
+                      <input type="hidden" name="texto" value="<%= texto %>" />
+                      <input type="hidden" name="filtro" value="<%= filtro %>" />
+                      <button type="submit" class="btn btn--contorno btn--chico">Desactivar</button>
+                    </form>
+                  <% } else { %>
+                    <form action="/admin/super/jugadores/<%= j.id %>/activar" method="POST"
+                          data-confirmar="Podrá volver a iniciar sesión con su contraseña."
+                          data-confirmar-titulo="¿Reactivar la cuenta de <%= j.correo %>?" data-confirmar-boton="Reactivar">
+                      <input type="hidden" name="texto" value="<%= texto %>" />
+                      <input type="hidden" name="filtro" value="<%= filtro %>" />
+                      <button type="submit" class="btn btn--verde btn--chico">Reactivar</button>
+                    </form>
+                  <% } %>
+                  <% if (j.equiposCreados > 0) { %>
+                    <a class="btn btn--contorno btn--chico" href="/admin/super/equipos?texto=<%= encodeURIComponent(j.correo) %>"
+                       title="Creó <%= j.equiposCreados %> equipo(s): elimínalos primero para poder borrar la cuenta">Ver sus equipos</a>
+                  <% } else { %>
+                    <form action="/admin/super/jugadores/<%= j.id %>/eliminar" method="POST"
+                          data-confirmar="Se borran su cuenta, su perfil, sus reservas, comentarios y notificaciones, y sale de todos sus equipos. Esta acción no se puede deshacer."
+                          data-confirmar-titulo="¿Eliminar la cuenta de <%= j.correo %>?" data-confirmar-boton="Eliminar">
+                      <input type="hidden" name="texto" value="<%= texto %>" />
+                      <input type="hidden" name="filtro" value="<%= filtro %>" />
+                      <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Eliminar</button>
+                    </form>
+                  <% } %>
+                <% } %>
+              </span>
+            </li>
+          <% }) %>
+        </ul>
+        <% if (jugadores.length === 50) { %><p class="dash-panel__nota">Se muestran los primeros 50: afina la búsqueda para ver otros.</p><% } %>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: 'admin' }) %>
+
+<%- include('../partials/footer') %>

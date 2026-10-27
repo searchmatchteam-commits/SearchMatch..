@@ -11,4 +11,17 @@ function requireAdmin(req, res, next) {
   return next();
 }
 
-module.exports = { requireAdmin };
+function requireSuperAdmin(req, res, next) {
+  if (!req.usuario) return res.redirect('/login?msg=Debes_iniciar_sesion');
+  if (!req.usuario.esSuperAdmin) {
+    return res.status(403).render('error', {
+      titulo: 'Sin permiso',
+      codigo: 403,
+      mensaje: 'Esta sección es solo para el superadministrador de SearchMatch.',
+    });
+  }
+  res.set('Cache-Control', 'no-store');
+  return next();
+}
+
+module.exports = { requireAdmin, requireSuperAdmin };

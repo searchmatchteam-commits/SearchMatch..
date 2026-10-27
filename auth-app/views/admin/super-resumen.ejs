@@ -1,0 +1,42 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<%
+  const tarjetas = [
+    { valor: cifras.conectados_24h, texto: 'Conectados hoy (24 h)', href: '/admin/super/jugadores?filtro=conectados' },
+    { valor: cifras.conectados_7d, texto: 'Conectados últimos 7 días', href: '/admin/super/jugadores?filtro=conectados' },
+    { valor: cifras.cuentas_activas, texto: `Cuentas activas de ${cifras.cuentas}`, href: '/admin/super/jugadores?filtro=activas' },
+    { valor: cifras.jugadores, texto: 'Perfiles de jugador', href: '/admin/super/jugadores' },
+    { valor: cifras.equipos_activos, texto: `Equipos activos (${cifras.equipos_inactivos} inactivos)`, href: '/admin/super/equipos' },
+    { valor: cifras.partidos_proximos, texto: 'Partidos próximos', href: null },
+  ];
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Superadministración</span>
+        <h1 class="eq-cabecera__titulo">Resumen de SearchMatch</h1>
+        <p class="eq-cabecera__stats">Actividad de la plataforma.</p>
+      </div>
+    </header>
+
+    <%- include('../partials/admin-nav', { seccion }) %>
+
+    <ul class="sm-cifras">
+      <% tarjetas.forEach(function (t) { %>
+        <li class="dash-panel eq-panel sm-cifra">
+          <% if (t.href) { %><a href="<%= t.href %>"><% } %>
+            <strong class="sm-cifra__valor"><%= t.valor %></strong>
+            <span class="sm-cifra__texto"><%= t.texto %></span>
+          <% if (t.href) { %></a><% } %>
+        </li>
+      <% }) %>
+    </ul>
+  </div>
+</section>
+
+<%- include('../partials/dock', { activo: 'admin' }) %>
+
+<%- include('../partials/footer') %>

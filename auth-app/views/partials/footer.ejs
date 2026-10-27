@@ -2,6 +2,8 @@
 
   <footer class="pie">
     <div class="pie__interior">
+      <% if (!(usuario && usuario.esSuperAdmin)) { %>
+      <!-- El superadministrador no ve estos enlaces: navega con el botón "Panel" del encabezado -->
       <nav class="pie__links" aria-label="Pie de página">
         <a href="/">Inicio</a>
         <% if (usuario) { %>
@@ -22,6 +24,7 @@
         <span aria-hidden="true">·</span>
         <a href="/privacidad">Privacidad</a>
       </nav>
+      <% } %>
       <p class="pie__copy">&copy; <%= new Date().getFullYear() %> SearchMatch · Fútbol amateur en Chile</p>
     </div>
   </footer>
@@ -64,6 +67,9 @@
   <% } %>
   <% if (locals.pagina === 'equipo') { %>
     <script src="/js/equipo.js?v=<%= versionAssets %>" defer></script>
+  <% } %>
+  <% if (locals.torneoForm) { %>
+    <script src="/js/torneo-form.js?v=<%= versionAssets %>" defer></script>
   <% } %>
   <% if (!usuario) { %>
     <script type="speculationrules">

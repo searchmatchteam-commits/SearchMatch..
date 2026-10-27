@@ -25,7 +25,7 @@ const subirImagen = express.raw({ type: ['image/jpeg', 'image/png', 'image/webp'
 router.get('/', pageController.landing);
 
 // GET/POST /select-role → "¿Cómo quieres empezar?" (solo con sesión).
-router.get('/select-role', requireAuth, rolController.mostrarSeleccion);
+router.get('/select-role', requireAuth, (req, res, next) => (req.usuario.esSuperAdmin ? res.redirect('/admin/super') : next()), rolController.mostrarSeleccion);
 router.post('/select-role', requireAuth, rolController.guardarSeleccion);
 
 // Rol "jugador": wizard para crear el perfil, la carta resultante y el editor.
@@ -69,9 +69,6 @@ router.get('/equipos/:id/escudo', requireAuth, equipoController.servirEscudo);
 router.post('/equipos/:id/escudo', requireAuth, requireRol, subirImagen, equipoController.subirEscudo);
 // Dirección antigua del paso de equipo (enlaces o marcadores guardados).
 router.get('/registro-equipo', (req, res) => res.redirect('/mi-equipo'));
-
-// GET /torneos → torneos (por ahora "Próximamente").
-router.get('/torneos', requireAuth, requireRol, pageController.torneos);
 
 // GET /dashboard → página protegida: requireAuth verifica la sesión y
 // requireRol manda a /select-role a quien aún no eligió rol.

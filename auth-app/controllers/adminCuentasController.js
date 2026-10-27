@@ -5,6 +5,7 @@ const AVISOS = {
   desactivada: 'Cuenta desactivada: su sesión se cerró y ya no puede entrar.',
   activada: 'Cuenta reactivada: ya puede volver a iniciar sesión.',
   propia: 'No puedes desactivar tu propia cuenta desde este módulo.',
+  protegida: 'La cuenta del superadministrador no se puede desactivar.',
   'sin-cambio': 'No hubo cambios: la cuenta ya estaba en ese estado.',
 };
 

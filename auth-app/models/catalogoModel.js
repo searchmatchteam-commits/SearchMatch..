@@ -15,6 +15,7 @@ const CATALOGOS = {
       { tabla: 'desafio', columna: 'id_modalidad', etiqueta: 'desafíos' },
       { tabla: 'cancha', columna: 'id_modalidad', etiqueta: 'canchas' },
       { tabla: 'partido', columna: 'id_modalidad', etiqueta: 'partidos' },
+      { tabla: 'torneo', columna: 'id_modalidad', etiqueta: 'torneos' },
     ],
     esProtegido: (fila) => Boolean(MODALIDADES[fila.cantidad_de_jugadores]),
   },

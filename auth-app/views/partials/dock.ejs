@@ -2,6 +2,7 @@
   // Barra de navegación inferior (dock flotante). Uso:
   //   include('partials/dock', { activo: 'inicio' })
   // "Perfil" siempre lleva a la carta (/perfil); los equipos del capitán están en "Mis equipos".
+  // El superadministrador no juega: no ve esta barra (navega con las pestañas de /admin/super).
   // Un ítem sin href (Canchas: aún no existe) es un botón que muestra un aviso de "próximamente"
   // (lo maneja public/js/dashboard.js con data-proximamente).
   const itemsDock = [
@@ -26,6 +27,7 @@
       icono: '<path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z" /><path d="M9 12l2 2 4-4" />' });
   }
 %>
+<% if (!usuario.esSuperAdmin) { %>
 <nav class="dock" aria-label="Navegación principal">
   <ul class="dock__lista">
     <% itemsDock.forEach(function (item) { %>
@@ -47,3 +49,4 @@
     <% }) %>
   </ul>
 </nav>
+<% } %>

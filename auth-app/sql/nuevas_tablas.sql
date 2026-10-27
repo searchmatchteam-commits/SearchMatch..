@@ -191,3 +191,93 @@ END $$;
 -- se usa la modalidad principal del desafiante.
 ALTER TABLE desafio
     ADD COLUMN IF NOT EXISTS id_modalidad INT REFERENCES modalidad(id);
+
+
+-- ============================================================
+-- SA-1) ROL SUPERADMINISTRADOR (/admin/super)
+-- ============================================================
+-- Puede todo lo del administrador y además eliminar equipos y cuentas de jugadores.
+-- Se asigna con: node scripts/hacer-admin.js correo@ejemplo.com --super
+INSERT INTO rol_aplicacion (nombre)
+SELECT 'superadministrador'
+ WHERE NOT EXISTS (SELECT 1 FROM rol_aplicacion WHERE lower(nombre) = 'superadministrador');
+
+-- Solo puede haber UN superadministrador: índice único parcial sobre una constante.
+-- (Al iniciar sesión, esa cuenta entra directo a /admin/super.)
+DO $$
+DECLARE id_super INT;
+BEGIN
+    SELECT id INTO id_super FROM rol_aplicacion WHERE lower(nombre) = 'superadministrador';
+    EXECUTE format('CREATE UNIQUE INDEX IF NOT EXISTS ux_un_solo_superadmin ON usuario ((true)) WHERE id_rol_aplicacion = %s', id_super);
+END $$;
+
+
+-- ============================================================
+-- SA-2) TORNEOS (/admin/super/torneos)
+-- ============================================================
+-- formato: 'liga' (todos contra todos, larga) o 'relampago' (torneo corto, eliminación en un día o fin de semana).
+-- patrocinadores / premios: texto libre; NULL = no hay.
+CREATE TABLE IF NOT EXISTS torneo (
+    id               INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre           VARCHAR(100) NOT NULL,
+    formato          VARCHAR(20)  NOT NULL CHECK (formato IN ('liga', 'relampago')),
+    id_modalidad     INT NOT NULL REFERENCES modalidad(id),
+    cantidad_equipos SMALLINT NOT NULL CHECK (cantidad_equipos BETWEEN 2 AND 64),
+    id_cancha        INT NOT NULL REFERENCES cancha(id),
+    patrocinadores   VARCHAR(500),
+    premios          VARCHAR(500),
+    creado_en        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE torneo ENABLE ROW LEVEL SECURITY;
+
+
+-- ============================================================
+-- SA-3) TORNEOS: FOTO, PATROCINADORES, INSCRIPCIONES Y PARTIDOS
+-- ============================================================
+-- estado: 'inscripcion' (los capitanes inscriben equipos) → 'en_curso' (el superadmin lo empezó con
+-- todos los cupos llenos) → 'finalizado' (se jugó todo; id_campeon = ganador).
+-- Relámpago: cantidad_equipos 4, 8, 16 o 32 (llaves de eliminación directa). Liga: 3 a 20 (todos contra todos).
+ALTER TABLE torneo
+    ADD COLUMN IF NOT EXISTS foto             BYTEA,
+    ADD COLUMN IF NOT EXISTS foto_tipo        VARCHAR(20),
+    ADD COLUMN IF NOT EXISTS foto_actualizada TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS estado           VARCHAR(20) NOT NULL DEFAULT 'inscripcion'
+        CHECK (estado IN ('inscripcion', 'en_curso', 'finalizado')),
+    ADD COLUMN IF NOT EXISTS id_campeon       INT REFERENCES equipo(id) ON DELETE SET NULL;
+
+-- Reemplaza al texto libre torneo.patrocinadores: cada patrocinador con su nombre y su logo.
+CREATE TABLE IF NOT EXISTS torneo_patrocinador (
+    id        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_torneo INT NOT NULL REFERENCES torneo(id) ON DELETE CASCADE,
+    nombre    VARCHAR(100) NOT NULL,
+    logo      BYTEA NOT NULL,
+    logo_tipo VARCHAR(20) NOT NULL
+);
+ALTER TABLE torneo_patrocinador ENABLE ROW LEVEL SECURITY;
+ALTER TABLE torneo DROP COLUMN IF EXISTS patrocinadores;
+
+CREATE TABLE IF NOT EXISTS torneo_equipo (
+    id_torneo   INT NOT NULL REFERENCES torneo(id) ON DELETE CASCADE,
+    id_equipo   INT NOT NULL REFERENCES equipo(id) ON DELETE CASCADE,
+    inscrito_en TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (id_torneo, id_equipo)
+);
+ALTER TABLE torneo_equipo ENABLE ROW LEVEL SECURITY;
+
+-- ronda: n.º de fecha (liga) o de ronda de la llave (relámpago, 1 = primera). orden: posición dentro de la ronda;
+-- en la llave, los ganadores de los partidos 2k y 2k+1 se enfrentan en el partido k de la ronda siguiente.
+-- Si se elimina un equipo, su lugar queda vacío (NULL) y el rival gana el partido.
+CREATE TABLE IF NOT EXISTS torneo_partido (
+    id           INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_torneo    INT NOT NULL REFERENCES torneo(id) ON DELETE CASCADE,
+    ronda        SMALLINT NOT NULL,
+    orden        SMALLINT NOT NULL,
+    id_local     INT REFERENCES equipo(id) ON DELETE SET NULL,
+    id_visita    INT REFERENCES equipo(id) ON DELETE SET NULL,
+    goles_local  SMALLINT CHECK (goles_local >= 0),
+    goles_visita SMALLINT CHECK (goles_visita >= 0),
+    id_ganador   INT REFERENCES equipo(id) ON DELETE SET NULL,
+    jugado       BOOLEAN NOT NULL DEFAULT FALSE,
+    UNIQUE (id_torneo, ronda, orden)
+);
+ALTER TABLE torneo_partido ENABLE ROW LEVEL SECURITY;

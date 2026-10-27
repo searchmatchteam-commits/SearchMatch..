@@ -1,0 +1,71 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Superadministración</span>
+        <h1 class="eq-cabecera__titulo">Torneos</h1>
+        <p class="eq-cabecera__stats">Ligas y torneos relámpago de SearchMatch.</p>
+      </div>
+      <div class="eq-cabecera__acciones">
+        <a class="btn btn--verde btn--grande" href="/admin/super/torneos/nuevo"><span aria-hidden="true">+</span> Crear torneo</a>
+      </div>
+    </header>
+
+    <%- include('../partials/admin-nav', { seccion }) %>
+
+    <% if (torneos.length === 0 && !texto) { %>
+      <div class="dash-panel eq-panel sm-vacio">
+        <p class="sm-vacio__titulo">Aún no hay torneos</p>
+        <p class="dash-panel__nota">Crea el primero: aparecerá en la sección Torneos de los jugadores para que los capitanes inscriban a sus equipos.</p>
+        <a class="btn btn--verde" href="/admin/super/torneos/nuevo">Crear torneo</a>
+      </div>
+    <% } else { %>
+      <form class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/super/torneos" role="search">
+        <div class="campo">
+          <label for="texto">Buscar por nombre del torneo o recinto</label>
+          <input type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. Copa Primavera" />
+        </div>
+        <div class="sm-form__acciones">
+          <button type="submit" class="btn btn--verde">Buscar</button>
+          <% if (texto) { %><a class="btn btn--contorno" href="/admin/super/torneos">Ver todos</a><% } %>
+        </div>
+      </form>
+
+      <% if (torneos.length === 0) { %>
+        <div class="dash-panel eq-panel sm-vacio">
+          <p class="sm-vacio__titulo">No hay torneos que coincidan con "<%= texto %>"</p>
+          <a class="btn btn--contorno" href="/admin/super/torneos">Ver todos</a>
+        </div>
+      <% } else { %>
+        <div class="dash-panel eq-panel">
+          <ul class="sm-filas">
+            <% torneos.forEach(function (t) { %>
+              <li class="sm-fila">
+                <% if (t.foto) { %><img class="sm-torneo-miniatura" src="<%= t.foto %>" alt="" loading="lazy" /><% } %>
+                <span class="sm-fila__principal">
+                  <strong><a href="/admin/super/torneos/<%= t.id %>"><%= t.nombre %></a></strong>
+                  <small><%= t.modalidad %> · <%= t.inscritos %>/<%= t.cantidadEquipos %> equipos · <%= t.recinto %></small>
+                </span>
+                <span class="sm-rol"><%= t.formatoTexto %></span>
+                <span class="sm-estado sm-estado--torneo-<%= t.estado %>"><%= t.estadoTexto %></span>
+                <span class="sm-fila__accion">
+                  <a class="btn btn--verde btn--chico" href="/admin/super/torneos/<%= t.id %>">Gestionar</a>
+                </span>
+              </li>
+            <% }) %>
+          </ul>
+        </div>
+      <% } %>
+    <% } %>
+  </div>
+</section>
+
+<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
+
+<%- include('../partials/dock', { activo: 'admin' }) %>
+
+<%- include('../partials/footer') %>

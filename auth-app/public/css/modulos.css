@@ -497,3 +497,79 @@ html[data-theme="light"] .sm-tema__luna { display: block; }
 }
 .sm-proximo small { color: var(--verde); font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.7rem; }
 .sm-proximo span { color: var(--texto-suave); font-size: 0.86rem; text-transform: capitalize; }
+
+/* Superadministración: cifras del resumen (/admin/super) */
+.sm-cifras { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.sm-cifra > a, .sm-cifra { display: flex; flex-direction: column; gap: 4px; color: var(--texto); text-decoration: none; }
+.sm-cifra__valor { font-size: 2rem; font-weight: 800; line-height: 1; color: var(--verde); }
+.sm-cifra__texto { color: var(--texto-suave); font-size: 0.9rem; }
+.sm-credenciales { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 6px 16px; margin-top: 8px; font-size: 0.85rem; }
+.sm-credenciales dt { color: var(--texto-suave); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.sm-credenciales dd { margin: 0; color: var(--texto); overflow-wrap: anywhere; }
+.sm-fila__acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Torneos: el campo de patrocinadores solo se ve si "¿Tiene patrocinadores?" = Sí */
+.sm-form--torneo:has(#tiene_patrocinadores option[value="no"]:checked) .sm-campo-patrocinadores { display: none; }
+
+/* Torneos (SA-3): ficha, tarjetas, patrocinadores, cupos, tabla de posiciones, fixture y llave */
+.sm-patrocinador-nuevo[hidden], [data-agregar-patrocinador][hidden] { display: none; }
+.sm-patrocinador-nuevo { border: 1px dashed var(--borde-fuerte); border-radius: 12px; padding: 12px 14px 4px; margin-bottom: 12px; }
+.sm-patrocinador-nuevo legend { padding: 0 6px; font-size: 0.8rem; font-weight: 700; color: var(--texto-suave); }
+.sm-torneo-miniatura { width: 56px; height: 56px; object-fit: cover; border-radius: 10px; flex: none; }
+.sm-torneo-miniatura--grande { width: 100%; max-width: 320px; height: auto; aspect-ratio: 16 / 9; margin-bottom: 8px; }
+
+.sm-torneo-ficha { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 760px) { .sm-torneo-ficha:has(.sm-torneo-ficha__foto) { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); } }
+.sm-torneo-ficha__foto { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px; }
+.sm-torneo-ficha__etiquetas { display: flex; flex-wrap: wrap; gap: 8px; }
+.sm-torneo-ficha__campeon { margin: 10px 0 0; font-size: 1.05rem; }
+.sm-estado--torneo-inscripcion { color: var(--verde); background: var(--verde-tenue); border: 1px solid var(--verde-borde); }
+.sm-estado--torneo-en_curso { color: #ffe08a; background: rgba(255, 196, 0, 0.08); border: 1px solid rgba(255, 196, 0, 0.35); }
+.sm-estado--torneo-finalizado { color: var(--texto); background: rgba(255, 255, 255, 0.06); border: 1px solid var(--borde-fuerte); }
+
+.sm-patrocinadores { list-style: none; display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.sm-patrocinador { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.sm-patrocinador__logo { width: 44px; height: 44px; object-fit: contain; border-radius: 8px; background: #fff; padding: 3px; }
+.sm-patrocinadores--mini { margin-top: 6px; }
+.sm-patrocinadores--mini .sm-patrocinador__logo { width: 30px; height: 30px; }
+
+.sm-torneos { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.sm-torneo-tarjeta { padding: 0; overflow: hidden; }
+.sm-torneo-tarjeta__enlace { display: flex; flex-direction: column; color: var(--texto); text-decoration: none; height: 100%; }
+.sm-torneo-tarjeta__foto { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.sm-torneo-tarjeta__cuerpo { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px 16px; }
+.sm-torneo-tarjeta__cuerpo small { color: var(--texto-suave); }
+.sm-torneo-tarjeta__titulo { font-size: 1.1rem; font-weight: 800; }
+.sm-torneo-tarjeta__enlace:hover .sm-torneo-tarjeta__titulo { color: var(--verde); }
+
+.sm-cupos { height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; margin: 6px 0 10px; }
+.sm-cupos__relleno { display: block; height: 100%; background: var(--verde); border-radius: inherit; }
+.sm-inscripcion { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 10px 0; }
+.sm-equipos-torneo { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 8px; }
+.sm-equipos-torneo li { display: flex; align-items: center; gap: 8px; }
+
+.sm-tabla-contenedor { overflow-x: auto; }
+.sm-tabla { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.sm-tabla th, .sm-tabla td { padding: 8px 6px; text-align: center; border-bottom: 1px solid var(--borde); }
+.sm-tabla th { color: var(--texto-suave); font-size: 0.75rem; text-transform: uppercase; }
+.sm-tabla abbr { text-decoration: none; }
+.sm-tabla .sm-tabla__equipo { text-align: left; font-weight: 700; min-width: 140px; }
+.sm-tabla tbody tr:first-child td:first-child { color: var(--verde); font-weight: 800; }
+.sm-tabla__fila--mia td { background: var(--verde-tenue); }
+
+.sm-fechas { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+.sm-llave { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 6px; }
+.sm-llave .sm-ronda { flex: 0 0 min(300px, 85%); display: flex; flex-direction: column; }
+.sm-llave .sm-partidos { flex: 1; justify-content: space-around; }
+.sm-ronda__titulo { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--texto-suave); margin-bottom: 8px; }
+.sm-partidos { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.sm-partido { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px;
+  padding: 10px 12px; border: 1px solid var(--borde); border-radius: 10px; background: rgba(255, 255, 255, 0.02); scroll-margin-top: 90px; }
+.sm-partido--mio { border-color: var(--verde-borde); }
+.sm-partido__equipo { font-weight: 600; overflow-wrap: anywhere; }
+.sm-partido__equipo--visita { text-align: right; }
+.sm-partido__equipo--gano { color: var(--verde); font-weight: 800; }
+.sm-partido__marcador { font-weight: 800; text-align: center; white-space: nowrap; display: flex; flex-direction: column; align-items: center; }
+.sm-partido__marcador small { font-weight: 500; color: var(--texto-suave); font-size: 0.7rem; }
+.sm-resultado { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; }
+.sm-resultado input { width: 56px; text-align: center; }
+.sm-resultado select { max-width: 100%; }

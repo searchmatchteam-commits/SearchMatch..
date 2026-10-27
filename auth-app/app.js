@@ -16,6 +16,7 @@ const notificacionRoutes = require('./routes/notificacionRoutes');
 const desafioRoutes = require('./routes/desafioRoutes');
 const equipoFichaRoutes = require('./routes/equipoFichaRoutes');
 const partidoRoutes = require('./routes/partidoRoutes');
+const torneoRoutes = require('./routes/torneoRoutes');
 const { contadorSinLeer } = require('./controllers/notificacionController');
 const { noEncontrado, manejarErrores } = require('./middlewares/errorHandler');
 
@@ -52,6 +53,7 @@ app.use('/admin', adminRoutes);
 app.use('/canchas', canchasRoutes);
 app.use('/notificaciones', notificacionRoutes);
 app.use('/desafios', desafioRoutes);
+app.use('/torneos', torneoRoutes);
 app.use('/', equipoFichaRoutes);
 app.use('/', partidoRoutes);
 
