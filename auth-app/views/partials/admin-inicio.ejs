@@ -1,0 +1,16 @@
+<%
+  // Apertura de toda página del panel: encabezado, menú lateral y nombre de la sección (AP-002).
+  //   include('../partials/admin-inicio', { seccion: 'actividad' })   …   include('../partials/admin-fin')
+  const seccionActual = (locals.seccionesPanel || []).find(function (s) { return s.clave === seccion; });
+%>
+<%- include('header') %>
+
+<%- include('fondo-cyber', { variante: 'perspectiva' }) %>
+
+<div class="sm-admin">
+  <aside class="sm-admin__lateral">
+    <p class="sm-admin__marca">Panel de administración</p>
+    <%- include('admin-nav', { seccion }) %>
+  </aside>
+  <div class="sm-admin__contenido">
+    <p class="sm-admin__ruta">Panel · <strong><%= seccionActual ? seccionActual.texto : titulo %></strong></p>

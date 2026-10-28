@@ -1,0 +1,66 @@
+<%- include('../partials/admin-inicio', { seccion }) %>
+
+<%
+  // Las cifras ampliadas y el rango de fechas llegan con AP-004 (fase 5).
+  const tarjetas = [
+    { valor: cifras.conectados_24h, texto: 'Conectados hoy (24 h)', href: '/admin/cuentas' },
+    { valor: cifras.conectados_7d, texto: 'Conectados últimos 7 días', href: '/admin/cuentas' },
+    { valor: cifras.cuentas_activas, texto: `Cuentas activas de ${cifras.cuentas}`, href: '/admin/cuentas' },
+    { valor: cifras.jugadores, texto: 'Perfiles de jugador', href: '/admin/cuentas' },
+    { valor: cifras.equipos_activos, texto: `Equipos activos (${cifras.equipos_inactivos} inactivos)`, href: '/admin/equipos' },
+    { valor: cifras.partidos_proximos, texto: 'Partidos próximos', href: null },
+  ];
+  const fechaHora = new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Santiago' });
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <h1 class="eq-cabecera__titulo">Resumen de SearchMatch</h1>
+        <p class="eq-cabecera__stats">Hola, <%= usuario.nombre %>.</p>
+      </div>
+    </header>
+
+    <ul class="sm-cifras">
+      <% tarjetas.forEach(function (t) { %>
+        <li class="dash-panel eq-panel sm-cifra">
+          <% if (t.href) { %><a href="<%= t.href %>"><% } %>
+            <strong class="sm-cifra__valor"><%= t.valor || 0 %></strong>
+            <span class="sm-cifra__texto"><%= t.texto %></span>
+          <% if (t.href) { %></a><% } %>
+        </li>
+      <% }) %>
+    </ul>
+
+    <div class="dash-panel eq-panel">
+      <header class="dash-panel__cabecera"><h2 class="dash-panel__titulo">Alertas pendientes (<%= alertas.length %>)</h2></header>
+      <% if (alertas.length === 0) { %>
+        <p class="dash-panel__nota">No hay alertas: todo en orden.</p>
+      <% } else { %>
+        <ul class="sm-filas">
+          <% alertas.forEach(function (a) { %>
+            <li class="sm-fila">
+              <span class="sm-estado sm-estado--pendiente"><%= a.tipoTexto %></span>
+              <span class="sm-fila__principal"><a href="<%= a.enlace %>"><%= a.texto %></a></span>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </div>
+
+    <% if (avisos.length > 0) { %>
+      <div class="dash-panel eq-panel">
+        <header class="dash-panel__cabecera"><h2 class="dash-panel__titulo">Avisos para ti</h2></header>
+        <ul class="sm-filas">
+          <% avisos.forEach(function (n) { %>
+            <li class="sm-fila">
+              <span class="sm-fila__principal"><a href="/admin/avisos/<%= n.id %>"><%= n.mensaje %></a><small><%= fechaHora.format(n.fecha) %></small></span>
+            </li>
+          <% }) %>
+        </ul>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('../partials/admin-fin') %>

@@ -1,22 +1,27 @@
 <%
-  const pestanas = [
-    { clave: 'recintos', texto: 'Recintos y canchas', href: '/admin/recintos' },
-    { clave: 'cuentas', texto: 'Cuentas', href: '/admin/cuentas' },
-    { clave: 'catalogos', texto: 'Catálogos', href: '/admin/catalogos' },
-  ];
-  if (usuario.esSuperAdmin) {
-    pestanas.splice(pestanas.findIndex((p) => p.clave === 'cuentas'), 1); // sus cuentas están en "Jugadores"
-    pestanas.unshift({ clave: 'super', texto: 'Resumen', href: '/admin/super' });
-    pestanas.push(
-      { clave: 'super-equipos', texto: 'Equipos', href: '/admin/super/equipos' },
-      { clave: 'super-jugadores', texto: 'Jugadores', href: '/admin/super/jugadores' },
-      { clave: 'super-torneos', texto: 'Torneos', href: '/admin/super/torneos' }
-    );
-  }
+  // AP-002 · Menú lateral del panel. Las secciones vienen de config/panel.js (res.locals.seccionesPanel,
+  // filtradas: "Administradores" solo para el Administrador principal). En pantallas angostas se contrae en
+  // un botón "Menú" (casilla + etiqueta: funciona sin JavaScript).
+  const secciones = locals.seccionesPanel || [];
+  const actual = secciones.find(function (s) { return s.clave === seccion; });
 %>
-<nav class="sm-pestanas" aria-label="Secciones de administración">
-  <% pestanas.forEach(function (p) { %>
-    <a class="sm-pestanas__item <%= p.clave === seccion ? 'sm-pestanas__item--activa' : '' %>" href="<%= p.href %>"
-       <%- p.clave === seccion ? 'aria-current="page"' : '' %>><%= p.texto %></a>
-  <% }) %>
+<input type="checkbox" id="sm-admin-menu" class="sm-admin-menu__check" />
+<label for="sm-admin-menu" class="sm-admin-menu__boton">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+  <span>Menú<% if (actual) { %> · <%= actual.texto %><% } %></span>
+  <% if (locals.alertasPendientes) { %><span class="sm-admin-menu__contador"><%= alertasPendientes %><span class="solo-lectores"> alertas pendientes</span></span><% } %>
+</label>
+<nav class="sm-admin-menu" aria-label="Secciones del panel">
+  <ul class="sm-admin-menu__lista">
+    <% secciones.forEach(function (s) { const activa = s.clave === seccion; %>
+      <li>
+        <a class="sm-admin-menu__item <%= activa ? 'sm-admin-menu__item--activa' : '' %>" href="<%= s.href %>" <%- activa ? 'aria-current="page"' : '' %>>
+          <span><%= s.texto %></span>
+          <% if (s.clave === 'resumen' && locals.alertasPendientes) { %>
+            <span class="sm-admin-menu__contador" title="Alertas pendientes"><%= alertasPendientes %><span class="solo-lectores"> alertas pendientes</span></span>
+          <% } %>
+        </a>
+      </li>
+    <% }) %>
+  </ul>
 </nav>

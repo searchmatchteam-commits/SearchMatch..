@@ -1,6 +1,4 @@
-<%- include('../partials/header') %>
-
-<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<%- include('../partials/admin-inicio', { seccion }) %>
 
 <section class="eq">
   <div class="contenedor">
@@ -14,8 +12,6 @@
         <a class="btn btn--verde btn--grande" href="/admin/super/torneos/nuevo"><span aria-hidden="true">+</span> Crear torneo</a>
       </div>
     </header>
-
-    <%- include('../partials/admin-nav', { seccion }) %>
 
     <% if (torneos.length === 0 && !texto) { %>
       <div class="dash-panel eq-panel sm-vacio">
@@ -64,8 +60,4 @@
   </div>
 </section>
 
-<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
-
-<%- include('../partials/dock', { activo: 'admin' }) %>
-
-<%- include('../partials/footer') %>
+<%- include('../partials/admin-fin') %>

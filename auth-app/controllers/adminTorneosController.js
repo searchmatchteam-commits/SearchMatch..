@@ -29,7 +29,7 @@ async function listar(req, res, next) {
     return res.render('admin/torneos', {
       titulo: 'Torneos',
       pagina: 'equipo',
-      seccion: 'super-torneos',
+      seccion: 'torneos',
       torneos: await torneoModel.listar(texto),
       texto,
       aviso: AVISOS[req.query.aviso] || null,
@@ -46,7 +46,7 @@ async function detalle(req, res, next) {
     return res.render('admin/torneo', {
       titulo: torneo.nombre,
       pagina: 'equipo',
-      seccion: 'super-torneos',
+      seccion: 'torneos',
       torneoAdmin: true,
       torneo,
       aviso: AVISOS[req.query.aviso] || null,
@@ -61,7 +61,7 @@ async function renderFormulario(res, { status = 200, torneo = null, datos = {}, 
   return res.status(status).render('admin/torneo-form', {
     titulo: torneo ? 'Editar torneo' : 'Crear torneo',
     pagina: 'equipo',
-    seccion: 'super-torneos',
+    seccion: 'torneos',
     torneoForm: true, // carga public/js/torneo-form.js
     torneo,
     datos,

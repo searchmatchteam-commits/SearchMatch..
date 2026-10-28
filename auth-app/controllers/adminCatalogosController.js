@@ -21,7 +21,7 @@ async function renderCatalogos(res, { status = 200, aviso = null, error = null }
   return res.status(status).render('admin/catalogos', {
     titulo: 'Catálogos',
     pagina: 'equipo',
-    seccion: 'catalogos',
+    seccion: 'configuracion',
     catalogos: tipos.map((tipo, i) => ({ tipo, ...catalogoModel.CATALOGOS[tipo], elementos: listas[i] })),
     aviso,
     error,

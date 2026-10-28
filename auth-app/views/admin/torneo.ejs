@@ -1,6 +1,4 @@
-<%- include('../partials/header') %>
-
-<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<%- include('../partials/admin-inicio', { seccion }) %>
 
 <%
   const lleno = torneo.inscritos >= torneo.cantidadEquipos;
@@ -22,8 +20,6 @@
         </form>
       </div>
     </header>
-
-    <%- include('../partials/admin-nav', { seccion }) %>
 
     <%- include('../partials/torneo-ficha', { torneo }) %>
 
@@ -74,8 +70,4 @@
   </div>
 </section>
 
-<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
-
-<%- include('../partials/dock', { activo: 'admin' }) %>
-
-<%- include('../partials/footer') %>
+<%- include('../partials/admin-fin') %>

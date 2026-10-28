@@ -1403,3 +1403,8 @@ html[data-theme="light"] .dash-miequipo__admin--ver:hover { background: #f8fafc;
 html[data-theme="light"] .dash-miequipo__estado { color: #374151; }
 html[data-theme="light"] .dash-miequipo__estado a { color: #15803d; text-shadow: none; }
 html[data-theme="light"] .dash-miequipo__partido small { color: #15803d; }
+
+/* Panel de administración (AP-002 / AP-003) */
+html[data-theme="light"] .sm-admin-menu__lista { background: rgba(255, 255, 255, 0.92); }
+html[data-theme="light"] .sm-admin-menu__boton { background: #fff; }
+html[data-theme="light"] .sm-accion__form { background: rgba(255, 255, 255, 0.95); }

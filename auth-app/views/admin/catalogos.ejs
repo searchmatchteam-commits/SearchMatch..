@@ -1,6 +1,4 @@
-<%- include('../partials/header') %>
-
-<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<%- include('../partials/admin-inicio', { seccion }) %>
 
 <section class="eq">
   <div class="contenedor">
@@ -11,8 +9,6 @@
         <p class="eq-cabecera__stats">Opciones que ven los usuarios al registrar canchas, equipos y perfiles.</p>
       </div>
     </header>
-
-    <%- include('../partials/admin-nav', { seccion }) %>
 
     <% if (error) { %>
       <div class="alerta alerta--error" role="alert"><%= error %></div>
@@ -106,8 +102,4 @@
   </div>
 </section>
 
-<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
-
-<%- include('../partials/dock', { activo: 'admin' }) %>
-
-<%- include('../partials/footer') %>
+<%- include('../partials/admin-fin') %>

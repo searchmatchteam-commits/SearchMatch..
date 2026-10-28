@@ -1,20 +1,40 @@
 const express = require('express');
 const router = express.Router();
 
+const acceso = require('../controllers/adminAccesoController');
+const panel = require('../controllers/adminPanelController');
+const administradores = require('../controllers/administradoresController');
 const recintos = require('../controllers/adminRecintosController');
 const cuentas = require('../controllers/adminCuentasController');
 const catalogos = require('../controllers/adminCatalogosController');
 const superAdmin = require('../controllers/superAdminController');
 const torneos = require('../controllers/adminTorneosController');
-const { requireAuth } = require('../middlewares/authMiddleware');
-const { requireAdmin, requireSuperAdmin } = require('../middlewares/rolMiddleware');
+const { requireAdmin, requirePrincipal } = require('../middlewares/rolMiddleware');
 const {
   validarRecinto, validarCancha, validarBloque, validarCatalogo, validarTorneo, subirImagenesTorneo,
 } = require('../middlewares/validadoresAdmin');
 
-router.use(requireAuth, requireAdmin);
+// AP-001: acceso propio del panel (sin registro). Son las únicas rutas de /admin sin sesión del panel.
+router.get('/login', acceso.mostrarLogin);
+router.post('/login', acceso.ingresar);
+router.post('/logout', acceso.salir);
 
-router.get('/', (req, res) => res.redirect(req.usuario.esSuperAdmin ? '/admin/super' : '/admin/recintos'));
+// Todo lo demás exige una sesión del panel vigente (así ninguna ruta nueva queda sin proteger).
+router.use(requireAdmin);
+
+router.get('/', panel.resumen);
+router.get('/avisos/:id', panel.abrirAviso);
+
+// AP-011 · solo el Administrador principal
+router.get('/administradores', requirePrincipal, administradores.listar);
+router.post('/administradores', requirePrincipal, administradores.crear);
+router.post('/administradores/traspasar', requirePrincipal, administradores.traspasar);
+router.post('/administradores/:id/revocar', requirePrincipal, administradores.revocar);
+router.post('/administradores/:id/reactivar', requirePrincipal, administradores.reactivar);
+
+// AP-032
+router.get('/actividad', panel.listarActividad);
+router.get('/actividad/:id', panel.detalleActividad);
 
 router.get('/recintos', recintos.listar);
 router.get('/recintos/nuevo', recintos.formularioNuevo);
@@ -34,7 +54,7 @@ router.post('/canchas/:id/activar', recintos.activarCancha);
 router.post('/canchas/:id/disponibilidad', validarBloque, recintos.crearBloque);
 router.post('/disponibilidad/:id/eliminar', recintos.eliminarBloque);
 
-// El superadministrador gestiona las cuentas desde /admin/super/jugadores (una sola lista).
+// Usuarios: el Administrador principal usa la lista con eliminación definitiva (/admin/super/jugadores).
 router.get('/cuentas', (req, res, next) => (req.usuario.esSuperAdmin ? res.redirect('/admin/super/jugadores') : next()), cuentas.listar);
 router.post('/cuentas/:id/desactivar', cuentas.desactivar);
 router.post('/cuentas/:id/activar', cuentas.activar);
@@ -44,23 +64,34 @@ router.post('/catalogos/:tipo', validarCatalogo, catalogos.crear);
 router.post('/catalogos/:tipo/:id', validarCatalogo, catalogos.editar);
 router.post('/catalogos/:tipo/:id/eliminar', catalogos.eliminar);
 
-router.get('/super', requireSuperAdmin, superAdmin.resumen);
-router.get('/super/equipos', requireSuperAdmin, superAdmin.equipos);
-router.post('/super/equipos/:id/eliminar', requireSuperAdmin, superAdmin.eliminarEquipo);
-router.get('/super/jugadores', requireSuperAdmin, superAdmin.jugadores);
-router.post('/super/jugadores/:id/eliminar', requireSuperAdmin, superAdmin.eliminarJugador);
-router.post('/super/jugadores/:id/desactivar', requireSuperAdmin, superAdmin.desactivarJugador);
-router.post('/super/jugadores/:id/activar', requireSuperAdmin, superAdmin.activarJugador);
+// Equipos y Torneos: hoy solo existen en /admin/super (AP-012 y la fase 1 los abren a todos los administradores).
+router.get('/equipos', (req, res, next) => (req.usuario.esSuperAdmin
+  ? res.redirect(`/admin/super/equipos${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`) : next()),
+  (req, res) => res.render('admin/proximamente', { titulo: 'Equipos', pagina: 'equipo', seccion: 'equipos', fase: 5 }));
+router.get('/torneos', (req, res, next) => (req.usuario.esSuperAdmin ? res.redirect('/admin/super/torneos') : next()),
+  (req, res) => res.render('admin/proximamente', { titulo: 'Torneos', pagina: 'equipo', seccion: 'torneos', fase: 1 }));
 
-router.get('/super/torneos', requireSuperAdmin, torneos.listar);
-router.get('/super/torneos/nuevo', requireSuperAdmin, torneos.formularioNuevo);
-router.post('/super/torneos', requireSuperAdmin, subirImagenesTorneo, validarTorneo, torneos.crear);
-router.get('/super/torneos/:id', requireSuperAdmin, torneos.detalle);
-router.get('/super/torneos/:id/editar', requireSuperAdmin, torneos.formularioEditar);
-router.post('/super/torneos/:id/editar', requireSuperAdmin, subirImagenesTorneo, validarTorneo, torneos.editar);
-router.post('/super/torneos/:id/eliminar', requireSuperAdmin, torneos.eliminar);
-router.post('/super/torneos/:id/empezar', requireSuperAdmin, torneos.empezar);
-router.post('/super/torneos/:id/equipos/:idEquipo/quitar', requireSuperAdmin, torneos.quitarEquipo);
-router.post('/super/torneos/:id/partidos/:idPartido', requireSuperAdmin, torneos.registrarResultado);
+// Secciones de fases siguientes (AP-002: el menú ya las muestra)
+['desafios', 'partidos', 'reservas', 'valoraciones', 'comentarios', 'anuncios', 'apelaciones', 'pagos', 'estadisticas']
+  .forEach((clave) => router.get(`/${clave}`, panel.proximamente(clave)));
+
+router.get('/super', (req, res) => res.redirect('/admin'));
+router.get('/super/equipos', requirePrincipal, superAdmin.equipos);
+router.post('/super/equipos/:id/eliminar', requirePrincipal, superAdmin.eliminarEquipo);
+router.get('/super/jugadores', requirePrincipal, superAdmin.jugadores);
+router.post('/super/jugadores/:id/eliminar', requirePrincipal, superAdmin.eliminarJugador);
+router.post('/super/jugadores/:id/desactivar', requirePrincipal, superAdmin.desactivarJugador);
+router.post('/super/jugadores/:id/activar', requirePrincipal, superAdmin.activarJugador);
+
+router.get('/super/torneos', requirePrincipal, torneos.listar);
+router.get('/super/torneos/nuevo', requirePrincipal, torneos.formularioNuevo);
+router.post('/super/torneos', requirePrincipal, subirImagenesTorneo, validarTorneo, torneos.crear);
+router.get('/super/torneos/:id', requirePrincipal, torneos.detalle);
+router.get('/super/torneos/:id/editar', requirePrincipal, torneos.formularioEditar);
+router.post('/super/torneos/:id/editar', requirePrincipal, subirImagenesTorneo, validarTorneo, torneos.editar);
+router.post('/super/torneos/:id/eliminar', requirePrincipal, torneos.eliminar);
+router.post('/super/torneos/:id/empezar', requirePrincipal, torneos.empezar);
+router.post('/super/torneos/:id/equipos/:idEquipo/quitar', requirePrincipal, torneos.quitarEquipo);
+router.post('/super/torneos/:id/partidos/:idPartido', requirePrincipal, torneos.registrarResultado);
 
 module.exports = router;

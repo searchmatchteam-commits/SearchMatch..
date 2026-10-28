@@ -901,3 +901,90 @@ html[data-theme="light"] .sm-pcard__equipo--gano { filter: none; text-shadow: no
 html[data-theme="light"] .pagina-equipo:has(.tl-fondo) { background: #f9fafb; }
 html[data-theme="light"] .tl-fondo { background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(22, 163, 74, 0.1), transparent 70%); }
 html[data-theme="light"] .tl-fondo__hex { color: rgba(22, 163, 74, 0.12); }
+
+/* ---------- Panel de administración (AP-002): menú lateral + contenido ---------- */
+.sm-admin { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 24px; width: min(1320px, 100% - 32px); margin-inline: auto; padding-top: 16px; }
+.sm-admin__lateral { position: relative; z-index: 2; }
+.sm-admin__marca { display: none; margin: 0 0 12px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--texto-suave); }
+.sm-admin__contenido { min-width: 0; }
+.sm-admin__contenido .eq { padding-top: 0; }
+.sm-admin__contenido .contenedor { width: 100%; max-width: none; padding-inline: 0; }
+.sm-admin__ruta { margin: 4px 0 8px; font-size: 0.82rem; color: var(--texto-suave); }
+.sm-admin__ruta strong { color: var(--verde); }
+
+/* Botón "Menú" (pantallas angostas): casilla oculta + etiqueta, sin JavaScript */
+.sm-admin-menu__check { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.sm-admin-menu__boton {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; cursor: pointer;
+  border: 1px solid var(--borde-fuerte); border-radius: 12px; font-weight: 700; font-size: 0.9rem; color: var(--texto);
+  background: rgba(255, 255, 255, 0.04);
+}
+.sm-admin-menu__boton svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.sm-admin-menu__check:focus-visible + .sm-admin-menu__boton { outline: 2px solid var(--verde); outline-offset: 2px; }
+.sm-admin-menu { display: none; margin-top: 10px; }
+.sm-admin-menu__check:checked ~ .sm-admin-menu { display: block; }
+.sm-admin-menu__lista { list-style: none; display: flex; flex-direction: column; gap: 2px; padding: 8px; border: 1px solid var(--borde); border-radius: 14px; background: rgba(11, 13, 11, 0.85); }
+.sm-admin-menu__item {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; border-radius: 10px;
+  font-size: 0.9rem; font-weight: 600; color: var(--texto-suave);
+}
+.sm-admin-menu__item:hover { color: var(--texto); background: rgba(255, 255, 255, 0.05); }
+.sm-admin-menu__item--activa, .sm-admin-menu__item--activa:hover { color: var(--sobre-verde); background: var(--verde); }
+.sm-admin-menu__contador {
+  display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 800; color: #1a1300; background: #ffc400;
+}
+@media (min-width: 900px) {
+  .sm-admin { grid-template-columns: 230px minmax(0, 1fr); }
+  .sm-admin__lateral { position: sticky; top: 84px; align-self: start; max-height: calc(100vh - 100px); overflow-y: auto; }
+  .sm-admin__marca { display: block; }
+  .sm-admin-menu__boton { display: none; }
+  .sm-admin-menu { display: block; margin-top: 0; }
+}
+
+/* ---------- Listados del panel (AP-003) ---------- */
+.dash-panel.sm-listado-barra { display: flex; flex-direction: column; gap: 12px; }
+.sm-listado-barra__buscar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.sm-listado-barra__buscar .campo { flex: 1 1 220px; min-width: 0; margin: 0; }
+.sm-listado-barra__filtros > summary { cursor: pointer; font-weight: 700; color: var(--texto); width: fit-content; }
+.sm-listado-barra__campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 12px; align-items: end; }
+.sm-listado-barra__pie { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.sm-listado-barra__total { margin: 0 auto 0 0; font-size: 0.85rem; color: var(--texto-suave); }
+.sm-etiquetas { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.sm-etiqueta {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700;
+  color: var(--verde); background: var(--verde-tenue); border: 1px solid var(--verde-borde);
+}
+.sm-etiqueta:hover { color: var(--sobre-verde); background: var(--verde); }
+
+.sm-tabla-contenedor { overflow-x: auto; }
+.sm-tabla { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.sm-tabla th, .sm-tabla td { padding: 10px 8px; text-align: left; vertical-align: top; border-top: 1px solid var(--borde); }
+.sm-tabla thead th { border-top: 0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--texto-suave); white-space: nowrap; }
+.sm-tabla td { color: var(--texto); overflow-wrap: anywhere; }
+.sm-tabla__orden { color: inherit; }
+.sm-tabla__orden:hover, th[aria-sort="ascending"] .sm-tabla__orden, th[aria-sort="descending"] .sm-tabla__orden { color: var(--verde); }
+.sm-tabla__acciones { min-width: 140px; }
+/* En celulares cada fila se vuelve una tarjeta con el título de la columna al lado */
+@media (max-width: 719px) {
+  .sm-tabla thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .sm-tabla, .sm-tabla tbody, .sm-tabla tr, .sm-tabla td, .sm-tabla tbody th { display: block; width: 100%; }
+  .sm-tabla tr { padding: 8px 0; border-top: 1px solid var(--borde); }
+  .sm-tabla td, .sm-tabla tbody th { border: 0; padding: 4px 0; }
+  .sm-tabla td[data-titulo]::before { content: attr(data-titulo); display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--texto-suave); }
+}
+.sm-listado-pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
+.sm-paginas { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--texto-suave); }
+.sm-listado-pie__por { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+.sm-listado-pie__por select { width: auto; }
+
+/* Acción con motivo (AP-000 c4) y bloques desplegables del panel */
+.sm-accion { display: inline-block; max-width: 100%; }
+.sm-accion > summary { list-style: none; }
+.sm-accion > summary::-webkit-details-marker { display: none; }
+.sm-accion[open] > summary { margin-bottom: 8px; }
+.sm-accion__form { display: flex; flex-direction: column; gap: 8px; min-width: min(280px, 100%); padding: 10px; border: 1px solid var(--borde-fuerte); border-radius: 12px; background: rgba(0, 0, 0, 0.35); }
+.sm-accion__form textarea { width: 100%; }
+.sm-desplegable > summary { cursor: pointer; }
+.sm-desplegable[open] > summary { margin-bottom: 14px; }
+.sm-admin-login { justify-content: center; }

@@ -1,0 +1,17 @@
+<%- include('../partials/admin-inicio', { seccion }) %>
+
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <h1 class="eq-cabecera__titulo"><%= titulo %></h1>
+      </div>
+    </header>
+    <div class="dash-panel eq-panel sm-vacio">
+      <p class="sm-vacio__titulo">Esta sección se habilita en la fase <%= fase %> del panel</p>
+      <p class="dash-panel__nota">Mientras tanto, el resto de las secciones del menú ya funciona.</p>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/admin-fin') %>

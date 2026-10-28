@@ -1,6 +1,4 @@
-<%- include('../partials/header') %>
-
-<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<%- include('../partials/admin-inicio', { seccion }) %>
 
 <%
   const accion = torneo ? `/admin/super/torneos/${torneo.id}/editar` : '/admin/super/torneos';
@@ -181,6 +179,4 @@
   </div>
 </section>
 
-<%- include('../partials/dock', { activo: 'admin' }) %>
-
-<%- include('../partials/footer') %>
+<%- include('../partials/admin-fin') %>
