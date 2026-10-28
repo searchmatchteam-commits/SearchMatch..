@@ -10,6 +10,8 @@
       </div>
     </header>
 
+    <%- include('../partials/admin-config-nav', { subseccion: 'catalogos' }) %>
+
     <% if (error) { %>
       <div class="alerta alerta--error" role="alert"><%= error %></div>
     <% } %>

@@ -1,0 +1,13 @@
+<%# Pestañas de Configuración. include('../partials/admin-config-nav', { subseccion: 'pasarelas' }) %>
+<%
+  const pestanasConfig = [
+    { clave: 'catalogos', texto: 'Catálogos', href: '/admin/catalogos' },
+    { clave: 'pasarelas', texto: 'Pasarelas de pago', href: '/admin/configuracion/pasarelas' },
+  ];
+%>
+<nav class="sm-pestanas" aria-label="Configuración">
+  <% pestanasConfig.forEach(function (p) { %>
+    <a class="sm-pestanas__item <%= p.clave === subseccion ? 'sm-pestanas__item--activa' : '' %>" href="<%= p.href %>"
+       <%- p.clave === subseccion ? 'aria-current="page"' : '' %>><%= p.texto %></a>
+  <% }) %>
+</nav>

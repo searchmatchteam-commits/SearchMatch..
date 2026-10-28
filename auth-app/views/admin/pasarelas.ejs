@@ -1,0 +1,96 @@
+<%- include('../partials/admin-inicio', { seccion }) %>
+
+<% const fechaHora = new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Santiago' }); %>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <h1 class="eq-cabecera__titulo">Pasarelas de pago</h1>
+        <p class="eq-cabecera__stats">Credenciales cifradas, prueba de conexión y entorno de cada medio de pago de las inscripciones.</p>
+      </div>
+    </header>
+
+    <%- include('../partials/admin-config-nav', { subseccion }) %>
+
+    <% if (!claveDisponible) { %>
+      <div class="alerta alerta--error" role="alert">
+        Falta <code>PASARELAS_CLAVE</code> en el <code>.env</code> del servidor (64 caracteres hexadecimales). Sin ella no se pueden guardar ni leer credenciales.
+      </div>
+    <% } %>
+
+    <% pasarelas.forEach(function (p) {
+         const def = definiciones[p.clave];
+         const err = errores[p.clave] || {};
+         const resultado = prueba && prueba.clave === p.clave ? prueba : null; %>
+      <article class="dash-panel eq-panel sm-pasarela" id="<%= p.clave %>">
+        <header class="dash-panel__cabecera">
+          <h2 class="dash-panel__titulo"><%= def.nombre %></h2>
+          <span class="sm-estado <%= p.activa ? 'sm-estado--activo' : 'sm-estado--inactivo' %>"><%= p.activa ? 'Activa' : 'Inactiva' %></span>
+          <% if (p.entorno === 'pruebas') { %><span class="sm-rol">Modo de pruebas</span><% } %>
+        </header>
+
+        <p class="dash-panel__nota">
+          <% if (!p.configurada) { %>Sin credenciales.
+          <% } else if (p.probada) { %>Conexión probada el <%= fechaHora.format(p.probadaEn) %>.
+          <% } else { %>Credenciales guardadas sin probar: no se puede activar hasta que la prueba resulte bien.<% } %>
+        </p>
+
+        <% if (resultado) { %>
+          <div class="alerta <%= resultado.ok ? 'alerta--exito' : 'alerta--error' %>" role="status"><%= resultado.detalle %></div>
+        <% } %>
+
+        <form class="sm-form sm-filtros" action="/admin/configuracion/pasarelas/<%= p.clave %>" method="POST" autocomplete="off"
+              data-confirmar="Si cambias credenciales o entorno, la pasarela queda inactiva hasta probarla de nuevo." data-confirmar-titulo="¿Guardar <%= def.nombre %>?" data-confirmar-boton="Guardar">
+          <% def.campos.forEach(function (c) { %>
+            <div class="campo <%= err[c.clave] ? 'campo--error' : '' %>">
+              <label for="<%= p.clave %>-<%= c.clave %>"><%= c.texto %></label>
+              <input type="password" id="<%= p.clave %>-<%= c.clave %>" name="<%= c.clave %>" autocomplete="new-password" spellcheck="false"
+                     placeholder="<%= p.mascara[c.clave] ? `${p.mascara[c.clave]} (déjalo vacío para mantenerlo)` : '' %>" <%= claveDisponible ? '' : 'disabled' %> />
+              <% if (c.ayuda) { %><small class="campo__ayuda"><%= c.ayuda %></small><% } %>
+              <small class="campo__error"><%= err[c.clave] || '' %></small>
+            </div>
+          <% }) %>
+          <div class="campo <%= err.entorno ? 'campo--error' : '' %>">
+            <label for="<%= p.clave %>-entorno">Entorno</label>
+            <select id="<%= p.clave %>-entorno" name="entorno" <%= claveDisponible ? '' : 'disabled' %>>
+              <% Object.entries(entornos).forEach(function ([valor, texto]) { %>
+                <option value="<%= valor %>" <%= p.entorno === valor ? 'selected' : '' %>><%= texto %></option>
+              <% }) %>
+            </select>
+            <small class="campo__error"><%= err.entorno || '' %></small>
+          </div>
+          <% if (p.clave === 'paypal') { %>
+            <div class="campo <%= err.tipo_cambio ? 'campo--error' : '' %>">
+              <label for="paypal-tipo-cambio">Tipo de cambio (pesos chilenos por 1 USD)</label>
+              <input type="text" inputmode="decimal" id="paypal-tipo-cambio" name="tipo_cambio" value="<%= p.tipoCambio || '' %>" placeholder="Ej. 950" <%= claveDisponible ? '' : 'disabled' %> />
+              <small class="campo__ayuda">PayPal no cobra en pesos: el monto en CLP se convierte a USD con este valor. Obligatorio para activarla.</small>
+              <small class="campo__error"><%= err.tipo_cambio || '' %></small>
+            </div>
+          <% } %>
+          <div class="sm-form__acciones">
+            <button type="submit" class="btn btn--verde btn--chico" <%= claveDisponible ? '' : 'disabled' %>>Guardar</button>
+          </div>
+        </form>
+
+        <div class="sm-form__acciones">
+          <form action="/admin/configuracion/pasarelas/<%= p.clave %>/probar" method="POST">
+            <button type="submit" class="btn btn--contorno btn--chico" <%= p.configurada && claveDisponible ? '' : 'disabled' %>>Probar conexión</button>
+          </form>
+          <% if (p.activa) { %>
+            <form action="/admin/configuracion/pasarelas/<%= p.clave %>/desactivar" method="POST"
+                  data-confirmar="Dejará de ofrecerse en los pagos nuevos. Los pagos ya aprobados no cambian." data-confirmar-titulo="¿Desactivar <%= def.nombre %>?" data-confirmar-boton="Desactivar">
+              <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Desactivar</button>
+            </form>
+          <% } else { %>
+            <form action="/admin/configuracion/pasarelas/<%= p.clave %>/activar" method="POST"
+                  data-confirmar="Se ofrecerá a los capitanes en los torneos que la habiliten." data-confirmar-titulo="¿Activar <%= def.nombre %>?" data-confirmar-boton="Activar">
+              <button type="submit" class="btn btn--verde btn--chico" <%= p.probada ? '' : 'disabled' %> title="<%= p.probada ? '' : 'Prueba la conexión primero' %>">Activar</button>
+            </form>
+          <% } %>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+</section>
+
+<%- include('../partials/admin-fin') %>
