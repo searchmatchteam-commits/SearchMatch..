@@ -1328,3 +1328,38 @@ html[data-theme="light"] .sm-mapa .leaflet-bar a:hover {
 html[data-theme="light"] .cursor-luz {
   display: none;
 }
+
+/* Agenda: día en que empieza un torneo (ámbar legible sobre blanco) */
+html[data-theme="light"] .sm-calendario__dia--torneo {
+  --icono-evento: #b45309;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(217, 119, 6, 0.55);
+  color: #92400e;
+}
+
+/* Calendario del inicio: misma estructura, en claro (sin malla, textos oscuros, anillos verde sólido) */
+html[data-theme="light"] .dash-panel--calendario::after { opacity: 0.25; }
+html[data-theme="light"] .dash-panel--calendario .dash-panel__titulo { color: #111827; }
+html[data-theme="light"] .sm-cal__semana { color: #6b7280; }
+html[data-theme="light"] .sm-cal__dia { color: #111827; }
+html[data-theme="light"] .sm-cal__icono { color: var(--icono-evento, #15803d); filter: none; }
+html[data-theme="light"] .sm-cal__dia--hoy.sm-cal__dia--evento { color: var(--sobre-verde); border-color: transparent; }
+html[data-theme="light"] .sm-cal__dia--evento,
+html[data-theme="light"] .sm-cal__dia[aria-pressed="true"] {
+  border-color: #16a34a;
+  color: #15803d;
+  box-shadow: none;
+}
+html[data-theme="light"] .sm-cal__dia[aria-pressed="true"] { background: rgba(22, 163, 74, 0.1); }
+html[data-theme="light"] .sm-cal__dia--hoy .sm-cal__icono { color: currentColor; }
+html[data-theme="light"] .sm-cal__tarjeta { background: #f9fafb; border-color: var(--borde); }
+html[data-theme="light"] .sm-cal__tarjeta-etiqueta { background: #fff; border-color: var(--borde); color: #6b7280; }
+html[data-theme="light"] .sm-cal__ev-titulo,
+html[data-theme="light"] .sm-cal__ev-datos strong,
+html[data-theme="light"] .sm-cal__ev-estado--mio { color: #111827; }
+html[data-theme="light"] .sm-cal__ev-datos,
+html[data-theme="light"] .sm-cal__ev-tipo,
+html[data-theme="light"] .sm-cal__ev-estado { color: #4b5563; }
+html[data-theme="light"] .sm-cal__ev + .sm-cal__ev { border-top-color: var(--borde); }
+html[data-theme="light"] .sm-cal__cta { --cal-dorado: #a16207; }
+html[data-theme="light"] .sm-cal__cta:hover { color: #854d0e; box-shadow: none; }

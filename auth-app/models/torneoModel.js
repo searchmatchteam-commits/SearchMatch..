@@ -305,6 +305,8 @@ async function eventosCalendario(desde, hasta, authId) {
     estado: t.estado,
     estadoTexto: t.estadoTexto,
     detalle: [t.formatoTexto, t.modalidad, t.recinto].filter(Boolean).join(' · '),
+    lugar: [t.recinto, t.comuna].filter(Boolean).join(', '),
+    subtitulo: `${t.formatoTexto} (${t.modalidad})`,
     mio: mios.includes(t.id),
     url: `/torneos/${t.id}`,
   }));

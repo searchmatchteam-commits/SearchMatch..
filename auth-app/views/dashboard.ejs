@@ -204,7 +204,11 @@
         <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
       </div>
       <div class="sm-cal__dias" data-calendario-dias></div>
-      <div class="sm-cal__eventos" aria-live="polite" data-calendario-eventos></div>
+      <!-- Tarjeta inferior: el próximo evento o, con un día elegido, los eventos de ese día (calendario.js) -->
+      <section class="sm-cal__tarjeta" aria-live="polite" data-calendario-eventos hidden>
+        <span class="sm-cal__tarjeta-etiqueta" data-calendario-etiqueta>Próximo evento</span>
+        <div class="sm-cal__tarjeta-lista" data-calendario-lista></div>
+      </section>
     </article>
 
     <!-- Mis equipos: cada equipo se despliega con su plantel; en los que creó, "Administrar" -->

@@ -100,6 +100,8 @@ async function eventos(req, res, next) {
       estado: p.cancelado ? 'cancelado' : 'programado',
       estadoTexto: p.cancelado ? 'Cancelado' : 'Programado',
       detalle: p.cancha,
+      lugar: [p.recinto, p.cancha].filter(Boolean).join(', '),
+      subtitulo: 'Partido por desafío',
       mio: true,
       url: `/partidos/${p.id}`,
     }));

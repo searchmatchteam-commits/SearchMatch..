@@ -1241,10 +1241,61 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   box-shadow: 0 0 8px 2px rgba(var(--verde-rgb), 0.6);
 }
 
-/* ---------- Calendario (solo la vista del mes, sin eventos) ---------- */
+/* ---------- Calendario (vista del mes con eventos; lo arma public/js/calendario.js) ----------
+   Vidrio oscuro con borde y halo verde, fondo con una malla geométrica muy tenue.
+   Días redondos: hoy = anillo verde con resplandor + silbato + estela hacia el día siguiente;
+   con evento = anillo verde + balón (los torneos próximos "respiran"); elegido = relleno verde suave.
+   Abajo, la tarjeta "Próximo evento" (o los eventos del día elegido) con el botón dorado de detalles. */
 .dash-panel--calendario {
-  background: #121212;
-  border-color: rgba(255, 255, 255, 0.1);
+  --cal-borde: rgba(var(--verde-rgb), 0.28);
+  --cal-dorado: #d4af37;
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(var(--verde-rgb), 0.08), transparent 60%),
+    rgba(10, 15, 13, 0.72);
+  border-color: var(--cal-borde);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03) inset, 0 0 32px rgba(var(--verde-rgb), 0.12), 0 24px 60px rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* Malla geométrica de fondo (decorativa, detrás del contenido) */
+.dash-panel--calendario::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  background:
+    repeating-linear-gradient(60deg, transparent 0 46px, rgba(var(--verde-rgb), 0.05) 46px 47px),
+    repeating-linear-gradient(-60deg, transparent 0 46px, rgba(var(--verde-rgb), 0.05) 46px 47px);
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent 85%);
+  mask-image: linear-gradient(to bottom, #000, transparent 85%);
+}
+
+/* Columna flex: cabecera, días de la semana, grilla y tarjeta van una debajo de otra, en el flujo normal.
+   Ninguna se encoge (flex-shrink: 0), así la tarjeta nunca se monta sobre la última fila. */
+.dash-panel--calendario {
+  --cal-dia: 46px; /* diámetro de cada día: alto fijo de las filas de la grilla */
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+}
+
+.dash-panel--calendario > * { flex-shrink: 0; }
+
+@media (max-width: 420px) {
+  .dash-panel--calendario { --cal-dia: 38px; }
+}
+
+.dash-panel--calendario .dash-panel__titulo {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
 }
 
 .dash-panel--calendario .dash-panel__titulo::first-letter {
@@ -1253,26 +1304,26 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
 
 .sm-cal__flechas {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .sm-cal__flecha {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: #1a1a1a;
+  background: rgba(20, 24, 22, 0.9);
   color: var(--texto);
   cursor: pointer;
   transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .sm-cal__flecha svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2.2;
@@ -1284,41 +1335,55 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
 .sm-cal__flecha:focus-visible {
   color: var(--verde);
   border-color: var(--verde-borde);
-  box-shadow: 0 0 12px rgba(var(--verde-rgb), 0.3);
+  box-shadow: 0 0 14px rgba(var(--verde-rgb), 0.35);
 }
 
 .sm-cal__semana,
 .sm-cal__dias {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
+  gap: 6px 4px;
   text-align: center;
+}
+
+/* Filas de alto explícito (no dependen de aspect-ratio): la grilla mide lo que de verdad ocupan sus días */
+.sm-cal__dias {
+  grid-auto-rows: var(--cal-dia);
+  align-items: center;
+  padding-bottom: 16px;
 }
 
 .sm-cal__semana {
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--texto-suave);
+  color: #9ca3af;
 }
 
 .sm-cal__dia {
+  position: relative;
+  z-index: 0;
   display: grid;
-  place-items: center;
-  width: 100%;
-  aspect-ratio: 1;
-  max-height: 44px;
+  grid-template-rows: auto;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  width: min(100%, var(--cal-dia));
+  height: min(100%, var(--cal-dia));
+  margin: 0 auto;
   padding: 0;
-  border: 1px solid transparent;
-  border-radius: 10px;
+  border: 2px solid transparent;
+  border-radius: 50%;
   background: none;
   font: inherit;
-  font-size: 0.88rem;
+  font-size: 0.98rem;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  color: var(--texto);
+  line-height: 1;
+  color: #f3f4f6;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease;
 }
 
 .sm-cal__dia:hover {
@@ -1327,67 +1392,218 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
 
 .sm-cal__dia:focus-visible {
   outline: 2px solid var(--verde-borde);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
-/* Día elegido: anillo verde (hoy mantiene su relleno verde) */
+/* Ícono bajo el número (silbato o balón) */
+.sm-cal__icono {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--icono-evento, var(--verde));
+  filter: drop-shadow(0 0 3px rgba(var(--verde-rgb), 0.7));
+}
+
+/* Día con evento: anillo verde sin relleno */
+.sm-cal__dia--evento {
+  border-color: var(--verde);
+  color: var(--verde);
+  font-weight: 800;
+  box-shadow: 0 0 12px rgba(var(--verde-rgb), 0.45), inset 0 0 8px rgba(var(--verde-rgb), 0.15);
+}
+
+/* Torneo: un segundo anillo exterior, tenue */
+.sm-cal__dia--torneo::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--verde-rgb), 0.3);
+  pointer-events: none;
+}
+
+.sm-cal__dia--proximo:not([aria-pressed="true"]) {
+  animation: sm-cal-respirar 2.6s ease-in-out infinite;
+}
+
+@keyframes sm-cal-respirar {
+  0%, 100% { box-shadow: 0 0 10px rgba(var(--verde-rgb), 0.35), inset 0 0 6px rgba(var(--verde-rgb), 0.12); }
+  50% { box-shadow: 0 0 22px rgba(var(--verde-rgb), 0.75), inset 0 0 10px rgba(var(--verde-rgb), 0.25); }
+}
+
+/* Hoy: anillo verde con resplandor fuerte; el degradado verde va DENTRO del círculo (no sale de la celda) */
+.sm-cal__dia--hoy {
+  overflow: hidden;
+  border-color: var(--verde);
+  background: radial-gradient(circle at 50% 40%, rgba(var(--verde-rgb), 0.28), rgba(var(--verde-rgb), 0.04) 70%);
+  color: var(--verde);
+  font-weight: 800;
+  box-shadow: 0 0 18px rgba(var(--verde-rgb), 0.6), inset 0 0 10px rgba(var(--verde-rgb), 0.2);
+}
+
+/* Elegido: relleno verde suave (hoy elegido: un poco más intenso) */
 .sm-cal__dia[aria-pressed="true"] {
   border-color: var(--verde);
-  background: rgba(var(--verde-rgb), 0.12);
+  background: rgba(var(--verde-rgb), 0.16);
   color: var(--verde);
   font-weight: 800;
 }
 
-.sm-cal__dia--hoy,
-.sm-cal__dia--hoy:hover,
 .sm-cal__dia--hoy[aria-pressed="true"] {
-  background: var(--verde);
-  color: var(--sobre-verde);
-  font-weight: 800;
-  box-shadow: 0 0 14px rgba(var(--verde-rgb), 0.55);
+  background: rgba(var(--verde-rgb), 0.26);
 }
 
-/* Días con eventos (public/js/calendario.js los marca con /api/calendario/eventos):
-   punto dorado = inicio de torneo, verde = partido de mis equipos */
-.sm-cal__dia { position: relative; }
-
-.sm-cal__dia[data-eventos]::after {
-  content: "";
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  transform: translateX(-50%);
-  background: var(--marca-evento, var(--verde));
+@media (prefers-reduced-motion: reduce) {
+  .sm-cal__dia--proximo:not([aria-pressed="true"]) { animation: none; }
 }
 
-.sm-cal__dia[data-eventos="torneo"] { --marca-evento: #f5b301; }
-.sm-cal__dia--hoy[data-eventos] { --marca-evento: var(--sobre-verde); }
-
-.sm-cal__eventos { display: grid; gap: 8px; margin-top: 12px; }
-.sm-cal__eventos:empty { display: none; }
-
-.sm-cal__evento {
-  display: grid;
-  gap: 2px;
-  padding: 10px 12px;
+/* ---------- Tarjeta "Próximo evento" ---------- */
+/* Elemento normal del flujo, debajo de la grilla: sin position absoluta, fondo sólido y borde propio.
+   Columna flex: la etiqueta va arriba (dentro de la tarjeta) y luego los eventos. */
+.sm-cal__tarjeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 16px;
   border-radius: 12px;
-  border: 1px solid var(--vidrio-borde);
-  border-left: 3px solid var(--marca-evento, var(--verde));
-  color: var(--texto);
-  text-decoration: none;
+  background: #0a0f0d;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.sm-cal__evento--torneo { --marca-evento: #f5b301; }
-.sm-cal__evento:hover { background: rgba(255, 255, 255, 0.04); }
-.sm-cal__evento strong { font-size: 0.9rem; }
-.sm-cal__evento small { font-size: 0.78rem; color: var(--texto-suave); }
+.sm-cal__tarjeta[hidden] { display: none; }
 
-/* Hoy elegido: anillo blanco para que se note sobre el verde */
-.sm-cal__dia--hoy[aria-pressed="true"] {
-  border-color: #fff;
+.sm-cal__tarjeta-etiqueta {
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  color: #9ca3af;
+  background: #121614;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sm-cal__tarjeta-lista { display: grid; gap: 14px; width: 100%; }
+
+.sm-cal__tarjeta-vacia {
+  font-size: 0.88rem;
+  color: var(--texto-suave);
+}
+
+.sm-cal__tarjeta-vacia a { color: var(--verde); font-weight: 700; }
+
+.sm-cal__ev { display: grid; gap: 6px; }
+.sm-cal__ev + .sm-cal__ev { padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+
+.sm-cal__ev-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.sm-cal__ev-titulo {
+  min-width: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.sm-cal__ev-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.sm-cal__ev-punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6b7280;
+}
+
+.sm-cal__ev-estado--mio { color: #e5e7eb; }
+
+.sm-cal__ev-estado--mio .sm-cal__ev-punto {
+  background: var(--verde);
+  box-shadow: 0 0 8px rgba(var(--verde-rgb), 0.8);
+}
+
+.sm-cal__ev-datos {
+  font-size: 0.86rem;
+  color: #9ca3af;
+}
+
+.sm-cal__ev-datos strong { color: #fff; }
+
+.sm-cal__ev-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sm-cal__ev-tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.84rem;
+  color: #9ca3af;
+}
+
+.sm-cal__ev-icono {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Botón dorado de detalles (borde y texto, brilla al pasar) */
+.sm-cal__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--cal-dorado);
+  background: rgba(212, 175, 55, 0.06);
+  color: var(--cal-dorado);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.sm-cal__cta:hover,
+.sm-cal__cta:focus-visible {
+  color: #f5d76e;
+  background: rgba(212, 175, 55, 0.14);
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.45);
+}
+
+.sm-cal__cta-icono {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* ---------- Responsive ---------- */
