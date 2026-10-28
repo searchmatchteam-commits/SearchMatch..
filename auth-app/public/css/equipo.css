@@ -1690,72 +1690,6 @@ button.cancha__vacio:focus-visible {
 }
 
 /* ---------- Mis equipos (/mis-equipos) ---------- */
-/* Focos del estadio en las esquinas, encima de la cancha en perspectiva de fondo-cyber */
-.eq-focos {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.eq-focos__torre {
-  position: absolute;
-  top: 9vh;
-  width: 88px;
-  height: 62px;
-  border-radius: 8px;
-  /* Panel de lámparas: una grilla de puntos que brillan */
-  background:
-    radial-gradient(circle, rgba(220, 255, 220, 0.95) 0 2.2px, transparent 3px) 0 0 / 11px 11px,
-    rgba(var(--verde-rgb), 0.12);
-  box-shadow: 0 0 40px 12px rgba(var(--verde-rgb), 0.35), 0 0 160px 60px rgba(var(--verde-rgb), 0.12);
-  opacity: 0.85;
-}
-
-/* El haz de luz que baja hacia la cancha */
-.eq-focos__torre::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 70vw;
-  height: 90vh;
-  background: radial-gradient(ellipse 50% 60% at 50% 0%, rgba(var(--verde-rgb), 0.09), transparent 70%);
-  transform-origin: 50% 0;
-}
-
-.eq-focos__torre--izq {
-  left: 6vw;
-  transform: rotate(-14deg);
-}
-
-.eq-focos__torre--izq::after {
-  transform: translateX(-50%) rotate(-28deg);
-}
-
-.eq-focos__torre--der {
-  right: 6vw;
-  transform: rotate(14deg);
-}
-
-.eq-focos__torre--der::after {
-  transform: translateX(-50%) rotate(28deg);
-}
-
-/* Foco lejano, más chico y tenue */
-.eq-focos__torre--lejos {
-  top: 26vh;
-  right: 22vw;
-  width: 46px;
-  height: 32px;
-  opacity: 0.5;
-}
-
-.eq-focos__torre--lejos::after {
-  display: none;
-}
-
 .eq-mis-grilla {
   list-style: none;
   display: grid;
@@ -2277,19 +2211,6 @@ button.eq-mis__accion {
 @media (min-width: 768px) {
   .eq-mis-grilla {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* En celular los focos se achican para no tapar el título */
-@media (max-width: 759px) {
-  .eq-focos__torre {
-    width: 54px;
-    height: 38px;
-    top: 4vh;
-  }
-
-  .eq-focos__torre--lejos {
-    display: none;
   }
 }
 

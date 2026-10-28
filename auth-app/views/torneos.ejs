@@ -15,7 +15,6 @@
   const formatos = [...new Map(torneos.map((t) => [t.formato, t.formatoTexto])).entries()];
   const modalidadesLista = [...new Set(torneos.map((t) => t.modalidad))].sort();
 %>
-<%- include('partials/fondo-hex') %>
 
 <section class="eq tl">
   <div class="contenedor">

@@ -59,6 +59,7 @@
     <!-- /perfil: escena "cyber-gamer" (después de tema-claro: también trae sus reglas de modo claro) -->
     <link rel="stylesheet" href="/css/perfil-pro.css?v=<%= versionAssets %>" />
   <% } %>
+  <link rel="stylesheet" href="/css/searchmatch-background.css?v=<%= versionAssets %>" />
   <% if (locals.pagina === 'landing' || locals.pagina === 'dashboard') { %>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <% } %>
@@ -91,7 +92,8 @@
     })();
   </script>
 </head>
-<body class="<%= locals.pagina ? 'pagina-' + pagina : '' %><%= locals.perfilPro ? ' perfil-pro' : '' %>">
+<body class="sm-con-fondo <%= locals.pagina ? 'pagina-' + pagina : '' %><%= locals.perfilPro ? ' perfil-pro' : '' %>">
+  <%- include('searchmatch-background') %>
   <header class="navbar">
     <div class="navbar__interior">
       <a class="logo" href="/" aria-label="SearchMatch, inicio">

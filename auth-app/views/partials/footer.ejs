@@ -34,6 +34,7 @@
   <% if (locals.pagina === 'dashboard' || locals.pagina === 'auth' || locals.pagina === 'equipo') { %>
     <script src="/js/cyber.js?v=<%= versionAssets %>" defer></script>
   <% } %>
+  <script src="/js/searchmatch-background.js?v=<%= versionAssets %>" defer></script>
   <% if (locals.pagina === 'auth') { %>
     <script src="/js/auth.js?v=<%= versionAssets %>" defer></script>
   <% } %>
@@ -55,7 +56,7 @@
     <script src="/js/torneo-admin.js?v=<%= versionAssets %>" defer></script>
   <% } %>
   <% if (locals.perfilPro) { %>
-    <!-- /perfil: partículas del fondo, caída de la carta, conteo de números y radar -->
+    <!-- /perfil: caída de la carta, conteo de números y radar -->
     <script src="/js/perfil-pro.js?v=<%= versionAssets %>" defer></script>
   <% } %>
   <% if (locals.pagina === 'landing' || locals.pagina === 'dashboard') { %>

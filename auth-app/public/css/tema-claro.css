@@ -398,21 +398,8 @@ html[data-theme="light"] .pagina-perfil::before {
     );
 }
 
-/* Fondo "cyber" (dashboard, equipo, login): la aurora y la cancha táctica siguen, más suaves */
-html[data-theme="light"] .cyber-fondo__aurora {
-  opacity: 0.45;
-}
-
 html[data-theme="light"] .auth__filo::after {
   background: linear-gradient(90deg, transparent, rgba(21, 128, 61, 0.5), transparent);
-}
-
-html[data-theme="light"] .cyber-fondo__ruido {
-  opacity: 0.03;
-}
-
-html[data-theme="light"] .cyber-fondo__cancha .rival {
-  stroke: rgba(17, 24, 39, 0.14);
 }
 
 html[data-theme="light"] [data-ripple="claro"] .ripple {
@@ -1202,7 +1189,6 @@ html[data-theme="light"] .eq-mis--hero:hover .eq-mis__emblema {
   filter: none;
 }
 html[data-theme="light"] .eq-mis__halo { display: none; }
-html[data-theme="light"] .eq-focos { display: none; }
 
 /* ---------- Ajustes finales del modo blanco ---------- */
 /* Pestañas de acceso: el fondo oscuro de auth.css no puede quedar sobre blanco */

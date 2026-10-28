@@ -3,7 +3,8 @@
    Tipografía: la misma del dashboard. Space Grotesk 700 para el título (como "Benjamin" en el saludo)
    y el botón principal (como "Buscar partido"); Inter para todo lo demás, con etiquetas en mayúsculas
    y tracking amplio (como el chip "Sesión activa").
-   Secciones: tokens · fondo (malla + partículas + retícula) · composición · carta 3D por capas ·
+   Fondo ambiental compartido: searchmatch-background.css.
+   Secciones: tokens · composición · carta 3D por capas ·
    caída elástica · paneles de cristal · radar · botón · dock · modo liviano / movimiento reducido · modo claro.
 
    Forma (cresta angular) y tipografía de la carta viven en carta-jugador.ejs / style.css:
@@ -31,115 +32,6 @@
   --pp-resorte: cubic-bezier(0.34, 1.56, 0.64, 1);
   --auth-fondo: var(--pp-abismo);
   background: var(--pp-abismo);
-}
-
-/* El resplandor genérico de style.css lo reemplaza la malla */
-.perfil-pro::before {
-  display: none;
-}
-
-/* ---------- Fondo: malla de color + partículas + retícula + grano ---------- */
-.pp-fondo {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  background: radial-gradient(ellipse 120% 90% at 50% 0%, #0b0f0c 0%, var(--pp-abismo) 60%);
-  pointer-events: none;
-}
-
-/* Mesh gradient: cuatro manchas grandes y muy desenfocadas que derivan despacio (solo transform: GPU) */
-.pp-fondo__malla {
-  position: absolute;
-  inset: -20%;
-  filter: blur(80px);
-  opacity: 0.9;
-}
-
-.pp-fondo__malla span {
-  position: absolute;
-  border-radius: 50%;
-  will-change: transform;
-}
-
-.pp-fondo__malla span:nth-child(1) {
-  left: 4%;
-  top: 8%;
-  width: 46vmax;
-  height: 46vmax;
-  background: radial-gradient(circle, rgba(16, 122, 64, 0.55), transparent 65%);
-  animation: pp-deriva-a 26s ease-in-out infinite alternate;
-}
-
-.pp-fondo__malla span:nth-child(2) {
-  right: 2%;
-  top: 0;
-  width: 40vmax;
-  height: 40vmax;
-  background: radial-gradient(circle, rgba(52, 58, 54, 0.75), transparent 65%);
-  animation: pp-deriva-b 32s ease-in-out infinite alternate;
-}
-
-.pp-fondo__malla span:nth-child(3) {
-  right: 10%;
-  bottom: 0;
-  width: 50vmax;
-  height: 50vmax;
-  background: radial-gradient(circle, rgba(6, 95, 70, 0.5), transparent 65%);
-  animation: pp-deriva-c 29s ease-in-out infinite alternate;
-}
-
-.pp-fondo__malla span:nth-child(4) {
-  left: 20%;
-  bottom: 6%;
-  width: 34vmax;
-  height: 34vmax;
-  background: radial-gradient(circle, rgba(var(--pp-neon-rgb), 0.16), transparent 65%);
-  animation: pp-deriva-a 22s ease-in-out infinite alternate-reverse;
-}
-
-@keyframes pp-deriva-a {
-  to { transform: translate(14vw, 10vh) scale(1.15); }
-}
-
-@keyframes pp-deriva-b {
-  to { transform: translate(-16vw, 18vh) scale(0.9); }
-}
-
-@keyframes pp-deriva-c {
-  to { transform: translate(-10vw, -14vh) scale(1.2); }
-}
-
-.pp-fondo__particulas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* Retícula de suelo en perspectiva, desvanecida hacia arriba */
-.pp-fondo__reticula {
-  position: absolute;
-  left: -50%;
-  right: -50%;
-  bottom: -10%;
-  height: 60%;
-  background-image:
-    linear-gradient(rgba(var(--pp-neon-rgb), 0.09) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(var(--pp-neon-rgb), 0.09) 1px, transparent 1px);
-  background-size: 64px 64px;
-  transform: perspective(600px) rotateX(62deg);
-  transform-origin: 50% 100%;
-  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 75%);
-  mask-image: linear-gradient(to top, #000 0%, transparent 75%);
-}
-
-/* Grano fino: rompe el banding de los degradados grandes */
-.pp-fondo__grano {
-  position: absolute;
-  inset: 0;
-  opacity: 0.06;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* ---------- Composición asimétrica: carta 40% / datos 60% ---------- */
@@ -967,11 +859,6 @@
 }
 
 /* ---------- Modo liviano y movimiento reducido ---------- */
-.modo-liviano .pp-fondo__malla,
-.modo-liviano .pp-fondo__particulas {
-  display: none;
-}
-
 .modo-liviano .pp-panel,
 .modo-liviano .perfil-pro .dock {
   -webkit-backdrop-filter: none;
@@ -980,7 +867,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pp-fondo__malla span,
   .pp-radar__barrido,
   .pp-eyebrow__punto,
   .pp-heroe__sombra,
@@ -1012,45 +898,6 @@ html[data-theme="light"] .perfil-pro {
   --pp-cristal-borde: #e2e8f0;
   --pp-cristal-neon: rgba(21, 128, 61, 0.25);
   background: #ffffff;
-}
-
-html[data-theme="light"] .pp-fondo {
-  background: radial-gradient(ellipse 120% 90% at 50% 0%, #ffffff 0%, #f8fafc 70%);
-}
-
-html[data-theme="light"] .pp-fondo__malla {
-  opacity: 0.15;
-}
-
-html[data-theme="light"] .pp-fondo__malla span:nth-child(1) {
-  background: radial-gradient(circle, rgba(21, 128, 61, 0.22), transparent 65%);
-}
-
-html[data-theme="light"] .pp-fondo__malla span:nth-child(2) {
-  background: radial-gradient(circle, rgba(203, 213, 225, 0.35), transparent 65%);
-}
-
-html[data-theme="light"] .pp-fondo__malla span:nth-child(3) {
-  background: radial-gradient(circle, rgba(21, 128, 61, 0.16), transparent 65%);
-}
-
-html[data-theme="light"] .pp-fondo__malla span:nth-child(4) {
-  background: radial-gradient(circle, rgba(21, 128, 61, 0.1), transparent 65%);
-}
-
-html[data-theme="light"] .pp-fondo__reticula {
-  background-image:
-    linear-gradient(rgba(21, 128, 61, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(21, 128, 61, 0.07) 1px, transparent 1px);
-}
-
-html[data-theme="light"] .pp-fondo__grano {
-  opacity: 0.025;
-}
-
-html[data-theme="light"] .pp-fondo__particulas {
-  opacity: 0.18;
-  filter: grayscale(1);
 }
 
 html[data-theme="light"] .pp-eyebrow,

@@ -8,7 +8,6 @@
 %>
 <!-- Pantalla completa "Buscar partido": data-estado = buscando | encontrado | vacio (matchmaking.js) -->
 <section class="mm" data-matchmaking data-estado="buscando" data-equipo="<%= equipo.id %>" data-zona="<%= equipo.zona || '' %>" data-nivel="<%= equipo.nivel || '' %>" aria-labelledby="mm-titulo">
-  <%- include('partials/mm-fondo') %>
   <div class="mm__flash" aria-hidden="true"></div>
 
   <script type="application/json" data-rivales><%- rivalesJson %></script>

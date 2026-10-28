@@ -7,8 +7,13 @@
   overflow: hidden;
 }
 
+/* La pantalla completa conserva su navegación propia; el fondo global queda visible detrás. */
+.pagina-matchmaking > .navbar,
+.pagina-matchmaking > .pie {
+  display: none;
+}
+
 .mm {
-  --mm-fondo: #050806;
   --mm-verde: #00ff41;
   --mm-verde-rgb: 0, 255, 65;
   --mm-texto: #f3f7f3;
@@ -23,59 +28,10 @@
   place-items: center;
   padding: 72px 16px 32px;
   overflow-y: auto;
-  background: var(--mm-fondo);
+  background: transparent;
   color: var(--mm-texto);
   font-family: 'Inter', system-ui, sans-serif;
   text-align: center;
-}
-
-.mm__fondo {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  /* Viñeta: el centro (el reloj) queda iluminado y los bordes se hunden en negro */
-  background:
-    radial-gradient(ellipse 55% 60% at 50% 48%, rgba(var(--mm-verde-rgb), 0.14), transparent 70%),
-    radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.75) 100%);
-}
-.mm[data-estado='encontrado'] .mm__fondo {
-  background:
-    radial-gradient(ellipse 60% 65% at 50% 42%, rgba(var(--mm-verde-rgb), 0.24), transparent 70%),
-    radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.75) 100%);
-}
-
-/* Pizarra táctica: líneas de cancha, jugadas y jugadores, apenas visible */
-.mm__cancha {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  width: 100% !important;
-  height: 100% !important;
-  opacity: 0.12;
-  stroke: var(--mm-verde) !important;
-  stroke-width: 2 !important;
-}
-.mm__cancha-grilla {
-  fill: url(#mm-grilla);
-}
-.mm__cancha pattern path {
-  fill: none;
-  stroke-width: 0.6;
-  opacity: 0.5;
-}
-.mm__cancha marker path {
-  fill: var(--mm-verde);
-  stroke: none;
-}
-.mm__cancha-lineas {
-  fill: none;
-}
-.mm__cancha-jugadas {
-  fill: none;
-  stroke-dasharray: 10 9;
-}
-.mm__cancha-jugadores {
-  fill: rgba(var(--mm-verde-rgb), 0.5);
 }
 
 /* Destello blanco-verde al encontrar rival */
