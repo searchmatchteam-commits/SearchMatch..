@@ -1,0 +1,51 @@
+<%- include('../partials/admin-inicio', { seccion }) %>
+
+<% const fechaHora = new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeStyle: 'medium', timeZone: 'America/Santiago' }); %>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <h1 class="eq-cabecera__titulo">Registro de actividad</h1>
+        <p class="eq-cabecera__stats">Quién cambió qué y cuándo. Las entradas no se pueden editar ni borrar.</p>
+      </div>
+    </header>
+
+    <%- include('../partials/listado-barra', { listado, filtrosVista, placeholder: 'Elemento, motivo, acción o administrador' }) %>
+
+    <% if (entradas.length === 0) { %>
+      <%- include('../partials/listado-vacio', { listado, mensaje: 'Aún no hay acciones registradas' }) %>
+    <% } else { %>
+      <div class="dash-panel eq-panel sm-tabla-contenedor">
+        <table class="sm-tabla">
+          <thead>
+            <tr>
+              <%- include('../partials/listado-th', { listado, clave: 'fecha', texto: 'Fecha y hora' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'admin', texto: 'Administrador' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'seccion', texto: 'Sección' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'accion', texto: 'Acción' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'elemento', texto: 'Elemento' }) %>
+              <th scope="col">Motivo</th>
+              <th scope="col"><span class="solo-lectores">Detalle</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% entradas.forEach(function (e) { %>
+              <tr>
+                <td data-titulo="Fecha"><%= fechaHora.format(e.fecha) %></td>
+                <td data-titulo="Administrador"><%= e.admin %></td>
+                <td data-titulo="Sección"><%= e.seccionTexto %></td>
+                <td data-titulo="Acción"><%= e.accion %></td>
+                <td data-titulo="Elemento"><%= e.elemento || '—' %></td>
+                <td data-titulo="Motivo"><%= e.motivo || '—' %></td>
+                <td><a class="btn btn--contorno btn--chico" href="/admin/actividad/<%= e.id %>"><%= e.conCambios ? 'Ver cambios' : 'Ver' %></a></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <%- include('../partials/listado-pie', { listado }) %>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('../partials/admin-fin') %>

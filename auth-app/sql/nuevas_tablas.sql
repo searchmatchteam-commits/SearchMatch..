@@ -317,3 +317,94 @@ ALTER TABLE equipo
     ADD COLUMN IF NOT EXISTS longitud NUMERIC(7, 3) CHECK (longitud BETWEEN -180 AND 180);
 ALTER TABLE equipo DROP CONSTRAINT IF EXISTS equipo_ubicacion_completa;
 ALTER TABLE equipo ADD CONSTRAINT equipo_ubicacion_completa CHECK ((latitud IS NULL) = (longitud IS NULL));
+
+
+-- ============================================================
+-- SA-6) PANEL DE ADMINISTRACIÓN: CUENTAS DEL PANEL, SESIONES, BLOQUEO Y REGISTRO DE ACTIVIDAD
+--       (AP-001, AP-011, AP-032)
+-- ============================================================
+-- Cuentas del panel: rol 'administrador' o 'superadministrador' (= Administrador principal, el único
+-- que gestiona administradores). Son distintas de las de jugador: no entran por /login, solo por /admin/login.
+-- admin_nombre: nombre visible (las cuentas del panel no tienen perfil de jugador).
+-- admin_seleccionado_en / _por: cuándo y quién la seleccionó. admin_revocado_en: NULL = acceso vigente.
+ALTER TABLE usuario
+    ADD COLUMN IF NOT EXISTS admin_nombre           VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS admin_seleccionado_en  TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS admin_seleccionado_por INT REFERENCES usuario(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS admin_revocado_en      TIMESTAMPTZ;
+
+UPDATE usuario u SET admin_seleccionado_en = now()
+  FROM rol_aplicacion r
+ WHERE r.id = u.id_rol_aplicacion AND lower(r.nombre) IN ('administrador', 'superadministrador')
+   AND u.admin_seleccionado_en IS NULL;
+
+-- Sesión del panel (AP-001): aparte de la de Supabase. La cookie sm_admin guarda un token al azar;
+-- aquí solo su SHA-256. Se cierra al salir, al revocar la cuenta o tras 30 minutos sin actividad.
+CREATE TABLE IF NOT EXISTS admin_sesion (
+    id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    token_hash       CHAR(64)    NOT NULL UNIQUE,
+    id_usuario       INT         NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
+    creada_en        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    ultima_actividad TIMESTAMPTZ NOT NULL DEFAULT now(),
+    cerrada_en       TIMESTAMPTZ,
+    motivo_cierre    VARCHAR(30)
+);
+CREATE INDEX IF NOT EXISTS ix_admin_sesion_usuario ON admin_sesion (id_usuario) WHERE cerrada_en IS NULL;
+ALTER TABLE admin_sesion ENABLE ROW LEVEL SECURITY;
+
+-- Intentos fallidos en /admin/login por correo (exista o no la cuenta, así no se revela cuáles existen).
+-- 5 seguidos → bloqueado_hasta = ahora + 15 minutos.
+CREATE TABLE IF NOT EXISTS admin_intento (
+    correo         VARCHAR(150) PRIMARY KEY,
+    fallidos       SMALLINT    NOT NULL DEFAULT 0,
+    bloqueado_hasta TIMESTAMPTZ,
+    actualizado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE admin_intento ENABLE ROW LEVEL SECURITY;
+
+-- Registro de actividad (AP-032): solo inserción. id_admin y admin_nombre se guardan tal cual
+-- (sin clave foránea) para que la entrada sobreviva aunque cambie la cuenta.
+CREATE TABLE IF NOT EXISTS admin_actividad (
+    id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    fecha          TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    id_admin       INT,
+    admin_nombre   VARCHAR(150),
+    seccion        VARCHAR(40)  NOT NULL,
+    accion         VARCHAR(60)  NOT NULL,
+    elemento_tipo  VARCHAR(40),
+    elemento_id    VARCHAR(40),
+    elemento       VARCHAR(200),
+    motivo         VARCHAR(500),
+    valor_anterior JSONB,
+    valor_nuevo    JSONB
+);
+CREATE INDEX IF NOT EXISTS ix_admin_actividad_fecha ON admin_actividad (fecha DESC);
+CREATE INDEX IF NOT EXISTS ix_admin_actividad_admin ON admin_actividad (id_admin, fecha DESC);
+ALTER TABLE admin_actividad ENABLE ROW LEVEL SECURITY;
+
+-- Nadie edita ni borra el registro: el trigger corre también para el dueño de la tabla.
+CREATE OR REPLACE FUNCTION admin_actividad_solo_insercion() RETURNS trigger AS $$
+BEGIN
+    RAISE EXCEPTION 'El registro de actividad no se puede modificar ni borrar.' USING ERRCODE = 'insufficient_privilege';
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tr_admin_actividad_inmutable ON admin_actividad;
+CREATE TRIGGER tr_admin_actividad_inmutable
+    BEFORE UPDATE OR DELETE ON admin_actividad
+    FOR EACH ROW EXECUTE FUNCTION admin_actividad_solo_insercion();
+DROP TRIGGER IF EXISTS tr_admin_actividad_sin_truncate ON admin_actividad;
+CREATE TRIGGER tr_admin_actividad_sin_truncate
+    BEFORE TRUNCATE ON admin_actividad
+    FOR EACH STATEMENT EXECUTE FUNCTION admin_actividad_solo_insercion();
+
+DO $$
+BEGIN
+    REVOKE UPDATE, DELETE, TRUNCATE ON admin_actividad FROM PUBLIC;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+        REVOKE ALL ON admin_actividad FROM anon;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+        REVOKE ALL ON admin_actividad FROM authenticated;
+    END IF;
+END $$;

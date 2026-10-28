@@ -1,0 +1,54 @@
+<%- include('../partials/admin-inicio', { seccion }) %>
+
+<%
+  const fechaHora = new Intl.DateTimeFormat('es-CL', { dateStyle: 'full', timeStyle: 'medium', timeZone: 'America/Santiago' });
+  // Une las claves de los dos valores para mostrarlos lado a lado.
+  const anterior = entrada.anterior || {};
+  const nuevo = entrada.nuevo || {};
+  const claves = [...new Set([...Object.keys(anterior), ...Object.keys(nuevo)])];
+  const mostrar = function (v) { return v === undefined || v === null || v === '' ? '—' : (typeof v === 'object' ? JSON.stringify(v) : String(v)); };
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: '/admin/actividad' }) %>
+        <h1 class="eq-cabecera__titulo"><%= entrada.accion %></h1>
+        <p class="eq-cabecera__stats"><%= fechaHora.format(entrada.fecha) %></p>
+      </div>
+    </header>
+
+    <div class="dash-panel eq-panel">
+      <dl class="sm-credenciales">
+        <div><dt>Administrador</dt><dd><%= entrada.admin %></dd></div>
+        <div><dt>Sección</dt><dd><%= entrada.seccionTexto %></dd></div>
+        <div><dt>Elemento</dt><dd><%= entrada.elemento || '—' %></dd></div>
+        <div><dt>Motivo</dt><dd><%= entrada.motivo || '—' %></dd></div>
+      </dl>
+    </div>
+
+    <div class="dash-panel eq-panel">
+      <header class="dash-panel__cabecera"><h2 class="dash-panel__titulo">Cambios</h2></header>
+      <% if (claves.length === 0) { %>
+        <p class="dash-panel__nota">Esta acción no modificó datos guardados.</p>
+      <% } else { %>
+        <div class="sm-tabla-contenedor">
+          <table class="sm-tabla">
+            <thead><tr><th scope="col">Dato</th><th scope="col">Valor anterior</th><th scope="col">Valor nuevo</th></tr></thead>
+            <tbody>
+              <% claves.forEach(function (k) { %>
+                <tr>
+                  <th scope="row"><%= k %></th>
+                  <td data-titulo="Anterior"><%= mostrar(anterior[k]) %></td>
+                  <td data-titulo="Nuevo"><%= mostrar(nuevo[k]) %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/admin-fin') %>
