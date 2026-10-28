@@ -25,7 +25,7 @@ const subirImagen = express.raw({ type: ['image/jpeg', 'image/png', 'image/webp'
 router.get('/', pageController.landing);
 
 // GET/POST /select-role → "¿Cómo quieres empezar?" (solo con sesión).
-router.get('/select-role', requireAuth, (req, res, next) => (req.usuario.esSuperAdmin ? res.redirect('/admin/super') : next()), rolController.mostrarSeleccion);
+router.get('/select-role', requireAuth, (req, res, next) => (req.usuario.esCuentaPanel ? res.redirect('/admin') : next()), rolController.mostrarSeleccion);
 router.post('/select-role', requireAuth, rolController.guardarSeleccion);
 
 // Rol "jugador": wizard para crear el perfil, la carta resultante y el editor.

@@ -2,8 +2,8 @@
 
   <footer class="pie">
     <div class="pie__interior">
-      <% if (!(usuario && usuario.esSuperAdmin)) { %>
-      <!-- El superadministrador no ve estos enlaces: navega con el botón "Panel" del encabezado -->
+      <% if (!(usuario && usuario.esCuentaPanel)) { %>
+      <!-- Las cuentas del panel no ven estos enlaces: navegan con el menú lateral del panel -->
       <nav class="pie__links" aria-label="Pie de página">
         <a href="/">Inicio</a>
         <% if (usuario) { %>

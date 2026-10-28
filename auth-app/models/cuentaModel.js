@@ -64,8 +64,12 @@ function enviarEnlaceRecuperacion(supabase, correo, urlRedireccion) {
   return supabase.auth.resetPasswordForEmail(correo, { redirectTo: urlRedireccion });
 }
 
-function validarEnlaceRecuperacion(supabase, { code, tokenHash }) {
-  if (tokenHash) return supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' });
+// AP-011: la invitación de un administrador llega al mismo formulario. Según la plantilla de Supabase trae
+// token_hash con type 'invite', o los tokens en el fragmento de la URL (#access_token=...), que la página
+// reenvía como parámetros: se validan con Supabase al abrir la sesión.
+function validarEnlaceRecuperacion(supabase, { code, tokenHash, type, accessToken, refreshToken }) {
+  if (tokenHash) return supabase.auth.verifyOtp({ token_hash: tokenHash, type: type === 'invite' ? 'invite' : 'recovery' });
+  if (accessToken && refreshToken) return supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
   return supabase.auth.exchangeCodeForSession(code);
 }
 

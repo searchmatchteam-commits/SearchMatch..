@@ -40,13 +40,16 @@ async function construirUsuario(usuarioAuth) {
   return {
     id: perfil ? perfil.id : null,
     idAuth: usuarioAuth.id,
-    nombre: (perfil && perfil.nombre) || meta.nombre || usuarioAuth.email,
+    nombre: (perfil && (perfil.nombre || perfil.admin_nombre)) || meta.nombre || usuarioAuth.email,
     apellido: (perfil && perfil.apellido) || meta.apellido || '',
     correo: usuarioAuth.email,
     rolInicio: ROLES_INICIO[meta.rol_inicio] ? meta.rol_inicio : null,
     activo: !perfil || perfil.activo !== false, // CORRECCIÓN: regla 7 (sin fila en la BD se asume activa)
-    esAdmin: Boolean(perfil && /^(super)?administrador$/i.test(perfil.rol || '')), // NUEVO: AR-004 (el superadministrador también lo es)
-    esSuperAdmin: Boolean(perfil && /^superadministrador$/i.test(perfil.rol || '')),
+    // AP-001: las cuentas del panel (rol Administrador o Superadministrador = Administrador principal) son
+    // distintas de las de jugador. esAdmin exige además que su selección no esté revocada (AP-011).
+    esCuentaPanel: Boolean(perfil && /^(super)?administrador$/i.test(perfil.rol || '')),
+    esAdmin: Boolean(perfil && /^(super)?administrador$/i.test(perfil.rol || '') && !perfil.admin_revocado_en),
+    esSuperAdmin: Boolean(perfil && /^superadministrador$/i.test(perfil.rol || '') && !perfil.admin_revocado_en),
     terminosVersion: perfil ? perfil.terminos_version : null, // NUEVO: AR-011
     privacidadVersion: perfil ? perfil.privacidad_version : null, // NUEVO: AR-011
     correoGuardado: perfil ? perfil.correo : null, // NUEVO: AR-012 (para sincronizar un cambio de correo)
@@ -82,6 +85,8 @@ async function cargarSesion(req, res, next) {
     // (también si un administrador la desactiva mientras navega, AD-012).
     if (!usuario.activo) {
       await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
+      // AP-001: en el panel, al login del panel (con su sesión del panel cerrada por requireAdmin al no haber usuario).
+      if (req.path.startsWith('/admin')) return req.path === '/admin/login' ? next() : res.redirect('/admin/login?msg=sin-acceso');
       return req.path === '/login' ? next() : res.redirect('/login?msg=Cuenta_desactivada');
     }
 
@@ -116,13 +121,13 @@ function requireAuth(req, res, next) {
 }
 
 /**
- * Página de inicio de un usuario autenticado: el panel de superadministración si
- * es el superadministrador; si no, la selección de rol si aún no eligió uno, o el dashboard.
+ * Página de inicio de un usuario autenticado: el panel si es una cuenta de administración;
+ * si no, la selección de rol si aún no eligió uno, o el dashboard.
  * @param {string|null|undefined} rolInicio - user_metadata.rol_inicio
- * @param {boolean} [esSuperAdmin]
+ * @param {boolean} [esCuentaPanel]
  */
-function rutaDeInicio(rolInicio, esSuperAdmin = false) {
-  if (esSuperAdmin) return '/admin/super';
+function rutaDeInicio(rolInicio, esCuentaPanel = false) {
+  if (esCuentaPanel) return '/admin';
   return ROLES_INICIO[rolInicio] ? '/dashboard' : '/select-role';
 }
 
@@ -131,7 +136,7 @@ function rutaDeInicio(rolInicio, esSuperAdmin = false) {
  *   router.get('/dashboard', requireAuth, requireRol, pageController.dashboard);
  */
 function requireRol(req, res, next) {
-  if (req.usuario.esSuperAdmin) return res.redirect('/admin/super'); // no participa como jugador
+  if (req.usuario.esCuentaPanel) return res.redirect('/admin'); // AP-001: las cuentas del panel no juegan
   if (!req.usuario.rolInicio) {
     return res.redirect('/select-role');
   }
@@ -141,7 +146,7 @@ function requireRol(req, res, next) {
 /** Redirige a su inicio si el usuario ya tiene sesión. Se aplica a /login y /registro. */
 function redirectIfAuthenticated(req, res, next) {
   if (req.usuario) {
-    return res.redirect(rutaDeInicio(req.usuario.rolInicio, req.usuario.esSuperAdmin));
+    return res.redirect(rutaDeInicio(req.usuario.rolInicio, req.usuario.esCuentaPanel));
   }
   return next();
 }

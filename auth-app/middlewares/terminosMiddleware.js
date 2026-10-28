@@ -8,7 +8,8 @@ function rutaLibre(ruta) {
 }
 
 function exigirTerminos(req, res, next) {
-  if (!req.usuario || rutaLibre(req.path) || aceptoVersionesVigentes(req.usuario)) return next();
+  // Las cuentas del panel (AP-001) no son de jugador: no aceptan los términos de los usuarios.
+  if (!req.usuario || req.usuario.esCuentaPanel || rutaLibre(req.path) || aceptoVersionesVigentes(req.usuario)) return next();
   if (req.accepts(['html', 'json']) === 'json') {
     return res.status(403).json({ ok: false, error: 'Debes aceptar los términos vigentes para continuar.' });
   }
