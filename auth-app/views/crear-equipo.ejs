@@ -1,7 +1,9 @@
 <%- include('partials/header') %>
 <%
-  // Pasos del wizard: 1 y 2 son el formulario; el 3 se muestra al crear el equipo (/crear-equipo/listo).
-  const pasos = ['Crea tu equipo', 'Configura tu equipo', 'Confirmación'];
+  // Pasos del wizard: 1 a 3 son el formulario (el 3, ubicación, es opcional — EQ-UB);
+  // el 4 se muestra al crear el equipo (/crear-equipo/listo).
+  const pasos = ['Crea tu equipo', 'Configura tu equipo', 'Ubicación', 'Confirmación'];
+  const ubicacion = datos.ubicacion || null;
   const iconoEscudo = '<path d="M12 3l8 3v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6z" />';
   const iconoCheck = '<path d="M5 12.5l4.2 4.2L19 7" />';
   // "Fútbol 7 y 11" (mismo texto que models/equipoModel.js y crear-equipo.js)
@@ -60,7 +62,7 @@
   <!-- Lado derecho: el formulario -->
   <div class="wizard__panel">
     <!-- Barra de progreso: crear-equipo.js actualiza las clases y --progreso al cambiar de paso -->
-    <div class="pasos pasos--3" data-pasos style="--progreso: <%= (paso - 1) / (pasos.length - 1) %>">
+    <div class="pasos" data-pasos style="--cantidad-pasos: <%= pasos.length %>; --progreso: <%= (paso - 1) / (pasos.length - 1) %>">
       <div class="pasos__barra" aria-hidden="true"><span></span></div>
       <ol class="pasos__lista">
         <% pasos.forEach(function (nombre, i) { const numero = i + 1; %>
@@ -231,6 +233,25 @@
           </div>
         </fieldset>
 
+        <!-- ============ PASO 3: UBICACIÓN (opcional) — EQ-UB ============
+             crear-equipo.js crea el mapa (mapa-ubicacion.js) al llegar aquí y llena latitud y longitud. -->
+        <fieldset class="wizard__paso" data-paso="3">
+          <legend class="wizard__titulo">¿Dónde juegan?</legend>
+          <p class="wizard__subtitulo">Toca el mapa donde suele jugar tu equipo para ver a cuántos km están los rivales. Ellos solo ven la distancia, nunca el lugar.</p>
+          <span class="ceq-chip ceq-chip--opcional">Opcional: puedes marcarla después en tu panel</span>
+
+          <div class="sm-mapa ceq-mapa" data-mapa-ubicacion></div>
+          <div class="ceq-ubicacion__acciones">
+            <button type="button" class="btn btn--contorno btn--chico" data-usar-mi-ubicacion>Usar mi ubicación</button>
+            <button type="button" class="btn btn--contorno btn--chico" data-quitar-ubicacion <%= ubicacion ? '' : 'hidden' %>>Quitar pin</button>
+          </div>
+          <p class="ceq-ubicacion__estado" data-ubicacion-estado role="status" aria-live="polite"></p>
+          <noscript><p class="campo__ayuda">El mapa necesita JavaScript: podrás marcar la ubicación después en tu panel.</p></noscript>
+
+          <input type="hidden" name="latitud" value="<%= ubicacion ? ubicacion.lat : '' %>" data-latitud />
+          <input type="hidden" name="longitud" value="<%= ubicacion ? ubicacion.lng : '' %>" data-longitud />
+        </fieldset>
+
         <!-- Errores del servidor o de crear-equipo.js -->
         <div class="alerta alerta--error" role="alert" data-alerta-errores <%= errores.length > 0 ? '' : 'hidden' %>>
           <ul>
@@ -243,7 +264,7 @@
           <a class="btn btn--oscuro btn--grande" href="/select-role" data-volver>
             <span aria-hidden="true">←</span> Volver
           </a>
-          <!-- Sin JS los dos pasos se ven juntos y este botón crea el equipo -->
+          <!-- Sin JS los tres pasos se ven juntos y este botón crea el equipo -->
           <button type="submit" class="btn btn--verde btn--grande" data-continuar data-texto-cargando="CREANDO EQUIPO...">
             <span class="btn__spinner" aria-hidden="true"></span>
             <span class="btn__texto">Crear equipo</span>
@@ -258,5 +279,14 @@
 </section>
 
 <p class="ceq-pie">¿No es lo que buscabas? <a href="/select-role">Cambiar tipo de cuenta</a></p>
+
+<% if (!creado) { %>
+  <!-- EQ-UB: mapa del paso 3 (Leaflet, el mismo de /canchas) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+  <script src="/js/mapa-ubicacion.js?v=<%= versionAssets %>" defer></script>
+<% } %>
 
 <%- include('partials/footer') %>

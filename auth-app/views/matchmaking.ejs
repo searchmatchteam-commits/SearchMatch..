@@ -8,41 +8,7 @@
 %>
 <!-- Pantalla completa "Buscar partido": data-estado = buscando | encontrado | vacio (matchmaking.js) -->
 <section class="mm" data-matchmaking data-estado="buscando" data-equipo="<%= equipo.id %>" data-zona="<%= equipo.zona || '' %>" data-nivel="<%= equipo.nivel || '' %>" aria-labelledby="mm-titulo">
-  <div class="mm__fondo" aria-hidden="true">
-    <!-- Pizarra táctica de fondo (muy tenue: el foco es el reloj) -->
-    <svg class="mm__cancha" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
-      <defs>
-        <pattern id="mm-grilla" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0v40" /></pattern>
-        <marker id="mm-flecha" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" /></marker>
-      </defs>
-      <rect class="mm__cancha-grilla" width="1600" height="900" />
-      <g class="mm__cancha-lineas">
-        <rect x="100" y="80" width="1400" height="740" rx="6" />
-        <path d="M800 80v740" />
-        <circle cx="800" cy="450" r="95" />
-        <rect x="100" y="260" width="220" height="380" />
-        <rect x="100" y="360" width="80" height="180" />
-        <path d="M320 380a95 95 0 0 1 0 140" />
-        <rect x="70" y="410" width="30" height="80" />
-        <rect x="1280" y="260" width="220" height="380" />
-        <rect x="1420" y="360" width="80" height="180" />
-        <path d="M1280 380a95 95 0 0 0 0 140" />
-        <rect x="1500" y="410" width="30" height="80" />
-      </g>
-      <g class="mm__cancha-jugadas">
-        <path d="M330 250 Q 450 170 560 230" marker-end="url(#mm-flecha)" />
-        <path d="M420 620 L 600 560" marker-end="url(#mm-flecha)" />
-        <path d="M1240 300 Q 1120 360 1060 470" marker-end="url(#mm-flecha)" />
-        <path d="M1150 650 Q 1000 700 920 610" marker-end="url(#mm-flecha)" />
-      </g>
-      <g class="mm__cancha-jugadores">
-        <circle cx="300" cy="250" r="11" /><circle cx="400" cy="620" r="11" /><circle cx="560" cy="420" r="11" />
-        <circle cx="240" cy="450" r="11" /><circle cx="650" cy="300" r="11" /><circle cx="690" cy="640" r="11" />
-        <circle cx="1270" cy="290" r="11" /><circle cx="1180" cy="660" r="11" /><circle cx="1040" cy="430" r="11" />
-        <circle cx="1360" cy="450" r="11" /><circle cx="950" cy="250" r="11" /><circle cx="910" cy="700" r="11" />
-      </g>
-    </svg>
-  </div>
+  <%- include('partials/mm-fondo') %>
   <div class="mm__flash" aria-hidden="true"></div>
 
   <script type="application/json" data-rivales><%- rivalesJson %></script>
@@ -85,6 +51,14 @@
         <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg><%= equipo.zona %></li>
       <% } %>
     </ul>
+    <% if (locals.puedeCambiarEquipo) { %>
+      <!-- Capitanea varios equipos: vuelve al selector -->
+      <a class="mm__cambiar" href="/matchmaking">Buscando con <strong><%= equipo.nombre %></strong> · Cambiar equipo</a>
+    <% } %>
+    <% if (!equipo.ubicacion) { %>
+      <!-- EQ-UB: sin ubicación no hay km; se ordena por comuna y nivel -->
+      <a class="mm__sugerencia" href="<%= volver %>#ubicacion">Marca la ubicación de tu equipo para ver a cuántos km están los rivales</a>
+    <% } %>
     <a class="mm__cancelar" href="<%= volver %>">
       Cancelar búsqueda
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
@@ -123,6 +97,7 @@
       </div>
 
       <h2 class="mm__nombre" data-rival-nombre></h2>
+      <p class="mm__distancia" data-rival-distancia hidden></p>
       <ul class="mm__meta">
         <li data-rival-nivel></li>
         <li data-rival-zona>

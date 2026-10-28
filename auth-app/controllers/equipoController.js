@@ -26,7 +26,7 @@
 const equipoModel = require('../models/equipoModel');
 const jugadorModel = require('../models/jugadorModel');
 const { jugadorParaVista, detectarTipoImagen, leerEscudo } = require('./jugadorController');
-const { LONGITUD_MAXIMA_MENSAJE_SOLICITUD, leerModalidades } = require('../middlewares/validators');
+const { LONGITUD_MAXIMA_MENSAJE_SOLICITUD, leerModalidades, leerUbicacion } = require('../middlewares/validators');
 const { NIVELES, POSICIONES, ESTADISTICAS, calcularMedia } = require('../config/perfilJugador');
 const {
   MODALIDADES, FORMACIONES, puestosDeFormacion, DETALLE_NIVEL, BARRAS_NIVEL, MAX_EQUIPOS_COMO_CAPITAN, // CORRECCIÓN: regla 5
@@ -296,13 +296,13 @@ async function crear(req, res, next) {
 }
 
 // ---------------------------------------------------------------
-// GET /crear-equipo/listo → paso 3: confirmación
+// GET /crear-equipo/listo → paso 4: confirmación
 // ---------------------------------------------------------------
 async function confirmacion(req, res, next) {
   try {
     const equipo = await equipoModel.obtenerEquipoDeCapitan(req.usuario.idAuth);
     if (!equipo) return res.redirect('/crear-equipo');
-    return renderWizard(res, { datos: {}, paso: 3, creado: equipo });
+    return renderWizard(res, { datos: {}, paso: 4, creado: equipo });
   } catch (err) {
     return pasarError(err, next);
   }
@@ -610,29 +610,68 @@ async function fotoSolicitud(req, res, next) {
 // ---------------------------------------------------------------
 // GET /matchmaking → pantalla "Buscar partido" (matchmaking.js): simula la búsqueda y revela
 // un rival de listarRivales() sin desafío pendiente; "Enviar desafío" usa POST /mi-equipo/desafios/:id.
-// ?equipo= elige desde cuál de sus equipos busca el capitán (sin él, el principal).
+// ¿Con qué equipo? ?equipo= lo dice (debe capitanearlo); sin él, si capitanea uno solo se usa ese
+// y si capitanea varios se muestra primero el selector (matchmaking-elegir).
 // ---------------------------------------------------------------
 async function matchmaking(req, res, next) {
   const idEquipo = idDeParametro(req.query.equipo);
   try {
-    const equipo = await equipoModel.obtenerMiEquipo(req.usuario.idAuth, idEquipo);
-    if (!equipo || !equipo.soyCapitan) {
+    const misEquipos = await equipoModel.listarMisEquipos(req.usuario.idAuth);
+    const capitaneados = misEquipos.filter((e) => e.soyCapitan);
+    if (capitaneados.length === 0) {
       return res.status(403).render('mensaje', {
         titulo: 'Buscar partido',
         pagina: 'equipo',
         mensaje: 'Solo el capitán de un equipo puede buscar rivales y enviar desafíos.',
-        enlace: equipo ? { href: '/mi-equipo', texto: 'Volver a mi equipo' } : { href: '/equipos', texto: 'Ir a Equipos' },
+        enlace: misEquipos.length > 0 ? { href: '/mi-equipo', texto: 'Volver a mi equipo' } : { href: '/equipos', texto: 'Ir a Equipos' },
       });
     }
+
+    const equipo = idEquipo ? capitaneados.find((e) => e.id === idEquipo)
+      : capitaneados.length === 1 ? capitaneados[0] : null;
+    // ?equipo= de un equipo que no capitanea: elige entre los suyos
+    if (idEquipo && !equipo) return res.redirect('/matchmaking');
+
+    if (!equipo) {
+      // Cuántos rivales tiene disponibles cada uno (el capitán tiene a lo más MAX_EQUIPOS_COMO_CAPITAN)
+      const rivalesPorEquipo = await Promise.all(capitaneados.map((e) => equipoModel.listarRivales(e.id)));
+      return res.render('matchmaking-elegir', {
+        titulo: 'Buscar partido',
+        pagina: 'matchmaking',
+        matchmaking: true,
+        equipos: capitaneados.map((e, i) => ({ ...e, rivales: rivalesPorEquipo[i].filter((r) => !r.desafio).length })),
+      });
+    }
+
     const rivales = (await equipoModel.listarRivales(equipo.id)).filter((rival) => !rival.desafio);
     return res.render('matchmaking', {
       titulo: 'Buscar partido',
       pagina: 'matchmaking',
       matchmaking: true,
       equipo,
+      puedeCambiarEquipo: capitaneados.length > 1,
       // Solo lo que muestra la tarjeta del rival (va como JSON a matchmaking.js)
-      rivales: rivales.map(({ id, nombre, zona, nivel, modalidad, escudo }) => ({ id, nombre, zona, nivel, modalidad, escudo })),
+      rivales: rivales.map(({ id, nombre, zona, nivel, modalidad, escudo, distanciaKm }) => ({ id, nombre, zona, nivel, modalidad, escudo, distanciaKm })),
     });
+  } catch (err) {
+    return pasarError(err, next);
+  }
+}
+
+// ---------------------------------------------------------------
+// POST /equipos/:id/ubicacion → EQ-UB: el capitán marca dónde juega su equipo (lat y lng) o la quita
+// (quitar=1). JSON para equipo-ubicacion.js; el modelo comprueba que el equipo sea suyo.
+// ---------------------------------------------------------------
+async function guardarUbicacion(req, res, next) {
+  const idEquipo = idDeParametro(req.params.id);
+  const quitar = req.body.quitar === '1';
+  const { ubicacion } = leerUbicacion(req.body.lat, req.body.lng);
+  try {
+    if (!idEquipo || (!quitar && !ubicacion)) return res.status(400).json({ ok: false, mensaje: 'Marca un punto en el mapa antes de guardar.' });
+    const guardado = await equipoModel.guardarUbicacion(req.usuario.idAuth, idEquipo,
+      quitar ? null : ubicacion.lat, quitar ? null : ubicacion.lng);
+    if (!guardado) return res.status(403).json({ ok: false, mensaje: 'Solo el capitán que creó el equipo puede cambiar su ubicación.' });
+    return res.json({ ok: true, mensaje: quitar ? 'Ubicación quitada.' : 'Ubicación guardada: ya verás a cuántos km están los rivales.' });
   } catch (err) {
     return pasarError(err, next);
   }
@@ -751,6 +790,7 @@ module.exports = {
   subirEscudo,
   servirEscudo,
   matchmaking,
+  guardarUbicacion,
   desafiar,
   invitar,
   responderInvitacion,

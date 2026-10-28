@@ -362,12 +362,33 @@ function revisarDatosEquipo(body, { conContacto = true } = {}) {
   };
 }
 
+/**
+ * EQ-UB: ubicación opcional del equipo (dónde suele jugar). Las dos vacías = sin ubicación;
+ * si no, deben ser números de latitud y longitud válidos. El modelo la redondea a ~100 m.
+ * @returns {{ubicacion: {lat: number, lng: number}|null, error: string|null}}
+ */
+function leerUbicacion(latTexto, lngTexto) {
+  const lat = String(latTexto ?? '').trim();
+  const lng = String(lngTexto ?? '').trim();
+  if (!lat && !lng) return { ubicacion: null, error: null };
+  const latitud = Number(lat);
+  const longitud = Number(lng);
+  if (!lat || !lng || !Number.isFinite(latitud) || !Number.isFinite(longitud)
+    || Math.abs(latitud) > 90 || Math.abs(longitud) > 180) {
+    return { ubicacion: null, error: 'La ubicación marcada no es válida: vuelve a marcarla en el mapa.' };
+  }
+  return { ubicacion: { lat: latitud, lng: longitud }, error: null };
+}
+
 function validarEquipo(req, res, next) {
   const { datos, paso1, paso2 } = revisarDatosEquipo(req.body);
-  req.datosFormulario = datos;
+  // EQ-UB: paso 3 del wizard (opcional)
+  const { ubicacion, error } = leerUbicacion(req.body.latitud, req.body.longitud);
+  const paso3 = error ? [error] : [];
+  req.datosFormulario = { ...datos, ubicacion };
   req.erroresEquipo = {
-    errores: [...paso1, ...paso2],
-    paso: paso1.length > 0 ? 1 : 2,
+    errores: [...paso1, ...paso2, ...paso3],
+    paso: paso1.length > 0 ? 1 : paso2.length > 0 ? 2 : 3,
   };
   return next();
 }
@@ -445,6 +466,7 @@ module.exports = {
   leerModalidades,
   validarDesafio,
   validarSolicitudUnion,
+  leerUbicacion, // EQ-UB (wizard y POST /equipos/:id/ubicacion)
   errorPasswordSegura, // CORRECCIÓN: contraseña segura (la reutilizan AR-008 y AR-009)
   REGEX_CORREO, // NUEVO: AR-012 (y otros formularios nuevos)
   LONGITUD_MAXIMA_MENSAJE_SOLICITUD,

@@ -2299,3 +2299,25 @@ button.eq-mis__accion {
     transition: none;
   }
 }
+
+
+/* ---------- EQ-UB: ubicación del equipo (mapa del capitán) ---------- */
+.eq-ubicacion__mapa {
+  height: 300px;
+  margin: 14px 0 12px;
+  cursor: crosshair;
+}
+
+.eq-ubicacion__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.eq-ubicacion__estado:empty {
+  display: none;
+}
+
+.eq-ubicacion__estado--error {
+  color: #ff7b7b;
+}

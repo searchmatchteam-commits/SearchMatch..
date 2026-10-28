@@ -2,15 +2,6 @@
   display: none !important;
 }
 
-.pasos--3 .pasos__lista {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.pasos--3 .pasos__barra {
-  left: 16.67%;
-  right: 16.67%;
-}
-
 .ceq .wizard__marca {
   display: flex;
   flex-direction: column;
@@ -386,4 +377,35 @@
   .ceq-nota {
     text-align: center;
   }
+}
+
+
+/* ---------- EQ-UB: paso 3, ubicación (opcional) ---------- */
+.ceq-chip--opcional {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 14px;
+}
+
+.ceq-mapa {
+  height: 320px;
+  margin-bottom: 12px;
+  cursor: crosshair;
+}
+
+.ceq-ubicacion__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ceq-ubicacion__estado {
+  min-height: 1.4em;
+  margin: 10px 0 0;
+  font-size: 0.88rem;
+  color: var(--texto-suave);
+}
+
+.ceq-ubicacion__estado--error {
+  color: #ff7b7b;
 }

@@ -64,6 +64,8 @@ router.post('/equipos/:id/unirme', requireAuth, requireRol, validarSolicitudUnio
 // Alineación, tipos de fútbol y escudo: solo el capitán que creó el equipo (lo comprueba el modelo).
 router.post('/equipos/:id/alineacion', requireAuth, requireRol, equipoController.guardarAlineacion);
 router.post('/equipos/:id/modalidades', requireAuth, requireRol, equipoController.actualizarModalidades);
+// EQ-UB: dónde juega el equipo (para la distancia a los rivales); solo su capitán (lo comprueba el modelo).
+router.post('/equipos/:id/ubicacion', requireAuth, requireRol, equipoController.guardarUbicacion);
 // Salida del plantel: el capitán saca a un jugador; el jugador sale de un equipo (no si es su capitán).
 router.post('/equipos/:id/plantel/:idJugador/sacar', requireAuth, requireRol, equipoController.sacar);
 router.post('/equipos/:id/salir', requireAuth, requireRol, equipoController.salir);

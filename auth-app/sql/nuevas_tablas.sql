@@ -303,3 +303,17 @@ ALTER TABLE torneo
 ALTER TABLE torneo DROP CONSTRAINT IF EXISTS torneo_hora_con_fecha;
 ALTER TABLE torneo ADD CONSTRAINT torneo_hora_con_fecha CHECK (hora_inicio IS NULL OR fecha_inicio IS NOT NULL);
 CREATE INDEX IF NOT EXISTS ix_torneo_fecha_inicio ON torneo (fecha_inicio) WHERE fecha_inicio IS NOT NULL;
+
+
+-- ============================================================
+-- EQ-UB) UBICACIÓN DEL EQUIPO (distancia en /matchmaking y en "Desafiar a otro equipo")
+-- ============================================================
+-- Dónde suele jugar el equipo; la marca el capitán en /mi-equipo. Se guarda con 3 decimales
+-- (~100 m) a propósito: alcanza para "A 1,2 km" sin guardar una dirección exacta.
+-- A los demás equipos solo se les muestra la distancia (se calcula en la base), nunca el punto.
+-- Las dos columnas van juntas: o ambas o ninguna.
+ALTER TABLE equipo
+    ADD COLUMN IF NOT EXISTS latitud  NUMERIC(6, 3) CHECK (latitud BETWEEN -90 AND 90),
+    ADD COLUMN IF NOT EXISTS longitud NUMERIC(7, 3) CHECK (longitud BETWEEN -180 AND 180);
+ALTER TABLE equipo DROP CONSTRAINT IF EXISTS equipo_ubicacion_completa;
+ALTER TABLE equipo ADD CONSTRAINT equipo_ubicacion_completa CHECK ((latitud IS NULL) = (longitud IS NULL));

@@ -132,6 +132,35 @@
       </section>
     <% } %>
 
+    <!-- ============ UBICACIÓN DEL EQUIPO (solo el capitán) — EQ-UB ============
+         Mapa para marcar dónde juega el equipo (equipo-ubicacion.js); abierta mientras no esté marcada. -->
+    <% if (equipo.soyCapitan) { %>
+      <details class="dash-panel eq-panel eq-desafios eq-ubicacion revelar" id="ubicacion" <%= equipo.ubicacion ? '' : 'open' %>
+               data-ubicacion data-equipo="<%= equipo.id %>"
+               <% if (equipo.ubicacion) { %>data-lat="<%= equipo.ubicacion.lat %>" data-lng="<%= equipo.ubicacion.lng %>"<% } %>>
+        <summary class="dash-panel__cabecera eq-desafios__cabecera">
+          <h2 class="dash-panel__titulo">Ubicación del equipo</h2>
+          <span class="eq-total" data-ubicacion-resumen><%= equipo.ubicacion ? 'Marcada' : 'Sin marcar' %></span>
+        </summary>
+        <p class="dash-panel__nota">Toca el mapa donde suele jugar tu equipo. Con ese punto calculamos a cuántos km están los rivales; ellos solo ven la distancia, nunca el lugar.</p>
+        <div class="sm-mapa eq-ubicacion__mapa" data-mapa-ubicacion></div>
+        <div class="eq-ubicacion__acciones">
+          <button type="button" class="btn btn--contorno btn--chico" data-usar-mi-ubicacion>Usar mi ubicación</button>
+          <button type="button" class="btn btn--verde btn--chico" data-guardar-ubicacion disabled>Guardar ubicación</button>
+          <button type="button" class="btn btn--contorno btn--chico" data-quitar-ubicacion <%= equipo.ubicacion ? '' : 'hidden' %>>Quitar ubicación</button>
+        </div>
+        <p class="dash-panel__nota eq-ubicacion__estado" data-ubicacion-estado role="status" aria-live="polite"></p>
+        <noscript><p class="dash-panel__nota">Activa JavaScript para marcar la ubicación en el mapa.</p></noscript>
+      </details>
+      <!-- Leaflet (el mismo de /canchas) solo para el capitán -->
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+              integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+      <script src="/js/mapa-ubicacion.js?v=<%= versionAssets %>" defer></script>
+      <script src="/js/equipo-ubicacion.js?v=<%= versionAssets %>" defer></script>
+    <% } %>
+
     <!-- ============ DESAFIAR A OTRO EQUIPO (solo el capitán) ============ -->
     <% if (equipo.soyCapitan) { %>
       <%
@@ -167,7 +196,7 @@
                 <span class="eq-club__escudo" aria-hidden="true"><%- include('partials/escudo-equipo', { equipo: rival }) %></span>
                 <span class="eq-club__texto">
                   <span class="eq-nombre"><%= rival.nombre %></span>
-                  <span class="eq-posicion">Comuna: <%= rival.zona || 'Sin definir' %></span>
+                  <span class="eq-posicion">Comuna: <%= rival.zona || 'Sin definir' %><% if (rival.distanciaKm !== null) { %> · <span class="texto-verde">a <%= rival.distanciaKm < 1 ? `${Math.max(100, Math.round(rival.distanciaKm * 10) * 100)} m` : `${rival.distanciaKm.toLocaleString('es-CL')} km` %></span><% } %></span>
                   <span class="eq-posicion">Nivel: <%= rival.nivel || 'Sin definir' %></span>
                   <!-- Sus modalidades: en verde las que también jugamos (se puede desafiar en ellas) -->
                   <span class="eq-modalidades" aria-label="Juega <%= rival.modalidad %>">

@@ -4,7 +4,8 @@
 //  1) Buscando: cronómetro que sube, anillo girando y un texto que cambia cada CAMBIO_TEXTO_MS.
 //     Tras DURACION_BUSQUEDA_MS (al azar dentro del rango) revela el siguiente rival.
 //  2) Encontrado: flash + tarjeta VS que entra con rebote (clases is-* en matchmaking.css).
-//     Primero los rivales de la misma comuna y nivel; entre iguales, al azar.
+//     Primero los más cercanos (EQ-UB: distanciaKm la calcula el servidor; sin ella, al final);
+//     a igual distancia, misma comuna y nivel; entre iguales, al azar.
 //  3) "Enviar desafío" → POST /mi-equipo/desafios/:id con fetch (JSON); "Buscar otro rival" vuelve a 1.
 //     Sin rivales (o todos ya desafiados) muestra la vista "vacio". Escape sale de la pantalla.
 
@@ -49,11 +50,12 @@ const DURACION_FLASH_MS = 700;
     'Analizando rivales disponibles...',
   ];
 
-  // Orden de la cola: misma comuna y mismo nivel primero; entre iguales, al azar
+  // Orden de la cola: por km (los sin ubicación al final), luego misma comuna y nivel; entre iguales, al azar
   const puntaje = (r) => (r.zona && r.zona === zonaPropia ? 2 : 0) + (r.nivel && r.nivel === nivelPropio ? 1 : 0);
+  const km = (r) => (r.distanciaKm === null || r.distanciaKm === undefined ? Infinity : r.distanciaKm);
   const cola = rivales
     .map((r) => ({ r, azar: Math.random() }))
-    .sort((a, b) => puntaje(b.r) - puntaje(a.r) || a.azar - b.azar)
+    .sort((a, b) => (km(a.r) - km(b.r) || 0) || puntaje(b.r) - puntaje(a.r) || a.azar - b.azar)
     .map(({ r }) => r);
   const desafiados = new Set();
   let indice = -1;
@@ -115,6 +117,12 @@ const DURACION_FLASH_MS = 700;
     }, minimo + Math.random() * (maximo - minimo)));
   }
 
+  // "A 400 m" bajo 1 km; si no, "A 1,2 km"
+  function textoDistancia(distanciaKm) {
+    if (distanciaKm < 1) return `A ${Math.max(100, Math.round(distanciaKm * 10) * 100)} m de distancia`;
+    return `A ${distanciaKm.toLocaleString('es-CL')} km de distancia`;
+  }
+
   function iniciales(nombre) {
     return nombre.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
   }
@@ -131,6 +139,10 @@ const DURACION_FLASH_MS = 700;
     ini.textContent = iniciales(rival.nombre);
 
     raiz.querySelector('[data-rival-nombre]').textContent = rival.nombre;
+    const distancia = raiz.querySelector('[data-rival-distancia]');
+    const conDistancia = typeof rival.distanciaKm === 'number';
+    distancia.hidden = !conDistancia;
+    distancia.textContent = conDistancia ? textoDistancia(rival.distanciaKm) : '';
     const nivel = raiz.querySelector('[data-rival-nivel]');
     nivel.hidden = !rival.nivel;
     nivel.textContent = rival.nivel ? `Nivel: ${rival.nivel}` : '';

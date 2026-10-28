@@ -18,6 +18,8 @@
   inset: 0;
   z-index: 1000;
   display: grid;
+  /* minmax(0, …): un nombre largo sin cortes (nowrap) no ensancha la columna más allá de la pantalla */
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   padding: 72px 16px 32px;
   overflow-y: auto;
@@ -121,7 +123,8 @@
 
 .mm__cola,
 .mm__revelacion,
-.mm__vacio {
+.mm__vacio,
+.mm__elegir {
   position: relative;
   z-index: 1;
   display: flex;
@@ -274,6 +277,21 @@
   filter: drop-shadow(0 0 4px rgba(var(--mm-verde-rgb), 0.6));
 }
 
+/* EQ-UB: el equipo aún no marca su ubicación */
+.mm__sugerencia {
+  max-width: 32ch;
+  color: var(--mm-suave);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--mm-verde-rgb), 0.4);
+  text-underline-offset: 3px;
+}
+.mm__sugerencia:hover,
+.mm__sugerencia:focus-visible {
+  color: var(--mm-verde);
+}
+
 /* Botón fantasma */
 .mm__cancelar {
   display: inline-flex;
@@ -302,6 +320,113 @@
   border-color: rgba(255, 99, 99, 0.55);
   background: rgba(255, 60, 60, 0.06);
   text-decoration: none;
+}
+
+/* Capitanea varios equipos: con cuál está buscando y enlace al selector */
+.mm__cambiar {
+  color: var(--mm-suave);
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+.mm__cambiar strong {
+  color: #fff;
+  font-weight: 600;
+}
+.mm__cambiar:hover,
+.mm__cambiar:focus-visible {
+  color: var(--mm-verde);
+}
+
+/* ---------- Selector de equipo (matchmaking-elegir.ejs) ---------- */
+.mm__elegir .mm__etiqueta {
+  letter-spacing: 0.12em;
+}
+
+.mm__opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mm__opcion {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--mm-texto);
+  text-align: left;
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+.mm__opcion:hover,
+.mm__opcion:focus-visible {
+  border-color: rgba(var(--mm-verde-rgb), 0.45);
+  background: rgba(var(--mm-verde-rgb), 0.06);
+  box-shadow: 0 0 24px rgba(var(--mm-verde-rgb), 0.12);
+  outline: none;
+}
+.mm__opcion:active {
+  transform: scale(0.98);
+}
+
+/* Doble clase: le gana a .mm__escudo, que va más abajo */
+.mm__escudo.mm__escudo--mini {
+  width: 48px;
+  flex-shrink: 0;
+  color: var(--mm-verde);
+  filter: none;
+}
+.mm__escudo.mm__escudo--mini span {
+  font-size: 0.9rem;
+}
+
+.mm__opcion-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+.mm__opcion-nombre {
+  overflow: hidden;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mm__opcion-detalle {
+  font-size: 0.8rem;
+  color: var(--mm-suave);
+}
+.mm__opcion-estado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  font-size: 0.76rem;
+  color: var(--mm-suave);
+}
+.mm__opcion-rivales {
+  color: var(--mm-verde);
+  font-weight: 600;
+}
+
+.mm__opcion-flecha {
+  color: var(--mm-suave);
+  transition: color 0.2s, transform 0.2s;
+}
+.mm__opcion:hover .mm__opcion-flecha,
+.mm__opcion:focus-visible .mm__opcion-flecha {
+  color: var(--mm-verde);
+  transform: translateX(3px);
 }
 
 /* ---------- Estado 2: rival encontrado ---------- */
@@ -425,6 +550,15 @@
   line-height: 1.15;
   color: #fff;
   overflow-wrap: anywhere;
+}
+
+.mm__distancia {
+  margin: -2px 0 10px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--mm-verde);
+  text-shadow: 0 0 10px rgba(var(--mm-verde-rgb), 0.5);
 }
 
 .mm__meta {

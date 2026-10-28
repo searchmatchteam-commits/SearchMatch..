@@ -1,0 +1,52 @@
+<%- include('partials/header') %>
+
+<%
+  const iniciales = (nombre) => nombre.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
+%>
+<!-- /matchmaking sin ?equipo= y con varios equipos capitaneados: se elige con cuál buscar partido.
+     Cada opción es un enlace a /matchmaking?equipo=ID (matchmaking.js no corre aquí: no hay [data-matchmaking]). -->
+<section class="mm" aria-labelledby="mm-elegir-titulo">
+  <%- include('partials/mm-fondo') %>
+
+  <a class="mm__cerrar" href="/dashboard" aria-label="Volver al panel">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+  </a>
+
+  <div class="mm__panel mm__elegir">
+    <h1 class="mm__etiqueta" id="mm-elegir-titulo">¿Con qué equipo juegas?</h1>
+    <p class="mm__texto">Buscaremos rivales para el equipo que elijas.</p>
+
+    <ul class="mm__opciones">
+      <% equipos.forEach(function (e) { %>
+        <li>
+          <a class="mm__opcion" href="/matchmaking?equipo=<%= e.id %>">
+            <span class="mm__escudo mm__escudo--mini" aria-hidden="true">
+              <% if (e.escudo) { %>
+                <img src="<%= e.escudo %>" alt="" />
+              <% } else { %>
+                <svg viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /></svg>
+                <span><%= iniciales(e.nombre) %></span>
+              <% } %>
+            </span>
+            <span class="mm__opcion-texto">
+              <span class="mm__opcion-nombre"><%= e.nombre %></span>
+              <span class="mm__opcion-detalle"><%= [e.modalidad, e.nivel, e.zona].filter(Boolean).join(' · ') %></span>
+              <span class="mm__opcion-estado">
+                <span class="<%= e.rivales > 0 ? 'mm__opcion-rivales' : '' %>"><%= e.rivales === 0 ? 'Sin rivales disponibles' : e.rivales === 1 ? '1 rival disponible' : `${e.rivales} rivales disponibles` %></span>
+                <% if (!e.ubicacion) { %><span>Sin ubicación: sin km</span><% } %>
+              </span>
+            </span>
+            <svg class="mm__opcion-flecha" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+          </a>
+        </li>
+      <% }) %>
+    </ul>
+
+    <a class="mm__cancelar" href="/dashboard">
+      Volver
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+    </a>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

@@ -29,6 +29,14 @@ async function idEstadoCancelada(cliente) {
 }
 
 // Modalidades que juega el equipo "e" (cantidades de jugadores, ej. {7,11}): equipo_modalidad.
+// EQ-UB: radio medio de la Tierra para la distancia entre equipos (haversine)
+const RADIO_TIERRA_KM = 6371;
+
+/** EQ-UB: 3 decimales (~100 m): alcanza para "A 1,2 km" sin guardar una dirección exacta. */
+function redondearCoordenada(valor) {
+  return valor === null || valor === undefined ? null : Math.round(valor * 1000) / 1000;
+}
+
 const SQL_MODALIDADES_EQUIPO = `(SELECT array_agg(mm.cantidad_de_jugadores ORDER BY mm.cantidad_de_jugadores)
             FROM equipo_modalidad em JOIN modalidad mm ON mm.id = em.id_modalidad WHERE em.id_equipo = e.id) AS modalidades`;
 
@@ -115,7 +123,7 @@ function etiquetaPosicion(nombreDb) {
 // $2: un equipo en particular (o null para todos). Primero los que capitanea.
 const SQL_MIS_EQUIPOS = `
   SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel,
-         e.id_usuario_creador = u.id AS soy_capitan,
+         e.id_usuario_creador = u.id AS soy_capitan, e.latitud::float8 AS latitud, e.longitud::float8 AS longitud,
          (SELECT json_agg(json_build_object('jugadores', mm.cantidad_de_jugadores, 'formacion', em.formacion)
                           ORDER BY mm.cantidad_de_jugadores)
             FROM equipo_modalidad em JOIN modalidad mm ON mm.id = em.id_modalidad WHERE em.id_equipo = e.id) AS alineaciones
@@ -140,6 +148,8 @@ function filaMiEquipo(fila) {
     nivel: fila.nivel,
     escudo: urlEscudo(fila),
     soyCapitan: Boolean(fila.soy_capitan),
+    // Dónde juega (EQ-UB); null si el capitán aún no la marca. Solo la ven sus integrantes.
+    ubicacion: fila.latitud === null || fila.latitud === undefined ? null : { lat: fila.latitud, lng: fila.longitud },
     // Una alineación por modalidad que juega, de la más chica a la más grande: cuántos titulares
     // lleva (5, 7 u 11) y su formación (la guardada si es de esa modalidad; si no, la primera).
     modalidades: (fila.alineaciones || (fila.jugadores ? [{ jugadores: fila.jugadores, formacion: null }] : []))
@@ -568,9 +578,10 @@ async function responderSolicitud(authId, idSolicitud, aceptar) {
 /**
  * Rivales para desafiar: equipos activos menos el propio que juegan al menos una de sus modalidades,
  * con las que tienen en común y el estado del último desafío PENDIENTE entre ambos (para el botón "Enviar Desafío").
+ * Los más cercanos primero (EQ-UB); los que no tienen ubicación, al final por nombre.
  * @param {number} idEquipo - El equipo del capitán.
  * @returns {Promise<Array<{id, nombre, zona, nivel, modalidad, modalidades: number[], comunes: number[],
- *          desafio: 'enviado'|'recibido'|null}>>} modalidades y comunes: cantidades de jugadores (ej. [7, 11]).
+ *          desafio: 'enviado'|'recibido'|null, distanciaKm: number|null}>>} modalidades y comunes: cantidades de jugadores (ej. [7, 11]).
  */
 async function listarRivales(idEquipo) {
   const { rows } = await pool.query(
@@ -581,12 +592,20 @@ async function listarRivales(idEquipo) {
             EXISTS (SELECT 1 FROM desafio d JOIN estado_desafio ed ON ed.id = d.id_estado_desafio
                      WHERE d.id_equipo_desafiante = e.id AND d.id_equipo_desafiado = $1
                        AND lower(ed.nombre) = $2) AS recibido,
+            -- EQ-UB: km en línea recta (haversine) entre las dos ubicaciones; NULL si falta alguna
+            CASE WHEN e.latitud IS NOT NULL AND yo.latitud IS NOT NULL THEN
+              2 * ${RADIO_TIERRA_KM} * asin(sqrt(
+                power(sin(radians(e.latitud - yo.latitud)::float8 / 2), 2)
+                + cos(radians(yo.latitud)::float8) * cos(radians(e.latitud)::float8)
+                  * power(sin(radians(e.longitud - yo.longitud)::float8 / 2), 2)))
+            END AS distancia_km,
             (SELECT array_agg(mc.cantidad_de_jugadores ORDER BY mc.cantidad_de_jugadores)
                FROM equipo_modalidad r
                JOIN equipo_modalidad propia ON propia.id_modalidad = r.id_modalidad AND propia.id_equipo = $1
                JOIN modalidad mc ON mc.id = r.id_modalidad
               WHERE r.id_equipo = e.id) AS comunes
        FROM equipo e
+       CROSS JOIN (SELECT latitud, longitud FROM equipo WHERE id = $1) yo
        LEFT JOIN modalidad m ON m.id = e.id_modalidad
        LEFT JOIN comunas cz ON cz.id = e.id_comuna -- CORRECCIÓN: regla 11 (se muestra la comuna; equipos antiguos, su zona)
        LEFT JOIN nivel n ON n.id = e.id_nivel
@@ -597,7 +616,7 @@ async function listarRivales(idEquipo) {
         AND EXISTS (SELECT 1 FROM equipo_modalidad r
                       JOIN equipo_modalidad propia ON propia.id_modalidad = r.id_modalidad AND propia.id_equipo = $1
                      WHERE r.id_equipo = e.id)
-      ORDER BY e.nombre`,
+      ORDER BY distancia_km NULLS LAST, e.nombre`,
     [idEquipo, ESTADO_DESAFIO_PENDIENTE]
   );
   return rows.map((fila) => ({
@@ -610,7 +629,28 @@ async function listarRivales(idEquipo) {
     comunes: fila.comunes || [],
     escudo: urlEscudo(fila),
     desafio: fila.enviado ? 'enviado' : fila.recibido ? 'recibido' : null,
+    // EQ-UB: con un decimal (null si alguno de los dos no marcó su ubicación)
+    distanciaKm: fila.distancia_km === null ? null : Math.round(fila.distancia_km * 10) / 10,
   }));
+}
+
+/**
+ * EQ-UB: guarda (o quita, con lat = lng = null) la ubicación del equipo. Solo el capitán que lo creó.
+ * Las coordenadas se redondean a 3 decimales (~100 m) antes de guardarse.
+ * @param {string} authId - UUID de auth.users.
+ * @param {number} idEquipo
+ * @param {number|null} lat - Ya validada.
+ * @param {number|null} lng - Ya validada.
+ * @returns {Promise<boolean>} false si no es su equipo (o no está activo).
+ */
+async function guardarUbicacion(authId, idEquipo, lat, lng) {
+  const { rowCount } = await pool.query(
+    `UPDATE equipo SET latitud = $3, longitud = $4
+      WHERE id = $2 AND activo
+        AND id_usuario_creador = (SELECT id FROM usuario WHERE auth_id = $1)`,
+    [authId, idEquipo, redondearCoordenada(lat), redondearCoordenada(lng)]
+  );
+  return rowCount > 0;
 }
 
 /**
@@ -716,9 +756,10 @@ async function enviarDesafio(authId, idRival, mensaje, jugadores = null, idEquip
  * @param {{nombre, correo, zona, nivel, modalidades}} datos - Ya validados;
  *        nivel es clave de NIVELES y modalidades, las cantidades de jugadores que juega (ej. [7, 11]).
  *        La formación de cada una parte en la primera (el capitán la cambia en /mi-equipo).
+ *        ubicacion ({lat, lng} o null, EQ-UB) es opcional: paso 3 del wizard.
  * @returns {Promise<{id: number}>} El id del equipo creado.
  */
-async function crearEquipo(authId, { nombre, correo, zona, nivel, modalidades, idComuna = null }) { // CORRECCIÓN: regla 11 (idComuna)
+async function crearEquipo(authId, { nombre, correo, zona, nivel, modalidades, idComuna = null, ubicacion = null }) { // CORRECCIÓN: regla 11 (idComuna)
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
@@ -756,10 +797,12 @@ async function crearEquipo(authId, { nombre, correo, zona, nivel, modalidades, i
     // CORRECCIÓN: regla 10 — puntaje_nivel parte en el mínimo del nivel elegido (antes quedaba en 0 para todos).
     // CORRECCIÓN: regla 11 — se guarda la comuna elegida de la lista (id_comuna).
     const equipo = await cliente.query(
-      `INSERT INTO equipo (nombre, zona, correo_contacto, id_modalidad, id_nivel, id_usuario_creador, puntaje_nivel, id_comuna)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO equipo (nombre, zona, correo_contacto, id_modalidad, id_nivel, id_usuario_creador, puntaje_nivel, id_comuna,
+                           latitud, longitud)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING id`,
-      [nombre, zona, correo, modalidad.rows[0].id, filaNivel.rows[0].id, idUsuario, filaNivel.rows[0].puntaje_min, idComuna]
+      [nombre, zona, correo, modalidad.rows[0].id, filaNivel.rows[0].id, idUsuario, filaNivel.rows[0].puntaje_min, idComuna,
+        redondearCoordenada(ubicacion && ubicacion.lat), redondearCoordenada(ubicacion && ubicacion.lng)] // EQ-UB (opcional)
     );
     const idEquipo = equipo.rows[0].id;
     await escribirModalidades(cliente, idEquipo, modalidades);
@@ -1139,6 +1182,7 @@ module.exports = {
   obtenerSolicitudDeMiEquipo,
   responderSolicitud,
   listarRivales,
+  guardarUbicacion,
   enviarDesafio,
   crearEquipo,
   listarEquipos,

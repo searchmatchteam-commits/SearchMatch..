@@ -1,14 +1,16 @@
 // public/js/crear-equipo.js
 // Wizard de equipo (form[data-wizard-equipo] en views/crear-equipo.ejs):
-//  1) Muestra un paso a la vez (1: identidad, 2: configuración) y actualiza la barra de progreso.
+//  1) Muestra un paso a la vez (1: identidad, 2: configuración, 3: ubicación opcional) y actualiza la barra de progreso.
 //  2) Valida el paso actual antes de avanzar (mismas reglas que validarEquipo en el servidor).
 //  3) Vista previa en vivo: nombre, tipo de fútbol · nivel y escudo (reducido y enviado en el campo oculto "escudo").
 //  Los tipos de fútbol son casillas: se puede marcar más de uno (la vista previa dice "Fútbol 7 y 11").
-//  4) Al crear: revisa los dos pasos y pone el botón en "cargando".
-// Sin JS el formulario muestra los dos pasos juntos y funciona igual (valida el servidor).
+//  4) Al crear: revisa los pasos y pone el botón en "cargando".
+//  5) EQ-UB: en el paso 3 crea el mapa (mapa-ubicacion.js) y copia el pin a los campos ocultos latitud y longitud.
+//     Sin pin el botón dice "Crear sin ubicación" (el paso es opcional).
+// Sin JS el formulario muestra los pasos juntos y funciona igual (valida el servidor; el mapa no aparece).
 
 const PRIMER_PASO_EQUIPO = 1;
-const ULTIMO_PASO_EQUIPO = 2;
+const ULTIMO_PASO_EQUIPO = 3;
 const REGEX_CORREO_EQUIPO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const NOMBRE_VACIO = 'Nombre del Club';
 const DETALLE_VACIO = 'Tipo de fútbol · Nivel';
@@ -63,6 +65,7 @@ const REGLAS_EQUIPO = {
     zona: (v) => (v ? null : 'Escribe la zona habitual de juego.'),
     modalidad: (v) => (v ? null : 'Elige al menos un tipo de fútbol.'),
   },
+  3: {}, // EQ-UB: ubicación opcional (el pin siempre deja coordenadas válidas)
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -79,6 +82,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const iconoFinal = botonContinuar.querySelector('[data-icono-final]');
   const iconoContinuar = botonContinuar.querySelector('[data-icono-continuar]');
   const notaFinal = formulario.querySelector('[data-nota-final]');
+  const contenedorMapa = formulario.querySelector('[data-mapa-ubicacion]');
+  const campoLatitud = formulario.querySelector('[data-latitud]');
+  const campoLongitud = formulario.querySelector('[data-longitud]');
+  const estadoUbicacion = formulario.querySelector('[data-ubicacion-estado]');
+  const botonMiUbicacion = formulario.querySelector('[data-usar-mi-ubicacion]');
+  const botonQuitarPin = formulario.querySelector('[data-quitar-ubicacion]');
+  let marcador = null;
 
   let pasoActual = Number(formulario.dataset.pasoInicial) || PRIMER_PASO_EQUIPO;
 
@@ -225,6 +235,51 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /* ---------- Ubicación (paso 3, opcional) ---------- */
+
+  const conUbicacion = () => campoLatitud.value !== '';
+  const textoFinal = () => (conUbicacion() ? 'Crear equipo' : 'Crear sin ubicación');
+
+  function avisarUbicacion(texto, error = false) {
+    estadoUbicacion.textContent = texto;
+    estadoUbicacion.classList.toggle('ceq-ubicacion__estado--error', error);
+  }
+
+  function copiarUbicacion(latlng) {
+    campoLatitud.value = latlng ? latlng.lat.toFixed(5) : '';
+    campoLongitud.value = latlng ? latlng.lng.toFixed(5) : '';
+    botonQuitarPin.hidden = !latlng;
+    if (pasoActual === ULTIMO_PASO_EQUIPO) textoContinuar.textContent = textoFinal();
+    avisarUbicacion(latlng ? 'Ubicación marcada: puedes mover el pin si no quedó justo.' : '');
+  }
+
+  // El mapa se crea la primera vez que se muestra el paso (oculto, Leaflet mediría 0 px)
+  function crearMapa() {
+    if (marcador || typeof L === 'undefined' || typeof crearMapaUbicacion !== 'function') return;
+    marcador = crearMapaUbicacion(contenedorMapa, {
+      inicial: conUbicacion() ? [Number(campoLatitud.value), Number(campoLongitud.value)] : null,
+      alCambiar: copiarUbicacion,
+    });
+  }
+
+  botonMiUbicacion.addEventListener('click', async () => {
+    if (!marcador) return;
+    botonMiUbicacion.disabled = true;
+    avisarUbicacion('Buscando tu ubicación...');
+    try {
+      await marcador.usarMiUbicacion();
+    } catch (err) {
+      avisarUbicacion(err.message, true);
+    } finally {
+      botonMiUbicacion.disabled = false;
+    }
+  });
+
+  botonQuitarPin.addEventListener('click', () => {
+    if (marcador) marcador.quitar();
+    copiarUbicacion(null);
+  });
+
   /* ---------- Navegación ---------- */
 
   function irA(numero, { enfocar = true } = {}) {
@@ -240,9 +295,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     indicador.style.setProperty('--progreso', String((numero - 1) / (items.length - 1)));
 
-    // Paso 1: "Continuar →"; paso 2: "Crear equipo ✓" con la nota debajo
+    // Pasos 1 y 2: "Continuar →"; paso 3: "Crear equipo ✓" (o "Crear sin ubicación") con la nota debajo
     const esUltimo = numero === ULTIMO_PASO_EQUIPO;
-    textoContinuar.textContent = esUltimo ? 'Crear equipo' : 'Continuar';
+    textoContinuar.textContent = esUltimo ? textoFinal() : 'Continuar';
+    if (esUltimo) crearMapa();
     iconoFinal.hidden = !esUltimo;
     iconoContinuar.hidden = esUltimo;
     notaFinal.hidden = !esUltimo;
@@ -250,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (enfocar) {
       indicador.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       const activo = pasos.find((paso) => Number(paso.dataset.paso) === numero);
-      const primerCampo = activo.querySelector('input:not([type="file"])');
+      const primerCampo = activo.querySelector('input:not([type="file"]):not([type="hidden"])');
       if (primerCampo) primerCampo.focus({ preventScroll: true });
     }
   }
@@ -259,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
     botonContinuar.disabled = cargando;
     botonContinuar.classList.toggle('btn--cargando', cargando);
     botonContinuar.setAttribute('aria-busy', String(cargando));
-    textoContinuar.textContent = cargando ? botonContinuar.dataset.textoCargando : 'Crear equipo';
+    textoContinuar.textContent = cargando ? botonContinuar.dataset.textoCargando : textoFinal();
     iconoFinal.hidden = cargando;
   }
 
@@ -278,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Último paso: se revisan los dos pasos antes de enviar.
+    // Último paso: se revisan todos los pasos antes de enviar.
     for (let numero = PRIMER_PASO_EQUIPO; numero <= ULTIMO_PASO_EQUIPO; numero++) {
       const errores = validarPaso(numero, { enfocar: false });
       if (errores.length > 0) {
