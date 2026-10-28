@@ -2,7 +2,8 @@
    Detalle de un torneo (/torneos/:id):
    - Pestañas Información | Equipos inscritos | Cuadrante (clic y flechas del teclado).
    - "Inscribir equipo": modal para elegir el equipo y aceptar las reglas.
-   - Cuadrante: al pasar el mouse (o el foco) por un equipo, se ilumina en verde su camino en la llave. */
+   - Cuadrante: al pasar el mouse (o el foco) por un equipo, se ilumina en verde su camino en la llave.
+   - Victoria: si el capitán ganó el torneo, modal "¡Campeones!" la primera vez que entra. */
 (function () {
   'use strict';
 
@@ -66,6 +67,53 @@
     modal.addEventListener('click', function (e) { if (e.target === modal) cerrar(); });
 
     if (new URLSearchParams(location.search).get('aviso') === 'modalidad-agregada') abrir();
+  }
+
+  // ---------- Modal de victoria ----------
+  // Se abre solo la primera vez que el capitán campeón entra al torneo (se recuerda en este navegador).
+  // "Compartir logro" usa el menú nativo de compartir; sin él, copia el enlace.
+  const victoria = document.querySelector('[data-modal-victoria]');
+  if (victoria) {
+    const clave = 'sm-victoria-vista-' + victoria.dataset.torneo;
+    const principal = victoria.querySelector('[data-cerrar-victoria]');
+    const compartir = victoria.querySelector('[data-compartir-victoria]');
+    const etiqueta = victoria.querySelector('[data-compartir-etiqueta]');
+    let vista = false;
+    try { vista = localStorage.getItem(clave) === '1'; } catch (e) { /* sin almacenamiento: se muestra igual */ }
+
+    function cerrarVictoria() {
+      victoria.hidden = true;
+      document.removeEventListener('keydown', teclasVictoria);
+      try { localStorage.setItem(clave, '1'); } catch (e) { /* sin almacenamiento */ }
+    }
+    function teclasVictoria(e) {
+      if (e.key === 'Escape') cerrarVictoria();
+      // El foco no sale del modal: solo hay dos botones
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        (document.activeElement === principal ? compartir : principal).focus();
+      }
+    }
+
+    principal.addEventListener('click', cerrarVictoria);
+    victoria.addEventListener('click', function (e) { if (e.target === victoria) cerrarVictoria(); });
+    compartir.addEventListener('click', function () {
+      const datos = { title: document.title, text: victoria.dataset.compartirTexto, url: location.origin + location.pathname };
+      if (navigator.share) {
+        navigator.share(datos).catch(function () { /* el usuario canceló */ });
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(datos.text + ' ' + datos.url).then(function () {
+          etiqueta.textContent = '¡Enlace copiado!';
+          setTimeout(function () { etiqueta.textContent = 'Compartir logro'; }, 2200);
+        });
+      }
+    });
+
+    if (!vista) {
+      victoria.hidden = false;
+      principal.focus();
+      document.addEventListener('keydown', teclasVictoria);
+    }
   }
 
   // ---------- Camino de un equipo en la llave ----------

@@ -47,6 +47,7 @@ async function detalle(req, res, next) {
       titulo: torneo.nombre,
       pagina: 'equipo',
       seccion: 'super-torneos',
+      torneoAdmin: true,
       torneo,
       aviso: AVISOS[req.query.aviso] || null,
     });

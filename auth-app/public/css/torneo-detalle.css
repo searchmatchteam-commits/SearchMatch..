@@ -818,3 +818,233 @@ html[data-theme="light"] .trn-cupo-libre { background: rgba(22, 163, 74, 0.06); 
 html[data-theme="light"] .trn-reglas { background: rgba(17, 24, 39, 0.03); border-color: var(--borde); }
 html[data-theme="light"] .trn-reglas__acepto input { accent-color: #16a34a; }
 html[data-theme="light"] body:has(.trn) .dock { background: rgba(255, 255, 255, 0.6); }
+
+/* ---------- Modal de victoria (views/torneos/detalle.ejs, data-modal-victoria) ----------
+   Fondo negro desenfocado; caja ultra oscura con borde neón y halo fuerte; detrás del contenido, rayos
+   radiales que giran lento y confeti verde que cae. Trofeo dorado con brillo, título con degradado,
+   premio en píldora, aviso de pago y dos botones a todo el ancho. */
+.vic {
+  background: rgba(0, 0, 0, 0.8);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.vic__caja {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  max-height: calc(100vh - 32px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: 24px;
+  background: #0a0f0d;
+  border: 1px solid #00ff41;
+  box-shadow: 0 0 40px rgba(0, 255, 65, 0.3), 0 0 90px rgba(0, 255, 65, 0.12), inset 0 0 40px rgba(0, 255, 65, 0.06);
+  animation: vic-entrar 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+
+/* Rayos: abanico cónico centrado sobre el trofeo, desvanecido hacia afuera */
+.vic__rayos {
+  position: absolute;
+  top: -260px;
+  left: 50%;
+  width: 640px;
+  height: 640px;
+  margin-left: -320px;
+  pointer-events: none;
+  background: repeating-conic-gradient(rgba(0, 255, 65, 0.09) 0deg 7deg, transparent 7deg 18deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 55%);
+  mask-image: radial-gradient(circle, #000 0%, transparent 55%);
+  animation: vic-girar 40s linear infinite;
+}
+
+.vic__confeti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+
+.vic__confeti span {
+  position: absolute;
+  top: -12px;
+  left: var(--x);
+  width: 6px;
+  height: 11px;
+  border-radius: 1px;
+  background: #00ff41;
+  opacity: 0;
+  transform: rotate(var(--r));
+  animation: vic-confeti var(--t) linear var(--d) infinite;
+}
+
+.vic__confeti span:nth-child(3n) { background: #facc15; width: 5px; height: 5px; border-radius: 50%; }
+.vic__confeti span:nth-child(4n) { background: #ffffff; height: 7px; }
+
+.vic__contenido {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 36px 26px 26px;
+  text-align: center;
+}
+
+.vic__trofeo {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.18), transparent 70%);
+  animation: vic-latir 2.4s ease-in-out infinite;
+}
+
+.vic__trofeo svg {
+  width: 64px;
+  height: 64px;
+  fill: rgba(250, 204, 21, 0.15);
+  stroke: #facc15;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.75)) drop-shadow(0 0 24px rgba(250, 204, 21, 0.35));
+}
+
+.vic__titulo {
+  font-family: var(--fuente-titulo);
+  font-size: clamp(2.25rem, 9vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #fff 0%, #fff 35%, #4ade80 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 14px rgba(0, 255, 65, 0.3));
+}
+
+.vic__subtitulo { color: #d1d5db; font-size: 0.98rem; overflow-wrap: anywhere; }
+.vic__subtitulo strong { color: #fff; }
+
+.vic__premio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 4px;
+  padding: 12px 28px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(0, 255, 65, 0.35);
+  box-shadow: inset 0 0 16px rgba(0, 255, 65, 0.08);
+}
+
+.vic__premio small {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.vic__premio strong {
+  font-family: var(--fuente-titulo);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #00ff41;
+  text-shadow: 0 0 14px rgba(0, 255, 65, 0.55);
+}
+
+.vic__premio strong span { font-size: 0.9rem; font-weight: 700; color: #4ade80; text-shadow: none; }
+
+.vic__pago {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 330px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  text-align: left;
+  color: #d1d5db;
+}
+
+.vic__pago svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  fill: none;
+  stroke: #00ff41;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.vic__pago strong { color: #fff; }
+
+.vic__acciones { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 8px; }
+
+.vic__btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.vic__btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.vic__btn:active { transform: scale(0.98); }
+.vic__btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+.vic__btn--principal {
+  border: 0;
+  background: #00ff41;
+  color: #000;
+  box-shadow: 0 0 16px rgba(0, 255, 65, 0.45);
+}
+
+.vic__btn--principal:hover { background: #4dff7a; box-shadow: 0 0 26px rgba(0, 255, 65, 0.7), 0 0 52px rgba(0, 255, 65, 0.3); }
+
+.vic__btn--secundario {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: #fff;
+}
+
+.vic__btn--secundario:hover { border-color: #fff; background: rgba(255, 255, 255, 0.06); }
+
+@keyframes vic-entrar { from { opacity: 0; transform: translateY(24px) scale(0.92); } }
+@keyframes vic-girar { to { transform: rotate(360deg); } }
+@keyframes vic-latir { 50% { transform: scale(1.06); } }
+@keyframes vic-confeti {
+  0% { opacity: 0; transform: translateY(0) rotate(var(--r)); }
+  10% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(640px) rotate(calc(var(--r) + 540deg)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vic__caja, .vic__rayos, .vic__trofeo { animation: none; }
+  .vic__confeti { display: none; }
+}
+
+/* Modo claro: el modal de victoria se queda oscuro (es una pantalla de celebración, no parte de la página) */
+html[data-theme="light"] .vic { background: rgba(0, 0, 0, 0.7); }

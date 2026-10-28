@@ -165,6 +165,47 @@
   </div>
 </section>
 
+<% if (victoria) { %>
+  <!-- Modal de victoria: torneo-detalle.js lo abre la primera vez que el capitán campeón entra al torneo.
+       Íconos de Lucide en línea (Trophy, Clock, Share2, CheckCircle). -->
+  <div class="modal vic" hidden data-modal-victoria data-torneo="<%= torneo.id %>"
+       data-compartir-texto="¡<%= victoria.equipo %> es campeón de <%= torneo.nombre %> en SearchMatch! 🏆">
+    <div class="vic__caja" role="dialog" aria-modal="true" aria-labelledby="vic-titulo" aria-describedby="vic-subtitulo">
+      <div class="vic__rayos" aria-hidden="true"></div>
+      <div class="vic__confeti" aria-hidden="true">
+        <% for (let i = 0; i < 28; i++) { %><span style="--x: <%= (i * 37) % 100 %>%; --d: <%= ((i * 7) % 10) / 4 %>s; --t: <%= 3 + (i % 4) * 0.6 %>s; --r: <%= (i * 53) % 360 %>deg"></span><% } %>
+      </div>
+
+      <div class="vic__contenido">
+        <span class="vic__trofeo" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></svg>
+        </span>
+        <h2 class="vic__titulo" id="vic-titulo">¡Campeones!</h2>
+        <p class="vic__subtitulo" id="vic-subtitulo"><strong><%= victoria.equipo %></strong> ganó el <%= torneo.nombre %></p>
+
+        <% if (victoria.monto) { %>
+          <p class="vic__premio"><small>Premio</small><strong class="trn-num"><%= victoria.monto %> <span>CLP</span></strong></p>
+          <p class="vic__pago">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+            <span>El premio está siendo procesado. Se abonará en tu cuenta bancaria en un plazo de <strong>24 a 48 horas hábiles</strong>.</span>
+          </p>
+        <% } %>
+
+        <div class="vic__acciones">
+          <button type="button" class="vic__btn vic__btn--principal" data-cerrar-victoria>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>
+            Entendido
+          </button>
+          <button type="button" class="vic__btn vic__btn--secundario" data-compartir-victoria>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /><line x1="15.41" x2="8.59" y1="6.51" y2="10.49" /></svg>
+            <span data-compartir-etiqueta>Compartir logro</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+<% } %>
+
 <% if (puedeInscribir) { %>
   <!-- Modal "Inscribir equipo": elegir equipo y aceptar las reglas (torneo-detalle.js lo abre) -->
   <div class="modal modal--vidrio" hidden data-modal-inscripcion>

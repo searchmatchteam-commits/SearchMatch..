@@ -559,6 +559,322 @@ html[data-theme="light"] .sm-tema__luna { display: block; }
 .sm-resultado input { width: 56px; text-align: center; }
 .sm-resultado select { max-width: 100%; }
 
+/* ---------- Cargar resultados (admin: partials/torneo-competencia con admin: true) ----------
+   Panel oscuro con rejilla verde; buscador y pills arriba; cada partido es una tarjeta de vidrio oscuro:
+   local - vs - visita, marcador tipo scoreboard y abajo penales + "Guardar resultado". */
+.dash-panel.sm-cargar {
+  --sc-neon: #00ff41;
+  --sc-neon-rgb: 0, 255, 65;
+  --sc-texto: #fff;
+  --sc-gris: #d1d5db;
+  --sc-gris-suave: #9ca3af;
+  --sc-linea: rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(rgba(var(--sc-neon-rgb), 0.04) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, rgba(var(--sc-neon-rgb), 0.04) 1px, transparent 1px) 0 0 / 28px 28px,
+    #050806;
+}
+
+.sm-cargar .sm-ronda__titulo {
+  margin-bottom: 14px;
+  font-family: var(--fuente-titulo);
+  font-size: 0.95rem;
+  letter-spacing: 0.22em;
+  color: var(--sc-texto);
+}
+
+.sm-cargar .sm-ronda__titulo::after {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 2px;
+  margin-top: 8px;
+  border-radius: 2px;
+  background: var(--sc-neon);
+  box-shadow: 0 0 8px rgba(var(--sc-neon-rgb), 0.7);
+}
+
+.sm-cargar .sm-partidos { gap: 14px; }
+.sm-cargar.dash-panel .sm-llave .sm-ronda { flex-basis: min(360px, 88%); }
+.sm-cargar .sm-ronda[hidden],
+.sm-cargar [data-partido][hidden] { display: none; }
+
+/* Barra: buscador + pills */
+.sm-cargar__barra { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px; }
+.sm-cargar__buscar { position: relative; flex: 1 1 220px; max-width: 360px; }
+
+.sm-cargar__lupa {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  width: 17px;
+  height: 17px;
+  transform: translateY(-50%);
+  fill: none;
+  stroke: var(--sc-gris-suave);
+  stroke-width: 2;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.sm-cargar__buscar input {
+  width: 100%;
+  padding: 11px 14px 11px 42px;
+  border-radius: 999px;
+  border: 1px solid var(--sc-linea);
+  background: rgba(10, 15, 13, 0.85);
+  color: var(--sc-texto);
+  font: inherit;
+  font-size: 0.92rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sm-cargar__buscar input::placeholder { color: var(--sc-gris-suave); }
+.sm-cargar__buscar input:focus {
+  outline: none;
+  border-color: var(--sc-neon);
+  box-shadow: 0 0 0 2px rgba(var(--sc-neon-rgb), 0.35), 0 0 16px rgba(var(--sc-neon-rgb), 0.25);
+}
+.sm-cargar__buscar:focus-within .sm-cargar__lupa { stroke: var(--sc-neon); }
+
+.sm-cargar__pills { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+
+.sm-cargar__pill {
+  flex: 0 0 auto;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: var(--sc-texto);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sm-cargar__pill:hover { border-color: rgba(var(--sc-neon-rgb), 0.6); }
+.sm-cargar__pill:focus-visible { outline: 2px solid var(--sc-neon); outline-offset: 2px; }
+.sm-cargar__pill[aria-pressed="true"] {
+  color: #000;
+  background: var(--sc-neon);
+  border-color: var(--sc-neon);
+  box-shadow: 0 0 14px rgba(var(--sc-neon-rgb), 0.45);
+}
+
+.sm-cargar__vacio { margin-top: 8px; text-align: center; }
+
+/* Tarjeta del partido */
+.sm-pcard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid var(--sc-linea);
+  background: rgba(10, 15, 13, 0.8);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  scroll-margin-top: 90px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sm-pcard:hover,
+.sm-pcard:focus-within {
+  border-color: var(--sc-neon);
+  box-shadow: 0 0 18px rgba(var(--sc-neon-rgb), 0.18);
+}
+
+.sm-pcard__equipos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.sm-pcard__equipo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--sc-texto);
+  overflow-wrap: anywhere;
+}
+
+.sm-pcard__equipo--visita { justify-content: flex-end; text-align: right; }
+.sm-pcard__equipo--gano { color: var(--sc-neon); text-shadow: 0 0 8px rgba(var(--sc-neon-rgb), 0.5); }
+
+.sm-pcard__escudo {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  fill: rgba(var(--sc-neon-rgb), 0.1);
+  stroke: var(--sc-neon);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px rgba(var(--sc-neon-rgb), 0.55));
+}
+
+.sm-pcard__vs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.75rem;
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sc-gris-suave);
+}
+
+.sm-pcard__vs small { font-size: 0.65rem; font-style: normal; }
+.sm-pcard__final { font-size: 1.1rem; font-style: normal; color: var(--sc-texto); font-variant-numeric: tabular-nums; }
+
+.sm-pcard__form { display: flex; flex-direction: column; gap: 14px; }
+
+/* Marcador tipo scoreboard */
+.sm-marcador { display: flex; justify-content: center; align-items: center; gap: 12px; }
+
+.sm-marcador__caja {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--sc-neon-rgb), 0.4);
+  background: #050806;
+  color: var(--sc-texto);
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  box-shadow: inset 0 0 10px rgba(var(--sc-neon-rgb), 0.08);
+  -moz-appearance: textfield;
+  appearance: textfield;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sm-marcador__caja::-webkit-outer-spin-button,
+.sm-marcador__caja::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.sm-marcador__caja::placeholder { color: rgba(255, 255, 255, 0.2); }
+.sm-marcador__caja:focus {
+  outline: none;
+  border-color: var(--sc-neon);
+  box-shadow: 0 0 0 2px rgba(var(--sc-neon-rgb), 0.3), 0 0 14px rgba(var(--sc-neon-rgb), 0.35);
+}
+
+.sm-marcador__guion { font-size: 1.25rem; font-weight: 800; color: var(--sc-gris-suave); }
+
+/* Fila inferior: penales a la izquierda, botón a la derecha; en angosto, uno sobre otro a todo el ancho */
+.sm-pcard__pie { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.sm-pcard__penales { position: relative; flex: 1 1 150px; min-width: 0; }
+
+.sm-pcard__penales select {
+  width: 100%;
+  padding: 10px 34px 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--sc-linea);
+  background: #0d1210;
+  color: var(--sc-gris);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.sm-pcard__penales select:hover { border-color: rgba(var(--sc-neon-rgb), 0.5); }
+.sm-pcard__penales select:focus-visible { outline: none; border-color: var(--sc-neon); box-shadow: 0 0 0 2px rgba(var(--sc-neon-rgb), 0.3); }
+.sm-pcard__penales option { background: #0d1210; color: var(--sc-texto); }
+
+.sm-pcard__chevron {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  fill: none;
+  stroke: var(--sc-gris-suave);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.sm-pcard__guardar {
+  flex: 1 1 auto;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--sc-neon);
+  color: #000;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(var(--sc-neon-rgb), 0.3);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
+}
+
+.sm-pcard__guardar:hover,
+.sm-pcard__guardar:focus-visible {
+  background: #4dff7a;
+  box-shadow: 0 0 15px rgba(var(--sc-neon-rgb), 0.6), 0 0 32px rgba(var(--sc-neon-rgb), 0.25);
+}
+
+.sm-pcard__guardar:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.sm-pcard__guardar:active { transform: scale(0.98); }
+
+.sm-pcard__check {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+html[data-theme="light"] .dash-panel.sm-cargar {
+  --sc-neon: #16a34a;
+  --sc-neon-rgb: 22, 163, 74;
+  --sc-texto: #111827;
+  --sc-gris: #374151;
+  --sc-gris-suave: #6b7280;
+  --sc-linea: #e5e7eb;
+  background:
+    linear-gradient(rgba(22, 163, 74, 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, rgba(22, 163, 74, 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
+    #fff;
+}
+html[data-theme="light"] .sm-cargar__buscar input,
+html[data-theme="light"] .sm-pcard,
+html[data-theme="light"] .sm-marcador__caja,
+html[data-theme="light"] .sm-pcard__penales select,
+html[data-theme="light"] .sm-pcard__penales option { background: #fff; }
+html[data-theme="light"] .sm-cargar__pill { border-color: #d1d5db; }
+html[data-theme="light"] .sm-cargar__pill[aria-pressed="true"],
+html[data-theme="light"] .sm-pcard__guardar { color: #fff; box-shadow: none; }
+html[data-theme="light"] .sm-pcard__guardar:hover { background: #15803d; box-shadow: 0 6px 16px rgba(22, 163, 74, 0.3); }
+html[data-theme="light"] .sm-marcador__caja::placeholder { color: #d1d5db; }
+html[data-theme="light"] .sm-pcard__escudo,
+html[data-theme="light"] .sm-pcard__equipo--gano { filter: none; text-shadow: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sm-pcard, .sm-pcard__guardar, .sm-marcador__caja, .sm-cargar__pill { transition: none; }
+}
+
 /* ---------- Fondo de hexágonos de los torneos (partials/fondo-hex) ---------- */
 .pagina-equipo:has(.tl-fondo) { background: #0a0a0a; }
 

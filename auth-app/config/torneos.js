@@ -146,7 +146,18 @@ function tablaLiga(equipos, partidos) {
     .sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf || a.nombre.localeCompare(b.nombre, 'es'));
 }
 
+/**
+ * Separa el monto del texto libre de premios: "1er lugar $500.000" → { monto: '$500.000', resto: '1er lugar' }.
+ * Acepta el monto con o sin "$" ("$500.000", "500.000", "$80000"); sin monto, monto queda vacío.
+ * @param {string} texto
+ */
+function partirPremio(texto) {
+  const m = texto.match(/\$\s?\d[\d.]*|\d{1,3}(?:\.\d{3})+/);
+  if (!m) return { monto: '', resto: texto };
+  return { monto: '$' + m[0].replace(/[\s$]/g, ''), resto: texto.replace(m[0], '').replace(/\(?\s*CLP\s*\)?/i, '').replace(/^[\s+·,:-]+|[\s+·,:-]+$/g, '') };
+}
+
 module.exports = {
   FORMATOS, ESTADOS, EMPAREJAMIENTOS, EQUIPOS_RELAMPAGO, EQUIPOS_LIGA, MAX_PATROCINADORES,
-  errorCantidad, textoFechaInicio, nombreRonda, fixtureLiga, primeraRondaLlave, tablaLiga,
+  errorCantidad, textoFechaInicio, nombreRonda, fixtureLiga, primeraRondaLlave, tablaLiga, partirPremio,
 };

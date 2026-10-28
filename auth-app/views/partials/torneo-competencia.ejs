@@ -6,6 +6,14 @@
   const resaltar = locals.resaltar || [];
   const esLlave = torneo.formato === 'relampago';
   function nombreEquipo(e) { return e ? e.nombre : 'Equipo eliminado'; }
+  // Íconos de Lucide (Search, Shield, Check, ChevronDown) en línea: el sitio no usa React
+  const ICONO = {
+    buscar: '<circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />',
+    escudo: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />',
+    check: '<path d="M20 6 9 17l-5-5" />',
+    chevron: '<path d="m6 9 6 6 6-6" />',
+  };
+  const svg = (nombre, clase) => `<svg class="${clase}" viewBox="0 0 24 24" aria-hidden="true">${ICONO[nombre]}</svg>`;
 %>
 <% if (torneo.formato === 'liga') { %>
   <div class="dash-panel eq-panel">
@@ -36,8 +44,23 @@
   </div>
 <% } %>
 
-<div class="dash-panel eq-panel">
+<div class="dash-panel eq-panel <%= admin ? 'sm-cargar' : '' %>" <%- admin ? 'data-cargar-resultados' : '' %>>
   <h2 class="dash-panel__titulo"><%= esLlave ? 'Llave del torneo' : 'Fixture' %></h2>
+  <% if (admin) { %>
+    <!-- Buscador y filtros: los aplica torneo-admin.js sin recargar -->
+    <div class="sm-cargar__barra">
+      <label class="sm-cargar__buscar">
+        <%- svg('buscar', 'sm-cargar__lupa') %>
+        <span class="solo-lectores">Buscar equipo</span>
+        <input type="search" placeholder="Buscar equipo…" autocomplete="off" data-buscar-partido />
+      </label>
+      <div class="sm-cargar__pills" role="group" aria-label="Filtrar partidos">
+        <% [['todos', 'Todos'], ['pendiente', 'Pendientes'], ['jugado', 'Jugados']].forEach(function ([clave, texto], i) { %>
+          <button type="button" class="sm-cargar__pill" data-filtro-partido="<%= clave %>" aria-pressed="<%= i === 0 %>"><%= texto %></button>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
   <div class="<%= esLlave ? 'sm-llave' : 'sm-fechas' %>" <%- esLlave ? 'data-llave' : '' %>>
     <% torneo.rondas.forEach(function (ronda) { %>
       <section class="sm-ronda" aria-label="<%= ronda.nombre %>">
@@ -45,7 +68,45 @@
         <ul class="sm-partidos">
           <% ronda.partidos.forEach(function (p) {
                const gano = (e) => p.jugado && esLlave && e && p.idGanador === e.id;
-               const penales = p.jugado && esLlave && p.golesLocal === p.golesVisita; %>
+               const penales = p.jugado && esLlave && p.golesLocal === p.golesVisita;
+               if (admin) {
+                 const cargable = p.editable && torneo.estado !== 'inscripcion'; %>
+            <li class="sm-pcard <%= p.jugado ? 'sm-pcard--jugado' : '' %>" id="partido-<%= p.id %>" data-partido data-estado="<%= p.jugado ? 'jugado' : 'pendiente' %>" data-nombres="<%= `${nombreEquipo(p.local)} ${nombreEquipo(p.visita)}`.toLowerCase() %>">
+              <div class="sm-pcard__equipos">
+                <span class="sm-pcard__equipo <%= gano(p.local) ? 'sm-pcard__equipo--gano' : '' %>"><%- svg('escudo', 'sm-pcard__escudo') %><span><%= nombreEquipo(p.local) %></span></span>
+                <span class="sm-pcard__vs">
+                  <% if (p.jugado && !cargable) { %><strong class="sm-pcard__final"><%= p.golesLocal %> - <%= p.golesVisita %></strong><% } else { %>vs<% } %>
+                  <% if (penales) { %><small>penales</small><% } %>
+                </span>
+                <span class="sm-pcard__equipo sm-pcard__equipo--visita <%= gano(p.visita) ? 'sm-pcard__equipo--gano' : '' %>"><span><%= nombreEquipo(p.visita) %></span><%- svg('escudo', 'sm-pcard__escudo') %></span>
+              </div>
+              <% if (cargable) { %>
+                <form class="sm-pcard__form" method="POST" action="/admin/super/torneos/<%= torneo.id %>/partidos/<%= p.id %>">
+                  <div class="sm-marcador">
+                    <label class="solo-lectores" for="gl-<%= p.id %>">Goles de <%= nombreEquipo(p.local) %></label>
+                    <input class="sm-marcador__caja" type="number" inputmode="numeric" id="gl-<%= p.id %>" name="goles_local" min="0" max="99" value="<%= p.golesLocal ?? '' %>" placeholder="0" required />
+                    <span class="sm-marcador__guion" aria-hidden="true">-</span>
+                    <label class="solo-lectores" for="gv-<%= p.id %>">Goles de <%= nombreEquipo(p.visita) %></label>
+                    <input class="sm-marcador__caja" type="number" inputmode="numeric" id="gv-<%= p.id %>" name="goles_visita" min="0" max="99" value="<%= p.golesVisita ?? '' %>" placeholder="0" required />
+                  </div>
+                  <div class="sm-pcard__pie">
+                    <% if (esLlave) { %>
+                      <label class="sm-pcard__penales">
+                        <span class="solo-lectores">Si empatan, quién ganó por penales</span>
+                        <select name="ganador_penales" title="Si empatan, quién ganó por penales">
+                          <option value="">Penales: —</option>
+                          <option value="local" <%= penales && p.local && p.idGanador === p.local.id ? 'selected' : '' %>>Penales: <%= nombreEquipo(p.local) %></option>
+                          <option value="visita" <%= penales && p.visita && p.idGanador === p.visita.id ? 'selected' : '' %>>Penales: <%= nombreEquipo(p.visita) %></option>
+                        </select>
+                        <%- svg('chevron', 'sm-pcard__chevron') %>
+                      </label>
+                    <% } %>
+                    <button type="submit" class="sm-pcard__guardar"><%- svg('check', 'sm-pcard__check') %><%= p.jugado ? 'Corregir resultado' : 'Guardar resultado' %></button>
+                  </div>
+                </form>
+              <% } %>
+            </li>
+          <% return; } %>
             <li class="sm-partido <%= (p.local && resaltar.includes(p.local.id)) || (p.visita && resaltar.includes(p.visita.id)) ? 'sm-partido--mio' : '' %>" id="partido-<%= p.id %>">
               <span class="sm-partido__equipo <%= gano(p.local) ? 'sm-partido__equipo--gano' : '' %>" <%- p.local ? `data-equipo="${p.local.id}"` : '' %>><%= nombreEquipo(p.local) %></span>
               <span class="sm-partido__marcador">
@@ -76,4 +137,5 @@
       </section>
     <% }) %>
   </div>
+  <% if (admin) { %><p class="dash-panel__nota sm-cargar__vacio" data-sin-partidos hidden>Ningún partido coincide con la búsqueda.</p><% } %>
 </div>

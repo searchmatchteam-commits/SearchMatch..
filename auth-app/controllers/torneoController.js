@@ -5,6 +5,7 @@
 const torneoModel = require('../models/torneoModel');
 const equipoModel = require('../models/equipoModel');
 const { idValido } = require('../middlewares/validadoresAdmin');
+const { partirPremio } = require('../config/torneos');
 
 const AVISOS = {
   inscrito: '¡Equipo inscrito! Te avisaremos cuando empiece el torneo.',
@@ -27,6 +28,7 @@ async function listar(req, res, next) {
       torneoLista: true, // carga torneos-lista.css/.js (cartas, pestañas, foto con fondo blanco)
       torneos: await torneoModel.listar(),
       misTorneos: await torneoModel.idsMisTorneos(req.usuario.idAuth),
+      partirPremio,
       aviso: AVISOS[req.query.aviso] || null,
     });
   } catch (err) {
@@ -38,12 +40,19 @@ async function detalle(req, res, next) {
   try {
     const torneo = await torneoModel.obtener(idValido(req.params.id));
     if (!torneo) return res.redirect('/torneos?aviso=inexistente');
+    const misEquipos = await torneoModel.equiposDelCapitan(req.usuario.idAuth, torneo.id);
+    // Modal de victoria: el torneo terminó y lo ganó un equipo del que el usuario es capitán
+    const equipoCampeon = torneo.campeon && misEquipos.find((e) => e.id === torneo.campeon.id);
+    const victoria = equipoCampeon
+      ? { equipo: equipoCampeon.nombre, monto: torneo.premios ? partirPremio(torneo.premios).monto : '' }
+      : null;
     return res.render('torneos/detalle', {
       titulo: torneo.nombre,
       pagina: 'equipo',
       torneoDetalle: true, // carga torneo-detalle.css/.js (pestañas, cuadrante, rejilla)
       torneo,
-      misEquipos: await torneoModel.equiposDelCapitan(req.usuario.idAuth, torneo.id),
+      misEquipos,
+      victoria,
       aviso: AVISOS[req.query.aviso] || null,
     });
   } catch (err) {
