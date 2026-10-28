@@ -4,58 +4,91 @@
   <div class="contenedor">
     <header class="eq-cabecera revelar">
       <div class="eq-cabecera__texto">
-        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Superadministración</span>
         <h1 class="eq-cabecera__titulo">Torneos</h1>
-        <p class="eq-cabecera__stats">Ligas y torneos relámpago de SearchMatch.</p>
+        <p class="eq-cabecera__stats">Todos los torneos, también los borradores y cancelados. Las acciones dependen del estado de cada uno.</p>
       </div>
       <div class="eq-cabecera__acciones">
-        <a class="btn btn--verde btn--grande" href="/admin/super/torneos/nuevo"><span aria-hidden="true">+</span> Crear torneo</a>
+        <a class="btn btn--verde btn--grande" href="/admin/torneos/nuevo"><span aria-hidden="true">+</span> Crear torneo</a>
       </div>
     </header>
 
-    <% if (torneos.length === 0 && !texto) { %>
-      <div class="dash-panel eq-panel sm-vacio">
-        <p class="sm-vacio__titulo">Aún no hay torneos</p>
-        <p class="dash-panel__nota">Crea el primero: aparecerá en la sección Torneos de los jugadores para que los capitanes inscriban a sus equipos.</p>
-        <a class="btn btn--verde" href="/admin/super/torneos/nuevo">Crear torneo</a>
-      </div>
-    <% } else { %>
-      <form class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/super/torneos" role="search">
-        <div class="campo">
-          <label for="texto">Buscar por nombre del torneo o recinto</label>
-          <input type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. Copa Primavera" />
-        </div>
-        <div class="sm-form__acciones">
-          <button type="submit" class="btn btn--verde">Buscar</button>
-          <% if (texto) { %><a class="btn btn--contorno" href="/admin/super/torneos">Ver todos</a><% } %>
-        </div>
-      </form>
+    <% if (aviso) { %><div class="alerta alerta--exito" role="status"><%= aviso %></div><% } %>
 
-      <% if (torneos.length === 0) { %>
-        <div class="dash-panel eq-panel sm-vacio">
-          <p class="sm-vacio__titulo">No hay torneos que coincidan con "<%= texto %>"</p>
-          <a class="btn btn--contorno" href="/admin/super/torneos">Ver todos</a>
-        </div>
-      <% } else { %>
-        <div class="dash-panel eq-panel">
-          <ul class="sm-filas">
+    <%- include('../partials/listado-barra', { listado, filtrosVista, placeholder: 'Nombre del torneo o recinto' }) %>
+
+    <% if (torneos.length === 0) { %>
+      <%- include('../partials/listado-vacio', { listado, mensaje: 'Aún no hay torneos' }) %>
+    <% } else { %>
+      <div class="dash-panel eq-panel sm-tabla-contenedor">
+        <table class="sm-tabla sm-tabla--listado">
+          <thead>
+            <tr>
+              <%- include('../partials/listado-th', { listado, clave: 'nombre', texto: 'Torneo' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'estado', texto: 'Estado' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'inicio', texto: 'Fechas' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'inscritos', texto: 'Inscritos' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'precio', texto: 'Precio' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'recaudado', texto: 'Recaudación' }) %>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
             <% torneos.forEach(function (t) { %>
-              <li class="sm-fila">
-                <% if (t.foto) { %><img class="sm-torneo-miniatura" src="<%= t.foto %>" alt="" loading="lazy" /><% } %>
-                <span class="sm-fila__principal">
-                  <strong><a href="/admin/super/torneos/<%= t.id %>"><%= t.nombre %></a></strong>
-                  <small><%= t.modalidad %> · <%= t.inscritos %>/<%= t.cantidadEquipos %> equipos · <%= t.recinto %> · Inicio: <%= t.fechaInicioTexto.larga %></small>
-                </span>
-                <span class="sm-rol"><%= t.formatoTexto %></span>
-                <span class="sm-estado sm-estado--torneo-<%= t.estado %>"><%= t.estadoTexto %></span>
-                <span class="sm-fila__accion">
-                  <a class="btn btn--verde btn--chico" href="/admin/super/torneos/<%= t.id %>">Gestionar</a>
-                </span>
-              </li>
+              <tr>
+                <td data-titulo="Torneo" class="sm-tabla__texto">
+                  <a href="/admin/torneos/<%= t.id %>"><strong><%= t.nombre %></strong></a>
+                  <small class="sm-tabla__sub"><%= t.formatoTexto %> · <%= t.modalidad %> · <%= t.nivelTexto %><%= t.recinto ? ` · ${t.recinto}` : '' %></small>
+                </td>
+                <td data-titulo="Estado"><span class="sm-estado sm-estado--torneo-<%= t.estado %>"><%= t.estadoTexto %></span></td>
+                <td data-titulo="Fechas">
+                  <%= t.fechaInicioTexto.corta || 'Por confirmar' %><%= t.fechaTermino ? ` – ${t.fechaTerminoTexto.corta}` : '' %>
+                  <% if (t.fechaLimite) { %><small class="sm-tabla__sub">Inscripción hasta el <%= t.fechaLimiteTexto.corta %></small><% } %>
+                </td>
+                <td data-titulo="Inscritos"><%= t.inscritos %>/<%= t.cupoMax %><% if (t.reservados > 0) { %> <small class="sm-tabla__sub">+<%= t.reservados %> pagando</small><% } %></td>
+                <td data-titulo="Precio"><%= t.precioTexto %></td>
+                <td data-titulo="Recaudación"><%= formatoCLP(t.recaudado) %></td>
+                <td data-titulo="Acciones">
+                  <details class="sm-accion sm-menu-acciones">
+                    <summary class="btn btn--chico btn--contorno">Acciones<span class="solo-lectores"> de <%= t.nombre %></span></summary>
+                    <div class="sm-menu-acciones__lista">
+                      <a class="btn btn--chico btn--contorno" href="/admin/torneos/<%= t.id %>">Ver</a>
+                      <% if (t.acciones.includes('editar')) { %><a class="btn btn--chico btn--contorno" href="/admin/torneos/<%= t.id %>/editar">Editar</a><% } %>
+                      <% if (t.acciones.includes('publicar')) { %>
+                        <form action="/admin/torneos/<%= t.id %>/publicar" method="POST"
+                              data-confirmar="Pasará a Inscripciones abiertas, lo verán los jugadores y se avisará a los capitanes de equipos que calzan con el torneo."
+                              data-confirmar-titulo="¿Publicar <%= t.nombre %>?" data-confirmar-boton="Publicar">
+                          <button type="submit" class="btn btn--chico btn--verde">Publicar</button>
+                        </form>
+                      <% } %>
+                      <% if (t.acciones.includes('cerrar')) { %>
+                        <form action="/admin/torneos/<%= t.id %>/cerrar" method="POST"
+                              data-confirmar="Ya no se aceptarán inscripciones nuevas y las pendientes de pago expiran."
+                              data-confirmar-titulo="¿Cerrar las inscripciones de <%= t.nombre %>?" data-confirmar-boton="Cerrar inscripciones">
+                          <button type="submit" class="btn btn--chico btn--contorno">Cerrar inscripciones</button>
+                        </form>
+                      <% } %>
+                      <% if (t.acciones.includes('fixture')) { %>
+                        <form action="/admin/torneos/<%= t.id %>/empezar" method="POST"
+                              data-confirmar="Se arma el fixture con los equipos confirmados y el torneo pasa a En curso."
+                              data-confirmar-titulo="¿Generar el fixture de <%= t.nombre %>?" data-confirmar-boton="Generar fixture">
+                          <button type="submit" class="btn btn--chico btn--verde">Generar fixture</button>
+                        </form>
+                      <% } %>
+                      <% if (t.acciones.includes('eliminar')) { %>
+                        <form action="/admin/torneos/<%= t.id %>/eliminar" method="POST"
+                              data-confirmar="El borrador se elimina definitivamente." data-confirmar-titulo="¿Eliminar <%= t.nombre %>?" data-confirmar-boton="Eliminar">
+                          <button type="submit" class="btn btn--chico btn--contorno sm-btn-peligro">Eliminar</button>
+                        </form>
+                      <% } %>
+                    </div>
+                  </details>
+                </td>
+              </tr>
             <% }) %>
-          </ul>
-        </div>
-      <% } %>
+          </tbody>
+        </table>
+        <%- include('../partials/listado-pie', { listado }) %>
+      </div>
     <% } %>
   </div>
 </section>
