@@ -85,6 +85,8 @@ Archivos con constantes y clientes compartidos. Son sencillos.
 | `equipo.js` | Modalidades (5, 7 y 11 jugadores), textos y "barras de señal" de cada nivel, y `MAX_EQUIPOS_COMO_CAPITAN = 1` (regla 5). |
 | `perfilJugador.js` | Catálogos del perfil: posiciones (con sigla y los nombres posibles en la base), pies, niveles y las 6 estadísticas de la carta (ritmo, tiro, pase, regate, defensa, físico). Funciones: `sortearEstadisticas()` (todas parten en 50, regla 8), `calcularMedia()` (promedio redondeado de las 6), `nombreEnCarta()` (el apodo, o el nombre si no tiene) y `urlFoto()` (URL con versión para evitar que el navegador muestre una foto vieja). |
 | `partidos.js` | Duración de un partido (60 minutos), duración mínima y máxima de una reserva (30 minutos a 6 horas) y marcador máximo (99). |
+| `panel.js` | Panel de administración (AP-000): reglas de acceso (`ACCESO`: 30 min de inactividad, 5 intentos fallidos, 15 min de bloqueo), nombre de la cookie de la sesión del panel (`sm_admin`), largo del motivo (5 a 500) y las **secciones del menú lateral** en orden (`SECCIONES`, con `soloPrincipal` para Administradores y `fase` para las que aún no existen). `seccionesPara(esPrincipal)` filtra las que ve cada cuenta. |
+| `listados.js` | **Listados del panel (AP-003)**, funciones puras: `leerListado(query, def)` lee texto, filtros, `orden`, `dir`, `pagina` y `por` (25/50/100) desde la URL con **listas blancas** (lo que no calza se ignora); `construirSQL(estado, def, paramsBase)` arma el `WHERE` (búsqueda en las columnas de la definición + filtros, todos con `AND`), el `ORDER BY` (columna de una lista fija + desempate) y `LIMIT/OFFSET`, con los valores siempre como parámetros `$n`; `vistaListado(...)` entrega a la vista las etiquetas quitables de cada filtro, el enlace de Limpiar filtros, los enlaces de orden (alternan asc/desc) y de páginas, el enlace del CSV (mismos filtros y orden, sin paginar) y los campos ocultos para no perder el estado; `aCSV`/`enviarCSV` generan el CSV (BOM + `;`, fechas en hora de Chile; las celdas que empiezan con `=`, `+`, `-` o `@` se neutralizan). Pruebas en `test/listados.test.js` (`npm test`). |
 | `legal.js` | Texto completo de los **términos y condiciones** y de la **política de privacidad**, cada uno con versión y fecha. `aceptoVersionesVigentes(usuario)` dice si la cuenta aceptó las versiones actuales. Para publicar una versión nueva basta con cambiar `version` y `actualizado`: todas las cuentas tendrán que aceptarla al entrar. |
 
 ---
@@ -119,9 +121,14 @@ Nunca corta la petición: si algo no cuadra, simplemente no hay usuario.
 
 Si la cuenta no aceptó la versión vigente de los términos y de la privacidad, cualquier página interna la lleva a `/aceptar-terminos`. Quedan libres las páginas de los documentos, la de aceptarlos, cerrar sesión y los flujos de acceso (login, registro, confirmación y recuperación). Si la petición viene de `fetch` (espera JSON), responde un error JSON en lugar de redirigir.
 
-### 4.3 `rolMiddleware.js` — administradores (AR-004)
+### 4.3 `rolMiddleware.js` — acceso al panel (AR-004, AP-001, AP-011)
 
-`requireAdmin` deja pasar solo a cuentas con rol "Administrador". Sin sesión → login; con sesión pero sin el rol → página 403 que no revela qué hay dentro. Se aplica a todo el router `/admin`. El rol "Superadministrador" también cuenta como administrador (`req.usuario.esAdmin`); además tiene `req.usuario.esSuperAdmin`, que exige `requireSuperAdmin` en las rutas `/admin/super/*`.
+Las **cuentas del panel** (rol "Administrador" o "Superadministrador") son distintas de las de jugador: `cargarSesion` marca `req.usuario.esCuentaPanel`, y `esAdmin` / `esSuperAdmin` solo valen si la selección no está revocada (`usuario.admin_revocado_en`). El **Administrador principal** de las historias es el rol Superadministrador (hay uno solo).
+
+- `requireAdmin` (todo el router `/admin`, salvo `/admin/login` y `/admin/logout`): exige sesión de Supabase **y** la sesión propia del panel (cookie `sm_admin`, abierta en `/admin/login`). En cada petición `panelModel.tocarSesion` renueva la última actividad; si pasaron más de 30 minutos, la cierra. Si falta la cookie, la sesión venció o la cuenta fue revocada o desactivada, cierra la sesión del panel y la de Supabase y manda a `/admin/login` (con `fetch` responde 401 JSON). También deja en `res.locals` las secciones del menú y el contador de alertas.
+- `requirePrincipal` (alias `requireSuperAdmin`): solo el Administrador principal (sección Administradores y lo que aún vive en `/admin/super/*`); los demás ven "Sin permiso" (403).
+
+Las cuentas del panel no entran por `/login` (se responde como credenciales incorrectas), `requireRol` las manda a `/admin`, no se les piden los términos de jugador y la app de jugadores no tiene ningún enlace al panel.
 
 ### 4.4 `errorHandler.js` — errores
 
@@ -150,7 +157,7 @@ Solo conectan URL → middlewares → controlador. Resumen:
 | `indexRoutes.js` | `/` | Landing, `/select-role`, perfil de jugador (`/perfil-jugador`, `/perfil`, `/perfil/editar`, fotos), equipos (`/crear-equipo`, `/mi-equipo`, solicitudes, desafíos, invitaciones, `/mis-equipos`, `/equipos`, plantel, escudo), `/torneos` y `/dashboard`. Las subidas de imagen usan `express.raw` con un tope de tamaño (el cuerpo es la imagen ya reducida en el navegador). `/registro-equipo` redirige a `/mi-equipo` por compatibilidad. |
 | `authRoutes.js` | `/` | `/registro`, `/login`, `/auth/confirmar` y `/logout`. |
 | `cuentaRoutes.js` | `/` | `/terminos`, `/privacidad`, `/aceptar-terminos`, `/recuperar` (+ `/recuperar/nueva`), `/cuenta` y `/cuenta/contrasena`. |
-| `adminRoutes.js` | `/admin` | Aplica `requireAuth + requireAdmin` a **todo** el router (así ninguna ruta nueva queda sin proteger). Recintos, canchas, disponibilidad, cuentas y catálogos. |
+| `adminRoutes.js` | `/admin` | `/admin/login` y `/admin/logout` sin protección; después aplica `requireAdmin` a **todo** el router (así ninguna ruta nueva queda sin proteger). Resumen (`/admin`), Administradores (solo el principal), Registro de actividad, recintos, canchas, disponibilidad, cuentas, catálogos, las secciones de fases siguientes (página "se habilita en la fase N") y lo que aún está en `/admin/super/*`. |
 | `canchasRoutes.js` | `/canchas` | Listado/búsqueda y ficha de cancha. |
 | `notificacionRoutes.js` | `/notificaciones` | Bandeja, marcar todas como leídas y abrir una. |
 | `desafioRoutes.js` | `/desafios` | Listar, detalle, aceptar, rechazar y cancelar. |
@@ -247,6 +254,16 @@ Cada módulo combina controlador, modelo y vistas. Están ordenados de forma par
 
 ### 6.6 Administración (complejidad media)
 
+**Panel (AP-000 a AP-003, AP-011, AP-032)**: `controllers/adminAccesoController.js`, `adminPanelController.js`, `administradoresController.js`, `models/panelModel.js`, `actividadModel.js`, `alertaModel.js`, vistas `admin/login`, `admin/resumen`, `admin/administradores`, `admin/actividad(-detalle)`, `admin/proximamente`, `admin/sin-permiso` y los partials `admin-inicio` / `admin-fin` (encabezado + menú lateral + nombre de la sección), `admin-nav` (menú), `listado-barra` / `listado-th` / `listado-pie` / `listado-vacio` (AP-003) y `admin-accion-motivo`.
+
+- **Ingreso (`/admin/login`)**: correo y contraseña con Supabase; solo pasan cuentas del panel activas y no revocadas. Cualquier otra falla muestra el mismo mensaje que unas credenciales incorrectas. Los fallos se cuentan **por correo** en `admin_intento` (exista o no la cuenta, así no se revela cuáles existen): al 5.º seguido el correo queda bloqueado 15 minutos, se registra en la actividad (sección Acceso) y se avisa al Administrador principal (lo ve en "Avisos para ti" del Resumen). Al entrar se abre una fila en `admin_sesion` (solo se guarda el SHA-256 del token de la cookie). **Cerrar sesión** pide confirmar, cierra la sesión del panel y la de Supabase y vuelve a `/admin/login`.
+- **Menú lateral (AP-002)**: todas las secciones de `config/panel.js`, la activa destacada y su nombre arriba del contenido; en pantallas angostas se contrae en un botón "Menú" (casilla + etiqueta, sin JavaScript). Junto a Resumen va la cantidad de alertas (`alertaModel`, que calcula cada alerta con el estado actual: desaparece sola al resolverse).
+- **Administradores (AP-011, solo el principal)**: listado con nombre, correo, estado, último acceso y fecha de selección. **Crear** pide nombre y correo, rechaza correos de cualquier otra cuenta, crea el usuario en Supabase Auth con una **invitación** (`inviteUserByEmail`, necesita `SUPABASE_SERVICE_ROLE_KEY`) y la fila `usuario` con rol Administrador (si la base falla, se borra el usuario de Auth). La persona define su contraseña en `/recuperar/nueva`, que acepta el enlace de invitación con `token_hash`, `code` o los tokens del fragmento, y luego va a `/admin/login`. **Revocar / Reactivar** piden motivo, cierran de inmediato sus sesiones del panel y le avisan. **Traspasar** el rol de principal pide motivo y la contraseña del principal actual (se comprueba con un cliente aparte de Supabase).
+- **Registro de actividad (AP-032)**: tabla `admin_actividad` de **solo inserción** (un trigger rechaza `UPDATE`, `DELETE` y `TRUNCATE`, incluso al dueño de la tabla, y se quitan esos permisos). `actividadModel.registrar(cliente, {...})` se llama con el **cliente de la transacción** de la acción: si la acción se deshace, la entrada también. Guarda fecha, administrador (id y nombre copiados), sección, acción, elemento, motivo y los valores anterior y nuevo (JSONB). El listado filtra por administrador, sección, acción y rango de fechas (hora de Chile); el detalle muestra anterior y nuevo lado a lado.
+- **Motivo y aviso (AP-000 c4)**: las acciones que afectan a un usuario usan `partials/admin-accion-motivo` (formulario desplegable con motivo obligatorio + confirmación). El servidor vuelve a exigirlo con `leerMotivo` (`validadoresAdmin.js`), lo guarda en el registro y lo incluye en la notificación (tipo `moderacion`). Ya lo usan: activar/desactivar cuentas, eliminar equipos y cuentas (Administrador principal) y revocar/reactivar/traspasar administradores. `notificacionModel.notificarEnTransaccion` crea el aviso dentro de la transacción con un `SAVEPOINT` (si falla, la acción sigue) y también para cuentas desactivadas.
+
+**Módulos que ya existían:**
+
 **Archivos:** `controllers/admin*Controller.js`, `models/recintoModel.js`, `canchaModel.js`, `disponibilidadModel.js`, `cuentaAdminModel.js`, `catalogoModel.js`, vistas `admin/*`.
 
 - **Recintos:** listado con búsqueda y filtros, crear, editar, activar y desactivar. Cada recinto tiene dirección, comuna, teléfono y coordenadas (validadas dentro de Chile).
@@ -342,6 +359,7 @@ Todas las horas se comparan con la hora de Chile (`now() AT TIME ZONE 'America/S
 |---|---|
 | `searchmatch.sql` | Esquema **original en MySQL** (referencia histórica; no se ejecuta en Supabase). |
 | `seed.sql` | El mismo esquema **portado a PostgreSQL**, re-ejecutable (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`). Las secciones A–R crean las tablas, la S carga los datos iniciales (roles, niveles, posiciones, estados, modalidades, etc.) y la T es una verificación opcional. Las secciones U en adelante son ampliaciones: **U** integra Supabase Auth (`usuario.auth_id`, contraseña opcional, RLS activado sin políticas para que la API pública no lea `usuario` ni `jugador`); **V** agrega el perfil deportivo y las estadísticas; **W** los datos del equipo creado desde la app; **X** la foto de la carta; **Y** el apodo; **Z** el mensaje de la solicitud; **AA** el escudo y las posiciones en la cancha; **AB** las invitaciones. |
+| `nuevas_tablas.sql` (SA-6) | Panel de administración: columnas `admin_nombre`, `admin_seleccionado_en`, `admin_seleccionado_por` y `admin_revocado_en` en `usuario`; tablas `admin_sesion`, `admin_intento` y `admin_actividad` (con el trigger que la hace inmutable). |
 | `nuevas_tablas.sql` | Agregados del "avance al 75 %". Se ejecuta **después** de `seed.sql`, solo agrega (no borra nada) y es re-ejecutable: estados "cancelada", regiones y comunas, aceptación de términos, nombre de cancha único por recinto, costo guardado en la reserva, tipos de notificación y enlace, moderación de comentarios, posiciones buscadas por un equipo, partidos cancelados y resultado, y reserva asociada a un partido. |
 
 **Tablas principales:** catálogos (`rol_aplicacion`, `nivel`, `posicion`, `rol_equipo`, `estado_*`, `tipo_notificacion`, `modalidad`), ubicación (`region`, `comunas`, `direccion`), personas (`usuario`, `jugador`, `jugador_posicion`), equipos (`equipo`, `equipo_jugador`, `solicitud_union_equipo`, `invitacion_equipo`, `equipo_posicion_buscada`), canchas (`recinto_deportivo`, `cancha`, `disponibilidad_cancha`, `reservar_cancha`), competencia (`desafio`, `partido`, `participacion`) y comunidad (`comentario`, `notificacion`).
@@ -426,7 +444,7 @@ EJS escapa el texto con `<%= %>` (seguro frente a HTML del usuario); `<%- %>` se
 | Script | Uso |
 |---|---|
 | `ejecutar-sql.js` | `node scripts/ejecutar-sql.js sql/nuevas_tablas.sql` — ejecuta un archivo `.sql` completo en **una transacción**: si una sentencia falla, se deshace todo. |
-| `hacer-admin.js` | `node scripts/hacer-admin.js correo@ejemplo.com` — da el rol "Administrador" a una cuenta ya registrada; con `--super` da "Superadministrador" (y crea el rol si no existe). No hay pantalla para esto a propósito: solo quien tiene acceso al servidor puede crear administradores. |
+| `hacer-admin.js` | Para la **instalación** (después, los administradores se crean en `/admin/administradores`). `node scripts/hacer-admin.js correo@ejemplo.com --crear "Nombre"` crea la cuenta del panel y envía la invitación; sin `--crear` convierte una cuenta existente en Administrador; `--super` la deja como Administrador principal (`--reemplazar` traspasa si ya hay uno). Si todavía no existe un Administrador principal, la primera cuenta del panel queda como principal (AP-011 c1). |
 
 ---
 
@@ -447,6 +465,11 @@ Reglas numeradas del proyecto que el código aplica:
 | 12 | Solo se desafía a equipos de la misma modalidad. | `equipoModel.listarRivales`, `enviarDesafio` |
 | 15 | Sin choques de horario, ni por equipo ni por cancha. | `partidoModel.equipoOcupado`, `reservaModel.cruzaConReserva` |
 | 16 | El resultado se registra una sola vez, después del partido y solo por un capitán. | `partidoModel.registrarResultado` |
+| P1 | Al panel solo entran cuentas del panel seleccionadas por el Administrador principal, por `/admin/login`; 5 fallos seguidos bloquean 15 min y 30 min sin actividad cierran la sesión. | `adminAccesoController`, `rolMiddleware.requireAdmin`, `panelModel` |
+| P2 | Solo el Administrador principal gestiona administradores; hay uno solo y el rol se traspasa con su contraseña. | `requirePrincipal`, `panelModel.traspasarPrincipal`, índice `ux_un_solo_superadmin` |
+| P3 | Toda acción del panel que cambia datos queda en el registro de actividad, en la misma transacción, con valor anterior y nuevo; el registro no se edita ni se borra. | `actividadModel.registrar`, trigger `tr_admin_actividad_inmutable` |
+| P4 | Toda acción del panel que afecta a un usuario exige un motivo, que se le notifica. | `leerMotivo`, `partials/admin-accion-motivo`, `notificarEnTransaccion` |
+| P5 | Todo listado del panel se busca, filtra, ordena, pagina y exporta a CSV con los mismos filtros, y la URL guarda el estado. | `config/listados.js`, `partials/listado-*` |
 
 ---
 
@@ -462,3 +485,5 @@ Reglas numeradas del proyecto que el código aplica:
 - **Mejora progresiva:** cada página funciona sin JavaScript; el JavaScript agrega animaciones, modales y envíos sin recargar.
 - **Fallos no críticos no rompen la acción principal:** notificaciones, sincronización de correo o aceptación de términos solo registran el error en la consola.
 - **Hora de Chile** para todo lo que es "antes" o "después" (`America/Santiago`).
+- **Acciones del panel:** transacción + `actividadModel.registrar(cliente, …)` con valor anterior y nuevo + motivo (`leerMotivo`) cuando afecta a un usuario + aviso con `notificarEnTransaccion` o, tras el `COMMIT`, `notificarUsuario`.
+- **Listados del panel:** una definición (`buscar`, `filtros`, `orden`) por listado en su modelo, `leerListado` → `construirSQL` → `vistaListado`, los partials `listado-*` en la vista y `?formato=csv` para exportar.

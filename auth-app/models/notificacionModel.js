@@ -43,6 +43,27 @@ async function notificarUsuario(idUsuario, tipo, mensaje, enlace = null) {
   }
 }
 
+/**
+ * Igual que notificarUsuario, pero dentro de la transacción de una acción del panel y también para cuentas
+ * inactivas (el aviso de una desactivación queda guardado para cuando la reactiven). Usa un SAVEPOINT:
+ * si la notificación falla, la acción sigue (solo se registra en la consola).
+ * @param {import('pg').PoolClient} cliente
+ */
+async function notificarEnTransaccion(cliente, idUsuario, tipo, mensaje, enlace = null) {
+  await cliente.query('SAVEPOINT notificacion');
+  try {
+    await cliente.query(
+      `INSERT INTO notificacion (mensaje, id_tipo_notificacion, id_usuario, enlace)
+       SELECT left($3, 500), t.id, $1, $4 FROM tipo_notificacion t WHERE lower(t.nombre) = $2`,
+      [idUsuario, tipo, mensaje, enlace]
+    );
+    await cliente.query('RELEASE SAVEPOINT notificacion');
+  } catch (err) {
+    await cliente.query('ROLLBACK TO SAVEPOINT notificacion');
+    console.error('⚠️  No se pudo crear la notificación:', err.message);
+  }
+}
+
 /** Notifica al capitán (quien creó el equipo). */
 async function notificarCapitan(idEquipo, tipo, mensaje, enlace = null) {
   const { rows } = await pool.query('SELECT id_usuario_creador FROM equipo WHERE id = $1', [idEquipo]);
@@ -167,6 +188,7 @@ async function marcarTodas(authId) {
 module.exports = {
   TIPOS,
   notificarUsuario,
+  notificarEnTransaccion,
   notificarCapitan,
   notificarIntegrantes,
   notificarJugador,

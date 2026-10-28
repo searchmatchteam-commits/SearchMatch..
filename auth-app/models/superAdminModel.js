@@ -7,6 +7,7 @@
 const { pool } = require('../config/db');
 const userModel = require('./userModel');
 const { notificarUsuario } = require('./notificacionModel');
+const actividad = require('./actividadModel');
 
 const ES_ADMIN = /^administrador$/i;
 const ES_SUPER = /^superadministrador$/i;
@@ -71,13 +72,16 @@ async function buscarEquipos(texto) {
  * a esos partidos se conservan, solo pierden el vínculo.
  * @returns {'eliminado'|'sin-cambio'}
  */
-async function eliminarEquipo(idEquipo) {
+async function eliminarEquipo(idEquipo, admin, motivo) {
   const cliente = await pool.connect();
   let nombre;
   let integrantes = [];
   try {
     await cliente.query('BEGIN');
-    const equipo = await cliente.query('SELECT nombre FROM equipo WHERE id = $1 FOR UPDATE', [idEquipo]);
+    const equipo = await cliente.query(
+      `SELECT e.nombre, e.activo, u.correo AS capitan FROM equipo e JOIN usuario u ON u.id = e.id_usuario_creador WHERE e.id = $1 FOR UPDATE OF e`,
+      [idEquipo]
+    );
     if (equipo.rowCount === 0) {
       await cliente.query('ROLLBACK');
       return 'sin-cambio';
@@ -98,6 +102,12 @@ async function eliminarEquipo(idEquipo) {
     await cliente.query('DELETE FROM solicitud_union_equipo WHERE id_equipo = $1', [idEquipo]);
     // equipo_jugador, equipo_modalidad, alineacion_puesto, invitaciones, comentarios...: CASCADE
     await cliente.query('DELETE FROM equipo WHERE id = $1', [idEquipo]);
+    await actividad.registrar(cliente, {
+      admin, seccion: 'equipos', accion: 'Eliminar equipo definitivamente', elementoTipo: 'equipo', elementoId: idEquipo,
+      elemento: nombre, motivo,
+      anterior: { nombre, activo: equipo.rows[0].activo, capitan: equipo.rows[0].capitan, integrantes: integrantes.length },
+      nuevo: { eliminado: true },
+    });
     await cliente.query('COMMIT');
   } catch (err) {
     await cliente.query('ROLLBACK').catch(() => {});
@@ -107,7 +117,7 @@ async function eliminarEquipo(idEquipo) {
   }
 
   await Promise.all(integrantes.map((idUsuario) =>
-    notificarUsuario(idUsuario, 'moderacion', `El equipo "${nombre}" fue eliminado por la administración de SearchMatch.`)));
+    notificarUsuario(idUsuario, 'moderacion', `El equipo "${nombre}" fue eliminado por la administración de SearchMatch. Motivo: ${motivo}`)));
   return 'eliminado';
 }
 
@@ -133,6 +143,7 @@ async function buscarJugadores(texto, filtro) {
        JOIN jugador j ON j.id_usuario = u.id -- solo cuentas con perfil de jugador
        LEFT JOIN auth.users a ON a.id = u.auth_id
       WHERE (${condicion})
+        AND lower(r.nombre) NOT IN ('administrador', 'superadministrador') -- AP-006 c5: las del panel van aparte
         AND ($1 = ''
              OR u.correo ILIKE '%' || $1 || '%'
              OR concat_ws(' ', j.nombre_apodo, j.apellido, j.apodo) ILIKE '%' || $1 || '%')
@@ -165,12 +176,12 @@ async function buscarJugadores(texto, filtro) {
  * No borra equipos ajenos: si creó equipos, hay que eliminarlos antes.
  * @returns {'eliminado'|'sin-cambio'|'propia'|'super'|'capitan'|'sin-auth'}
  */
-async function eliminarJugador(idUsuario, authIdAdmin) {
+async function eliminarJugador(idUsuario, admin, motivo) {
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
     const { rows } = await cliente.query(
-      `SELECT u.auth_id, r.nombre AS rol,
+      `SELECT u.auth_id, u.correo, u.activo, r.nombre AS rol,
               (SELECT count(*)::int FROM equipo e WHERE e.id_usuario_creador = u.id) AS equipos_creados
          FROM usuario u JOIN rol_aplicacion r ON r.id = u.id_rol_aplicacion
         WHERE u.id = $1
@@ -179,8 +190,8 @@ async function eliminarJugador(idUsuario, authIdAdmin) {
     );
     const cuenta = rows[0];
     const bloqueo = !cuenta ? 'sin-cambio'
-      : cuenta.auth_id === authIdAdmin ? 'propia'
-      : ES_SUPER.test(cuenta.rol) ? 'super'
+      : cuenta.auth_id === admin.idAuth ? 'propia'
+      : ES_SUPER.test(cuenta.rol) || ES_ADMIN.test(cuenta.rol) ? 'super'
       : cuenta.equipos_creados > 0 ? 'capitan'
       : null;
     if (bloqueo) {
@@ -196,6 +207,10 @@ async function eliminarJugador(idUsuario, authIdAdmin) {
     await cliente.query('DELETE FROM reservar_cancha WHERE id_usuario_reserva = $1', [idUsuario]);
     // jugador (y con él equipo_jugador, posiciones, invitaciones) y notificacion: CASCADE
     await cliente.query('DELETE FROM usuario WHERE id = $1', [idUsuario]);
+    await actividad.registrar(cliente, {
+      admin, seccion: 'usuarios', accion: 'Eliminar cuenta definitivamente', elementoTipo: 'usuario', elementoId: idUsuario,
+      elemento: cuenta.correo, motivo, anterior: { correo: cuenta.correo, activo: cuenta.activo }, nuevo: { eliminada: true },
+    });
 
     // Auth se borra antes del COMMIT: si Supabase falla, la cuenta queda intacta en la base.
     if (cuenta.auth_id && !(await userModel.eliminarDeAuth(cuenta.auth_id))) {

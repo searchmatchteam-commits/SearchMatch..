@@ -1,0 +1,20 @@
+<%
+  // AP-000 c4 · Acción del panel que afecta a un usuario: despliega un formulario con el motivo (obligatorio;
+  // el servidor lo vuelve a validar) y pide confirmar antes de enviar. Funciona sin JavaScript (<details>).
+  //   include('../partials/admin-accion-motivo', { accion: '/admin/...', boton: 'Revocar', titulo: '¿Revocar…?',
+  //            texto: 'Qué pasará', peligro: true, ocultos: [['texto', '...']], extra: '<campos html opcionales>' })
+  const idMotivo = 'motivo' + accion.replace(/[^a-z0-9]/gi, '-');
+%>
+<details class="sm-accion">
+  <summary class="btn btn--chico btn--contorno <%= locals.peligro ? 'sm-btn-peligro' : '' %>"><%= boton %></summary>
+  <form class="sm-accion__form" action="<%= accion %>" method="POST"
+        data-confirmar="<%= texto %>" data-confirmar-titulo="<%= titulo %>" data-confirmar-boton="<%= boton %>">
+    <% (locals.ocultos || []).forEach(function (par) { %><input type="hidden" name="<%= par[0] %>" value="<%= par[1] %>" /><% }) %>
+    <%- locals.extra || '' %>
+    <div class="campo">
+      <label for="<%= idMotivo %>">Motivo <small>(se le notificará)</small></label>
+      <textarea id="<%= idMotivo %>" name="motivo" rows="2" minlength="5" maxlength="500" required></textarea>
+    </div>
+    <button type="submit" class="btn btn--chico <%= locals.peligro ? 'btn--contorno sm-btn-peligro' : 'btn--verde' %>">Confirmar</button>
+  </form>
+</details>

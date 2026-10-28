@@ -238,4 +238,15 @@ function validarTorneo(req, res, next) {
   next();
 }
 
-module.exports = { validarRecinto, validarCancha, validarBloque, validarCatalogo, validarTorneo, subirImagenesTorneo, idValido };
+// AP-000: toda acción del panel que afecta a un usuario exige un motivo (se guarda en el registro y se le notifica).
+const { MOTIVO } = require('../config/panel');
+
+/** Motivo limpio o null si no cumple el largo. */
+function leerMotivo(valor) {
+  const motivo = texto(valor);
+  return motivo.length >= MOTIVO.min && motivo.length <= MOTIVO.max ? motivo : null;
+}
+
+const MSG_MOTIVO = `Indica el motivo (entre ${MOTIVO.min} y ${MOTIVO.max} caracteres).`;
+
+module.exports = { leerMotivo, MSG_MOTIVO, validarRecinto, validarCancha, validarBloque, validarCatalogo, validarTorneo, subirImagenesTorneo, idValido };
