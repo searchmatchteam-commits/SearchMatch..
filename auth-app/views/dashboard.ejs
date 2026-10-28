@@ -187,7 +187,7 @@
       <p class="dash-panel__nota">Estamos preparando la búsqueda de partidos por comuna y horario.</p>
     </article>
 
-    <!-- Calendario: por ahora solo la vista del mes (sin eventos); lo arma public/js/calendario.js -->
+    <!-- Calendario: vista del mes con los torneos y partidos de /api/calendario/eventos; lo arma public/js/calendario.js -->
     <article class="dash-panel dash-panel--calendario revelar" data-calendario>
       <header class="dash-panel__cabecera">
         <h2 class="dash-panel__titulo" data-calendario-titulo aria-live="polite">Calendario</h2>
@@ -204,6 +204,7 @@
         <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
       </div>
       <div class="sm-cal__dias" data-calendario-dias></div>
+      <div class="sm-cal__eventos" aria-live="polite" data-calendario-eventos></div>
     </article>
 
     <!-- Mis equipos: cada equipo se despliega con su plantel; en los que creó, "Administrar" -->

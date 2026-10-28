@@ -1,15 +1,16 @@
 // models/torneoModel.js
 // Torneos que organiza el superadministrador (tablas torneo, torneo_patrocinador, torneo_equipo y
-// torneo_partido; ver sql/nuevas_tablas.sql SA-2 y SA-3). Las reglas puras están en config/torneos.js.
+// torneo_partido; ver sql/nuevas_tablas.sql SA-2 a SA-5). Las reglas puras están en config/torneos.js.
 // Todas las consultas son parametrizadas ($1, $2...).
 
 const { pool } = require('../config/db');
 const reglas = require('../config/torneos');
 
 const SELECT_TORNEO = `
-  SELECT t.id, t.nombre, t.formato, t.estado, t.id_modalidad, m.nombre AS modalidad, t.cantidad_equipos,
+  SELECT t.id, t.nombre, t.formato, t.estado, t.emparejamiento, t.id_modalidad, m.nombre AS modalidad, t.cantidad_equipos,
          t.id_cancha, c.nombre AS cancha, r.nombre AS recinto, co.nombre AS comuna, t.premios,
          t.foto_actualizada, t.id_campeon, ec.nombre AS campeon,
+         to_char(t.fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio, to_char(t.hora_inicio, 'HH24:MI') AS hora_inicio,
          (SELECT count(*)::int FROM torneo_equipo te WHERE te.id_torneo = t.id) AS inscritos
     FROM torneo t
     JOIN modalidad m ON m.id = t.id_modalidad
@@ -31,6 +32,8 @@ function aTorneo(f) {
     formatoTexto: reglas.FORMATOS[f.formato] || f.formato,
     estado: f.estado,
     estadoTexto: reglas.ESTADOS[f.estado] || f.estado,
+    emparejamiento: f.emparejamiento,
+    emparejamientoTexto: reglas.EMPAREJAMIENTOS[f.emparejamiento] || f.emparejamiento,
     idModalidad: f.id_modalidad,
     modalidad: f.modalidad,
     cantidadEquipos: f.cantidad_equipos,
@@ -43,6 +46,10 @@ function aTorneo(f) {
     premios: f.premios || '',
     foto: f.foto_actualizada ? `/torneos/${f.id}/foto?v=${f.foto_actualizada.getTime()}` : null,
     campeon: f.id_campeon ? { id: f.id_campeon, nombre: f.campeon } : null,
+    // SA-5: 'AAAA-MM-DD' / 'HH:MM' o null (= Por confirmar)
+    fechaInicio: f.fecha_inicio,
+    horaInicio: f.hora_inicio,
+    fechaInicioTexto: reglas.textoFechaInicio(f.fecha_inicio, f.hora_inicio),
   };
 }
 
@@ -189,9 +196,11 @@ async function enTransaccion(fn) {
 async function crear(datos, foto, patrocinadores) {
   return enTransaccion(async (cliente) => {
     const { rows } = await cliente.query(
-      `INSERT INTO torneo (nombre, formato, id_modalidad, cantidad_equipos, id_cancha, premios, foto, foto_tipo, foto_actualizada)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now()) RETURNING id`,
-      [datos.nombre, datos.formato, datos.idModalidad, datos.cantidadEquipos, datos.idCancha, datos.premios || null, foto.datos, foto.tipo]
+      `INSERT INTO torneo (nombre, formato, id_modalidad, cantidad_equipos, id_cancha, premios, foto, foto_tipo, foto_actualizada, emparejamiento,
+                           fecha_inicio, hora_inicio)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now(), $9, $10, $11) RETURNING id`,
+      [datos.nombre, datos.formato, datos.idModalidad, datos.cantidadEquipos, datos.idCancha, datos.premios || null, foto.datos, foto.tipo, datos.emparejamiento,
+       datos.fechaInicio, datos.horaInicio]
     );
     await agregarPatrocinadores(cliente, rows[0].id, patrocinadores);
     return rows[0].id;
@@ -207,12 +216,14 @@ async function editar(idTorneo, datos, foto, patrocinadoresNuevos, idsPatrocinad
   return enTransaccion(async (cliente) => {
     await cliente.query(
       `UPDATE torneo
-          SET nombre = $1, id_cancha = $2, premios = $3,
+          SET nombre = $1, id_cancha = $2, premios = $3, fecha_inicio = $9, hora_inicio = $10,
               formato = CASE WHEN estado = 'inscripcion' THEN $4 ELSE formato END,
               id_modalidad = CASE WHEN estado = 'inscripcion' THEN $5 ELSE id_modalidad END,
-              cantidad_equipos = CASE WHEN estado = 'inscripcion' THEN $6 ELSE cantidad_equipos END
+              cantidad_equipos = CASE WHEN estado = 'inscripcion' THEN $6 ELSE cantidad_equipos END,
+              emparejamiento = CASE WHEN estado = 'inscripcion' THEN $8 ELSE emparejamiento END
         WHERE id = $7`,
-      [datos.nombre, datos.idCancha, datos.premios || null, datos.formato, datos.idModalidad, datos.cantidadEquipos, idTorneo]
+      [datos.nombre, datos.idCancha, datos.premios || null, datos.formato, datos.idModalidad, datos.cantidadEquipos, idTorneo, datos.emparejamiento,
+       datos.fechaInicio, datos.horaInicio]
     );
     if (foto) {
       await cliente.query('UPDATE torneo SET foto = $1, foto_tipo = $2, foto_actualizada = now() WHERE id = $3', [foto.datos, foto.tipo, idTorneo]);
@@ -275,6 +286,31 @@ async function idsMisTorneos(authId) {
 }
 
 /**
+ * Torneos con fecha de inicio entre dos días (ambos incluidos), para el calendario (SA-5).
+ * @param {string} desde - 'AAAA-MM-DD'
+ * @param {string} hasta - 'AAAA-MM-DD'
+ * @param {string} authId - Marca "mio" en los que juega algún equipo de la cuenta.
+ */
+async function eventosCalendario(desde, hasta, authId) {
+  const [{ rows }, mios] = await Promise.all([
+    pool.query(`${SELECT_TORNEO} WHERE t.fecha_inicio BETWEEN $1::date AND $2::date ORDER BY t.fecha_inicio, t.hora_inicio NULLS LAST, t.nombre`, [desde, hasta]),
+    idsMisTorneos(authId),
+  ]);
+  return rows.map(aTorneo).map((t) => ({
+    tipo: 'torneo',
+    id: t.id,
+    titulo: t.nombre,
+    fecha: t.fechaInicio,
+    hora: t.horaInicio,
+    estado: t.estado,
+    estadoTexto: t.estadoTexto,
+    detalle: [t.formatoTexto, t.modalidad, t.recinto].filter(Boolean).join(' · '),
+    mio: mios.includes(t.id),
+    url: `/torneos/${t.id}`,
+  }));
+}
+
+/**
  * Inscribe un equipo del capitán. El torneo se bloquea (FOR UPDATE) para que dos inscripciones
  * simultáneas no superen los cupos.
  * @returns {'inscrito'|'inexistente'|'cerrado'|'lleno'|'no-capitan'|'modalidad'|'ya-inscrito'}
@@ -327,13 +363,15 @@ async function insertarPartidos(cliente, idTorneo, partidos) {
  */
 async function empezar(idTorneo) {
   return enTransaccion(async (cliente) => {
-    const t = await cliente.query('SELECT formato, estado, cantidad_equipos FROM torneo WHERE id = $1 FOR UPDATE', [idTorneo]);
+    const t = await cliente.query('SELECT formato, estado, cantidad_equipos, emparejamiento FROM torneo WHERE id = $1 FOR UPDATE', [idTorneo]);
     if (!t.rows[0]) return { resultado: 'inexistente' };
     if (t.rows[0].estado !== 'inscripcion') return { resultado: 'estado' };
-    const { rows } = await cliente.query('SELECT id_equipo FROM torneo_equipo WHERE id_torneo = $1', [idTorneo]);
+    // Orden de inscripción: con emparejamiento 'llegada' define los cruces (igual que el cuadrante previo).
+    const { rows } = await cliente.query('SELECT id_equipo FROM torneo_equipo WHERE id_torneo = $1 ORDER BY inscrito_en, id_equipo', [idTorneo]);
     const equipos = rows.map((f) => f.id_equipo);
     if (equipos.length < t.rows[0].cantidad_equipos) return { resultado: 'faltan' };
-    const partidos = t.rows[0].formato === 'liga' ? reglas.fixtureLiga(equipos) : reglas.primeraRondaLlave(equipos);
+    const { formato, emparejamiento } = t.rows[0];
+    const partidos = formato === 'liga' ? reglas.fixtureLiga(equipos, emparejamiento) : reglas.primeraRondaLlave(equipos, emparejamiento);
     await insertarPartidos(cliente, idTorneo, partidos);
     await cliente.query(`UPDATE torneo SET estado = 'en_curso' WHERE id = $1`, [idTorneo]);
     return { resultado: 'empezado', equipos };
@@ -408,5 +446,5 @@ async function registrarResultado(idTorneo, idPartido, golesLocal, golesVisita, 
 
 module.exports = {
   listar, obtener, modalidades, canchasDisponibles, canchaParaTorneo, crear, editar, eliminar,
-  obtenerFoto, obtenerLogo, equiposDelCapitan, idsMisTorneos, inscribir, retirar, empezar, registrarResultado,
+  obtenerFoto, obtenerLogo, equiposDelCapitan, idsMisTorneos, eventosCalendario, inscribir, retirar, empezar, registrarResultado,
 };

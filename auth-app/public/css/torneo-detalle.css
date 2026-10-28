@@ -220,6 +220,135 @@
   color: #fff;
 }
 
+/* ---------- Fecha de inicio (badge bajo las etiquetas) ---------- */
+.trn-fecha {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--verde);
+  background: rgba(var(--verde-rgb), 0.08);
+  border: 1px solid var(--verde-borde);
+}
+
+.trn-fecha svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+/* ---------- Inscripción: botón principal, requisito de modalidad y reglas ---------- */
+.trn-cta { margin-top: 14px; }
+.trn-cta:not(:disabled) { box-shadow: 0 0 18px rgba(var(--verde-rgb), 0.35); }
+.trn-cta--info { margin-top: 18px; }
+
+/* Sin la modalidad: botón apagado y la solución (habilitarla) justo debajo */
+.trn-requisito__texto {
+  margin: 12px 0 8px;
+  font-size: 0.88rem;
+  color: var(--texto-suave);
+}
+
+.trn-requisito__texto strong { color: var(--texto); }
+
+.trn-requisito__fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px dashed var(--verde-borde);
+}
+
+.trn-requisito__nombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.trn-requisito__fila .btn { flex-shrink: 0; }
+
+.trn-requisito__enlace {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--verde);
+  text-decoration: none;
+}
+
+.trn-requisito__enlace:hover,
+.trn-requisito__enlace:focus-visible { text-decoration: underline; }
+
+.trn-cta-nota { margin-top: 16px; }
+
+/* Pestaña "Equipos inscritos": aún hay cupos */
+.trn-cupo-libre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(var(--verde-rgb), 0.06);
+  border: 1px solid var(--verde-borde);
+}
+
+.trn-cupo-libre .trn-cta { margin-top: 0; }
+.trn-cupo-libre__texto { font-weight: 600; }
+.trn-cupo-libre__texto .trn-num { color: var(--verde); }
+
+/* Modal: reglas y casilla de aceptación */
+.trn-reglas {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--vidrio-borde);
+}
+
+.trn-reglas__titulo {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--texto-suave);
+}
+
+.trn-reglas__lista {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.trn-reglas__lista li + li { margin-top: 4px; }
+
+.trn-reglas__acepto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.trn-reglas__acepto input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--verde);
+}
+
 /* ---------- Pestañas ---------- */
 .trn-principal {
   min-width: 0;
@@ -472,6 +601,16 @@ a.cq-equipo:hover { text-decoration: none; color: #fff; box-shadow: 0 0 20px rgb
   letter-spacing: 0.12em;
 }
 
+/* Tómbola: cupo ocupado, rival todavía sin sortear (borde verde punteado, sin nombre) */
+.cq-equipo--sorteo {
+  justify-content: center;
+  color: var(--verde);
+  border-style: dashed;
+  box-shadow: none;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
 .cq-equipo__escudo {
   display: grid;
   place-items: center;
@@ -648,6 +787,7 @@ html[data-theme="light"] .cq-equipo { background: #fff; border-color: var(--cq-n
 html[data-theme="light"] .trn-pestana[aria-selected="true"] { color: #fff; background: #16a34a; box-shadow: none; }
 html[data-theme="light"] .cq-equipo--esperando { background: #f3f4f6; border-color: #f3f4f6; color: #9ca3af; }
 html[data-theme="light"] .cq-equipo__escudo { color: #fff; }
+html[data-theme="light"] .cq-equipo--sorteo { color: #16a34a; }
 html[data-theme="light"] .cq-final { background: #fff; box-shadow: 0 0 18px rgba(22, 163, 74, 0.18); }
 html[data-theme="light"] .cq-final .cq-equipo { color: #111827; background: rgba(22, 163, 74, 0.08); }
 html[data-theme="light"] .cq-final .cq-equipo--esperando { color: #9ca3af; background: #f3f4f6; border-color: #e5e7eb; }
@@ -669,4 +809,12 @@ html[data-theme="light"] .trn-energia__cuenta strong,
 html[data-theme="light"] .trn-camino { text-shadow: none; }
 html[data-theme="light"] .trn-btn-retirar { color: #dc2626; border-color: rgba(220, 38, 38, 0.5); }
 html[data-theme="light"] .trn-btn-retirar:hover { color: #fff; background: #dc2626; }
+html[data-theme="light"] .trn-cta:not(:disabled) { box-shadow: none; }
+html[data-theme="light"] .trn-fecha { color: #15803d; background: rgba(22, 163, 74, 0.08); border-color: rgba(22, 163, 74, 0.35); }
+html[data-theme="light"] .trn-requisito__fila { border-color: rgba(22, 163, 74, 0.45); }
+html[data-theme="light"] .trn-requisito__enlace,
+html[data-theme="light"] .trn-cupo-libre__texto .trn-num { color: #16a34a; }
+html[data-theme="light"] .trn-cupo-libre { background: rgba(22, 163, 74, 0.06); border-color: rgba(22, 163, 74, 0.35); }
+html[data-theme="light"] .trn-reglas { background: rgba(17, 24, 39, 0.03); border-color: var(--borde); }
+html[data-theme="light"] .trn-reglas__acepto input { accent-color: #16a34a; }
 html[data-theme="light"] body:has(.trn) .dock { background: rgba(255, 255, 255, 0.6); }

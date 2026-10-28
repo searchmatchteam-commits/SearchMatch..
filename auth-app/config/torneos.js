@@ -3,10 +3,16 @@
 //  - Relámpago: eliminación directa, por eso la cantidad de equipos es 4, 8, 16 o 32
 //    (cada ronda deja a la mitad: dieciseisavos → octavos → cuartos → semifinal → final).
 //  - Liga: todos contra todos a una vuelta (3 a 20 equipos, puede ser impar: cada fecha descansa uno).
+//  - Emparejamiento (SA-4): por orden de llegada (1° vs 2°, 3° vs 4°...) o tómbola (se barajan al empezar).
 
 const FORMATOS = {
   liga: 'Liga',
   relampago: 'Torneo relámpago',
+};
+
+const EMPAREJAMIENTOS = {
+  sorteo: 'Tómbola (sorteo al empezar)',
+  llegada: 'Orden de llegada',
 };
 
 const ESTADOS = {
@@ -31,6 +37,21 @@ function errorCantidad(formato, cantidad) {
   return null;
 }
 
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+/**
+ * Fecha de inicio en texto (SA-5). Sin fecha → 'Por confirmar'.
+ * @param {string|null} fecha - 'AAAA-MM-DD' (sin zona horaria: es la fecha de Chile).
+ * @param {string|null} hora - 'HH:MM' o null.
+ * @returns {{larga: string, corta: string|null}} larga: '15 de noviembre, 2026 · 10:00 hrs'; corta: '15 de nov'.
+ */
+function textoFechaInicio(fecha, hora) {
+  if (!fecha) return { larga: 'Por confirmar', corta: null };
+  const [anio, mes, dia] = fecha.split('-').map(Number);
+  const larga = `${dia} de ${MESES[mes - 1]}, ${anio}${hora ? ` · ${hora} hrs` : ''}`;
+  return { larga, corta: `${dia} de ${MESES[mes - 1].slice(0, 3)}` };
+}
+
 /** Nombre de una ronda de la llave según cuántos partidos tiene. */
 function nombreRonda(partidosEnRonda) {
   return { 1: 'Final', 2: 'Semifinal', 4: 'Cuartos de final', 8: 'Octavos de final', 16: 'Dieciseisavos de final' }[partidosEnRonda]
@@ -46,14 +67,27 @@ function barajar(lista) {
   return copia;
 }
 
+/** Equipos en el orden en que se emparejan: tal cual llegaron ('llegada') o barajados ('sorteo'). */
+function ordenarParaEmparejar(idsEquipos, emparejamiento) {
+  return emparejamiento === 'llegada' ? [...idsEquipos] : barajar(idsEquipos);
+}
+
 /**
  * Fixture de liga por el método del círculo: n-1 fechas (n par) o n fechas (n impar, con un descanso por fecha).
+ * @param {number[]} idsEquipos - En orden de inscripción.
+ * @param {'llegada'|'sorteo'} emparejamiento - Con 'llegada', la fecha 1 es 1° vs 2°, 3° vs 4°... (si son impares, descansa el último).
  * @returns {{ronda:number, orden:number, local:number, visita:number}[]}
  */
-function fixtureLiga(idsEquipos) {
-  const equipos = barajar(idsEquipos);
-  if (equipos.length % 2 === 1) equipos.push(null); // null = descansa
-  const n = equipos.length;
+function fixtureLiga(idsEquipos, emparejamiento = 'sorteo') {
+  const enOrden = ordenarParaEmparejar(idsEquipos, emparejamiento);
+  if (enOrden.length % 2 === 1) enOrden.push(null); // null = descansa
+  const n = enOrden.length;
+  // El círculo enfrenta la posición i con la n-1-i: los pares (0,1), (2,3)... quedan en esas posiciones.
+  const equipos = new Array(n);
+  for (let i = 0; i < n / 2; i += 1) {
+    equipos[i] = enOrden[2 * i];
+    equipos[n - 1 - i] = enOrden[2 * i + 1];
+  }
   const partidos = [];
   for (let fecha = 0; fecha < n - 1; fecha += 1) {
     let orden = 0;
@@ -71,9 +105,13 @@ function fixtureLiga(idsEquipos) {
   return partidos;
 }
 
-/** Primera ronda de la llave: emparejamiento al azar. */
-function primeraRondaLlave(idsEquipos) {
-  const equipos = barajar(idsEquipos);
+/**
+ * Primera ronda de la llave: con 'llegada', 1° vs 2°, 3° vs 4°... (lo mismo que muestra el cuadrante
+ * mientras se inscriben); con 'sorteo', cruces al azar.
+ * @param {number[]} idsEquipos - En orden de inscripción.
+ */
+function primeraRondaLlave(idsEquipos, emparejamiento = 'sorteo') {
+  const equipos = ordenarParaEmparejar(idsEquipos, emparejamiento);
   const partidos = [];
   for (let i = 0; i < equipos.length; i += 2) {
     partidos.push({ ronda: 1, orden: i / 2, local: equipos[i], visita: equipos[i + 1] });
@@ -109,6 +147,6 @@ function tablaLiga(equipos, partidos) {
 }
 
 module.exports = {
-  FORMATOS, ESTADOS, EQUIPOS_RELAMPAGO, EQUIPOS_LIGA, MAX_PATROCINADORES,
-  errorCantidad, nombreRonda, fixtureLiga, primeraRondaLlave, tablaLiga,
+  FORMATOS, ESTADOS, EMPAREJAMIENTOS, EQUIPOS_RELAMPAGO, EQUIPOS_LIGA, MAX_PATROCINADORES,
+  errorCantidad, textoFechaInicio, nombreRonda, fixtureLiga, primeraRondaLlave, tablaLiga,
 };

@@ -3,6 +3,7 @@
 // y ver el fixture, la tabla (liga) o la llave (relámpago). Los organiza el superadministrador.
 
 const torneoModel = require('../models/torneoModel');
+const equipoModel = require('../models/equipoModel');
 const { idValido } = require('../middlewares/validadoresAdmin');
 
 const AVISOS = {
@@ -14,6 +15,8 @@ const AVISOS = {
   modalidad: 'Tu equipo no juega la modalidad de este torneo.',
   'ya-inscrito': 'Ese equipo ya está inscrito.',
   inexistente: 'Ese torneo ya no existe.',
+  reglas: 'Debes aceptar las reglas del torneo para inscribir a tu equipo.',
+  'modalidad-agregada': 'Listo: tu equipo ya juega esta modalidad. Ahora puedes inscribirlo.',
 };
 
 async function listar(req, res, next) {
@@ -52,8 +55,24 @@ async function inscribir(req, res, next) {
   try {
     const idTorneo = idValido(req.params.id);
     const idEquipo = idValido(req.body.id_equipo);
+    // El modal de inscripción pide aceptar las reglas antes de enviar.
+    if (req.body.acepto_reglas !== 'si') return res.redirect(`/torneos/${idTorneo}?aviso=reglas`);
     const resultado = idTorneo && idEquipo ? await torneoModel.inscribir(req.usuario.idAuth, idTorneo, idEquipo) : 'no-capitan';
     return res.redirect(`/torneos/${idTorneo}?aviso=${resultado}`);
+  } catch (err) {
+    return next(err);
+  }
+}
+
+// POST /torneos/:id/habilitar-modalidad → suma la modalidad del torneo al equipo (botón del panel de inscripción)
+async function habilitarModalidad(req, res, next) {
+  try {
+    const torneo = await torneoModel.obtener(idValido(req.params.id));
+    if (!torneo) return res.redirect('/torneos?aviso=inexistente');
+    if (torneo.estado !== 'inscripcion') return res.redirect(`/torneos/${torneo.id}?aviso=cerrado`);
+    const idEquipo = idValido(req.body.id_equipo);
+    const resultado = idEquipo ? await equipoModel.agregarModalidad(req.usuario.idAuth, idEquipo, torneo.idModalidad) : 'sin-permiso';
+    return res.redirect(`/torneos/${torneo.id}?aviso=${resultado === 'actualizadas' ? 'modalidad-agregada' : 'no-capitan'}`);
   } catch (err) {
     return next(err);
   }
@@ -89,7 +108,7 @@ function servirImagen(leer) {
 }
 
 module.exports = {
-  listar, detalle, inscribir, retirar,
+  listar, detalle, inscribir, retirar, habilitarModalidad,
   foto: servirImagen(torneoModel.obtenerFoto),
   logo: servirImagen(torneoModel.obtenerLogo),
 };

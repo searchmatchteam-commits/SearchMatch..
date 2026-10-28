@@ -480,6 +480,16 @@ html[data-theme="light"] .sm-tema__luna { display: block; }
 .sm-calendario__dia--partido::after {
   content: ""; position: absolute; bottom: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--verde);
 }
+/* Inicio de un torneo (SA-5): punto dorado; si también hay partido, los dos puntos lado a lado */
+.sm-calendario__dia--torneo { border-color: rgba(245, 179, 1, 0.55); }
+.sm-calendario__dia--torneo::before {
+  content: ""; position: absolute; bottom: 5px; width: 5px; height: 5px; border-radius: 50%; background: #f5b301;
+}
+.sm-calendario__dia--torneo.sm-calendario__dia--partido::before { transform: translateX(-4px); }
+.sm-calendario__dia--torneo.sm-calendario__dia--partido::after { transform: translateX(4px); }
+.sm-calendario__leyenda { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.8rem; color: var(--texto-suave); }
+.sm-calendario__marca { width: 8px; height: 8px; border-radius: 50%; background: var(--verde); }
+.sm-calendario__marca--torneo { background: #f5b301; }
 .sm-calendario__dia--hoy { border-color: var(--texto-suave); }
 .sm-calendario__dia--elegido { outline: 2px solid var(--verde); outline-offset: 1px; }
 

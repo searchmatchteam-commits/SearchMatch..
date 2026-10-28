@@ -22,5 +22,7 @@ router.post('/partidos/:id/cancelar', conSesion, partidos.cancelar);
 
 router.get('/agenda', conSesion, agenda.agenda);
 router.get('/inicio/equipo', conSesion, agenda.elegirEquipo);
+// JSON de los calendarios (dashboard y agenda): responde 401 en JSON sin sesión, por eso no usa conSesion.
+router.get('/api/calendario/eventos', agenda.eventos);
 
 module.exports = router;

@@ -59,6 +59,10 @@
               <optgroup label="Modalidad">
                 <% modalidadesLista.forEach(function (m) { %><option value="modalidad:<%= m %>"><%= m %></option><% }) %>
               </optgroup>
+              <optgroup label="Fecha de inicio">
+                <option value="fecha:confirmada">Con fecha</option>
+                <option value="fecha:por-confirmar">Por confirmar</option>
+              </optgroup>
             </select>
           </label>
           <button type="button" class="tl-flecha" data-carrusel-mover="-1" aria-label="Torneos anteriores">
@@ -81,7 +85,7 @@
              else if (abierto && t.cuposLibres > 0) cta = { texto: 'Inscribir equipo', href: `/torneos/${t.id}#inscripcion` };
              else if (abierto) cta = { texto: 'Ver torneo', href: `/torneos/${t.id}` };
              else if (t.estado === 'en_curso') cta = { texto: 'Ver cuadrante', href: `/torneos/${t.id}` }; %>
-          <li class="tl-carta" data-estado="<%= t.estado %>" data-mio="<%= mio %>" data-formato="<%= t.formato %>" data-modalidad="<%= t.modalidad %>">
+          <li class="tl-carta" data-estado="<%= t.estado %>" data-mio="<%= mio %>" data-formato="<%= t.formato %>" data-modalidad="<%= t.modalidad %>" data-fecha="<%= t.fechaInicio ? 'confirmada' : 'por-confirmar' %>">
             <div class="tl-carta__media">
               <!-- Las iniciales quedan debajo: se ven si no hay foto o si no carga -->
               <span class="tl-carta__iniciales" aria-hidden="true"><%= iniciales(t.nombre) %></span>
@@ -97,6 +101,7 @@
               <h2 class="tl-carta__titulo"><a class="tl-carta__enlace" href="/torneos/<%= t.id %>"><%= t.nombre %></a></h2>
 
               <p class="tl-carta__meta">
+                <span title="Fecha de inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2.5" /><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" /></svg><span class="solo-lectores">Fecha de inicio: </span><%= t.fechaInicio ? `${t.fechaInicioTexto.corta}${t.horaInicio ? ` · ${t.horaInicio}` : ''}` : 'Por confirmar' %></span>
                 <% if (t.comuna) { %>
                   <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" /><circle cx="12" cy="10" r="2.4" /></svg><%= t.comuna %></span>
                 <% } %>

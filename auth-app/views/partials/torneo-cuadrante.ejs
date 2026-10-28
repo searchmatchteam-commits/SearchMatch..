@@ -3,6 +3,8 @@
   // cupos de la primera ronda y el resto queda "Esperando...". Solo interfaz: no consulta nada,
   // usa los equipos que ya trae el torneo. Uso: include('partials/torneo-cuadrante', { torneo, resaltar })
   //   resaltar: ids de equipos a destacar (los del jugador)
+  // Con emparejamiento 'sorteo' (tómbola) los cruces aún no existen: los cupos ocupados dicen "Por sortear"
+  // en vez del nombre, para no mostrar un rival que después cambia. Con 'llegada' el cruce ya es el definitivo.
   // Líneas: cada columna se divide en celdas de igual alto (flex: 1), así el centro de cada cupo
   // queda exactamente a la altura del punto medio del par que lo alimenta (estilos: .cq-* en torneo-detalle.css).
   const resaltarCq = locals.resaltar || [];
@@ -15,6 +17,7 @@
   for (let n = cuposPrimera; n >= 4; n /= 2) columnas.push(n);
   function equipoEn(columna, i) { return columna === 0 ? torneo.equipos[i] || null : null; }
   const porcentaje = Math.round(100 * torneo.inscritos / torneo.cantidadEquipos);
+  const porSortear = torneo.emparejamiento !== 'llegada';
 %>
 <div class="cq">
   <div class="cq-llave">
@@ -26,7 +29,9 @@
             <div class="cq-par">
               <% [2 * p, 2 * p + 1].forEach(function (i) { const e = equipoEn(c, i); %>
                 <div class="cq-celda">
-                  <% if (e) { %>
+                  <% if (e && porSortear) { %>
+                    <span class="cq-equipo cq-equipo--sorteo">Por sortear</span>
+                  <% } else if (e) { %>
                     <a class="cq-equipo <%= resaltarCq.includes(e.id) ? 'cq-equipo--mio' : '' %>" href="/equipos/<%= e.id %>">
                       <span class="cq-equipo__escudo" aria-hidden="true"><%- include('escudo-equipo', { equipo: e }) %></span>
                       <span class="cq-equipo__nombre" title="<%= e.nombre %>"><%= e.nombre %></span>
@@ -66,7 +71,11 @@
   <div class="cq-progreso">
     <p>
       Equipos inscritos: <strong class="trn-num"><%= torneo.inscritos %>/<%= torneo.cantidadEquipos %></strong>
-      <span class="cq-progreso__nota">El cuadrante se completa cuando se llenen los cupos</span>
+      <span class="cq-progreso__nota">
+        <%= porSortear
+          ? 'Los cruces se sortean con tómbola cuando se llenen los cupos'
+          : 'Cruces por orden de llegada: tu rival es el equipo que se inscribe junto a ti' %>
+      </span>
     </p>
     <span class="cq-progreso__barra" role="progressbar" aria-valuemin="0" aria-valuemax="<%= torneo.cantidadEquipos %>" aria-valuenow="<%= torneo.inscritos %>" aria-label="Cupos llenos">
       <span class="cq-progreso__relleno" style="width: <%= porcentaje %>%"></span>

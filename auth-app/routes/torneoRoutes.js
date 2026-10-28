@@ -12,5 +12,6 @@ router.get('/', requireAuth, requireRol, torneoController.listar);
 router.get('/:id', requireAuth, requireRol, torneoController.detalle);
 router.post('/:id/inscribir', requireAuth, requireRol, torneoController.inscribir);
 router.post('/:id/retirar/:idEquipo', requireAuth, requireRol, torneoController.retirar);
+router.post('/:id/habilitar-modalidad', requireAuth, requireRol, torneoController.habilitarModalidad);
 
 module.exports = router;

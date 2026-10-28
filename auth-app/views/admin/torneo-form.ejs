@@ -87,6 +87,32 @@
           <small class="campo__error" id="cantidad_equipos-error"><%= erroresCampo.cantidad_equipos || '' %></small>
         </div>
 
+        <div class="formulario__fila">
+          <div class="campo <%= error('fecha_inicio') %>">
+            <label for="fecha_inicio">Fecha de inicio <span class="sm-opcional">(opcional)</span></label>
+            <input type="date" id="fecha_inicio" name="fecha_inicio" value="<%= datos.fechaInicio || '' %>" aria-describedby="fecha_inicio-error fecha-ayuda" />
+            <small class="campo__ayuda" id="fecha-ayuda">Déjala en blanco y se mostrará "Por confirmar". Con fecha, el torneo aparece en el calendario.</small>
+            <small class="campo__error" id="fecha_inicio-error"><%= erroresCampo.fecha_inicio || '' %></small>
+          </div>
+          <div class="campo <%= error('hora_inicio') %>">
+            <label for="hora_inicio">Hora de inicio <span class="sm-opcional">(opcional)</span></label>
+            <input type="time" id="hora_inicio" name="hora_inicio" value="<%= datos.horaInicio || '' %>" aria-describedby="hora_inicio-error" />
+            <small class="campo__error" id="hora_inicio-error"><%= erroresCampo.hora_inicio || '' %></small>
+          </div>
+        </div>
+
+        <div class="campo <%= error('emparejamiento') %>">
+          <label for="emparejamiento">Emparejamiento</label>
+          <select id="emparejamiento" name="emparejamiento" required aria-describedby="emparejamiento-error emparejamiento-ayuda" <%= fijo ? 'disabled' : '' %>>
+            <% Object.entries(emparejamientos).forEach(function ([clave, texto]) { %>
+              <option value="<%= clave %>" <%= (datos.emparejamiento || 'sorteo') === clave ? 'selected' : '' %>><%= texto %></option>
+            <% }) %>
+          </select>
+          <% if (fijo) { %><input type="hidden" name="emparejamiento" value="<%= datos.emparejamiento %>" /><% } %>
+          <small class="campo__ayuda" id="emparejamiento-ayuda">Tómbola: los cruces se sortean al empezar el torneo. Orden de llegada: 1° inscrito vs 2°, 3° vs 4°… (los capitanes ven su rival en el cuadrante mientras se inscriben).</small>
+          <small class="campo__error" id="emparejamiento-error"><%= erroresCampo.emparejamiento || '' %></small>
+        </div>
+
         <div class="campo <%= error('cancha') %>">
           <label for="cancha">Cancha donde se jugará</label>
           <input type="text" id="cancha" name="cancha" list="lista-canchas" value="<%= datos.canchaTexto || '' %>" autocomplete="off"

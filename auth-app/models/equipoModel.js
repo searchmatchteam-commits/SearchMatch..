@@ -368,6 +368,39 @@ async function actualizarModalidades(authId, idEquipo, lista) {
 }
 
 /**
+ * El capitán suma una modalidad a las que ya juega el equipo (ej. desde un torneo de esa modalidad).
+ * @param {string} authId - UUID de auth.users (el capitán).
+ * @param {number} idModalidad - Fila de la tabla modalidad.
+ * @returns {Promise<'actualizadas'|'sin-permiso'>}
+ */
+async function agregarModalidad(authId, idEquipo, idModalidad) {
+  const cliente = await pool.connect();
+  try {
+    await cliente.query('BEGIN');
+    if (!(await bloquearEquipoDeCapitan(cliente, authId, idEquipo))) {
+      await cliente.query('ROLLBACK');
+      return 'sin-permiso';
+    }
+    const { rows } = await cliente.query(
+      `SELECT m.cantidad_de_jugadores
+         FROM modalidad m
+        WHERE m.id = $2
+           OR m.id IN (SELECT em.id_modalidad FROM equipo_modalidad em WHERE em.id_equipo = $1)
+           OR m.id = (SELECT e.id_modalidad FROM equipo e WHERE e.id = $1)`,
+      [idEquipo, idModalidad]
+    );
+    await escribirModalidades(cliente, idEquipo, [...new Set(rows.map((f) => f.cantidad_de_jugadores))]);
+    await cliente.query('COMMIT');
+    return 'actualizadas';
+  } catch (err) {
+    await cliente.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    cliente.release();
+  }
+}
+
+/**
  * Reemplaza el escudo del equipo (solo el capitán que lo creó).
  * @param {Buffer} datos - Imagen ya validada.
  * @param {string} tipo - 'image/jpeg' | 'image/png' | 'image/webp'
@@ -1097,6 +1130,7 @@ module.exports = {
   listarPlantel,
   guardarAlineacion,
   actualizarModalidades,
+  agregarModalidad,
   guardarEscudo,
   obtenerEscudo,
   listarSolicitudesPendientes,

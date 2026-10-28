@@ -1,6 +1,7 @@
 /* public/js/torneo-detalle.js
    Detalle de un torneo (/torneos/:id):
    - Pestañas Información | Equipos inscritos | Cuadrante (clic y flechas del teclado).
+   - "Inscribir equipo": modal para elegir el equipo y aceptar las reglas.
    - Cuadrante: al pasar el mouse (o el foco) por un equipo, se ilumina en verde su camino en la llave. */
 (function () {
   'use strict';
@@ -35,6 +36,37 @@
       });
     });
   });
+
+  // ---------- Modal "Inscribir equipo" ----------
+  // Lo abren los botones del panel, de Información y de Equipos inscritos. Escape, "Cancelar" o un clic
+  // fuera de la caja lo cierran. Tras habilitar la modalidad (?aviso=modalidad-agregada) se abre solo.
+  const modal = document.querySelector('[data-modal-inscripcion]');
+  if (modal) {
+    let anterior = null;
+
+    function abrir() {
+      anterior = document.activeElement;
+      modal.hidden = false;
+      modal.querySelector('select').focus();
+      document.addEventListener('keydown', teclas);
+    }
+    function cerrar() {
+      modal.hidden = true;
+      document.removeEventListener('keydown', teclas);
+      if (anterior && anterior.focus) anterior.focus();
+    }
+    function teclas(e) {
+      if (e.key === 'Escape') cerrar();
+    }
+
+    document.querySelectorAll('[data-abrir-inscripcion]').forEach(function (boton) {
+      boton.addEventListener('click', abrir);
+    });
+    modal.querySelector('[data-cerrar-modal]').addEventListener('click', cerrar);
+    modal.addEventListener('click', function (e) { if (e.target === modal) cerrar(); });
+
+    if (new URLSearchParams(location.search).get('aviso') === 'modalidad-agregada') abrir();
+  }
 
   // ---------- Camino de un equipo en la llave ----------
   document.querySelectorAll('[data-llave]').forEach(function (llave) {

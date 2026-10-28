@@ -14,7 +14,9 @@
       <p class="sm-torneo-ficha__campeon">🏆 Campeón: <strong><%= torneo.campeon.nombre %></strong></p>
     <% } %>
     <dl class="sm-credenciales">
+      <div><dt>Fecha de inicio</dt><dd><%= torneo.fechaInicioTexto.larga %></dd></div>
       <div><dt>Modalidad</dt><dd><%= torneo.modalidad %></dd></div>
+      <div><dt>Emparejamiento</dt><dd><%= torneo.emparejamientoTexto %></dd></div>
       <div><dt>Equipos</dt><dd><%= torneo.inscritos %> de <%= torneo.cantidadEquipos %> inscritos</dd></div>
       <div><dt>Cancha</dt><dd><%= torneo.recinto %> · <%= torneo.cancha %><%= torneo.comuna ? ` (${torneo.comuna})` : '' %></dd></div>
       <div><dt>Premios</dt><dd><%= torneo.premios || 'Sin premios' %></dd></div>

@@ -1347,6 +1347,44 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   box-shadow: 0 0 14px rgba(var(--verde-rgb), 0.55);
 }
 
+/* Días con eventos (public/js/calendario.js los marca con /api/calendario/eventos):
+   punto dorado = inicio de torneo, verde = partido de mis equipos */
+.sm-cal__dia { position: relative; }
+
+.sm-cal__dia[data-eventos]::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: var(--marca-evento, var(--verde));
+}
+
+.sm-cal__dia[data-eventos="torneo"] { --marca-evento: #f5b301; }
+.sm-cal__dia--hoy[data-eventos] { --marca-evento: var(--sobre-verde); }
+
+.sm-cal__eventos { display: grid; gap: 8px; margin-top: 12px; }
+.sm-cal__eventos:empty { display: none; }
+
+.sm-cal__evento {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--vidrio-borde);
+  border-left: 3px solid var(--marca-evento, var(--verde));
+  color: var(--texto);
+  text-decoration: none;
+}
+
+.sm-cal__evento--torneo { --marca-evento: #f5b301; }
+.sm-cal__evento:hover { background: rgba(255, 255, 255, 0.04); }
+.sm-cal__evento strong { font-size: 0.9rem; }
+.sm-cal__evento small { font-size: 0.78rem; color: var(--texto-suave); }
+
 /* Hoy elegido: anillo blanco para que se note sobre el verde */
 .sm-cal__dia--hoy[aria-pressed="true"] {
   border-color: #fff;

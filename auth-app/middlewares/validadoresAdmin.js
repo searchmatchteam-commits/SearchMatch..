@@ -7,6 +7,13 @@ function texto(valor) {
   return String(valor || '').trim().replace(/\s+/g, ' ');
 }
 
+/** 'AAAA-MM-DD' que existe en el calendario (rechaza 2026-02-30). */
+function fechaValida(valor) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) return false;
+  const fecha = new Date(`${valor}T00:00:00Z`);
+  return !Number.isNaN(fecha.getTime()) && fecha.toISOString().slice(0, 10) === valor;
+}
+
 function idValido(valor) {
   const id = Number(valor);
   return Number.isInteger(id) && id > 0 ? id : null;
@@ -176,6 +183,7 @@ function validarTorneo(req, res, next) {
   const datos = {
     nombre: texto(b.nombre),
     formato: ['liga', 'relampago'].includes(b.formato) ? b.formato : null,
+    emparejamiento: ['llegada', 'sorteo'].includes(b.emparejamiento) ? b.emparejamiento : null,
     idModalidad: idValido(b.id_modalidad),
     cantidadIngresada: String(b.cantidad_equipos || '').trim(),
     cantidadEquipos: Number.isInteger(cantidad) ? cantidad : null,
@@ -183,6 +191,9 @@ function validarTorneo(req, res, next) {
     idCancha: idCancha ? idValido(idCancha[1]) : null,
     tienePatrocinadores: b.tiene_patrocinadores === 'si',
     premios: texto(b.premios),
+    // SA-5: fecha y hora de inicio opcionales (vacías = "Por confirmar")
+    fechaInicio: texto(b.fecha_inicio) || null,
+    horaInicio: texto(b.hora_inicio) || null,
     patrocinadoresNuevos: [],
     // ids de patrocinadores ya guardados que se marcaron para quitar (solo al editar)
     quitarPatrocinadores: Object.keys(b).filter((k) => /^quitar_patrocinador_\d+$/.test(k) && b[k] === 'si')
@@ -193,6 +204,10 @@ function validarTorneo(req, res, next) {
   if (!datos.nombre) e.nombre = 'El nombre del torneo es obligatorio.';
   else if (datos.nombre.length > 100) e.nombre = 'Máximo 100 caracteres.';
   if (!datos.formato) e.formato = 'Elige si es una liga o un torneo relámpago.';
+  if (!datos.emparejamiento) e.emparejamiento = 'Elige cómo se arman los cruces.';
+  if (datos.fechaInicio && !fechaValida(datos.fechaInicio)) e.fecha_inicio = 'La fecha no es válida.';
+  if (datos.horaInicio && !REGEX_HORA.test(datos.horaInicio)) e.hora_inicio = 'La hora no es válida (HH:MM).';
+  else if (datos.horaInicio && !datos.fechaInicio) e.hora_inicio = 'Para indicar la hora, primero elige la fecha.';
   if (!datos.idModalidad) e.id_modalidad = 'Elige la modalidad.';
   if (!datos.cantidadIngresada) e.cantidad_equipos = 'Indica cuántos equipos participan.';
   else if (!datos.cantidadEquipos) e.cantidad_equipos = 'Debe ser un número entero.';

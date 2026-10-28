@@ -11,7 +11,7 @@
       <div class="eq-cabecera__texto">
         <%- include('../partials/boton-volver', { fallbackUrl: '/admin/super/torneos' }) %>
         <h1 class="eq-cabecera__titulo"><%= torneo.nombre %></h1>
-        <p class="eq-cabecera__stats"><%= torneo.formatoTexto %> · <%= torneo.modalidad %> · <%= torneo.estadoTexto %></p>
+        <p class="eq-cabecera__stats"><%= torneo.formatoTexto %> · <%= torneo.modalidad %> · <%= torneo.estadoTexto %> · Inicio: <%= torneo.fechaInicioTexto.larga %></p>
       </div>
       <div class="eq-cabecera__acciones">
         <a class="btn btn--contorno" href="/admin/super/torneos/<%= torneo.id %>/editar">Editar</a>
@@ -59,7 +59,7 @@
 
         <div class="sm-form__acciones">
           <form action="/admin/super/torneos/<%= torneo.id %>/empezar" method="POST"
-                data-confirmar="<%= torneo.formato === 'liga' ? 'Se arma el fixture de todos contra todos.' : 'Se sortean los cruces de la primera ronda.' %> Después ya no se podrán inscribir ni quitar equipos."
+                data-confirmar="<%= torneo.formato === 'liga' ? 'Se arma el fixture de todos contra todos' : 'Se arman los cruces de la primera ronda' %> <%= torneo.emparejamiento === 'llegada' ? 'por orden de llegada' : 'con tómbola (sorteo)' %>. Después ya no se podrán inscribir ni quitar equipos."
                 data-confirmar-titulo="¿Empezar <%= torneo.nombre %>?" data-confirmar-boton="Empezar">
             <button type="submit" class="btn btn--verde btn--grande" <%= lleno ? '' : 'disabled' %>>Empezar torneo</button>
           </form>

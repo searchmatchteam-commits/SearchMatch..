@@ -10,6 +10,10 @@
   const esLlave = torneo.formato === 'relampago';
   const porcentaje = Math.round(100 * torneo.inscritos / torneo.cantidadEquipos);
   const faltan = torneo.cuposLibres;
+  // Inscripción: con un equipo que juega la modalidad se abre el modal; si ninguno la juega, el botón
+  // queda deshabilitado y cada equipo trae "Habilitar <modalidad>" (un clic, sin salir del torneo).
+  const puedeInscribir = enInscripcion && faltan > 0 && disponibles.length > 0;
+  const bloqueadoModalidad = enInscripcion && faltan > 0 && disponibles.length === 0 && otraModalidad.length > 0;
   // Pestaña por defecto: el cuadrante (vacío mientras se llenan los cupos, con resultados después)
   const pestanaInicial = 'cuadrante';
 %>
@@ -25,6 +29,12 @@
           <span class="sm-rol"><%= torneo.modalidad %></span>
           <span class="sm-estado sm-estado--torneo-<%= torneo.estado %>"><%= torneo.estadoTexto %></span>
         </p>
+        <% if (enInscripcion && torneo.fechaInicio) { %>
+          <p class="trn-fecha">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2.5" /><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" /></svg>
+            Inicia el <%= torneo.fechaInicioTexto.corta %><%= torneo.horaInicio ? ` · ${torneo.horaInicio} hrs` : '' %>
+          </p>
+        <% } %>
 
         <div class="dash-panel eq-panel trn-energia" id="inscripcion">
           <div class="trn-energia__cabecera">
@@ -62,21 +72,24 @@
           <% if (enInscripcion) { %>
             <% if (faltan === 0) { %>
               <p class="dash-panel__nota">No quedan cupos.</p>
-            <% } else if (disponibles.length > 0) { %>
-              <form class="sm-inscripcion" action="/torneos/<%= torneo.id %>/inscribir" method="POST">
-                <% if (disponibles.length === 1) { %>
-                  <input type="hidden" name="id_equipo" value="<%= disponibles[0].id %>" />
-                  <button type="submit" class="btn btn--verde">Inscribir a <%= disponibles[0].nombre %></button>
-                <% } else { %>
-                  <label for="id_equipo">Equipo</label>
-                  <select id="id_equipo" name="id_equipo" required>
-                    <% disponibles.forEach(function (e) { %><option value="<%= e.id %>"><%= e.nombre %></option><% }) %>
-                  </select>
-                  <button type="submit" class="btn btn--verde">Inscribir equipo</button>
-                <% } %>
-              </form>
-            <% } else if (otraModalidad.length > 0) { %>
-              <p class="dash-panel__nota"><%= inscritos.length > 0 ? 'Tus otros equipos' : 'Tus equipos' %> no juegan <%= torneo.modalidad %>. Agrega esa modalidad en el panel de tu equipo para inscribirlo.</p>
+            <% } else if (puedeInscribir) { %>
+              <button type="button" class="btn btn--verde btn--bloque trn-cta" data-abrir-inscripcion>Inscribir mi equipo</button>
+            <% } else if (bloqueadoModalidad) { %>
+              <div class="trn-requisito">
+                <button type="button" class="btn btn--verde btn--bloque trn-cta" disabled aria-describedby="trn-requisito-texto">Inscribir mi equipo</button>
+                <p class="trn-requisito__texto" id="trn-requisito-texto">
+                  <%= inscritos.length > 0 ? 'Tus otros equipos' : (otraModalidad.length === 1 ? 'Tu equipo' : 'Tus equipos') %>
+                  no <%= otraModalidad.length === 1 ? 'juega' : 'juegan' %> <strong><%= torneo.modalidad %></strong>. Habilítala con un clic para inscribirlo:
+                </p>
+                <% otraModalidad.forEach(function (e) { %>
+                  <form class="trn-requisito__fila" action="/torneos/<%= torneo.id %>/habilitar-modalidad" method="POST">
+                    <input type="hidden" name="id_equipo" value="<%= e.id %>" />
+                    <span class="trn-requisito__nombre"><%= e.nombre %></span>
+                    <button type="submit" class="btn btn--contorno btn--chico">Habilitar <%= torneo.modalidad %></button>
+                  </form>
+                <% }) %>
+                <a class="trn-requisito__enlace" href="/mi-equipo?equipo=<%= otraModalidad[0].id %>">Ir al panel de mi equipo →</a>
+              </div>
             <% } else if (misEquipos.length === 0) { %>
               <p class="dash-panel__nota">Solo el capitán puede inscribir a su equipo. <a href="/crear-equipo">Crea un equipo</a> o pídele a tu capitán que lo inscriba.</p>
             <% } %>
@@ -97,6 +110,11 @@
 
         <div class="trn-panel" role="tabpanel" id="panel-informacion" aria-labelledby="pestana-informacion" <%= pestanaInicial === 'informacion' ? '' : 'hidden' %>>
           <%- include('../partials/torneo-ficha', { torneo }) %>
+          <% if (puedeInscribir) { %>
+            <button type="button" class="btn btn--verde btn--bloque btn--xl trn-cta trn-cta--info" data-abrir-inscripcion>Inscribir equipo</button>
+          <% } else if (bloqueadoModalidad) { %>
+            <p class="dash-panel__nota trn-cta-nota">Para inscribirte, tu equipo debe jugar <%= torneo.modalidad %>. <a href="#inscripcion">Habilítala desde el panel de inscripción</a>.</p>
+          <% } %>
         </div>
 
         <div class="trn-panel" role="tabpanel" id="panel-equipos" aria-labelledby="pestana-equipos" hidden>
@@ -111,6 +129,14 @@
             </ul>
           <% } else { %>
             <p class="dash-panel__nota">Todavía no hay equipos inscritos. ¡Sé el primero!</p>
+          <% } %>
+          <% if (puedeInscribir) { %>
+            <div class="trn-cupo-libre">
+              <span class="trn-cupo-libre__texto">
+                <span class="trn-num"><%= faltan === 1 ? 'Queda 1 cupo' : `Quedan ${faltan} cupos` %></span> en este torneo
+              </span>
+              <button type="button" class="btn btn--verde trn-cta" data-abrir-inscripcion>Inscribir a mi equipo aquí</button>
+            </div>
           <% } %>
         </div>
 
@@ -127,6 +153,7 @@
               <p class="trn-vacio__texto">
                 El fixture se generará automáticamente cuando se llenen los
                 <span class="trn-num"><%= torneo.cantidadEquipos %></span> cupos
+                (<%= torneo.emparejamiento === 'llegada' ? 'fecha 1 por orden de llegada' : 'cruces por tómbola' %>)
               </p>
             </div>
           <% } else { %>
@@ -137,6 +164,48 @@
     </div>
   </div>
 </section>
+
+<% if (puedeInscribir) { %>
+  <!-- Modal "Inscribir equipo": elegir equipo y aceptar las reglas (torneo-detalle.js lo abre) -->
+  <div class="modal modal--vidrio" hidden data-modal-inscripcion>
+    <div class="modal__caja" role="dialog" aria-modal="true" aria-labelledby="modal-inscripcion-titulo">
+      <h2 class="modal__titulo" id="modal-inscripcion-titulo">Inscribir en <span class="texto-verde"><%= torneo.nombre %></span></h2>
+      <p class="modal__texto">
+        <%= faltan === 1 ? 'Queda 1 cupo' : `Quedan ${faltan} cupos` %>. Elige el equipo y confirma las reglas.
+      </p>
+      <form class="modal__form" action="/torneos/<%= torneo.id %>/inscribir" method="POST">
+        <label class="modal__campo">
+          <span>Equipo</span>
+          <select name="id_equipo" required>
+            <% disponibles.forEach(function (e) { %><option value="<%= e.id %>"><%= e.nombre %></option><% }) %>
+          </select>
+        </label>
+        <div class="trn-reglas">
+          <p class="trn-reglas__titulo">Reglas del torneo</p>
+          <ul class="trn-reglas__lista">
+            <li><%= torneo.formatoTexto %> de <%= torneo.modalidad %> con <%= torneo.cantidadEquipos %> equipos.</li>
+            <li>
+              <%= torneo.emparejamiento === 'llegada'
+                ? 'Cruces por orden de llegada: 1° inscrito vs 2°, 3° vs 4°…'
+                : 'Cruces por tómbola: se sortean cuando se llenen los cupos.' %>
+            </li>
+            <li>Se juega en <%= torneo.recinto %> · <%= torneo.cancha %><%= torneo.comuna ? ` (${torneo.comuna})` : '' %>.</li>
+            <li>Puedes retirar a tu equipo mientras las inscripciones sigan abiertas: su cupo queda libre.</li>
+            <li>El torneo empieza cuando se llenan los cupos; desde ahí ya no podrás retirarlo.</li>
+          </ul>
+        </div>
+        <label class="trn-reglas__acepto">
+          <input type="checkbox" name="acepto_reglas" value="si" required />
+          <span>Acepto las reglas del torneo</span>
+        </label>
+        <div class="modal__acciones">
+          <button type="button" class="btn btn--contorno" data-cerrar-modal>Cancelar</button>
+          <button type="submit" class="btn btn--verde">Confirmar inscripción</button>
+        </div>
+      </form>
+    </div>
+  </div>
+<% } %>
 
 <p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
 

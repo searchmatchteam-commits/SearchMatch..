@@ -33,20 +33,35 @@
           <% ['L', 'M', 'M', 'J', 'V', 'S', 'D'].forEach(function (d) { %><span class="sm-calendario__cabecera" aria-hidden="true"><%= d %></span><% }) %>
           <% celdas.forEach(function (fecha) { %>
             <% if (!fecha) { %><span class="sm-calendario__vacio"></span><% } else {
-                 const conPartido = diasConPartido.has(fecha); %>
-              <a class="sm-calendario__dia <%= conPartido ? 'sm-calendario__dia--partido' : '' %> <%= fecha === hoy ? 'sm-calendario__dia--hoy' : '' %> <%= fecha === dia ? 'sm-calendario__dia--elegido' : '' %>"
+                 const conPartido = diasConPartido.has(fecha);
+                 const conTorneo = diasConTorneo.has(fecha); %>
+              <a class="sm-calendario__dia <%= conPartido ? 'sm-calendario__dia--partido' : '' %> <%= conTorneo ? 'sm-calendario__dia--torneo' : '' %> <%= fecha === hoy ? 'sm-calendario__dia--hoy' : '' %> <%= fecha === dia ? 'sm-calendario__dia--elegido' : '' %>"
                  href="/agenda?mes=<%= mes %>&dia=<%= fecha %>&lista=<%= lista %>"
-                 aria-label="<%= diaLargo.format(new Date(fecha + 'T00:00:00Z')) %><%= conPartido ? ', con partido' : '' %>"><%= Number(fecha.slice(8)) %></a>
+                 aria-label="<%= diaLargo.format(new Date(fecha + 'T00:00:00Z')) %><%= conPartido ? ', con partido' : '' %><%= conTorneo ? ', inicia un torneo' : '' %>"><%= Number(fecha.slice(8)) %></a>
             <% } %>
           <% }) %>
         </div>
-        <% if (!hayEnElMes) { %><p class="dash-panel__nota">No tienes partidos en <%= nombreMes %>.</p><% } %>
+        <% if (!hayEnElMes) { %><p class="dash-panel__nota">No tienes partidos ni hay torneos en <%= nombreMes %>.</p><% } %>
+        <% if (diasConTorneo.size > 0) { %>
+          <p class="sm-calendario__leyenda"><span class="sm-calendario__marca sm-calendario__marca--torneo" aria-hidden="true"></span> Inicio de un torneo</p>
+        <% } %>
 
         <% if (dia) { %>
           <h3 class="sm-subtitulo"><%= diaLargo.format(new Date(dia + 'T00:00:00Z')) %></h3>
-          <% if (delDia.length === 0) { %>
-            <p class="dash-panel__nota">No hay partidos este día.</p>
-          <% } else { %>
+          <% if (torneosDelDia.length > 0) { %>
+            <ul class="sm-filas">
+              <% torneosDelDia.forEach(function (t) { %>
+                <li class="sm-fila">
+                  <a href="<%= t.url %>">🏆 <%= t.titulo %></a>
+                  <span><%= t.hora ? `${t.hora} hrs · ` : '' %><%= t.detalle %></span>
+                  <span class="sm-estado sm-estado--torneo-<%= t.estado %>"><%= t.mio ? 'Tu equipo juega' : t.estadoTexto %></span>
+                </li>
+              <% }) %>
+            </ul>
+          <% } %>
+          <% if (delDia.length === 0 && torneosDelDia.length === 0) { %>
+            <p class="dash-panel__nota">No hay partidos ni torneos este día.</p>
+          <% } else if (delDia.length > 0) { %>
             <ul class="sm-filas">
               <% delDia.forEach(function (p) { const f = fila(p); %>
                 <li class="sm-fila <%= p.cancelado ? 'sm-fila--inactiva' : '' %>">

@@ -48,7 +48,7 @@
                 <% if (t.foto) { %><img class="sm-torneo-miniatura" src="<%= t.foto %>" alt="" loading="lazy" /><% } %>
                 <span class="sm-fila__principal">
                   <strong><a href="/admin/super/torneos/<%= t.id %>"><%= t.nombre %></a></strong>
-                  <small><%= t.modalidad %> · <%= t.inscritos %>/<%= t.cantidadEquipos %> equipos · <%= t.recinto %></small>
+                  <small><%= t.modalidad %> · <%= t.inscritos %>/<%= t.cantidadEquipos %> equipos · <%= t.recinto %> · Inicio: <%= t.fechaInicioTexto.larga %></small>
                 </span>
                 <span class="sm-rol"><%= t.formatoTexto %></span>
                 <span class="sm-estado sm-estado--torneo-<%= t.estado %>"><%= t.estadoTexto %></span>

@@ -69,6 +69,7 @@ async function renderFormulario(res, { status = 200, torneo = null, datos = {}, 
     modalidades,
     canchas: canchas.map((c) => ({ texto: textoCancha(c), modalidad: c.modalidad })),
     formatos: reglas.FORMATOS,
+    emparejamientos: reglas.EMPAREJAMIENTOS,
     equiposRelampago: reglas.EQUIPOS_RELAMPAGO,
     equiposLiga: reglas.EQUIPOS_LIGA,
     maxPatrocinadores: reglas.MAX_PATROCINADORES,
@@ -156,9 +157,11 @@ async function editar(req, res, next) {
     const torneo = await torneoModel.obtener(idValido(req.params.id));
     if (!torneo) return res.redirect('/admin/super/torneos?aviso=inexistente');
     if (torneo.estado !== 'inscripcion') {
-      // Ya empezó: el formato, la modalidad y la cantidad quedan fijos.
-      Object.assign(datos, { formato: torneo.formato, idModalidad: torneo.idModalidad, cantidadEquipos: torneo.cantidadEquipos });
-      ['formato', 'id_modalidad', 'cantidad_equipos'].forEach((campo) => delete erroresCampo[campo]);
+      // Ya empezó: el formato, la modalidad, la cantidad y el emparejamiento quedan fijos.
+      Object.assign(datos, {
+        formato: torneo.formato, idModalidad: torneo.idModalidad, cantidadEquipos: torneo.cantidadEquipos, emparejamiento: torneo.emparejamiento,
+      });
+      ['formato', 'id_modalidad', 'cantidad_equipos', 'emparejamiento'].forEach((campo) => delete erroresCampo[campo]);
     }
     await revisar(datos, erroresCampo, torneo);
     if (Object.keys(erroresCampo).length > 0) {

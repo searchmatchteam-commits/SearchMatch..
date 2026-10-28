@@ -281,3 +281,25 @@ CREATE TABLE IF NOT EXISTS torneo_partido (
     UNIQUE (id_torneo, ronda, orden)
 );
 ALTER TABLE torneo_partido ENABLE ROW LEVEL SECURITY;
+
+
+-- ============================================================
+-- SA-4) TORNEOS: EMPAREJAMIENTO DE LA PRIMERA RONDA / FIXTURE
+-- ============================================================
+-- emparejamiento: 'llegada' (los cruces siguen el orden de inscripción: 1° vs 2°, 3° vs 4°...)
+-- o 'sorteo' (tómbola: se barajan al empezar el torneo). Se puede cambiar mientras haya inscripciones.
+ALTER TABLE torneo
+    ADD COLUMN IF NOT EXISTS emparejamiento VARCHAR(10) NOT NULL DEFAULT 'sorteo'
+        CHECK (emparejamiento IN ('llegada', 'sorteo'));
+
+
+-- ============================================================
+-- SA-5) TORNEOS: FECHA Y HORA DE INICIO (calendario)
+-- ============================================================
+-- Opcionales: NULL = "Por confirmar". La hora solo tiene sentido con fecha (hora de Chile).
+ALTER TABLE torneo
+    ADD COLUMN IF NOT EXISTS fecha_inicio DATE,
+    ADD COLUMN IF NOT EXISTS hora_inicio  TIME;
+ALTER TABLE torneo DROP CONSTRAINT IF EXISTS torneo_hora_con_fecha;
+ALTER TABLE torneo ADD CONSTRAINT torneo_hora_con_fecha CHECK (hora_inicio IS NULL OR fecha_inicio IS NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_torneo_fecha_inicio ON torneo (fecha_inicio) WHERE fecha_inicio IS NOT NULL;
