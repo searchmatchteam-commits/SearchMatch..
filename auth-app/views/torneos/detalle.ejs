@@ -6,7 +6,9 @@
   const inscritos = misEquipos.filter((e) => e.inscrito);
   const disponibles = misEquipos.filter((e) => !e.inscrito && e.juegaModalidad);
   const otraModalidad = misEquipos.filter((e) => !e.inscrito && !e.juegaModalidad);
-  const enInscripcion = torneo.estado === 'inscripcion';
+  // Inscripciones abiertas o con cupos completos y dentro de la fecha límite (comprobación perezosa del plazo).
+  const enInscripcion = torneo.conInscripciones && !torneo.inscripcionVencida;
+  const conPago = torneo.precio > 0;
   const esLlave = torneo.formato === 'relampago';
   const porcentaje = Math.round(100 * torneo.inscritos / torneo.cantidadEquipos);
   const faltan = torneo.cuposLibres;
@@ -48,7 +50,7 @@
           </div>
           <p class="trn-energia__texto">
             <% if (!enInscripcion) { %>
-              Cupos completos · <%= torneo.estadoTexto %>
+              <%= torneo.conInscripciones ? 'Inscripciones cerradas' : torneo.estadoTexto %>
             <% } else if (faltan === 0) { %>
               ¡Cupos completos! El torneo está por comenzar
             <% } else { %>
@@ -63,13 +65,14 @@
                 <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
               </span>
               <span class="trn-mi-equipo__nombre"><strong><%= e.nombre %></strong><small>Inscrito</small></span>
-              <% if (enInscripcion) { %>
+              <% if (enInscripcion && !conPago) { %>
                 <button type="submit" class="trn-btn-retirar">Retirar</button>
               <% } %>
             </form>
           <% }) %>
 
           <% if (enInscripcion) { %>
+            <p class="dash-panel__nota">Inscripción: <strong><%= torneo.precioTexto %></strong> por equipo · hasta el <%= torneo.fechaLimiteTexto.corta || 'inicio' %>.</p>
             <% if (faltan === 0) { %>
               <p class="dash-panel__nota">No quedan cupos.</p>
             <% } else if (puedeInscribir) { %>

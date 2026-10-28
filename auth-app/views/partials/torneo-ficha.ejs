@@ -15,12 +15,27 @@
     <% } %>
     <dl class="sm-credenciales">
       <div><dt>Fecha de inicio</dt><dd><%= torneo.fechaInicioTexto.larga %></dd></div>
+      <% if (torneo.fechaTermino) { %><div><dt>Fecha de término</dt><dd><%= torneo.fechaTerminoTexto.larga %></dd></div><% } %>
+      <% if (torneo.fechaLimite) { %><div><dt>Inscripciones hasta</dt><dd><%= torneo.fechaLimiteTexto.larga %></dd></div><% } %>
       <div><dt>Modalidad</dt><dd><%= torneo.modalidad %></dd></div>
+      <div><dt>Nivel admitido</dt><dd><%= torneo.nivelTexto %></dd></div>
       <div><dt>Emparejamiento</dt><dd><%= torneo.emparejamientoTexto %></dd></div>
-      <div><dt>Equipos</dt><dd><%= torneo.inscritos %> de <%= torneo.cantidadEquipos %> inscritos</dd></div>
-      <div><dt>Cancha</dt><dd><%= torneo.recinto %> · <%= torneo.cancha %><%= torneo.comuna ? ` (${torneo.comuna})` : '' %></dd></div>
+      <% if (torneo.formato === 'grupos' && torneo.cantidadGrupos) { %>
+        <div><dt>Grupos</dt><dd><%= torneo.cantidadGrupos %> grupos · clasifican <%= torneo.clasificanPorGrupo %> por grupo</dd></div>
+      <% } %>
+      <div><dt>Equipos</dt><dd><%= torneo.inscritos %> de <%= torneo.cantidadEquipos %> inscritos<%= torneo.cupoMin && torneo.cupoMin !== torneo.cupoMax ? ` (mínimo ${torneo.cupoMin})` : '' %></dd></div>
+      <% if (torneo.minJugadores) { %><div><dt>Plantel mínimo</dt><dd><%= torneo.minJugadores %> jugadores</dd></div><% } %>
+      <div><dt><%= torneo.cancha.includes(',') ? 'Canchas' : 'Cancha' %></dt><dd><%= torneo.recinto %><%= torneo.cancha ? ` · ${torneo.cancha}` : '' %><%= torneo.comuna ? ` (${torneo.comuna})` : '' %></dd></div>
+      <div><dt>Inscripción</dt><dd><%= torneo.precioTexto %><%= torneo.precio > 0 && torneo.mediosTexto ? ` · ${torneo.mediosTexto}` : '' %></dd></div>
       <div><dt>Premios</dt><dd><%= torneo.premios || 'Sin premios' %></dd></div>
     </dl>
+    <% if (torneo.descripcion) { %><p class="sm-torneo-ficha__descripcion"><%= torneo.descripcion %></p><% } %>
+    <% if (torneo.reglamento) { %>
+      <details class="sm-torneo-ficha__reglamento">
+        <summary>Reglamento</summary>
+        <p><%= torneo.reglamento %></p>
+      </details>
+    <% } %>
     <% if (torneo.patrocinadores.length > 0) { %>
       <h2 class="sm-subtitulo">Patrocinadores</h2>
       <ul class="sm-patrocinadores">

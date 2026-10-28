@@ -1,5 +1,5 @@
 // public/js/torneo-admin.js
-// /admin/super/torneos/:id: buscador por equipo y filtros (Todos / Pendientes / Jugados) de los partidos.
+// /admin/torneos/:id: buscador por equipo y filtros (Todos / Pendientes / Jugados) de los partidos.
 // Oculta las tarjetas que no coinciden y las rondas que quedan vacías.
 (function () {
   document.querySelectorAll('[data-cargar-resultados]').forEach(function (panel) {

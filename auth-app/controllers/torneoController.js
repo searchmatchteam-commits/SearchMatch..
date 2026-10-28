@@ -1,6 +1,7 @@
 // controllers/torneoController.js
 // Sección Torneos de los jugadores: ver torneos, inscribir o retirar un equipo (solo su capitán)
-// y ver el fixture, la tabla (liga) o la llave (relámpago). Los organiza el superadministrador.
+// y ver el fixture, la tabla (liga) o la llave (eliminación directa). Los organiza la administración desde el
+// panel; los borradores no se muestran.
 
 const torneoModel = require('../models/torneoModel');
 const equipoModel = require('../models/equipoModel');
@@ -18,6 +19,7 @@ const AVISOS = {
   inexistente: 'Ese torneo ya no existe.',
   reglas: 'Debes aceptar las reglas del torneo para inscribir a tu equipo.',
   'modalidad-agregada': 'Listo: tu equipo ya juega esta modalidad. Ahora puedes inscribirlo.',
+  'con-pago': 'La inscripción con pago en línea se habilita muy pronto. Mientras tanto no es posible inscribirse en este torneo.',
 };
 
 async function listar(req, res, next) {
@@ -78,7 +80,7 @@ async function habilitarModalidad(req, res, next) {
   try {
     const torneo = await torneoModel.obtener(idValido(req.params.id));
     if (!torneo) return res.redirect('/torneos?aviso=inexistente');
-    if (torneo.estado !== 'inscripcion') return res.redirect(`/torneos/${torneo.id}?aviso=cerrado`);
+    if (!torneo.conInscripciones || torneo.inscripcionVencida) return res.redirect(`/torneos/${torneo.id}?aviso=cerrado`);
     const idEquipo = idValido(req.body.id_equipo);
     const resultado = idEquipo ? await equipoModel.agregarModalidad(req.usuario.idAuth, idEquipo, torneo.idModalidad) : 'sin-permiso';
     return res.redirect(`/torneos/${torneo.id}?aviso=${resultado === 'actualizadas' ? 'modalidad-agregada' : 'no-capitan'}`);

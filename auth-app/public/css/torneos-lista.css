@@ -346,8 +346,8 @@
   background: currentColor;
 }
 
-.tl-estado--inscripcion { color: var(--tl-neon); text-shadow: 0 0 8px rgba(var(--tl-neon-rgb), 0.6); }
-.tl-estado--inscripcion::before { box-shadow: 0 0 8px var(--tl-neon); animation: tl-pulso 1.8s ease-in-out infinite; }
+.tl-estado--abierto { color: var(--tl-neon); text-shadow: 0 0 8px rgba(var(--tl-neon-rgb), 0.6); }
+.tl-estado--abierto::before { box-shadow: 0 0 8px var(--tl-neon); animation: tl-pulso 1.8s ease-in-out infinite; }
 .tl-estado--en_curso { color: #fbbf24; }
 
 @keyframes tl-pulso { 50% { opacity: 0.35; } }
@@ -546,7 +546,7 @@
 @media (prefers-reduced-motion: reduce) {
   .tl-carrusel { scroll-behavior: auto; }
   .tl-carta, .tl-carta__foto, .tl-cta, .tl-cta__icono { transition: none; }
-  .tl-estado--inscripcion::before { animation: none; }
+  .tl-estado--abierto::before { animation: none; }
 }
 
 /* ---------- Modo claro ---------- */
@@ -577,7 +577,7 @@ html[data-theme="light"] .tl-carta__foto--fondo-claro { filter: none; mix-blend-
 html[data-theme="light"] .tl-carta__enlace { color: #111827; }
 html[data-theme="light"] .tl-badge--formato { background: rgba(255, 255, 255, 0.9); text-shadow: none; box-shadow: none; }
 html[data-theme="light"] .tl-badge--mio { color: #fff; box-shadow: none; }
-html[data-theme="light"] .tl-estado--inscripcion,
+html[data-theme="light"] .tl-estado--abierto,
 html[data-theme="light"] .tl-carta__iniciales { text-shadow: none; }
 html[data-theme="light"] .tl-carta__meta svg { filter: none; }
 html[data-theme="light"] .tl-anillo { background: #fff; box-shadow: none; }

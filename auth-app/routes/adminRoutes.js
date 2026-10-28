@@ -9,6 +9,7 @@ const cuentas = require('../controllers/adminCuentasController');
 const catalogos = require('../controllers/adminCatalogosController');
 const superAdmin = require('../controllers/superAdminController');
 const torneos = require('../controllers/adminTorneosController');
+const config = require('../controllers/adminConfigController');
 const { requireAdmin, requirePrincipal } = require('../middlewares/rolMiddleware');
 const {
   validarRecinto, validarCancha, validarBloque, validarCatalogo, validarTorneo, subirImagenesTorneo,
@@ -68,8 +69,29 @@ router.post('/catalogos/:tipo/:id/eliminar', catalogos.eliminar);
 router.get('/equipos', (req, res, next) => (req.usuario.esSuperAdmin
   ? res.redirect(`/admin/super/equipos${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`) : next()),
   (req, res) => res.render('admin/proximamente', { titulo: 'Equipos', pagina: 'equipo', seccion: 'equipos', fase: 5 }));
-router.get('/torneos', (req, res, next) => (req.usuario.esSuperAdmin ? res.redirect('/admin/super/torneos') : next()),
-  (req, res) => res.render('admin/proximamente', { titulo: 'Torneos', pagina: 'equipo', seccion: 'torneos', fase: 1 }));
+
+// Torneos (AP-027, TO-001 a TO-005): Administrador y Administrador principal.
+router.get('/torneos', torneos.listar);
+router.get('/torneos/nuevo', torneos.formularioNuevo);
+router.get('/torneos/canchas', torneos.canchasJSON);
+router.post('/torneos', subirImagenesTorneo, validarTorneo, torneos.crear);
+router.get('/torneos/:id', torneos.detalle);
+router.get('/torneos/:id/editar', torneos.formularioEditar);
+router.post('/torneos/:id/editar', subirImagenesTorneo, validarTorneo, torneos.editar);
+router.post('/torneos/:id/publicar', torneos.publicar);
+router.post('/torneos/:id/cerrar', torneos.cerrar);
+router.post('/torneos/:id/eliminar', torneos.eliminar);
+router.post('/torneos/:id/empezar', torneos.empezar);
+router.post('/torneos/:id/equipos/:idEquipo/quitar', torneos.quitarEquipo);
+router.post('/torneos/:id/partidos/:idPartido', torneos.registrarResultado);
+
+// Configuración → Pasarelas de pago (TO-013)
+router.get('/configuracion', (req, res) => res.redirect('/admin/catalogos'));
+router.get('/configuracion/pasarelas', config.mostrar);
+router.post('/configuracion/pasarelas/:clave', config.guardar);
+router.post('/configuracion/pasarelas/:clave/probar', config.probar);
+router.post('/configuracion/pasarelas/:clave/activar', config.activar);
+router.post('/configuracion/pasarelas/:clave/desactivar', config.desactivar);
 
 // Secciones de fases siguientes (AP-002: el menú ya las muestra)
 ['desafios', 'partidos', 'reservas', 'valoraciones', 'comentarios', 'anuncios', 'apelaciones', 'pagos', 'estadisticas']
@@ -83,15 +105,7 @@ router.post('/super/jugadores/:id/eliminar', requirePrincipal, superAdmin.elimin
 router.post('/super/jugadores/:id/desactivar', requirePrincipal, superAdmin.desactivarJugador);
 router.post('/super/jugadores/:id/activar', requirePrincipal, superAdmin.activarJugador);
 
-router.get('/super/torneos', requirePrincipal, torneos.listar);
-router.get('/super/torneos/nuevo', requirePrincipal, torneos.formularioNuevo);
-router.post('/super/torneos', requirePrincipal, subirImagenesTorneo, validarTorneo, torneos.crear);
-router.get('/super/torneos/:id', requirePrincipal, torneos.detalle);
-router.get('/super/torneos/:id/editar', requirePrincipal, torneos.formularioEditar);
-router.post('/super/torneos/:id/editar', requirePrincipal, subirImagenesTorneo, validarTorneo, torneos.editar);
-router.post('/super/torneos/:id/eliminar', requirePrincipal, torneos.eliminar);
-router.post('/super/torneos/:id/empezar', requirePrincipal, torneos.empezar);
-router.post('/super/torneos/:id/equipos/:idEquipo/quitar', requirePrincipal, torneos.quitarEquipo);
-router.post('/super/torneos/:id/partidos/:idPartido', requirePrincipal, torneos.registrarResultado);
+// Las rutas antiguas de torneos redirigen a /admin/torneos (los formularios POST usan 307 para conservar el método).
+router.all(/^\/super\/torneos(\/.*)?$/, (req, res) => res.redirect(req.method === 'GET' ? 301 : 307, `/admin/torneos${req.url.slice('/super/torneos'.length)}`));
 
 module.exports = router;

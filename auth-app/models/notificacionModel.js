@@ -17,6 +17,7 @@ const TIPOS = {
   comentario: 'Comentarios',
   equipo: 'Equipos',
   moderacion: 'Moderación',
+  torneo: 'Torneos',
 };
 
 /**
@@ -61,6 +62,34 @@ async function notificarEnTransaccion(cliente, idUsuario, tipo, mensaje, enlace 
   } catch (err) {
     await cliente.query('ROLLBACK TO SAVEPOINT notificacion');
     console.error('⚠️  No se pudo crear la notificación:', err.message);
+  }
+}
+
+/**
+ * Notifica a los capitanes de varios equipos dentro de la transacción de una acción del panel (TO-003, TO-004,
+ * TO-005...). Solo a cuentas activas y una vez por capitán aunque tenga varios equipos. Si falla, la acción sigue.
+ * @param {import('pg').PoolClient} cliente
+ * @param {number[]} idsEquipos
+ */
+async function notificarCapitanesEnTransaccion(cliente, idsEquipos, tipo, mensaje, enlace = null) {
+  if (idsEquipos.length === 0) return 0;
+  await cliente.query('SAVEPOINT notificacion_capitanes');
+  try {
+    const { rowCount } = await cliente.query(
+      `INSERT INTO notificacion (mensaje, id_tipo_notificacion, id_usuario, enlace)
+       SELECT DISTINCT left($3, 500), t.id, u.id, $4
+         FROM equipo e
+         JOIN usuario u ON u.id = e.id_usuario_creador AND u.activo
+         JOIN tipo_notificacion t ON lower(t.nombre) = $2
+        WHERE e.id = ANY($1::int[])`,
+      [idsEquipos, tipo, mensaje, enlace]
+    );
+    await cliente.query('RELEASE SAVEPOINT notificacion_capitanes');
+    return rowCount;
+  } catch (err) {
+    await cliente.query('ROLLBACK TO SAVEPOINT notificacion_capitanes');
+    console.error('⚠️  No se pudo crear la notificación:', err.message);
+    return 0;
   }
 }
 
@@ -189,6 +218,7 @@ module.exports = {
   TIPOS,
   notificarUsuario,
   notificarEnTransaccion,
+  notificarCapitanesEnTransaccion,
   notificarCapitan,
   notificarIntegrantes,
   notificarJugador,

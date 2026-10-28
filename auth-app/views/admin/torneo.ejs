@@ -1,72 +1,128 @@
 <%- include('../partials/admin-inicio', { seccion }) %>
 
-<%
-  const lleno = torneo.inscritos >= torneo.cantidadEquipos;
-%>
+<% const fechaHora = new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Santiago' }); %>
 <section class="eq">
   <div class="contenedor">
     <header class="eq-cabecera revelar">
       <div class="eq-cabecera__texto">
-        <%- include('../partials/boton-volver', { fallbackUrl: '/admin/super/torneos' }) %>
+        <%- include('../partials/boton-volver', { fallbackUrl: '/admin/torneos' }) %>
         <h1 class="eq-cabecera__titulo"><%= torneo.nombre %></h1>
         <p class="eq-cabecera__stats"><%= torneo.formatoTexto %> · <%= torneo.modalidad %> · <%= torneo.estadoTexto %> · Inicio: <%= torneo.fechaInicioTexto.larga %></p>
       </div>
       <div class="eq-cabecera__acciones">
-        <a class="btn btn--contorno" href="/admin/super/torneos/<%= torneo.id %>/editar">Editar</a>
-        <form action="/admin/super/torneos/<%= torneo.id %>/eliminar" method="POST"
-              data-confirmar="Se borran sus inscripciones, partidos y resultados. Esta acción no se puede deshacer."
-              data-confirmar-titulo="¿Eliminar el torneo <%= torneo.nombre %>?" data-confirmar-boton="Eliminar">
-          <button type="submit" class="btn btn--contorno sm-btn-peligro">Eliminar</button>
-        </form>
+        <% if (torneo.acciones.includes('editar')) { %><a class="btn btn--contorno" href="/admin/torneos/<%= torneo.id %>/editar">Editar</a><% } %>
+        <% if (torneo.acciones.includes('publicar')) { %>
+          <form action="/admin/torneos/<%= torneo.id %>/publicar" method="POST"
+                data-confirmar="Pasará a Inscripciones abiertas, lo verán los jugadores y se avisará a los capitanes de equipos de <%= torneo.modalidad %> con nivel <%= torneo.nivelTexto %>."
+                data-confirmar-titulo="¿Publicar <%= torneo.nombre %>?" data-confirmar-boton="Publicar">
+            <button type="submit" class="btn btn--verde">Publicar</button>
+          </form>
+        <% } %>
+        <% if (torneo.acciones.includes('cerrar')) { %>
+          <form action="/admin/torneos/<%= torneo.id %>/cerrar" method="POST"
+                data-confirmar="Ya no se aceptarán inscripciones nuevas<%= torneo.reservados > 0 ? ` y expiran las ${torneo.reservados} pendientes de pago` : '' %>. Se avisará a los capitanes confirmados."
+                data-confirmar-titulo="¿Cerrar las inscripciones?" data-confirmar-boton="Cerrar inscripciones">
+            <button type="submit" class="btn btn--contorno">Cerrar inscripciones</button>
+          </form>
+        <% } %>
+        <% if (torneo.acciones.includes('fixture')) { %>
+          <form action="/admin/torneos/<%= torneo.id %>/empezar" method="POST"
+                data-confirmar="<%= torneo.formato === 'liga' ? 'Se arma el fixture de todos contra todos' : 'Se arman los cruces de la primera ronda' %> <%= torneo.emparejamiento === 'llegada' ? 'por orden de llegada' : 'con tómbola (sorteo)' %> con los <%= torneo.inscritos %> equipos confirmados."
+                data-confirmar-titulo="¿Generar el fixture?" data-confirmar-boton="Generar fixture">
+            <button type="submit" class="btn btn--verde">Generar fixture</button>
+          </form>
+        <% } %>
+        <% if (torneo.acciones.includes('eliminar')) { %>
+          <form action="/admin/torneos/<%= torneo.id %>/eliminar" method="POST"
+                data-confirmar="El borrador se elimina definitivamente." data-confirmar-titulo="¿Eliminar <%= torneo.nombre %>?" data-confirmar-boton="Eliminar">
+            <button type="submit" class="btn btn--contorno sm-btn-peligro">Eliminar</button>
+          </form>
+        <% } else if (esPrincipal && torneo.pagosAprobados === 0) { %>
+          <%- include('../partials/admin-accion-motivo', {
+            accion: `/admin/torneos/${torneo.id}/eliminar`, boton: 'Eliminar', peligro: true, titulo: `¿Eliminar ${torneo.nombre}?`,
+            texto: 'Se borran sus inscripciones, partidos y resultados, y se avisa a los capitanes con el motivo. No se puede deshacer.',
+          }) %>
+        <% } %>
       </div>
     </header>
 
+    <% if (aviso) { %>
+      <div class="alerta <%= tipoAviso === 'error' ? 'alerta--error' : 'alerta--exito' %>" role="<%= tipoAviso === 'error' ? 'alert' : 'status' %>">
+        <%= aviso %>
+        <% if (locals.ofrecerExtender) { %>
+          <span class="sm-form__acciones">
+            <a class="btn btn--chico btn--verde" href="/admin/torneos/<%= torneo.id %>/editar#fecha_limite_inscripcion">Extender la fecha límite</a>
+          </span>
+        <% } %>
+      </div>
+    <% } %>
+    <% if (torneo.estado === 'borrador') { %>
+      <div class="alerta alerta--info" role="note">Borrador: los jugadores no ven este torneo hasta que lo publiques.</div>
+    <% } else if (torneo.conInscripciones && torneo.inscripcionVencida) { %>
+      <div class="alerta alerta--error" role="note">
+        La fecha límite de inscripción ya pasó y no se alcanzó el cupo mínimo (<%= torneo.inscritos %> de <%= torneo.cupoMin %> confirmados).
+        <a href="/admin/torneos/<%= torneo.id %>/editar#fecha_limite_inscripcion">Extiende la fecha límite</a> o cancela el torneo.
+      </div>
+    <% } %>
+
     <%- include('../partials/torneo-ficha', { torneo }) %>
 
-    <% if (torneo.estado === 'inscripcion') { %>
-      <div class="dash-panel eq-panel">
-        <header class="dash-panel__cabecera">
-          <h2 class="dash-panel__titulo">Equipos inscritos (<%= torneo.inscritos %>/<%= torneo.cantidadEquipos %>)</h2>
-        </header>
-        <div class="sm-cupos" role="progressbar" aria-valuemin="0" aria-valuemax="<%= torneo.cantidadEquipos %>" aria-valuenow="<%= torneo.inscritos %>"
-             aria-label="Cupos llenos">
-          <span class="sm-cupos__relleno" style="width: <%= Math.round(100 * torneo.inscritos / torneo.cantidadEquipos) %>%"></span>
-        </div>
-
-        <% if (torneo.equipos.length === 0) { %>
-          <p class="dash-panel__nota">Aún no se inscribe ningún equipo. Los capitanes lo hacen desde la sección Torneos.</p>
-        <% } else { %>
-          <ul class="sm-filas">
-            <% torneo.equipos.forEach(function (e) { %>
-              <li class="sm-fila">
-                <span class="dash-equipo__escudo" aria-hidden="true"><%- include('../partials/escudo-equipo', { equipo: e }) %></span>
-                <span class="sm-fila__principal"><strong><%= e.nombre %></strong></span>
-                <span class="sm-fila__accion">
-                  <form action="/admin/super/torneos/<%= torneo.id %>/equipos/<%= e.id %>/quitar" method="POST"
-                        data-confirmar="Se avisará a sus integrantes y su cupo quedará libre."
-                        data-confirmar-titulo="¿Quitar a <%= e.nombre %> del torneo?" data-confirmar-boton="Quitar">
-                    <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Quitar</button>
-                  </form>
-                </span>
-              </li>
-            <% }) %>
-          </ul>
+    <div class="dash-panel eq-panel">
+      <header class="dash-panel__cabecera"><h2 class="dash-panel__titulo">Inscripción y pago</h2></header>
+      <dl class="sm-credenciales">
+        <div><dt>Precio por equipo</dt><dd><%= torneo.precioTexto %></dd></div>
+        <div><dt>Medios de pago</dt><dd><%= torneo.precio === 0 ? 'No aplica (gratuito)' : (torneo.mediosTexto || 'Ninguno: no se puede publicar') %></dd></div>
+        <% if (usd) { %>
+          <div><dt>PayPal cobra</dt><dd><%= usd.monto === null ? 'Falta definir el tipo de cambio en Configuración → Pasarelas de pago' : `US$${usd.monto.toFixed(2)} (tipo de cambio ${formatoCLP(usd.tipoCambio)} por dólar)` %></dd></div>
         <% } %>
+        <div><dt>Recaudación</dt><dd><%= formatoCLP(torneo.recaudado) %> (<%= torneo.pagosAprobados %> <%= torneo.pagosAprobados === 1 ? 'pago aprobado' : 'pagos aprobados' %>)</dd></div>
+        <div><dt>Cupos</dt><dd>Mínimo <%= torneo.cupoMin %> · máximo <%= torneo.cupoMax %> · <%= torneo.inscritos %> confirmados<%= torneo.reservados > 0 ? ` · ${torneo.reservados} pendientes de pago` : '' %></dd></div>
+        <div><dt>Fecha límite</dt><dd><%= torneo.fechaLimiteTexto.larga %></dd></div>
+        <% if (torneo.publicadoEn) { %><div><dt>Publicado</dt><dd><%= fechaHora.format(torneo.publicadoEn) %></dd></div><% } %>
+        <% if (torneo.cerradoEn) { %><div><dt>Inscripciones cerradas</dt><dd><%= fechaHora.format(torneo.cerradoEn) %></dd></div><% } %>
+      </dl>
+    </div>
 
-        <div class="sm-form__acciones">
-          <form action="/admin/super/torneos/<%= torneo.id %>/empezar" method="POST"
-                data-confirmar="<%= torneo.formato === 'liga' ? 'Se arma el fixture de todos contra todos' : 'Se arman los cruces de la primera ronda' %> <%= torneo.emparejamiento === 'llegada' ? 'por orden de llegada' : 'con tómbola (sorteo)' %>. Después ya no se podrán inscribir ni quitar equipos."
-                data-confirmar-titulo="¿Empezar <%= torneo.nombre %>?" data-confirmar-boton="Empezar">
-            <button type="submit" class="btn btn--verde btn--grande" <%= lleno ? '' : 'disabled' %>>Empezar torneo</button>
-          </form>
-          <% if (!lleno) { %>
-            <p class="dash-panel__nota">Se habilita cuando se llenen todos los cupos: <%= torneo.cuposLibres === 1 ? 'falta 1 equipo' : `faltan ${torneo.cuposLibres} equipos` %>.</p>
-          <% } %>
-        </div>
-      </div>
-    <% } else { %>
+    <% if (['en_curso', 'finalizado'].includes(torneo.estado)) { %>
       <%- include('../partials/torneo-competencia', { torneo, admin: true }) %>
     <% } %>
+
+    <div class="dash-panel eq-panel">
+      <header class="dash-panel__cabecera">
+        <h2 class="dash-panel__titulo">Inscripciones (<%= torneo.inscritos %>/<%= torneo.cupoMax %> confirmadas)</h2>
+      </header>
+      <div class="sm-cupos" role="progressbar" aria-valuemin="0" aria-valuemax="<%= torneo.cupoMax %>" aria-valuenow="<%= torneo.ocupados %>" aria-label="Cupos ocupados">
+        <span class="sm-cupos__relleno" style="width: <%= Math.min(100, Math.round(100 * torneo.ocupados / torneo.cupoMax)) %>%"></span>
+      </div>
+      <% if (torneo.conInscripciones && torneo.faltanParaMinimo > 0) { %>
+        <p class="dash-panel__nota">Para cerrar las inscripciones <%= torneo.faltanParaMinimo === 1 ? 'falta 1 equipo confirmado' : `faltan ${torneo.faltanParaMinimo} equipos confirmados` %> (cupo mínimo <%= torneo.cupoMin %>).</p>
+      <% } %>
+
+      <% if (torneo.inscripciones.length === 0) { %>
+        <p class="dash-panel__nota"><%= torneo.estado === 'borrador' ? 'Las inscripciones se abren al publicar el torneo.' : 'Aún no se inscribe ningún equipo. Los capitanes lo hacen desde la sección Torneos.' %></p>
+      <% } else { %>
+        <ul class="sm-filas">
+          <% torneo.inscripciones.forEach(function (e) { %>
+            <li class="sm-fila">
+              <span class="dash-equipo__escudo" aria-hidden="true"><%- include('../partials/escudo-equipo', { equipo: e }) %></span>
+              <span class="sm-fila__principal">
+                <strong><%= e.nombre %></strong>
+                <small>Inscrito el <%= fechaHora.format(e.inscritoEn) %><%= e.motivo ? ` · ${e.motivo}` : '' %></small>
+              </span>
+              <span class="sm-estado sm-estado--inscripcion-<%= e.estado %>"><%= e.estadoTexto %></span>
+              <% if (torneo.conInscripciones && ['confirmada', 'pendiente_pago'].includes(e.estado)) { %>
+                <span class="sm-fila__accion">
+                  <%- include('../partials/admin-accion-motivo', {
+                    accion: `/admin/torneos/${torneo.id}/equipos/${e.id}/quitar`, boton: 'Quitar', peligro: true,
+                    titulo: `¿Quitar a ${e.nombre} del torneo?`, texto: 'Se avisará a su capitán con el motivo y su cupo quedará libre.',
+                  }) %>
+                </span>
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </div>
   </div>
 </section>
 

@@ -408,3 +408,147 @@ BEGIN
         REVOKE ALL ON admin_actividad FROM authenticated;
     END IF;
 END $$;
+
+
+-- ============================================================
+-- SA-7) TORNEOS GESTIONADOS DESDE EL PANEL: DATOS, ESTADOS, CUPOS, INSCRIPCIONES, PAGOS Y PASARELAS
+--       (TO-001 a TO-005, TO-013, AP-027; las inscripciones y pagos los usa la fase 2)
+-- ============================================================
+-- Formatos: 'relampago' se muestra como "Eliminación directa"; 'grupos' = fase de grupos + eliminación.
+ALTER TABLE torneo DROP CONSTRAINT IF EXISTS torneo_formato_check;
+ALTER TABLE torneo ADD CONSTRAINT torneo_formato_check CHECK (formato IN ('liga', 'relampago', 'grupos'));
+
+-- Estados: borrador → abierto (inscripciones abiertas) ↔ completo (cupos completos) → cerrado (inscripciones
+-- cerradas) → en_curso → finalizado; cancelado desde cualquiera salvo finalizado. Un torneo nuevo nace en borrador.
+ALTER TABLE torneo DROP CONSTRAINT IF EXISTS torneo_estado_check;
+UPDATE torneo SET estado = 'abierto' WHERE estado = 'inscripcion';
+ALTER TABLE torneo ALTER COLUMN estado SET DEFAULT 'borrador';
+ALTER TABLE torneo ADD CONSTRAINT torneo_estado_check
+    CHECK (estado IN ('borrador', 'abierto', 'completo', 'cerrado', 'en_curso', 'finalizado', 'cancelado'));
+
+-- Datos del torneo (TO-001). Las fechas son de Chile (sin zona). fecha_limite_inscripcion: último día para inscribirse.
+-- id_nivel_min / id_nivel_max: rango de nivel admitido (por puntaje_min de "nivel").
+-- cupo_min / cupo_max reemplazan a cantidad_equipos (que queda igual a cupo_max por compatibilidad).
+-- precio: CLP entero (0 = gratuito). medios_pago: subconjunto de {'webpay','mercadopago','paypal'}.
+ALTER TABLE torneo
+    ADD COLUMN IF NOT EXISTS descripcion              VARCHAR(2000),
+    ADD COLUMN IF NOT EXISTS reglamento               TEXT,
+    ADD COLUMN IF NOT EXISTS id_nivel_min             INT REFERENCES nivel(id),
+    ADD COLUMN IF NOT EXISTS id_nivel_max             INT REFERENCES nivel(id),
+    ADD COLUMN IF NOT EXISTS id_recinto               INT REFERENCES recinto_deportivo(id),
+    ADD COLUMN IF NOT EXISTS fecha_termino            DATE,
+    ADD COLUMN IF NOT EXISTS fecha_limite_inscripcion DATE,
+    ADD COLUMN IF NOT EXISTS cupo_min                 SMALLINT,
+    ADD COLUMN IF NOT EXISTS cupo_max                 SMALLINT,
+    ADD COLUMN IF NOT EXISTS min_jugadores            SMALLINT,
+    ADD COLUMN IF NOT EXISTS cantidad_grupos          SMALLINT,
+    ADD COLUMN IF NOT EXISTS clasifican_por_grupo     SMALLINT,
+    ADD COLUMN IF NOT EXISTS precio                   INT NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS medios_pago              TEXT[] NOT NULL DEFAULT '{}',
+    ADD COLUMN IF NOT EXISTS creado_por               INT REFERENCES usuario(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS publicado_en             TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS cerrado_en               TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS cancelado_en             TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS motivo_cancelacion       VARCHAR(500);
+
+ALTER TABLE torneo ALTER COLUMN id_cancha DROP NOT NULL; -- las canchas pasan a torneo_cancha
+
+-- Torneos existentes: cupo mínimo = máximo = cantidad de equipos; recinto de su cancha; mínimo de jugadores de la modalidad.
+UPDATE torneo SET cupo_min = cantidad_equipos WHERE cupo_min IS NULL;
+UPDATE torneo SET cupo_max = cantidad_equipos WHERE cupo_max IS NULL;
+UPDATE torneo t SET id_recinto = c.id_recinto_deportivo FROM cancha c WHERE c.id = t.id_cancha AND t.id_recinto IS NULL;
+UPDATE torneo t SET min_jugadores = m.cantidad_de_jugadores FROM modalidad m WHERE m.id = t.id_modalidad AND t.min_jugadores IS NULL;
+
+ALTER TABLE torneo DROP CONSTRAINT IF EXISTS torneo_cupos_check;
+ALTER TABLE torneo ADD CONSTRAINT torneo_cupos_check CHECK (cupo_min >= 2 AND cupo_max >= cupo_min AND cupo_max <= 64);
+ALTER TABLE torneo DROP CONSTRAINT IF EXISTS torneo_precio_check;
+ALTER TABLE torneo ADD CONSTRAINT torneo_precio_check CHECK (precio >= 0);
+ALTER TABLE torneo DROP CONSTRAINT IF EXISTS torneo_medios_check;
+ALTER TABLE torneo ADD CONSTRAINT torneo_medios_check CHECK (medios_pago <@ ARRAY['webpay', 'mercadopago', 'paypal']::text[]);
+ALTER TABLE torneo DROP CONSTRAINT IF EXISTS torneo_fechas_check;
+ALTER TABLE torneo ADD CONSTRAINT torneo_fechas_check CHECK (
+    (fecha_termino IS NULL OR fecha_inicio IS NULL OR fecha_termino >= fecha_inicio)
+    AND (fecha_limite_inscripcion IS NULL OR fecha_inicio IS NULL OR fecha_limite_inscripcion <= fecha_inicio));
+ALTER TABLE torneo DROP CONSTRAINT IF EXISTS torneo_grupos_check;
+ALTER TABLE torneo ADD CONSTRAINT torneo_grupos_check CHECK (
+    formato <> 'grupos' OR (cantidad_grupos >= 2 AND clasifican_por_grupo >= 1));
+CREATE INDEX IF NOT EXISTS ix_torneo_estado ON torneo (estado);
+
+-- Canchas del torneo (TO-001: una o más canchas del recinto).
+CREATE TABLE IF NOT EXISTS torneo_cancha (
+    id_torneo INT NOT NULL REFERENCES torneo(id) ON DELETE CASCADE,
+    id_cancha INT NOT NULL REFERENCES cancha(id),
+    PRIMARY KEY (id_torneo, id_cancha)
+);
+ALTER TABLE torneo_cancha ENABLE ROW LEVEL SECURITY;
+INSERT INTO torneo_cancha (id_torneo, id_cancha)
+SELECT id, id_cancha FROM torneo WHERE id_cancha IS NOT NULL
+ON CONFLICT DO NOTHING;
+
+-- Inscripción de un equipo (una fila por equipo y torneo; un equipo expirado puede reintentar en la misma fila).
+-- Solo 'confirmada' cuenta como participante; 'pendiente_pago' con reservada_hasta vigente también ocupa cupo.
+-- Las inscripciones anteriores a esta sección ya estaban confirmadas.
+ALTER TABLE torneo_equipo
+    ADD COLUMN IF NOT EXISTS id               INT GENERATED ALWAYS AS IDENTITY,
+    ADD COLUMN IF NOT EXISTS estado           VARCHAR(20) NOT NULL DEFAULT 'confirmada',
+    ADD COLUMN IF NOT EXISTS reservada_hasta  TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS confirmada_en    TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS actualizada_en   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    ADD COLUMN IF NOT EXISTS motivo           VARCHAR(500),
+    ADD COLUMN IF NOT EXISTS id_usuario_inscribe INT REFERENCES usuario(id) ON DELETE SET NULL;
+UPDATE torneo_equipo SET confirmada_en = inscrito_en WHERE confirmada_en IS NULL AND estado = 'confirmada';
+CREATE UNIQUE INDEX IF NOT EXISTS ux_torneo_equipo_id ON torneo_equipo (id);
+ALTER TABLE torneo_equipo DROP CONSTRAINT IF EXISTS torneo_equipo_estado_check;
+ALTER TABLE torneo_equipo ADD CONSTRAINT torneo_equipo_estado_check CHECK (estado IN (
+    'pendiente_pago', 'confirmada', 'expirada', 'eliminada', 'retiro_pendiente', 'retirada', 'reembolsada', 'finalizada'));
+CREATE INDEX IF NOT EXISTS ix_torneo_equipo_estado ON torneo_equipo (id_torneo, estado);
+
+-- Pagos de inscripción (fase 2). El monto se toma del torneo en el servidor. Un índice impide dos pagos
+-- aprobados para la misma inscripción.
+CREATE TABLE IF NOT EXISTS torneo_pago (
+    id              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_inscripcion  INT NOT NULL REFERENCES torneo_equipo(id),
+    pasarela        VARCHAR(20) NOT NULL CHECK (pasarela IN ('webpay', 'mercadopago', 'paypal', 'gratuito')),
+    entorno         VARCHAR(12) NOT NULL DEFAULT 'pruebas' CHECK (entorno IN ('pruebas', 'produccion')),
+    estado          VARCHAR(25) NOT NULL DEFAULT 'iniciado' CHECK (estado IN (
+        'iniciado', 'aprobado', 'rechazado', 'en_verificacion', 'reembolso_solicitado', 'reembolsado', 'reembolso_fallido')),
+    monto           INT NOT NULL CHECK (monto >= 0),
+    monto_usd       NUMERIC(10, 2),
+    tipo_cambio     NUMERIC(10, 2),
+    orden_compra    VARCHAR(40) NOT NULL UNIQUE,
+    id_pasarela     VARCHAR(120),
+    id_transaccion  VARCHAR(120),
+    comprobante     JSONB,
+    numero_comprobante VARCHAR(20) UNIQUE,
+    motivo          VARCHAR(500),
+    monto_reembolso INT CHECK (monto_reembolso IS NULL OR monto_reembolso >= 0),
+    creado_en       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    actualizado_en  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    aprobado_en     TIMESTAMPTZ
+);
+ALTER TABLE torneo_pago ENABLE ROW LEVEL SECURITY;
+CREATE UNIQUE INDEX IF NOT EXISTS ux_torneo_pago_un_aprobado ON torneo_pago (id_inscripcion) WHERE estado = 'aprobado';
+CREATE INDEX IF NOT EXISTS ix_torneo_pago_inscripcion ON torneo_pago (id_inscripcion, creado_en DESC);
+
+-- Pasarelas de pago (TO-013). Las credenciales se guardan cifradas con AES-256-GCM (clave PASARELAS_CLAVE del
+-- .env, nunca en la base); "mascara" guarda solo los últimos 4 caracteres para mostrarlas.
+-- probada_en: última prueba de conexión exitosa con las credenciales actuales (NULL = sin probar: no se puede activar).
+-- tipo_cambio: pesos chilenos por 1 USD (solo PayPal).
+CREATE TABLE IF NOT EXISTS pasarela_config (
+    clave          VARCHAR(20) PRIMARY KEY CHECK (clave IN ('webpay', 'mercadopago', 'paypal')),
+    activa         BOOLEAN NOT NULL DEFAULT FALSE,
+    entorno        VARCHAR(12) NOT NULL DEFAULT 'pruebas' CHECK (entorno IN ('pruebas', 'produccion')),
+    credenciales   TEXT,
+    mascara        JSONB,
+    probada_en     TIMESTAMPTZ,
+    tipo_cambio    NUMERIC(10, 2) CHECK (tipo_cambio IS NULL OR tipo_cambio > 0),
+    actualizada_en TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE pasarela_config ENABLE ROW LEVEL SECURITY;
+INSERT INTO pasarela_config (clave) VALUES ('webpay'), ('mercadopago'), ('paypal') ON CONFLICT DO NOTHING;
+ALTER TABLE pasarela_config DROP CONSTRAINT IF EXISTS pasarela_activa_probada;
+ALTER TABLE pasarela_config ADD CONSTRAINT pasarela_activa_probada CHECK (NOT activa OR (credenciales IS NOT NULL AND probada_en IS NOT NULL));
+
+-- Notificaciones de torneos (TO-026).
+INSERT INTO tipo_notificacion (nombre)
+SELECT 'torneo' WHERE NOT EXISTS (SELECT 1 FROM tipo_notificacion WHERE lower(nombre) = 'torneo');

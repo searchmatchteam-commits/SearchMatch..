@@ -507,7 +507,12 @@ html[data-theme="light"] .sm-tema__luna { display: block; }
 .sm-torneo-ficha__foto { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px; }
 .sm-torneo-ficha__etiquetas { display: flex; flex-wrap: wrap; gap: 8px; }
 .sm-torneo-ficha__campeon { margin: 10px 0 0; font-size: 1.05rem; }
-.sm-estado--torneo-inscripcion { color: var(--verde); background: var(--verde-tenue); border: 1px solid var(--verde-borde); }
+.sm-estado--torneo-inscripcion, .sm-estado--torneo-abierto { color: var(--verde); background: var(--verde-tenue); border: 1px solid var(--verde-borde); }
+/* SA-7: estados del torneo y de la inscripción */
+.sm-estado--torneo-borrador, .sm-estado--inscripcion-expirada, .sm-estado--inscripcion-retirada { color: var(--texto-suave); background: transparent; border: 1px dashed var(--borde-fuerte); }
+.sm-estado--torneo-completo, .sm-estado--torneo-cerrado, .sm-estado--inscripcion-pendiente_pago, .sm-estado--inscripcion-retiro_pendiente { color: #9ecbff; background: rgba(80, 160, 255, 0.08); border: 1px solid rgba(80, 160, 255, 0.35); }
+.sm-estado--torneo-cancelado, .sm-estado--inscripcion-eliminada, .sm-estado--inscripcion-reembolsada { color: #ffb4b4; background: rgba(255, 107, 107, 0.08); border: 1px solid rgba(255, 107, 107, 0.3); }
+.sm-estado--inscripcion-confirmada, .sm-estado--inscripcion-finalizada { color: var(--verde); background: var(--verde-tenue); border: 1px solid var(--verde-borde); }
 .sm-estado--torneo-en_curso { color: #ffe08a; background: rgba(255, 196, 0, 0.08); border: 1px solid rgba(255, 196, 0, 0.35); }
 .sm-estado--torneo-finalizado { color: var(--texto); background: rgba(255, 255, 255, 0.06); border: 1px solid var(--borde-fuerte); }
 
@@ -988,3 +993,25 @@ html[data-theme="light"] .tl-fondo__hex { color: rgba(22, 163, 74, 0.12); }
 .sm-desplegable > summary { cursor: pointer; }
 .sm-desplegable[open] > summary { margin-bottom: 14px; }
 .sm-admin-login { justify-content: center; }
+
+/* AP-027 · menú de acciones por fila y textos secundarios de las tablas del panel */
+.sm-menu-acciones { position: relative; }
+.sm-menu-acciones__lista { display: flex; flex-direction: column; gap: 6px; align-items: stretch; min-width: 170px; }
+.sm-menu-acciones__lista form { margin: 0; }
+.sm-menu-acciones__lista .btn { width: 100%; }
+.sm-tabla__texto { text-align: left; }
+.sm-tabla__sub { display: block; color: var(--texto-suave); font-size: 0.78rem; font-weight: 400; }
+
+/* TO-001 · casillas de canchas y medios de pago */
+.sm-casillas { border: 0; padding: 0; margin: 0 0 16px; display: flex; flex-direction: column; gap: 6px; }
+.sm-casillas legend { font-weight: 700; margin-bottom: 6px; }
+.sm-casilla { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sm-casilla small { color: var(--texto-suave); }
+.sm-casilla--deshabilitada { opacity: 0.6; }
+.sm-torneo-ficha__descripcion { white-space: pre-line; margin: 12px 0 0; }
+.sm-torneo-ficha__reglamento { margin-top: 12px; }
+.sm-torneo-ficha__reglamento p { white-space: pre-line; color: var(--texto-suave); }
+.sm-tabla--listado td[data-titulo="Precio"], .sm-tabla--listado td[data-titulo="Recaudación"], .sm-tabla--listado td[data-titulo="Inscritos"] { white-space: nowrap; }
+.campo.sm-casillas .sm-casilla { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 8px; margin: 0; font-weight: 600; }
+.campo.sm-casillas .sm-casilla input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; flex: 0 0 auto; margin: 0; padding: 0; }
+.sm-casillas [hidden], .btn[hidden] { display: none !important; }
