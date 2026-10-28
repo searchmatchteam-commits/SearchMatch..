@@ -1,0 +1,8 @@
+<%# AP-003 c8 · Sin resultados, con la opción de limpiar filtros. include('../partials/listado-vacio', { listado, mensaje }) %>
+<div class="dash-panel eq-panel sm-vacio">
+  <p class="sm-vacio__titulo"><%= listado.filtrosActivos ? 'Sin resultados para estos filtros' : (locals.mensaje || 'Aún no hay registros') %></p>
+  <% if (listado.filtrosActivos) { %>
+    <p class="dash-panel__nota">Ningún registro cumple todos los filtros a la vez.</p>
+    <a class="btn btn--contorno" href="<%= listado.limpiar %>">Limpiar filtros</a>
+  <% } %>
+</div>
