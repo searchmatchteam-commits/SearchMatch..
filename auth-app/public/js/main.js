@@ -159,14 +159,65 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* ---------- 4) Carta de jugador: tilt 3D ---------- */
+  /* ---------- 4) Carta de jugador: tilt 3D con resorte ---------- */
   // Solo con mouse: en pantallas táctiles o con movimiento reducido la carta queda quieta.
+  // La inclinación (--rx/--ry) no salta al cursor: un resorte amortiguado (rigidez 300, amortiguación 20)
+  // la lleva hacia el objetivo en cada cuadro y, al salir el mouse, la devuelve a 0 con un leve rebote.
+  // Mientras el resorte la mueve, la carta lleva .tilt-resorte (sin transición CSS de transform).
   const conMouse = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   if (conMouse && !sinMovimiento) {
     const INCLINACION_MAX = 14; // grados (data-tilt="15" lo cambia para esa carta)
+    const RIGIDEZ = 300;
+    const AMORTIGUACION = 20;
+    const REPOSO = 0.01; // grados y grados/s bajo los que el resorte se detiene
+
+    /** Resorte de --rx/--ry de una carta: objetivo(rx, ry) fija hacia dónde va; se anima solo. */
+    function crearResorte(carta, inclinacionMax) {
+      const limite = inclinacionMax * 1.5;
+      const estado = { rx: 0, ry: 0, vx: 0, vy: 0, ox: 0, oy: 0 };
+      let cuadro = null;
+      let anterior = null; // tiempo del cuadro anterior (solo el reloj de requestAnimationFrame, sin mezclar con performance.now)
+
+      function paso(ahora) {
+        // El primer cuadro solo marca el tiempo. Después, el paso nunca es negativo (con dt < 0 el resorte
+        // se desboca) y tiene tope (una pestaña en segundo plano no "salta").
+        const dt = anterior === null ? 0 : Math.min(Math.max((ahora - anterior) / 1000, 0), 1 / 30);
+        anterior = ahora;
+        if (dt === 0) {
+          cuadro = requestAnimationFrame(paso);
+          return;
+        }
+        estado.vx += (-RIGIDEZ * (estado.rx - estado.ox) - AMORTIGUACION * estado.vx) * dt;
+        estado.vy += (-RIGIDEZ * (estado.ry - estado.oy) - AMORTIGUACION * estado.vy) * dt;
+        // Seguro: aunque algo falle, la carta nunca pasa de 1,5 veces la inclinación máxima
+        estado.rx = Math.max(-limite, Math.min(limite, estado.rx + estado.vx * dt));
+        estado.ry = Math.max(-limite, Math.min(limite, estado.ry + estado.vy * dt));
+        carta.style.setProperty('--rx', `${estado.rx.toFixed(2)}deg`);
+        carta.style.setProperty('--ry', `${estado.ry.toFixed(2)}deg`);
+        const quieto = Math.abs(estado.rx - estado.ox) < REPOSO && Math.abs(estado.ry - estado.oy) < REPOSO
+          && Math.abs(estado.vx) < REPOSO && Math.abs(estado.vy) < REPOSO;
+        if (quieto) {
+          cuadro = null;
+          if (estado.ox === 0 && estado.oy === 0) carta.classList.remove('tilt-resorte');
+          return;
+        }
+        cuadro = requestAnimationFrame(paso);
+      }
+
+      return function objetivo(rx, ry) {
+        estado.ox = rx;
+        estado.oy = ry;
+        carta.classList.add('tilt-resorte');
+        if (!cuadro) {
+          anterior = null;
+          cuadro = requestAnimationFrame(paso);
+        }
+      };
+    }
 
     document.querySelectorAll('[data-tilt]').forEach((carta) => {
       const inclinacionMax = Number(carta.dataset.tilt) || INCLINACION_MAX;
+      const inclinar = crearResorte(carta, inclinacionMax);
       // El área que detecta el mouse es el contenedor (no cambia al inclinarse la carta).
       const zona = carta.parentElement;
 
@@ -177,8 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const rect = carta.getBoundingClientRect();
         const x = Math.min(1, Math.max(0, (evento.clientX - rect.left) / rect.width));
         const y = Math.min(1, Math.max(0, (evento.clientY - rect.top) / rect.height));
-        carta.style.setProperty('--ry', `${(x - 0.5) * 2 * inclinacionMax}deg`);
-        carta.style.setProperty('--rx', `${(0.5 - y) * 2 * inclinacionMax}deg`);
+        inclinar((0.5 - y) * 2 * inclinacionMax, (x - 0.5) * 2 * inclinacionMax);
         carta.style.setProperty('--brillo-x', `${x * 100}%`);
         carta.style.setProperty('--brillo-y', `${y * 100}%`);
         carta.style.setProperty('--brillo-op', '1');
@@ -188,9 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       zona.addEventListener('pointerleave', () => {
-        carta.classList.remove('inclinando'); // vuelve a su lugar con transición suave
-        carta.style.setProperty('--rx', '0deg');
-        carta.style.setProperty('--ry', '0deg');
+        carta.classList.remove('inclinando');
+        inclinar(0, 0); // el resorte la devuelve a su lugar, con un leve rebote
         carta.style.setProperty('--brillo-op', '0');
         carta.style.setProperty('--px', '0');
         carta.style.setProperty('--py', '0');

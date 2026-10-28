@@ -1,0 +1,27 @@
+<%
+  // Calendario del mes con eventos (torneos con fecha y partidos de mis equipos, de /api/calendario/eventos).
+  // Es el mismo en el dashboard y en /agenda: lo arma public/js/calendario.js (la página debe cargarlo:
+  // pagina 'dashboard' o calendarioEventos: true al renderizar) y lo pinta .dash-panel--calendario en dashboard.css.
+%>
+<article class="dash-panel dash-panel--calendario revelar" data-calendario>
+  <header class="dash-panel__cabecera">
+    <h2 class="dash-panel__titulo" data-calendario-titulo aria-live="polite">Calendario</h2>
+    <div class="sm-cal__flechas">
+      <button type="button" class="sm-cal__flecha" data-calendario-mover="-1" aria-label="Mes anterior">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6" /></svg>
+      </button>
+      <button type="button" class="sm-cal__flecha" data-calendario-mover="1" aria-label="Mes siguiente">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+      </button>
+    </div>
+  </header>
+  <div class="sm-cal__semana" aria-hidden="true">
+    <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+  </div>
+  <div class="sm-cal__dias" data-calendario-dias></div>
+  <!-- Tarjeta inferior: el próximo evento o, con un día elegido, los eventos de ese día -->
+  <section class="sm-cal__tarjeta" aria-live="polite" data-calendario-eventos hidden>
+    <span class="sm-cal__tarjeta-etiqueta" data-calendario-etiqueta>Próximo evento</span>
+    <div class="sm-cal__tarjeta-lista" data-calendario-lista></div>
+  </section>
+</article>

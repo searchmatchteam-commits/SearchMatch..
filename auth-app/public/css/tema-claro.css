@@ -277,7 +277,6 @@ html[data-theme="light"] .chip,
 html[data-theme="light"] .sm-lista-docs li,
 html[data-theme="light"] .sm-versus__equipo,
 html[data-theme="light"] .sm-comentario,
-html[data-theme="light"] .sm-calendario__dia,
 html[data-theme="light"] .dash-invitacion,
 html[data-theme="light"] .dash-equipo__detalle,
 html[data-theme="light"] .eq-solicitud,
@@ -1327,14 +1326,6 @@ html[data-theme="light"] .sm-mapa .leaflet-bar a:hover {
 /* El cursor de luz es decorativo: sobre blanco solo distrae */
 html[data-theme="light"] .cursor-luz {
   display: none;
-}
-
-/* Agenda: día en que empieza un torneo (ámbar legible sobre blanco) */
-html[data-theme="light"] .sm-calendario__dia--torneo {
-  --icono-evento: #b45309;
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(217, 119, 6, 0.55);
-  color: #92400e;
 }
 
 /* Calendario del inicio: misma estructura, en claro (sin malla, textos oscuros, anillos verde sólido) */

@@ -466,33 +466,7 @@ html[data-theme="light"] .sm-tema__luna { display: block; }
 .sm-costo { font-size: 1rem; }
 .sm-costo strong { color: var(--verde); }
 
-/* ---------- Agenda (AG-001) ---------- */
-.sm-mes { justify-content: space-between; }
-.sm-mes__titulo { text-transform: capitalize; }
-.sm-calendario { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-.sm-calendario__cabecera { text-align: center; font-size: 0.72rem; font-weight: 800; color: var(--texto-suave); }
-.sm-calendario__dia {
-  position: relative; display: grid; place-items: center; aspect-ratio: 1; border-radius: 10px;
-  font-weight: 700; font-size: 0.9rem; color: var(--texto); border: 1px solid transparent; background: rgba(255, 255, 255, 0.03);
-}
-.sm-calendario__dia:hover { border-color: var(--borde-fuerte); }
-.sm-calendario__dia--partido { background: var(--verde-tenue); border-color: var(--verde-borde); color: var(--verde); }
-.sm-calendario__dia--partido::after {
-  content: ""; position: absolute; bottom: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--verde);
-}
-/* Inicio de un torneo (SA-5): fondo amarillo suave, borde y trofeo bajo el número (como el calendario del inicio).
-   Si también hay partido, se mantiene su punto verde. */
-.sm-calendario__dia--torneo {
-  --icono-evento: #facc15;
-  grid-template-rows: auto auto; align-content: center; gap: 2px; line-height: 1;
-  background: rgba(250, 204, 21, 0.1); border-color: rgba(250, 204, 21, 0.55); color: #fde68a; font-weight: 800;
-}
-.sm-calendario__dia--torneo .sm-cal__icono { width: 12px; height: 12px; }
-.sm-calendario__dia--torneo.sm-calendario__dia--partido::after { bottom: 3px; }
-.sm-calendario__leyenda { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.8rem; color: var(--texto-suave); }
-.sm-calendario__leyenda .sm-cal__icono { --icono-evento: #facc15; width: 14px; height: 14px; }
-.sm-calendario__dia--hoy { border-color: var(--texto-suave); }
-.sm-calendario__dia--elegido { outline: 2px solid var(--verde); outline-offset: 1px; }
+/* ---------- Agenda (AG-001): usa el calendario del dashboard (partials/calendario-eventos, dashboard.css) ---------- */
 
 /* ---------- Inicio: equipo elegido (IN-005) ---------- */
 .sm-selector-equipos { display: flex; flex-wrap: wrap; gap: 8px; }

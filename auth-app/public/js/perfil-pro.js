@@ -34,9 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
     numeros.forEach((el) => { el.textContent = '0'; });
 
     setTimeout(() => {
-      const inicio = performance.now();
+      // El conteo parte en el primer cuadro y usa solo el reloj de requestAnimationFrame: mezclado con
+      // performance.now(), el tiempo del cuadro podía ser anterior al inicio y mostraba números negativos.
+      let inicio = null;
       function paso(ahora) {
-        const t = Math.min(1, (ahora - inicio) / DURACION);
+        if (inicio === null) inicio = ahora;
+        const t = Math.min(1, Math.max(0, (ahora - inicio) / DURACION));
         const avance = 1 - Math.pow(1 - t, 3); // frena al final
         numeros.forEach((el, i) => { el.textContent = String(Math.round(finales[i] * avance)); });
         if (t < 1) requestAnimationFrame(paso);

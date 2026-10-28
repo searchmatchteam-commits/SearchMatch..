@@ -62,7 +62,9 @@
   <% } %>
   <% if (locals.pagina === 'dashboard') { %>
     <script src="/js/visualizador-corporal.js?v=<%= versionAssets %>" defer></script>
-    <!-- Calendario del mes (solo la vista, todavía sin eventos) -->
+  <% } %>
+  <% if (locals.pagina === 'dashboard' || locals.calendarioEventos) { %>
+    <!-- Calendario del mes con eventos (dashboard y /agenda: partials/calendario-eventos) -->
     <script src="/js/calendario.js?v=<%= versionAssets %>" defer></script>
   <% } %>
   <% if (locals.pagina === 'equipo') { %>

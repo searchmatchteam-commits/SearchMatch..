@@ -327,6 +327,11 @@
   transition: transform 0.12s ease-out;
 }
 
+/* El resorte de main.js mueve la inclinación cuadro a cuadro: sin transición CSS encima */
+.perfil-pro .carta-jugador--perfil.tilt-resorte:not(.carta-jugador--mini) {
+  transition: none;
+}
+
 .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__marco,
 .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cuerpo,
 .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cabecera,
@@ -343,6 +348,16 @@
 /* Borde neón que respira: el resplandor sigue la silueta del escudo */
 .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__silueta {
   animation: pp-respirar 3.8s ease-in-out infinite;
+  transition: filter 0.35s ease;
+}
+
+/* Con el mouse encima, el resplandor deja de respirar y se enciende al máximo */
+.perfil-pro .carta-jugador--perfil.inclinando:not(.carta-jugador--mini) .carta-jugador__silueta {
+  animation: none;
+  filter:
+    drop-shadow(0 0 10px rgba(var(--pp-neon-rgb), 1))
+    drop-shadow(0 0 30px rgba(var(--pp-neon-rgb), 0.7))
+    drop-shadow(0 0 60px rgba(var(--pp-neon-rgb), 0.35));
 }
 
 @keyframes pp-respirar {
@@ -365,17 +380,18 @@
   translate: none;
 }
 
-.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__bandera { transform: translateZ(18px); }
+/* Profundidades (el marco/borde está en Z 0): textos y stats a 40-50px; foto y bandera, lo más cerca (60px) */
 .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__marca { transform: translateZ(22px); }
-.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__foto { transform: translateZ(30px); }
 .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cuerpo::before { transform: translateZ(24px); }
 .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__stats { transform: translateZ(40px); }
 .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__posicion { transform: translateZ(46px); }
-.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__nombre { transform: translateZ(46px); }
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__nombre { transform: translateZ(50px); }
 .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__numero {
   display: block;
-  transform: translateZ(56px);
+  transform: translateZ(50px);
 }
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__bandera { transform: translateZ(60px); }
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__foto { transform: translateZ(60px); }
 
 /* La tipografía de la carta es la de style.css */
 .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__posicion {
@@ -454,9 +470,18 @@
   100% { opacity: 0.9; transform: scale(1); }
 }
 
-/* La flotación de style.css arranca cuando la carta ya aterrizó */
+/* Flotación: sube 15px y baja en 4s; arranca cuando la carta ya aterrizó (style.css la pausa con el mouse) */
+.perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) {
+  animation: pp-flotar 4s ease-in-out infinite;
+}
+
 .js .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) {
   animation-delay: 1.5s;
+}
+
+@keyframes pp-flotar {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -15px; }
 }
 
 /* ---------- Paneles de cristal ---------- */

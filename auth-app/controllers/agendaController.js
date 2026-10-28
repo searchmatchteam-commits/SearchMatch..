@@ -5,19 +5,6 @@ const { idValido } = require('../middlewares/validadoresAdmin');
 
 const COOKIE_EQUIPO_INICIO = 'sm_equipo_inicio';
 const UN_ANIO_MS = 365 * 24 * 60 * 60 * 1000;
-const NOMBRES_MES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-
-function leerMes(texto) {
-  const hoy = ahoraEnChile().fecha.slice(0, 7);
-  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(texto || '')) return hoy;
-  return texto;
-}
-
-function moverMes(mes, delta) {
-  const [anio, numero] = mes.split('-').map(Number);
-  const fecha = new Date(Date.UTC(anio, numero - 1 + delta, 1));
-  return fecha.toISOString().slice(0, 7);
-}
 
 function celdasDelMes(mes) {
   const [anio, numero] = mes.split('-').map(Number);
@@ -27,33 +14,16 @@ function celdasDelMes(mes) {
   return [...Array(vacias).fill(null), ...Array.from({ length: dias }, (_, i) => `${mes}-${String(i + 1).padStart(2, '0')}`)];
 }
 
+// GET /agenda → el calendario compartido (lo llena calendario.js con /api/calendario/eventos)
+// y la lista de partidos próximos o pasados (?lista=pasados).
 async function agenda(req, res, next) {
-  const mes = leerMes(req.query.mes);
   const lista = req.query.lista === 'pasados' ? 'pasados' : 'proximos';
   try {
-    const celdas = celdasDelMes(mes);
-    const ultimo = celdas[celdas.length - 1];
-    const [delMes, listado, torneosDelMes] = await Promise.all([
-      partidoModel.listarDeCuentaEntre(req.usuario.idAuth, `${mes}-01`, ultimo),
-      partidoModel.listarDeCuenta(req.usuario.idAuth, lista === 'proximos'),
-      torneoModel.eventosCalendario(`${mes}-01`, ultimo, req.usuario.idAuth),
-    ]);
-    const dia = /^\d{4}-\d{2}-\d{2}$/.test(req.query.dia || '') && req.query.dia.startsWith(mes) ? req.query.dia : null;
+    const listado = await partidoModel.listarDeCuenta(req.usuario.idAuth, lista === 'proximos');
     return res.render('agenda/index', {
       titulo: 'Agenda',
       pagina: 'equipo',
-      mes,
-      nombreMes: `${NOMBRES_MES[Number(mes.slice(5)) - 1]} ${mes.slice(0, 4)}`,
-      mesAnterior: moverMes(mes, -1),
-      mesSiguiente: moverMes(mes, 1),
-      celdas,
-      hoy: ahoraEnChile().fecha,
-      diasConPartido: new Set(delMes.map((p) => p.fecha)),
-      dia,
-      delDia: dia ? delMes.filter((p) => p.fecha === dia) : [],
-      diasConTorneo: new Set(torneosDelMes.map((t) => t.fecha)),
-      torneosDelDia: dia ? torneosDelMes.filter((t) => t.fecha === dia) : [],
-      hayEnElMes: delMes.length > 0 || torneosDelMes.length > 0,
+      calendarioEventos: true, // carga public/js/calendario.js (partials/calendario-eventos)
       lista,
       listado,
     });

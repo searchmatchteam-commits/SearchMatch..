@@ -4,9 +4,6 @@
 
 <%
   const formatoDia = new Intl.DateTimeFormat('es-CL', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
-  const diaLargo = new Intl.DateTimeFormat('es-CL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
-  // Trofeo bajo el número de los días en que empieza un torneo (mismo ícono que el calendario del inicio)
-  const iconoTrofeo = '<svg class="sm-cal__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7" /></svg>';
   function fila(p) {
     return { dia: formatoDia.format(new Date(p.fecha + 'T00:00:00Z')), estado: p.cancelado ? 'Cancelado' : p.marcador_desafiante !== null ? `${p.marcador_desafiante} – ${p.marcador_desafiado}` : 'Programado' };
   }
@@ -17,71 +14,22 @@
       <div class="eq-cabecera__texto">
         <%- include('../partials/boton-volver') %>
         <h1 class="eq-cabecera__titulo">Agenda de partidos</h1>
-        <p class="eq-cabecera__stats">Los partidos de todos tus equipos.</p>
+        <p class="eq-cabecera__stats">Los partidos de todos tus equipos y los torneos con fecha.</p>
       </div>
       <div class="eq-cabecera__acciones">
         <a class="btn btn--contorno btn--grande" href="/reservas">Mis reservas</a>
       </div>
     </header>
 
-    <div class="sm-columnas">
-      <section class="dash-panel eq-panel" aria-labelledby="titulo-mes">
-        <header class="dash-panel__cabecera sm-mes">
-          <a class="btn btn--contorno btn--chico" href="/agenda?mes=<%= mesAnterior %>&lista=<%= lista %>" aria-label="Mes anterior">←</a>
-          <h2 class="dash-panel__titulo sm-mes__titulo" id="titulo-mes"><%= nombreMes %></h2>
-          <a class="btn btn--contorno btn--chico" href="/agenda?mes=<%= mesSiguiente %>&lista=<%= lista %>" aria-label="Mes siguiente">→</a>
-        </header>
-        <div class="sm-calendario" role="grid" aria-labelledby="titulo-mes">
-          <% ['L', 'M', 'M', 'J', 'V', 'S', 'D'].forEach(function (d) { %><span class="sm-calendario__cabecera" aria-hidden="true"><%= d %></span><% }) %>
-          <% celdas.forEach(function (fecha) { %>
-            <% if (!fecha) { %><span class="sm-calendario__vacio"></span><% } else {
-                 const conPartido = diasConPartido.has(fecha);
-                 const conTorneo = diasConTorneo.has(fecha); %>
-              <a class="sm-calendario__dia <%= conPartido ? 'sm-calendario__dia--partido' : '' %> <%= conTorneo ? 'sm-calendario__dia--torneo' : '' %> <%= fecha === hoy ? 'sm-calendario__dia--hoy' : '' %> <%= fecha === dia ? 'sm-calendario__dia--elegido' : '' %>"
-                 href="/agenda?mes=<%= mes %>&dia=<%= fecha %>&lista=<%= lista %>"
-                 aria-label="<%= diaLargo.format(new Date(fecha + 'T00:00:00Z')) %><%= conPartido ? ', con partido' : '' %><%= conTorneo ? ', inicia un torneo' : '' %>"><% if (conTorneo) { %><span><%= Number(fecha.slice(8)) %></span><%- iconoTrofeo %><% } else { %><%= Number(fecha.slice(8)) %><% } %></a>
-            <% } %>
-          <% }) %>
-        </div>
-        <% if (!hayEnElMes) { %><p class="dash-panel__nota">No tienes partidos ni hay torneos en <%= nombreMes %>.</p><% } %>
-        <% if (diasConTorneo.size > 0) { %>
-          <p class="sm-calendario__leyenda"><%- iconoTrofeo %> Inicio de un torneo</p>
-        <% } %>
-
-        <% if (dia) { %>
-          <h3 class="sm-subtitulo"><%= diaLargo.format(new Date(dia + 'T00:00:00Z')) %></h3>
-          <% if (torneosDelDia.length > 0) { %>
-            <ul class="sm-filas">
-              <% torneosDelDia.forEach(function (t) { %>
-                <li class="sm-fila">
-                  <a href="<%= t.url %>">🏆 <%= t.titulo %></a>
-                  <span><%= t.hora ? `${t.hora} hrs · ` : '' %><%= t.detalle %></span>
-                  <span class="sm-estado sm-estado--torneo-<%= t.estado %>"><%= t.mio ? 'Tu equipo juega' : t.estadoTexto %></span>
-                </li>
-              <% }) %>
-            </ul>
-          <% } %>
-          <% if (delDia.length === 0 && torneosDelDia.length === 0) { %>
-            <p class="dash-panel__nota">No hay partidos ni torneos este día.</p>
-          <% } else if (delDia.length > 0) { %>
-            <ul class="sm-filas">
-              <% delDia.forEach(function (p) { const f = fila(p); %>
-                <li class="sm-fila <%= p.cancelado ? 'sm-fila--inactiva' : '' %>">
-                  <a href="/partidos/<%= p.id %>"><%= p.desafiante %> vs <%= p.desafiado %></a>
-                  <span><%= p.hora %> · <%= p.cancha %></span>
-                  <span class="sm-estado <%= p.cancelado ? 'sm-estado--inactivo' : 'sm-rol' %>"><%= f.estado %></span>
-                </li>
-              <% }) %>
-            </ul>
-          <% } %>
-        <% } %>
-      </section>
+    <div class="sm-columnas sm-columnas--agenda">
+      <!-- El mismo calendario del dashboard: días con evento, próximo evento y eventos del día elegido -->
+      <%- include('../partials/calendario-eventos') %>
 
       <section class="dash-panel eq-panel" aria-labelledby="titulo-lista">
         <h2 class="solo-lectores" id="titulo-lista">Lista de partidos</h2>
         <nav class="sm-pestanas sm-pestanas--chicas" aria-label="Próximos o pasados">
-          <a class="sm-pestanas__item <%= lista === 'proximos' ? 'sm-pestanas__item--activa' : '' %>" href="/agenda?mes=<%= mes %>&lista=proximos">Próximos</a>
-          <a class="sm-pestanas__item <%= lista === 'pasados' ? 'sm-pestanas__item--activa' : '' %>" href="/agenda?mes=<%= mes %>&lista=pasados">Pasados</a>
+          <a class="sm-pestanas__item <%= lista === 'proximos' ? 'sm-pestanas__item--activa' : '' %>" href="/agenda?lista=proximos">Próximos</a>
+          <a class="sm-pestanas__item <%= lista === 'pasados' ? 'sm-pestanas__item--activa' : '' %>" href="/agenda?lista=pasados">Pasados</a>
         </nav>
         <% if (listado.length === 0) { %>
           <div class="sm-vacio">

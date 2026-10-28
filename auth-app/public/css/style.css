@@ -739,6 +739,11 @@ svg {
   transition: transform 0.1s ease-out, filter 0.3s ease;
 }
 
+/* Con el resorte de main.js moviendo --rx/--ry, el transform no lleva transición CSS (se pelearían) */
+.carta-jugador.tilt-resorte.tilt-resorte {
+  transition: filter 0.3s ease;
+}
+
 .carta-jugador--bronce { --carta-color: #d08c52; }
 .carta-jugador--plata { --carta-color: #cfd7dd; }
 .carta-jugador--neon { --carta-color: var(--verde); }
