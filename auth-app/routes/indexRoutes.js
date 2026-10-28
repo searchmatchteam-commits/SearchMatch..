@@ -16,6 +16,7 @@ const {
   validarEquipo,
   validarDesafio,
   validarSolicitudUnion,
+  leerFiltrosRivales,
 } = require('../middlewares/validators');
 
 // Cuerpo binario de la foto. Pesa ~100 KB tras reducirla; el tope evita cargas enormes.
@@ -40,13 +41,14 @@ router.post('/perfil/foto', requireAuth, requireRol, subirImagen, jugadorControl
 router.post('/perfil/foto/eliminar', requireAuth, requireRol, jugadorController.eliminarFoto);
 // Foto de la carta de cualquier jugador (las cartas del plantel en /mi-equipo).
 router.get('/jugadores/:id/foto', requireAuth, jugadorController.servirFotoJugador);
+router.get('/jugadores/:id', requireAuth, requireRol, jugadorController.perfilPublico); // PE-010
 
 // Equipos: wizard para crear el equipo, panel del capitán, mis equipos y directorio con solicitudes.
 // Cualquier cuenta puede crear su equipo (queda como capitán); desafiar lo comprueba el modelo.
 router.get('/crear-equipo', requireAuth, requireRol, equipoController.mostrarCrear);
 router.post('/crear-equipo', requireAuth, requireRol, validarEquipo, equipoController.crear);
 router.get('/crear-equipo/listo', requireAuth, requireRol, equipoController.confirmacion);
-router.get('/mi-equipo', requireAuth, requireRol, equipoController.panel);
+router.get('/mi-equipo', requireAuth, requireRol, leerFiltrosRivales, equipoController.panel);
 router.post('/mi-equipo/solicitudes/:id/:accion', requireAuth, requireRol, equipoController.responder);
 // Perfil (carta, datos y mensaje) de quien pidió unirse; solo el capitán que creó ese equipo.
 router.get('/mi-equipo/solicitudes/:id', requireAuth, requireRol, equipoController.verSolicitud);
@@ -68,6 +70,7 @@ router.post('/equipos/:id/modalidades', requireAuth, requireRol, equipoControlle
 router.post('/equipos/:id/ubicacion', requireAuth, requireRol, equipoController.guardarUbicacion);
 // Salida del plantel: el capitán saca a un jugador; el jugador sale de un equipo (no si es su capitán).
 router.post('/equipos/:id/plantel/:idJugador/sacar', requireAuth, requireRol, equipoController.sacar);
+router.post('/equipos/:id/capitania/:idJugador', requireAuth, requireRol, equipoController.transferirCapitania); // PE-016
 router.post('/equipos/:id/salir', requireAuth, requireRol, equipoController.salir);
 router.get('/equipos/:id/escudo', requireAuth, equipoController.servirEscudo);
 router.post('/equipos/:id/escudo', requireAuth, requireRol, subirImagen, equipoController.subirEscudo);

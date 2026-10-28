@@ -82,6 +82,13 @@ const AVISOS_PANEL = {
   modalidades: 'Tipos de fútbol actualizados: arma la alineación de cada uno.',
   'sin-modalidad': 'Tu equipo debe jugar al menos un tipo de fútbol.',
   'sin-permiso': 'Solo el capitán que creó el equipo puede cambiar sus tipos de fútbol.',
+  // PE-016 (el aviso de éxito lleva el nombre del nuevo capitán: lo arma panel() con datos de la base)
+  'capitania-sin-permiso': 'Solo el capitán actual de un equipo activo puede transferir la capitanía.',
+  'capitania-no-integrante': 'Ese jugador ya no es parte del plantel.',
+  'capitania-cuenta-inactiva': 'La cuenta de ese jugador está desactivada: no puede ser capitán.',
+  'capitania-mismo': 'Ya eres el capitán de este equipo.',
+  'capitania-limite': `Ese jugador ya capitanea ${MAX_EQUIPOS_COMO_CAPITAN} `
+    + `${MAX_EQUIPOS_COMO_CAPITAN === 1 ? 'equipo activo' : 'equipos activos'}: no puede recibir la capitanía.`,
 };
 
 // Respuestas al guardar la alineación (JSON para equipo.js): solo textos fijos.
@@ -338,13 +345,22 @@ async function panel(req, res, next) {
     // Sin equipo (el capitán sin equipos ya vio la lista vacía): el jugador busca uno al que unirse.
     if (!equipo) return res.redirect('/equipos');
 
-    const [plantel, solicitudes, rivales, invitables, equiposCapitan] = await Promise.all([
+    // DE-007: filtros de región y comuna de los rivales. Una comuna de otra región (o inexistente) se descarta;
+    // una comuna sin región toma la suya.
+    const filtros = { ...(req.filtrosRivales || {}) };
+    if (filtros.idComuna) {
+      const comuna = await ubicacionModel.obtenerComuna(filtros.idComuna);
+      if (!comuna || (filtros.idRegion && comuna.idRegion !== filtros.idRegion)) filtros.idComuna = null;
+      else filtros.idRegion = comuna.idRegion;
+    }
+    const [plantel, solicitudes, rivales, invitables, equiposCapitan, regiones] = await Promise.all([
       equipoModel.listarPlantel(equipo.id),
       equipo.soyCapitan ? equipoModel.listarSolicitudesPendientes(equipo.id) : [],
-      equipo.soyCapitan ? equipoModel.listarRivales(equipo.id) : [],
+      equipo.soyCapitan ? equipoModel.listarRivales(equipo.id, filtros) : [],
       equipo.soyCapitan ? equipoModel.listarJugadoresParaInvitar(equipo.id) : [],
       // Selector para pasar de un equipo a otro (solo si capitanea más de uno)
       equipo.soyCapitan ? equipoModel.listarMisEquipos(req.usuario.idAuth).then((lista) => lista.filter((e) => e.soyCapitan)) : [],
+      equipo.soyCapitan ? ubicacionModel.listarRegionesConComunas() : [], // DE-007
     ]);
     return res.render('equipo-panel', {
       titulo: 'Mi equipo',
@@ -361,8 +377,12 @@ async function panel(req, res, next) {
       capitan: plantel.find((jugador) => jugador.capitan) || null,
       solicitudes,
       rivales,
+      regiones,
+      filtrosRivales: filtros, // DE-007
       invitables: invitables.map(jugadorInvitable),
-      aviso: AVISOS_PANEL[req.query.aviso] || AVISOS_DESAFIO[req.query.desafio] || AVISOS_INVITACION[req.query.invitacion]
+      aviso: (req.query.aviso === 'capitania' && plantel.find((j) => j.capitan)
+        ? `La capitanía se transfirió a ${nombreConApodo(plantel.find((j) => j.capitan))}` : null) // PE-016
+        || AVISOS_PANEL[req.query.aviso] || AVISOS_DESAFIO[req.query.desafio] || AVISOS_INVITACION[req.query.invitacion]
         || AVISOS_SACAR[req.query.sacar] || null,
     });
   } catch (err) {
@@ -746,6 +766,29 @@ async function responderInvitacion(req, res, next) {
 // POST /equipos/:id/plantel/:idJugador/sacar → el capitán saca a un jugador (el modelo comprueba
 // que el equipo sea suyo y que no sea él mismo). JSON desde equipo.js; sin JavaScript vuelve al panel.
 // ---------------------------------------------------------------
+/** PE-016: "Diego Valenzuela («prime»)": el apodo distingue a jugadores con el mismo nombre. */
+function nombreConApodo(jugador) {
+  return jugador.nombreCarta && jugador.nombreCarta !== jugador.nombre ? `${jugador.nombre} («${jugador.nombreCarta}»)` : jugador.nombre;
+}
+
+// ---------------------------------------------------------------
+// POST /equipos/:id/capitania/:idJugador → el capitán traspasa la capitanía a un integrante (PE-016)
+// ---------------------------------------------------------------
+async function transferirCapitania(req, res, next) {
+  const idEquipo = idDeParametro(req.params.id);
+  const idJugador = idDeParametro(req.params.idJugador);
+  try {
+    if (!idEquipo || !idJugador) return res.redirect(`/mi-equipo?equipo=${idEquipo || ''}&aviso=capitania-no-integrante`);
+    const salida = await equipoModel.transferirCapitania(req.usuario.idAuth, idEquipo, idJugador);
+    if (salida.resultado !== 'transferida') return res.redirect(`/mi-equipo?equipo=${idEquipo}&aviso=capitania-${salida.resultado}`);
+    await avisosEquipo.capitaniaTransferida(salida.idUsuarioNuevo, salida.equipo, idEquipo);
+    // Sigue en el plantel como jugador: vuelve al mismo panel, ahora sin las herramientas de capitán
+    return res.redirect(`/mi-equipo?equipo=${idEquipo}&aviso=capitania`);
+  } catch (err) {
+    return pasarError(err, next);
+  }
+}
+
 async function sacar(req, res, next) {
   const idEquipo = idDeParametro(req.params.id);
   const idJugador = idDeParametro(req.params.idJugador);
@@ -787,6 +830,7 @@ module.exports = {
   fotoSolicitud,
   guardarAlineacion,
   actualizarModalidades,
+  estadoCreacionEquipo, // PE-013: el perfil muestra "Crear equipo" solo si es 'puede'
   subirEscudo,
   servirEscudo,
   matchmaking,
@@ -795,6 +839,7 @@ module.exports = {
   invitar,
   responderInvitacion,
   sacar,
+  transferirCapitania, // PE-016
   salir,
   AVISOS_RESPUESTA_INVITACION,
   AVISOS_SALIDA,

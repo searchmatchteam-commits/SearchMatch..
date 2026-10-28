@@ -66,16 +66,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const tarjetas = [...document.querySelectorAll('[data-busqueda]')];
     const sinResultados = document.querySelector('[data-sin-resultados]');
     const total = document.querySelector('[data-total-resultados]'); // pie del modal "Invitar jugador"
-    buscador.addEventListener('input', () => {
-      const texto = normalizar(buscador.value);
+    // DE-001 (solo el directorio, con data-minimo-busqueda): con menos letras no se filtra y se avisa.
+    const minimo = Number(buscador.dataset.minimoBusqueda) || 0;
+    const avisoMinimo = document.querySelector('[data-aviso-minimo]');
+    function filtrar() {
+      const texto = normalizar(buscador.value).trim();
+      const corto = texto.length > 0 && texto.length < minimo;
+      if (avisoMinimo) avisoMinimo.hidden = !corto;
       let visibles = 0;
       tarjetas.forEach((tarjeta) => {
-        const coincide = normalizar(tarjeta.dataset.busqueda).includes(texto);
+        const coincide = corto || normalizar(tarjeta.dataset.busqueda).includes(texto);
         tarjeta.hidden = !coincide;
         if (coincide) visibles += 1;
       });
       sinResultados.hidden = visibles > 0;
       if (total) total.textContent = visibles;
+    }
+    buscador.addEventListener('input', filtrar);
+    // "Limpiar búsqueda": vacía el campo y vuelve a mostrar todos
+    document.querySelector('[data-limpiar-busqueda]')?.addEventListener('click', () => {
+      buscador.value = '';
+      filtrar();
+      buscador.focus();
     });
   }
 

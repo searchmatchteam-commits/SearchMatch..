@@ -288,6 +288,54 @@
   width: 100%;
 }
 
+/* PE-001: estado de carga de la carta. Solo con JavaScript (clase .js): sin JS la carta se ve directo.
+   La forma copia la de la carta (ancho y proporción 320/520) para que no salte el diseño al terminar. */
+.pp-carga {
+  display: none;
+  position: absolute;
+  inset: 4px 0 30px; /* el mismo relleno de .pp-heroe: coincide con la carta ya aterrizada */
+  justify-content: center;
+  align-items: flex-start; /* sin estirar: la altura sale de aspect-ratio */
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.js .pp-heroe[aria-busy="true"] .pp-carga {
+  display: flex;
+}
+
+.js .pp-heroe[aria-busy="true"] .carta-jugador {
+  opacity: 0;
+}
+
+.pp-carga__carta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: min(100%, 340px);
+  aspect-ratio: 320 / 520;
+  box-sizing: border-box;
+  padding: 22% 18% 0;
+  border-radius: 22px;
+}
+
+.pp-carga__foto {
+  width: 46%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.pp-carga__linea {
+  width: 70%;
+}
+
+.pp-carga__linea.skeleton--corta {
+  width: 40%;
+}
+
 .perfil-pro .perfil__escenario {
   width: 100%;
   padding: 12px 0;
@@ -942,6 +990,13 @@
   .pp-radar__valores,
   .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__silueta {
     animation: none;
+  }
+
+  /* PE-001: sin brillo animado ni fundido (el shimmer de .skeleton ya lo apaga dashboard.css) */
+  .pp-carga,
+  .pp-carga .skeleton::after {
+    animation: none;
+    transition: none;
   }
 }
 

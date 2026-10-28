@@ -106,6 +106,10 @@
                 <span class="dash-equipo__meta">
                   <%= invitacion.capitan ? 'Capitán: ' + invitacion.capitan : 'Sin capitán' %><%= invitacion.equipo.detalle ? ' · ' + invitacion.equipo.detalle : '' %>
                 </span>
+                <% if (invitacion.fecha) { %>
+                  <!-- PE-023: fecha de la invitación (fecha_invitacion es TIMESTAMPTZ: se muestra en hora de Chile) -->
+                  <time class="dash-equipo__meta" datetime="<%= new Date(invitacion.fecha).toISOString() %>">Recibida el <%= new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', dateStyle: 'long', timeStyle: 'short' }).format(new Date(invitacion.fecha)) %></time>
+                <% } %>
               </span>
               <span class="dash-invitacion__acciones">
                 <form action="/invitaciones/<%= invitacion.id %>/aceptar" method="POST">

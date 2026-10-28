@@ -55,6 +55,15 @@ function obtenerPerfilPorId(idJugador) {
   return leerPerfil('j.id', idJugador);
 }
 
+/** PE-010: cuenta dueña de un jugador (para no mostrar perfiles de cuentas inactivas ni el propio). */
+async function cuentaDeJugador(idJugador) {
+  const { rows } = await pool.query(
+    'SELECT u.auth_id, u.activo FROM jugador j JOIN usuario u ON u.id = j.id_usuario WHERE j.id = $1',
+    [idJugador]
+  );
+  return rows[0] ? { authId: rows[0].auth_id, activo: rows[0].activo !== false } : null;
+}
+
 
 async function escribirPerfil(idJugador, datos, stats, conservarStats) {
   const cliente = await pool.connect();
@@ -91,6 +100,11 @@ async function escribirPerfil(idJugador, datos, stats, conservarStats) {
         ...ESTADISTICAS.map(({ clave }) => stats[clave]),
       ]
     );
+
+    // PE-002: el editor también cambia nombre y apellido (el wizard no los envía: se piden en el registro).
+    if (datos.nombre !== undefined) {
+      await cliente.query('UPDATE jugador SET nombre_apodo = $1, apellido = $2 WHERE id = $3', [datos.nombre, datos.apellido, idJugador]);
+    }
 
     await cliente.query('DELETE FROM jugador_posicion WHERE id_jugador = $1', [idJugador]);
     await cliente.query(
@@ -148,6 +162,7 @@ module.exports = {
   COLUMNA_INEXISTENTE,
   obtenerPerfil,
   obtenerPerfilPorId,
+  cuentaDeJugador,
   guardarPerfil,
   actualizarPerfil,
   obtenerFoto,

@@ -24,6 +24,7 @@ router.post('/recuperar/nueva', validarNuevaPassword, cuentaController.guardarNu
 
 router.get('/cuenta', requireAuth, cuentaController.mostrarCuenta);
 router.post('/cuenta', requireAuth, validarDatosCuenta, cuentaController.guardarCuenta);
+router.post('/cuenta/verificacion', requireAuth, cuentaController.reenviarVerificacion); // AR-007
 router.get('/cuenta/contrasena', requireAuth, cuentaController.mostrarCambiarPassword);
 router.post('/cuenta/contrasena', requireAuth, validarCambioPassword, cuentaController.cambiarPassword);
 

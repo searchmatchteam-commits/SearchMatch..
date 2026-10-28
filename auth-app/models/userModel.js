@@ -29,6 +29,11 @@ function confirmarCorreoEnAuth(supabase, { code, tokenHash, type }) {
   return supabase.auth.exchangeCodeForSession(code);
 }
 
+// AR-007: nuevo enlace de verificación del registro (Supabase no revela si el correo existe).
+function reenviarVerificacionEnAuth(supabase, correo, urlRedireccion) {
+  return supabase.auth.resend({ type: 'signup', email: correo, options: { emailRedirectTo: urlRedireccion } });
+}
+
 function guardarRolInicio(supabase, rol) {
   return supabase.auth.updateUser({ data: { rol_inicio: rol } });
 }
@@ -64,7 +69,7 @@ async function findByAuthId(authId) {
   return resultado.rows[0];
 }
 
-async function create({ authId, nombre, apellido, correo, telefono, fechaNacimiento }) {
+async function create({ authId, nombre, apellido, correo, correoSecundario = null, telefono, fechaNacimiento }) {
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
@@ -78,10 +83,10 @@ async function create({ authId, nombre, apellido, correo, telefono, fechaNacimie
     }
 
     const usuario = await cliente.query(
-      `INSERT INTO usuario (auth_id, correo, telefono, id_rol_aplicacion)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO usuario (auth_id, correo, correo_secundario, telefono, id_rol_aplicacion)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [authId, correo, telefono, rol.rows[0].id]
+      [authId, correo, correoSecundario, telefono, rol.rows[0].id]
     );
     const idUsuario = usuario.rows[0].id;
 
@@ -106,6 +111,7 @@ module.exports = {
   iniciarSesionEnAuth,
   obtenerUsuarioActual,
   confirmarCorreoEnAuth,
+  reenviarVerificacionEnAuth,
   guardarRolInicio,
   cerrarSesionEnAuth,
   eliminarDeAuth,

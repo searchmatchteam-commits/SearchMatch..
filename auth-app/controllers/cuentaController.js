@@ -1,4 +1,5 @@
 const cuentaModel = require('../models/cuentaModel');
+const userModel = require('../models/userModel');
 const { TERMINOS, PRIVACIDAD } = require('../config/legal');
 
 const COOKIE_RECUPERACION = 'sm_recuperacion';
@@ -11,7 +12,24 @@ const AVISOS_CUENTA = {
   guardado: 'Tus datos se guardaron correctamente.',
   'correo-pendiente': 'Datos guardados. Te enviamos un enlace al correo nuevo: el cambio de correo principal se aplica al confirmarlo.',
   contrasena: 'Tu contraseña se cambió correctamente.',
+  'verificacion-enviada': 'Te enviamos un nuevo enlace de verificación a tu correo principal.', // AR-007
+  'verificacion-error': 'No pudimos reenviar el enlace ahora. Espera un minuto e inténtalo de nuevo.',
 };
+
+/**
+ * AR-007 — ¿El correo principal ya está verificado? Lo dice Supabase (email_confirmed_at).
+ * @returns {Promise<boolean|null>} null si no se pudo consultar (la vista no muestra el estado).
+ */
+async function correoVerificado(req) {
+  try {
+    const { data, error } = await userModel.obtenerUsuarioActual(req.supabase);
+    if (error || !data.user) return null;
+    return Boolean(data.user.email_confirmed_at);
+  } catch (err) {
+    console.error('⚠️  No se pudo consultar la verificación del correo:', err.message);
+    return null;
+  }
+}
 
 function urlApp() {
   return process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`;
@@ -145,8 +163,9 @@ async function cambiarPassword(req, res, next) {
 }
 
 async function renderCuenta(req, res, { status = 200, datos = null, erroresCampo = {}, aviso = null } = {}) {
-  const guardados = await cuentaModel.obtenerDatosCuenta(req.usuario.idAuth);
+  const [guardados, verificado] = await Promise.all([cuentaModel.obtenerDatosCuenta(req.usuario.idAuth), correoVerificado(req)]);
   return res.status(status).render('cuenta/datos', {
+    verificado, // AR-007
     titulo: 'Mi cuenta',
     pagina: 'equipo',
     datos: datos || guardados,
@@ -156,6 +175,23 @@ async function renderCuenta(req, res, { status = 200, datos = null, erroresCampo
     errores: listaErrores(erroresCampo),
     aviso,
   });
+}
+
+// ---------------------------------------------------------------
+// POST /cuenta/verificacion → reenviar el enlace de verificación del correo principal (AR-007)
+// ---------------------------------------------------------------
+async function reenviarVerificacion(req, res, next) {
+  try {
+    if ((await correoVerificado(req)) === true) return res.redirect('/cuenta');
+    const { error } = await userModel.reenviarVerificacionEnAuth(req.supabase, req.usuario.correo, `${urlApp()}/auth/confirmar`);
+    if (error) {
+      console.error('⚠️  No se pudo reenviar la verificación:', error.code, error.message);
+      return res.redirect('/cuenta?aviso=verificacion-error');
+    }
+    return res.redirect('/cuenta?aviso=verificacion-enviada');
+  } catch (err) {
+    return next(err);
+  }
 }
 
 async function mostrarCuenta(req, res, next) {
@@ -216,4 +252,5 @@ module.exports = {
   cambiarPassword,
   mostrarCuenta,
   guardarCuenta,
+  reenviarVerificacion, // AR-007
 };

@@ -40,7 +40,7 @@
   <% if (locals.pagina === 'rol') { %>
     <script src="/js/rol.js?v=<%= versionAssets %>" defer></script>
   <% } %>
-  <% if (locals.pagina === 'wizard' && locals.wizardEquipo) { %>
+  <% if ((locals.pagina === 'wizard' && locals.wizardEquipo) || locals.editarEquipo) { %>
     <script src="/js/crear-equipo.js?v=<%= versionAssets %>" defer></script>
   <% } else if (locals.pagina === 'wizard') { %>
     <script src="/js/wizard.js?v=<%= versionAssets %>" defer></script>

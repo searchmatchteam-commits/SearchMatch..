@@ -12,6 +12,7 @@ const REGEX_CELULAR_CL = /^(?:\+?56)?(9\d{8})$/;
 
 const { POSICIONES, NIVELES, ESTADISTICAS, STAT_RANGO } = require('../config/perfilJugador');
 const { MODALIDADES } = require('../config/equipo');
+const cuentaModel = require('../models/cuentaModel');
 
 const LONGITUD_MINIMA_PASSWORD = 8;
 const LONGITUD_MAXIMA_NOMBRE = 100; // jugador.nombre_apodo / jugador.apellido
@@ -104,10 +105,11 @@ function errorPasswordSegura(password) {
 /**
  * Valida el formulario de REGISTRO.
  */
-function validarRegistro(req, res, next) {
+async function validarRegistro(req, res, next) {
   const nombre = (req.body.nombre || '').trim();
   const apellido = (req.body.apellido || '').trim();
   const correo = (req.body.correo || '').trim().toLowerCase();
+  const correoSecundario = (req.body.correo_secundario || '').trim().toLowerCase();
   const telefonoIngresado = (req.body.telefono || '').trim();
   const fechaNacimiento = (req.body.fecha_nacimiento || '').trim();
   const password = req.body.password || '';
@@ -133,6 +135,23 @@ function validarRegistro(req, res, next) {
     errores.push('El formato del correo no es válido.');
   }
 
+  // AR-001 — correo secundario opcional: formato, distinto del principal y libre en otras cuentas.
+  if (correoSecundario) {
+    if (!REGEX_CORREO.test(correoSecundario) || correoSecundario.length > LONGITUD_MAXIMA_CORREO) {
+      errores.push('El formato del correo secundario no es válido.');
+    } else if (correoSecundario === correo) {
+      errores.push('El correo secundario debe ser distinto del principal.');
+    } else {
+      try {
+        if (await cuentaModel.correoUsadoPorOtraCuenta(correoSecundario, null)) {
+          errores.push('El correo secundario ya está registrado en otra cuenta.');
+        }
+      } catch (err) {
+        return next(err);
+      }
+    }
+  }
+
   const telefono = normalizarTelefono(telefonoIngresado);
   if (!telefonoIngresado) {
     errores.push('El teléfono es obligatorio.');
@@ -155,11 +174,12 @@ function validarRegistro(req, res, next) {
   if (!aceptoTerminos) errores.push('Debes aceptar los términos y condiciones y la política de privacidad.');
 
   // Valores para el controlador (teléfono ya normalizado) y para re-pintar el formulario.
-  req.datosFormulario = { nombre, apellido, correo, telefono, fechaNacimiento };
+  req.datosFormulario = { nombre, apellido, correo, correoSecundario: correoSecundario || null, telefono, fechaNacimiento };
   const datos = {
     nombre,
     apellido,
     correo,
+    correo_secundario: correoSecundario,
     telefono: telefonoIngresado,
     fecha_nacimiento: fechaNacimiento,
     acepto_terminos: aceptoTerminos, // NUEVO: AR-011 (la casilla sigue marcada si hay otros errores)
@@ -286,13 +306,22 @@ function validarEdicionPerfil(req, res, next) {
   const erroresStats = [];
   const stats = {};
 
+  // PE-002: nombre y apellido también se editan aquí (obligatorios, máx. LONGITUD_MAXIMA_NOMBRE).
+  const nombre = (req.body.nombre || '').trim().replace(/\s+/g, ' ');
+  const apellido = (req.body.apellido || '').trim().replace(/\s+/g, ' ');
+  const erroresNombre = [];
+  if (!nombre) erroresNombre.push('El nombre es obligatorio.');
+  else if (nombre.length > LONGITUD_MAXIMA_NOMBRE) erroresNombre.push(`El nombre no puede superar los ${LONGITUD_MAXIMA_NOMBRE} caracteres.`);
+  if (!apellido) erroresNombre.push('El apellido es obligatorio.');
+  else if (apellido.length > LONGITUD_MAXIMA_NOMBRE) erroresNombre.push(`El apellido no puede superar los ${LONGITUD_MAXIMA_NOMBRE} caracteres.`);
+
   ESTADISTICAS.forEach(({ clave, nombre }) => {
     stats[clave] = enteroEnRango(req.body[`stat_${clave}`], STAT_RANGO);
     if (stats[clave] === null) erroresStats.push(`${nombre} debe estar entre ${STAT_RANGO.min} y ${STAT_RANGO.max}.`);
   });
 
-  req.datosFormulario = { ...datos, stats };
-  req.erroresPerfil = { errores: [...paso2, ...paso3, ...erroresStats] };
+  req.datosFormulario = { ...datos, nombre, apellido, stats };
+  req.erroresPerfil = { errores: [...erroresNombre, ...paso2, ...paso3, ...erroresStats] };
   return next();
 }
 
@@ -318,7 +347,9 @@ function leerModalidades(valor) {
  * @returns {{ datos: object, paso1: string[], paso2: string[] }}
  *          paso1 = identidad (nombre y correo), paso2 = configuración (nivel, zona, comuna, tipos de fútbol).
  */
-function revisarDatosEquipo(body, { conContacto = true } = {}) {
+// PE-012: la edición del equipo usa conZona: false (la zona sale de la comuna) y conModalidades: false
+// (los tipos de fútbol se cambian aparte, en el panel del capitán).
+function revisarDatosEquipo(body, { conContacto = true, conZona = conContacto, conModalidades = true } = {}) {
   const nombre = (body.nombre_equipo || '').trim();
   const correo = (body.correo_contacto || '').trim().toLowerCase();
   const nivel = body.nivel || '';
@@ -338,12 +369,12 @@ function revisarDatosEquipo(body, { conContacto = true } = {}) {
 
   if (!NIVELES[nivel]) paso2.push('Elige el nivel de juego del equipo.');
 
-  if (conContacto) {
+  if (conZona) {
     if (!zona) paso2.push('Escribe la zona habitual de juego.');
     else if (zona.length > LONGITUD_MAXIMA_ZONA) paso2.push(`La zona no puede superar los ${LONGITUD_MAXIMA_ZONA} caracteres.`);
   }
 
-  if (modalidades.length === 0) paso2.push('Elige al menos un tipo de fútbol.');
+  if (conModalidades && modalidades.length === 0) paso2.push('Elige al menos un tipo de fútbol.');
 
   // CORRECCIÓN: regla 11 — comuna de la lista (para filtrar y recomendar rivales por ubicación).
   // Que exista la revisa el controlador con ubicacionModel.obtenerComuna.
@@ -390,6 +421,28 @@ function validarEquipo(req, res, next) {
     errores: [...paso1, ...paso2, ...paso3],
     paso: paso1.length > 0 ? 1 : paso2.length > 0 ? 2 : 3,
   };
+  return next();
+}
+
+/**
+ * PE-012 — Valida EDITAR EQUIPO (/equipos/:id/editar): nombre, correo de contacto, nivel y comuna.
+ * No corta la petición: deja req.datosFormulario y req.erroresEquipo = { errores: [...] }.
+ */
+function validarEdicionEquipo(req, res, next) {
+  const { datos, paso1, paso2 } = revisarDatosEquipo(req.body, { conZona: false, conModalidades: false });
+  req.datosFormulario = datos;
+  req.erroresEquipo = { errores: [...paso1, ...paso2] };
+  return next();
+}
+
+/**
+ * DE-007 — Filtros de región y comuna de los rivales (GET /mi-equipo?id_region=&id_comuna=).
+ * Solo revisa el formato: que la comuna sea de la región lo comprueba el controlador con ubicacionModel.
+ * Deja req.filtrosRivales = { idRegion, idComuna } (null = sin filtro).
+ */
+function leerFiltrosRivales(req, res, next) {
+  const id = (valor) => (/^[1-9]\d{0,8}$/.test(String(valor || '')) ? Number(valor) : null);
+  req.filtrosRivales = { idRegion: id(req.query.id_region), idComuna: id(req.query.id_comuna) };
   return next();
 }
 
@@ -463,6 +516,8 @@ module.exports = {
   validarPerfilJugador,
   validarEdicionPerfil,
   validarEquipo,
+  validarEdicionEquipo,
+  leerFiltrosRivales,
   leerModalidades,
   validarDesafio,
   validarSolicitudUnion,

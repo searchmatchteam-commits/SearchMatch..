@@ -27,11 +27,21 @@
 <section class="perfil perfil--pro">
   <!-- ============ IZQUIERDA: EL HÉROE ============ -->
   <div class="perfil__carta">
-    <div class="pp-heroe">
+    <!-- PE-001: aria-busy + skeleton mientras cargan la foto y las fuentes (perfil-pro.js los quita) -->
+    <div class="pp-heroe" aria-busy="true" data-heroe-carta>
       <!-- La caída elástica va en este envoltorio: la carta conserva su transform para el tilt -->
       <div class="pp-heroe__caida" data-caida>
         <%- include('partials/carta-jugador', { jugador, editor: false, tilt: 15 }) %>
       </div>
+      <!-- Fuera de la caída: el skeleton queda quieto donde aterriza la carta -->
+      <div class="pp-carga" data-carta-cargando aria-hidden="true">
+        <span class="skeleton pp-carga__carta">
+          <span class="skeleton skeleton--circulo pp-carga__foto"></span>
+          <span class="skeleton skeleton--linea pp-carga__linea"></span>
+          <span class="skeleton skeleton--linea skeleton--corta pp-carga__linea"></span>
+        </span>
+      </div>
+      <span class="solo-lectores" role="status" data-carta-cargando-texto>Cargando tu carta…</span>
       <span class="pp-heroe__sombra"></span>
     </div>
   </div>
@@ -166,6 +176,13 @@
         <svg class="btn__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M13.5 6.5l4 4" /></svg>
         Editar perfil
       </a>
+      <% if (puedeCrearEquipo) { %>
+        <!-- PE-013: crear un equipo en cualquier momento (solo si la cuenta puede: estadoCreacionEquipo === 'puede') -->
+        <a class="btn btn--contorno btn--grande pp-boton" href="/crear-equipo">
+          <svg class="btn__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z" /><path d="M12 9v6M9 12h6" /></svg>
+          Crear equipo
+        </a>
+      <% } %>
     </div>
 
     <div class="perfil__enlaces">

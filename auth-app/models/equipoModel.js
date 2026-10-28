@@ -10,7 +10,7 @@
 
 const { pool } = require('../config/db');
 const { NIVELES, POSICIONES, ESTADISTICAS } = require('../config/perfilJugador');
-const { MODALIDADES, FORMACIONES, formacionValida, textoModalidades } = require('../config/equipo');
+const { MODALIDADES, FORMACIONES, formacionValida, textoModalidades, MAX_EQUIPOS_COMO_CAPITAN } = require('../config/equipo');
 
 // Nombres aceptados en los catálogos (se buscan en minúsculas).
 const NOMBRES_ROL_CAPITAN = ['capitán', 'capitan'];
@@ -123,6 +123,7 @@ function etiquetaPosicion(nombreDb) {
 // $2: un equipo en particular (o null para todos). Primero los que capitanea.
 const SQL_MIS_EQUIPOS = `
   SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel,
+         e.puntaje_nivel, -- IN-001: puntaje y nivel en el inicio
          e.id_usuario_creador = u.id AS soy_capitan, e.latitud::float8 AS latitud, e.longitud::float8 AS longitud,
          (SELECT json_agg(json_build_object('jugadores', mm.cantidad_de_jugadores, 'formacion', em.formacion)
                           ORDER BY mm.cantidad_de_jugadores)
@@ -145,7 +146,8 @@ function filaMiEquipo(fila) {
     zona: fila.zona,
     detalle: detalleEquipo(fila),
     modalidad: modalidadesDe(fila), // 'Fútbol 5 y 11' (las tarjetas de "Mis equipos" lo muestran aparte)
-    nivel: fila.nivel,
+    nivel: fila.nivel || null,
+    puntaje: fila.puntaje_nivel, // IN-001
     escudo: urlEscudo(fila),
     soyCapitan: Boolean(fila.soy_capitan),
     // Dónde juega (EQ-UB); null si el capitán aún no la marca. Solo la ven sus integrantes.
@@ -181,6 +183,29 @@ async function obtenerMiEquipo(authId, idEquipo = null) {
 async function listarMisEquipos(authId) {
   const { rows } = await pool.query(SQL_MIS_EQUIPOS, [authId, null]);
   return rows.map(filaMiEquipo);
+}
+
+/**
+ * PE-010 — Equipos activos en que juega un jugador (los que creó y los de su plantel), para su perfil público.
+ * @returns {Promise<Array<{id, nombre, zona, nivel, escudo: string|null, capitan: boolean}>>}
+ */
+async function listarEquiposActivosDeJugador(idJugador) {
+  const { rows } = await pool.query(
+    `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, n.nombre AS nivel,
+            e.id_usuario_creador = j.id_usuario AS capitan
+       FROM jugador j
+       JOIN equipo e ON e.activo
+        AND (e.id_usuario_creador = j.id_usuario
+             OR EXISTS (SELECT 1 FROM equipo_jugador x WHERE x.id_equipo = e.id AND x.id_jugador = j.id))
+       LEFT JOIN comunas cz ON cz.id = e.id_comuna
+       LEFT JOIN nivel n ON n.id = e.id_nivel
+      WHERE j.id = $1
+      ORDER BY capitan DESC, e.nombre`,
+    [idJugador]
+  );
+  return rows.map((fila) => ({
+    id: fila.id, nombre: fila.nombre, zona: fila.zona, nivel: fila.nivel, escudo: urlEscudo(fila), capitan: fila.capitan,
+  }));
 }
 
 /**
@@ -583,9 +608,14 @@ async function responderSolicitud(authId, idSolicitud, aceptar) {
  * @returns {Promise<Array<{id, nombre, zona, nivel, modalidad, modalidades: number[], comunes: number[],
  *          desafio: 'enviado'|'recibido'|null, distanciaKm: number|null}>>} modalidades y comunes: cantidades de jugadores (ej. [7, 11]).
  */
-async function listarRivales(idEquipo) {
+/**
+ * DE-007 — Rivales recomendados para un equipo: activos, del MISMO nivel (id_nivel), de otro capitán y que
+ * jueguen alguna de sus modalidades (regla 12). Primero los de puntaje_nivel más cercano; en empate, por nombre.
+ * @param {{ idRegion?: number|null, idComuna?: number|null }} [filtros] - Ya validados (la comuna es de la región).
+ */
+async function listarRivales(idEquipo, { idRegion = null, idComuna = null } = {}) {
   const { rows } = await pool.query(
-    `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel,
+    `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel, e.puntaje_nivel,
             EXISTS (SELECT 1 FROM desafio d JOIN estado_desafio ed ON ed.id = d.id_estado_desafio
                      WHERE d.id_equipo_desafiante = $1 AND d.id_equipo_desafiado = e.id
                        AND lower(ed.nombre) = $2) AS enviado,
@@ -593,11 +623,11 @@ async function listarRivales(idEquipo) {
                      WHERE d.id_equipo_desafiante = e.id AND d.id_equipo_desafiado = $1
                        AND lower(ed.nombre) = $2) AS recibido,
             -- EQ-UB: km en línea recta (haversine) entre las dos ubicaciones; NULL si falta alguna
-            CASE WHEN e.latitud IS NOT NULL AND yo.latitud IS NOT NULL THEN
+            CASE WHEN e.latitud IS NOT NULL AND propio.latitud IS NOT NULL THEN
               2 * ${RADIO_TIERRA_KM} * asin(sqrt(
-                power(sin(radians(e.latitud - yo.latitud)::float8 / 2), 2)
-                + cos(radians(yo.latitud)::float8) * cos(radians(e.latitud)::float8)
-                  * power(sin(radians(e.longitud - yo.longitud)::float8 / 2), 2)))
+                power(sin(radians(e.latitud - propio.latitud)::float8 / 2), 2)
+                + cos(radians(propio.latitud)::float8) * cos(radians(e.latitud)::float8)
+                  * power(sin(radians(e.longitud - propio.longitud)::float8 / 2), 2)))
             END AS distancia_km,
             (SELECT array_agg(mc.cantidad_de_jugadores ORDER BY mc.cantidad_de_jugadores)
                FROM equipo_modalidad r
@@ -605,25 +635,31 @@ async function listarRivales(idEquipo) {
                JOIN modalidad mc ON mc.id = r.id_modalidad
               WHERE r.id_equipo = e.id) AS comunes
        FROM equipo e
-       CROSS JOIN (SELECT latitud, longitud FROM equipo WHERE id = $1) yo
+       JOIN equipo propio ON propio.id = $1 -- DE-007: nivel y puntaje del equipo del capitán; EQ-UB: su ubicación
        LEFT JOIN modalidad m ON m.id = e.id_modalidad
        LEFT JOIN comunas cz ON cz.id = e.id_comuna -- CORRECCIÓN: regla 11 (se muestra la comuna; equipos antiguos, su zona)
        LEFT JOIN nivel n ON n.id = e.id_nivel
       WHERE e.activo AND e.id <> $1
         -- El capitán puede tener varios equipos: no se desafía a sí mismo
-        AND e.id_usuario_creador <> (SELECT id_usuario_creador FROM equipo WHERE id = $1)
+        AND e.id_usuario_creador <> propio.id_usuario_creador
+        -- DE-007: solo equipos del mismo nivel, con filtros opcionales de región y comuna
+        AND e.id_nivel = propio.id_nivel
+        AND ($3::int IS NULL OR cz.id_region = $3)
+        AND ($4::int IS NULL OR e.id_comuna = $4)
         -- CORRECCIÓN: regla 12 — solo rivales que juegan al menos una modalidad del equipo del capitán
         AND EXISTS (SELECT 1 FROM equipo_modalidad r
                       JOIN equipo_modalidad propia ON propia.id_modalidad = r.id_modalidad AND propia.id_equipo = $1
                      WHERE r.id_equipo = e.id)
-      ORDER BY distancia_km NULLS LAST, e.nombre`,
-    [idEquipo, ESTADO_DESAFIO_PENDIENTE]
+      -- DE-007: primero el puntaje más cercano; en empate, el más cercano en distancia (EQ-UB) y luego el nombre
+      ORDER BY abs(e.puntaje_nivel - propio.puntaje_nivel), distancia_km NULLS LAST, e.nombre`,
+    [idEquipo, ESTADO_DESAFIO_PENDIENTE, idRegion, idComuna]
   );
   return rows.map((fila) => ({
     id: fila.id,
     nombre: fila.nombre,
     zona: fila.zona,
     nivel: fila.nivel,
+    puntaje: fila.puntaje_nivel, // DE-007
     modalidad: modalidadesDe(fila),
     modalidades: fila.modalidades || [],
     comunes: fila.comunes || [],
@@ -1149,6 +1185,76 @@ async function sacarJugador(authId, idEquipo, idJugador) {
 }
 
 /**
+ * PE-016 — El capitán traspasa la capitanía a un integrante, en UNA transacción:
+ *  1) Bloquea el equipo y comprueba que sea suyo y siga activo.
+ *  2) El elegido debe estar en el plantel, con su cuenta activa, y no ser el mismo capitán.
+ *  3) El elegido no puede pasar de MAX_EQUIPOS_COMO_CAPITAN equipos activos como capitán.
+ *  4) equipo.id_usuario_creador pasa al elegido (de ahí salen todos los permisos de capitán: desafíos,
+ *     partidos y resultados) y en equipo_jugador se intercambian los roles capitán / integrante.
+ * @returns {Promise<{resultado: 'transferida'|'sin-permiso'|'no-integrante'|'cuenta-inactiva'|'mismo'|'limite',
+ *          nombre?: string, equipo?: string, idUsuarioNuevo?: number}>}
+ */
+async function transferirCapitania(authId, idEquipo, idJugador) {
+  const cliente = await pool.connect();
+  try {
+    await cliente.query('BEGIN');
+    const terminar = async (resultado) => { await cliente.query('ROLLBACK'); return { resultado }; };
+
+    if (!(await bloquearEquipoDeCapitan(cliente, authId, idEquipo))) return await terminar('sin-permiso');
+
+    const { rows } = await cliente.query(
+      `SELECT j.id_usuario, uj.activo, coalesce(nullif(trim(j.apodo), ''), j.nombre_apodo) AS nombre,
+              e.nombre AS equipo, e.id_usuario_creador, cap.id AS id_jugador_capitan
+         FROM equipo_jugador ej
+         JOIN jugador j ON j.id = ej.id_jugador
+         JOIN usuario uj ON uj.id = j.id_usuario
+         JOIN equipo e ON e.id = ej.id_equipo
+         LEFT JOIN jugador cap ON cap.id_usuario = e.id_usuario_creador
+        WHERE ej.id_equipo = $1 AND ej.id_jugador = $2`,
+      [idEquipo, idJugador]
+    );
+    const elegido = rows[0];
+    if (!elegido) return await terminar('no-integrante');
+    if (elegido.activo === false) return await terminar('cuenta-inactiva');
+    if (elegido.id_usuario === elegido.id_usuario_creador) return await terminar('mismo');
+
+    const capitaneados = await cliente.query('SELECT count(*)::int AS total FROM equipo WHERE id_usuario_creador = $1 AND activo', [
+      elegido.id_usuario,
+    ]);
+    if (capitaneados.rows[0].total >= MAX_EQUIPOS_COMO_CAPITAN) return await terminar('limite');
+
+    const roles = await cliente.query(
+      `SELECT (SELECT id FROM rol_equipo WHERE lower(nombre) = ANY($1) ORDER BY id LIMIT 1) AS capitan,
+              (SELECT id FROM rol_equipo WHERE lower(nombre) = $2) AS integrante`,
+      [NOMBRES_ROL_CAPITAN, ROL_INTEGRANTE]
+    );
+    const { capitan: idRolCapitan, integrante: idRolIntegrante } = roles.rows[0];
+    if (!idRolCapitan || !idRolIntegrante) throw new Error("Faltan los roles 'capitan' o 'integrante' en la tabla rol_equipo.");
+
+    await cliente.query('UPDATE equipo SET id_usuario_creador = $2 WHERE id = $1', [idEquipo, elegido.id_usuario]);
+    await cliente.query('UPDATE equipo_jugador SET id_rol_equipo = $3 WHERE id_equipo = $1 AND id_jugador = $2', [
+      idEquipo, idJugador, idRolCapitan,
+    ]);
+    // El capitán anterior sigue en el plantel como integrante (si le faltaba la fila, se crea)
+    if (elegido.id_jugador_capitan) {
+      await cliente.query(
+        `INSERT INTO equipo_jugador (id_jugador, id_equipo, id_rol_equipo) VALUES ($1, $2, $3)
+         ON CONFLICT (id_jugador, id_equipo) DO UPDATE SET id_rol_equipo = EXCLUDED.id_rol_equipo`,
+        [elegido.id_jugador_capitan, idEquipo, idRolIntegrante]
+      );
+    }
+
+    await cliente.query('COMMIT');
+    return { resultado: 'transferida', nombre: elegido.nombre, equipo: elegido.equipo, idUsuarioNuevo: elegido.id_usuario };
+  } catch (err) {
+    await cliente.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    cliente.release();
+  }
+}
+
+/**
  * El jugador de la cuenta sale de un equipo: borra su fila de equipo_jugador
  * (WHERE id_equipo AND id_jugador). El que creó el equipo no puede salir: el equipo quedaría sin capitán.
  * @param {string} authId - UUID de auth.users.
@@ -1172,6 +1278,7 @@ module.exports = {
   obtenerMiEquipo,
   listarMisEquipos,
   listarMisEquiposConPlantel,
+  listarEquiposActivosDeJugador, // PE-010
   listarPlantel,
   guardarAlineacion,
   actualizarModalidades,
@@ -1193,4 +1300,5 @@ module.exports = {
   responderInvitacion,
   sacarJugador,
   salirDeEquipo,
+  transferirCapitania, // PE-016
 };

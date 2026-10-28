@@ -47,7 +47,20 @@
       <fieldset class="perfil__tarjeta editor__seccion">
         <legend class="perfil__tarjeta-titulo">Datos personales</legend>
 
-        <!-- Nombre y apellido se piden solo al crear la cuenta -->
+        <!-- PE-002: nombre y apellido también se editan aquí -->
+        <div class="formulario__fila">
+          <div class="campo">
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" name="nombre" value="<%= datos.nombre || '' %>" maxlength="100"
+                   autocomplete="given-name" required />
+          </div>
+          <div class="campo">
+            <label for="apellido">Apellido</label>
+            <input type="text" id="apellido" name="apellido" value="<%= datos.apellido || '' %>" maxlength="100"
+                   autocomplete="family-name" required />
+          </div>
+        </div>
+
         <div class="campo">
           <label for="apodo">Apodo</label>
           <input type="text" id="apodo" name="apodo" value="<%= datos.apodo || '' %>" placeholder="Ej. El Niño Maravilla"

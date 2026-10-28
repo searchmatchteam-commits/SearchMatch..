@@ -221,11 +221,55 @@ async function mostrarPerfil(req, res, next) {
       return res.redirect('/perfil-jugador');
     }
 
+    // PE-013: acceso "Crear equipo" solo si la cuenta puede crear uno. Se carga aquí porque
+    // equipoController importa este archivo (un require arriba sería circular).
+    const { estadoCreacionEquipo } = require('./equipoController');
     return res.render('perfil', {
       titulo: 'Tu carta de jugador',
       pagina: 'perfil',
       perfilPro: true, // escena "cyber-gamer": fondo con partículas, carta 3D por capas y radar (perfil-pro.css/js)
       jugador: jugadorParaVista(perfil, urlFoto(perfil)),
+      puedeCrearEquipo: (await estadoCreacionEquipo(req.usuario)) === 'puede',
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+// ---------------------------------------------------------------
+// GET /jugadores/:id → perfil público de otro jugador (PE-010). Nunca correo, teléfono ni fecha de
+// nacimiento: jugadorParaVista solo entrega la edad calculada.
+// ---------------------------------------------------------------
+function perfilNoDisponible(res) {
+  return res.status(404).render('mensaje', {
+    titulo: 'Perfil no disponible',
+    pagina: 'equipo',
+    mensaje: 'Este perfil no está disponible',
+    enlace: { href: '/equipos', texto: 'Ver equipos' },
+  });
+}
+
+async function perfilPublico(req, res, next) {
+  const idJugador = Number(req.params.id);
+  try {
+    if (!Number.isInteger(idJugador) || idJugador <= 0) return perfilNoDisponible(res);
+    const cuenta = await jugadorModel.cuentaDeJugador(idJugador);
+    if (!cuenta || !cuenta.activo) return perfilNoDisponible(res);
+    if (cuenta.authId === req.usuario.idAuth) return res.redirect('/perfil');
+
+    const [perfil, equipos] = await Promise.all([
+      jugadorModel.obtenerPerfilPorId(idJugador),
+      equipoModel.listarEquiposActivosDeJugador(idJugador),
+    ]);
+    if (!perfil || !perfil.perfilCompleto) return perfilNoDisponible(res);
+
+    const foto = perfil.fotoVersion ? `/jugadores/${idJugador}/foto?v=${perfil.fotoVersion}` : null;
+    return res.render('jugador-publico', {
+      titulo: nombreEnCarta(perfil),
+      pagina: 'perfil',
+      perfilAjeno: true, // sin descargar/compartir carta (perfil.js)
+      jugador: jugadorParaVista(perfil, foto),
+      equipos,
     });
   } catch (err) {
     return next(err);
@@ -265,6 +309,8 @@ async function mostrarEditor(req, res, next) {
     return renderEditor(res, {
       perfil,
       datos: {
+        nombre: perfil.nombre || '', // PE-002
+        apellido: perfil.apellido || '',
         apodo: perfil.apodo,
         fechaNacimiento: perfil.fechaNacimiento,
         altura: perfil.altura ? Math.round(perfil.altura) : '',
@@ -397,6 +443,7 @@ module.exports = {
   mostrarWizard,
   guardarWizard,
   mostrarPerfil,
+  perfilPublico, // PE-010
   mostrarEditor,
   guardarEditor,
   subirFoto,

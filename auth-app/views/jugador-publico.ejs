@@ -1,0 +1,40 @@
+<%- include('partials/header') %>
+<%# PE-010: perfil público de otro jugador. Solo datos deportivos y edad: nunca correo, teléfono ni fecha de nacimiento %>
+<section class="perfil">
+  <div class="perfil__carta">
+    <%- include('partials/carta-jugador', { jugador, editor: false }) %>
+  </div>
+
+  <header class="perfil__cabecera">
+    <div class="perfil__volver"><%- include('partials/boton-volver', { fallbackUrl: '/equipos' }) %></div>
+    <span class="rol__eyebrow">PERFIL DE JUGADOR</span>
+    <h1 class="perfil__titulo"><%= jugador.nombreCompleto || jugador.nombre %></h1>
+    <p class="perfil__subtitulo">«<%= jugador.apodo %>» · <%= jugador.posiciones %></p>
+  </header>
+
+  <div class="perfil__info">
+    <%- include('partials/perfil-resumen', { jugador, nota: null }) %>
+
+    <article class="perfil__tarjeta">
+      <h2 class="perfil__tarjeta-titulo">Equipos</h2>
+      <% if (equipos.length === 0) { %>
+        <p class="perfil__nota">No juega en ningún equipo activo por ahora.</p>
+      <% } else { %>
+        <ul class="sm-filas">
+          <% equipos.forEach(function (e) { %>
+            <li class="sm-fila">
+              <span class="dash-equipo__escudo" aria-hidden="true"><%- include('partials/escudo-equipo', { equipo: e }) %></span>
+              <a href="/equipos/<%= e.id %>"><%= e.nombre %></a>
+              <span><%= [e.nivel, e.zona].filter(Boolean).join(' · ') %></span>
+              <span class="sm-rol"><%= e.capitan ? 'Capitán' : 'Jugador' %></span>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </article>
+  </div>
+</section>
+
+<%- include('partials/dock', { activo: 'mis-equipos' }) %>
+
+<%- include('partials/footer') %>
