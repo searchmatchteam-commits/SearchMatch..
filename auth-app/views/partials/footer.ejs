@@ -74,6 +74,9 @@
   <% if (locals.pagina === 'equipo') { %>
     <script src="/js/equipo.js?v=<%= versionAssets %>" defer></script>
   <% } %>
+  <% if (locals.matchmaking) { %>
+    <script src="/js/matchmaking.js?v=<%= versionAssets %>" defer></script>
+  <% } %>
   <% if (locals.torneoLista) { %>
     <script src="/js/torneos-lista.js?v=<%= versionAssets %>" defer></script>
   <% } %>

@@ -13,10 +13,12 @@
     // Páginas "cyber-sport": sistema compartido + hoja propia de la página
     const cyber = locals.pagina === 'dashboard' || locals.pagina === 'auth' || locals.pagina === 'equipo';
     // Una sola petición a Google Fonts (cada hoja de fuentes extra bloquea el primer pintado)
-    const fuentes = 'family=Inter:wght@400;500;600;700;800;900' + (cyber || locals.perfilPro ? '&family=Space+Grotesk:wght@500;600;700' : '')
+    const fuentes = 'family=Inter:wght@400;500;600;700;800;900' + (cyber || locals.perfilPro || locals.matchmaking ? '&family=Space+Grotesk:wght@500;600;700' : '')
       + (locals.pagina === 'perfil' || locals.pagina === 'dashboard' ? '&family=Barlow+Condensed:wght@600;700;800' : '')
       // Oswald: solo el apodo dentro de la carta de jugador (perfil, editor, solicitudes y plantel)
-      + (locals.pagina === 'perfil' || locals.pagina === 'equipo' ? '&family=Oswald:wght@700' : '');
+      + (locals.pagina === 'perfil' || locals.pagina === 'equipo' ? '&family=Oswald:wght@700' : '')
+      // JetBrains Mono: solo el cronómetro de /matchmaking (cifras de ancho fijo)
+      + (locals.matchmaking ? '&family=JetBrains+Mono:wght@700;800' : '');
   %>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?<%= fuentes %>&display=swap" />
   <!-- ?v= cambia en cada arranque del servidor: el navegador puede guardar los archivos en caché sin quedar desactualizado -->
@@ -48,6 +50,10 @@
   <% if (locals.torneoDetalle) { %>
     <!-- /torneos/:id: dos columnas, pestañas y cuadrante (después de tema-claro: trae sus reglas de modo claro) -->
     <link rel="stylesheet" href="/css/torneo-detalle.css?v=<%= versionAssets %>" />
+  <% } %>
+  <% if (locals.matchmaking) { %>
+    <!-- /matchmaking: pantalla completa siempre oscura (después de tema-claro) -->
+    <link rel="stylesheet" href="/css/matchmaking.css?v=<%= versionAssets %>" />
   <% } %>
   <% if (locals.perfilPro) { %>
     <!-- /perfil: escena "cyber-gamer" (después de tema-claro: también trae sus reglas de modo claro) -->

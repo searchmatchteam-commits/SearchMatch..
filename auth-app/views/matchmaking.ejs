@@ -1,0 +1,156 @@
+<%- include('partials/header') %>
+
+<%
+  const volver = `/mi-equipo?equipo=${equipo.id}`;
+  const iniciales = (nombre) => nombre.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
+  // Los rivales van como JSON a matchmaking.js; "<" escapado para que un nombre no cierre el <script>
+  const rivalesJson = JSON.stringify(rivales).replace(/</g, '\\u003c');
+%>
+<!-- Pantalla completa "Buscar partido": data-estado = buscando | encontrado | vacio (matchmaking.js) -->
+<section class="mm" data-matchmaking data-estado="buscando" data-equipo="<%= equipo.id %>" data-zona="<%= equipo.zona || '' %>" data-nivel="<%= equipo.nivel || '' %>" aria-labelledby="mm-titulo">
+  <div class="mm__fondo" aria-hidden="true">
+    <!-- Pizarra táctica de fondo (muy tenue: el foco es el reloj) -->
+    <svg class="mm__cancha" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <pattern id="mm-grilla" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0v40" /></pattern>
+        <marker id="mm-flecha" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" /></marker>
+      </defs>
+      <rect class="mm__cancha-grilla" width="1600" height="900" />
+      <g class="mm__cancha-lineas">
+        <rect x="100" y="80" width="1400" height="740" rx="6" />
+        <path d="M800 80v740" />
+        <circle cx="800" cy="450" r="95" />
+        <rect x="100" y="260" width="220" height="380" />
+        <rect x="100" y="360" width="80" height="180" />
+        <path d="M320 380a95 95 0 0 1 0 140" />
+        <rect x="70" y="410" width="30" height="80" />
+        <rect x="1280" y="260" width="220" height="380" />
+        <rect x="1420" y="360" width="80" height="180" />
+        <path d="M1280 380a95 95 0 0 0 0 140" />
+        <rect x="1500" y="410" width="30" height="80" />
+      </g>
+      <g class="mm__cancha-jugadas">
+        <path d="M330 250 Q 450 170 560 230" marker-end="url(#mm-flecha)" />
+        <path d="M420 620 L 600 560" marker-end="url(#mm-flecha)" />
+        <path d="M1240 300 Q 1120 360 1060 470" marker-end="url(#mm-flecha)" />
+        <path d="M1150 650 Q 1000 700 920 610" marker-end="url(#mm-flecha)" />
+      </g>
+      <g class="mm__cancha-jugadores">
+        <circle cx="300" cy="250" r="11" /><circle cx="400" cy="620" r="11" /><circle cx="560" cy="420" r="11" />
+        <circle cx="240" cy="450" r="11" /><circle cx="650" cy="300" r="11" /><circle cx="690" cy="640" r="11" />
+        <circle cx="1270" cy="290" r="11" /><circle cx="1180" cy="660" r="11" /><circle cx="1040" cy="430" r="11" />
+        <circle cx="1360" cy="450" r="11" /><circle cx="950" cy="250" r="11" /><circle cx="910" cy="700" r="11" />
+      </g>
+    </svg>
+  </div>
+  <div class="mm__flash" aria-hidden="true"></div>
+
+  <script type="application/json" data-rivales><%- rivalesJson %></script>
+
+  <a class="mm__cerrar" href="<%= volver %>" aria-label="Salir del matchmaking">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+  </a>
+
+  <!-- Estado 1: en cola -->
+  <div class="mm__cola mm__panel" data-vista="buscando">
+    <h1 class="mm__etiqueta" id="mm-titulo">Buscando partido</h1>
+    <div class="mm__radar">
+      <span class="mm__pulso" aria-hidden="true"></span>
+      <svg class="mm__marcas" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="98" /></svg>
+      <svg class="mm__anillo" viewBox="0 0 200 200" aria-hidden="true">
+        <defs>
+          <linearGradient id="mm-degradado" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#00ff41" stop-opacity="0.15" />
+            <stop offset="0.55" stop-color="#00ff41" />
+            <stop offset="1" stop-color="#ffffff" />
+          </linearGradient>
+        </defs>
+        <circle class="mm__anillo-pista" cx="100" cy="100" r="88" />
+        <circle class="mm__anillo-arco" cx="100" cy="100" r="88" stroke="url(#mm-degradado)" />
+      </svg>
+      <div class="mm__disco">
+        <time class="mm__reloj" data-reloj>00:00</time>
+      </div>
+    </div>
+    <p class="mm__texto" data-texto role="status" aria-live="polite">Buscando equipos cerca de ti...</p>
+    <!-- Parámetros de la búsqueda (los de tu equipo) -->
+    <ul class="mm__chips" aria-label="Parámetros de búsqueda">
+      <% if (equipo.modalidad) { %>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m12 7 4 3-1.5 5h-5L8 10z" /><path d="M12 7V2M16 10l5-2M14.5 15l3 4.5M9.5 15l-3 4.5M8 10 3 8" /></svg><%= equipo.modalidad %></li>
+      <% } %>
+      <% if (equipo.nivel) { %>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg>Nivel <%= equipo.nivel %></li>
+      <% } %>
+      <% if (equipo.zona) { %>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg><%= equipo.zona %></li>
+      <% } %>
+    </ul>
+    <a class="mm__cancelar" href="<%= volver %>">
+      Cancelar búsqueda
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+    </a>
+  </div>
+
+  <!-- Estado 2: rival encontrado -->
+  <div class="mm__revelacion" data-vista="encontrado" hidden>
+    <p class="mm__encontrado">¡Rival encontrado!</p>
+
+    <article class="mm__tarjeta">
+      <div class="mm__vs">
+        <div class="mm__lado mm__lado--propio">
+          <div class="mm__escudo mm__escudo--chico">
+            <% if (equipo.escudo) { %>
+              <img src="<%= equipo.escudo %>" alt="" />
+            <% } else { %>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /></svg>
+              <span><%= iniciales(equipo.nombre) %></span>
+            <% } %>
+          </div>
+          <p class="mm__nombre-chico"><%= equipo.nombre %></p>
+          <p class="mm__rol">Tu equipo</p>
+        </div>
+
+        <span class="mm__versus" aria-label="contra">VS</span>
+
+        <div class="mm__lado mm__lado--rival">
+          <div class="mm__escudo" data-rival-escudo>
+            <img src="" alt="" data-rival-img hidden />
+            <svg viewBox="0 0 24 24" aria-hidden="true" data-rival-placeholder><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /></svg>
+            <span data-rival-iniciales></span>
+          </div>
+          <p class="mm__rol mm__rol--rival">Rival</p>
+        </div>
+      </div>
+
+      <h2 class="mm__nombre" data-rival-nombre></h2>
+      <ul class="mm__meta">
+        <li data-rival-nivel></li>
+        <li data-rival-zona>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+          <span></span>
+        </li>
+        <li data-rival-modalidad></li>
+      </ul>
+    </article>
+
+    <form class="mm__acciones" method="POST" action="" data-form-desafio>
+      <button type="submit" class="mm__desafiar" data-desafiar>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" /><line x1="13" x2="19" y1="19" y2="13" /><line x1="16" x2="20" y1="16" y2="20" /><line x1="19" x2="21" y1="21" y2="19" /><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5" /><line x1="5" x2="9" y1="14" y2="18" /><line x1="7" x2="4" y1="17" y2="20" /><line x1="3" x2="5" y1="19" y2="21" /></svg>
+        <span data-desafiar-texto>Enviar desafío</span>
+      </button>
+      <p class="mm__resultado" data-resultado role="status" aria-live="polite"></p>
+      <a class="mm__ver-desafios" href="/desafios?equipo=<%= equipo.id %>&ver=enviados" data-ver-desafios hidden>Ver mis desafíos enviados →</a>
+      <button type="button" class="mm__otro" data-otro>Buscar otro rival</button>
+    </form>
+  </div>
+
+  <!-- Sin rivales disponibles -->
+  <div class="mm__vacio mm__panel" data-vista="vacio" hidden>
+    <p class="mm__encontrado mm__encontrado--apagado">Sin rivales por ahora</p>
+    <p class="mm__texto">No hay equipos de tus modalidades disponibles para desafiar (o ya tienen un desafío pendiente contigo).</p>
+    <a class="mm__desafiar" href="/equipos">Explorar equipos</a>
+    <a class="mm__cancelar" href="<%= volver %>">Volver a mi equipo</a>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

@@ -52,6 +52,8 @@ router.post('/mi-equipo/solicitudes/:id/:accion', requireAuth, requireRol, equip
 router.get('/mi-equipo/solicitudes/:id', requireAuth, requireRol, equipoController.verSolicitud);
 router.get('/mi-equipo/solicitudes/:id/foto', requireAuth, requireRol, equipoController.fotoSolicitud);
 router.post('/mi-equipo/desafios/:id', requireAuth, requireRol, validarDesafio, equipoController.desafiar);
+// Pantalla "Buscar partido": cola simulada y revelación de un rival (solo capitanes).
+router.get('/matchmaking', requireAuth, requireRol, equipoController.matchmaking);
 // Modal "Invitar jugador +": solo el capitán que creó el equipo (lo comprueba el modelo).
 router.post('/equipos/:id/invitaciones/:idJugador', requireAuth, requireRol, equipoController.invitar);
 // Panel "Invitaciones" del dashboard: el jugador invitado acepta o rechaza (lo comprueba el modelo).

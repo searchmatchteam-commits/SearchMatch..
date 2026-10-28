@@ -1,0 +1,623 @@
+/* public/css/matchmaking.css
+   Pantalla "Buscar partido" (/matchmaking): estética esports, siempre oscura (también en modo claro).
+   Tres vistas dentro de .mm según data-estado: buscando (cola con cronómetro y anillo),
+   encontrado (flash + tarjeta VS con rebote) y vacio. Las animaciones usan solo transform y opacity. */
+
+.pagina-matchmaking {
+  overflow: hidden;
+}
+
+.mm {
+  --mm-fondo: #050806;
+  --mm-verde: #00ff41;
+  --mm-verde-rgb: 0, 255, 65;
+  --mm-texto: #f3f7f3;
+  --mm-suave: #8a968a;
+  --mm-peligro: #b34747;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 72px 16px 32px;
+  overflow-y: auto;
+  background: var(--mm-fondo);
+  color: var(--mm-texto);
+  font-family: 'Inter', system-ui, sans-serif;
+  text-align: center;
+}
+
+.mm__fondo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Viñeta: el centro (el reloj) queda iluminado y los bordes se hunden en negro */
+  background:
+    radial-gradient(ellipse 55% 60% at 50% 48%, rgba(var(--mm-verde-rgb), 0.14), transparent 70%),
+    radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.75) 100%);
+}
+.mm[data-estado='encontrado'] .mm__fondo {
+  background:
+    radial-gradient(ellipse 60% 65% at 50% 42%, rgba(var(--mm-verde-rgb), 0.24), transparent 70%),
+    radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.75) 100%);
+}
+
+/* Pizarra táctica: líneas de cancha, jugadas y jugadores, apenas visible */
+.mm__cancha {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 0.12;
+  stroke: var(--mm-verde) !important;
+  stroke-width: 2 !important;
+}
+.mm__cancha-grilla {
+  fill: url(#mm-grilla);
+}
+.mm__cancha pattern path {
+  fill: none;
+  stroke-width: 0.6;
+  opacity: 0.5;
+}
+.mm__cancha marker path {
+  fill: var(--mm-verde);
+  stroke: none;
+}
+.mm__cancha-lineas {
+  fill: none;
+}
+.mm__cancha-jugadas {
+  fill: none;
+  stroke-dasharray: 10 9;
+}
+.mm__cancha-jugadores {
+  fill: rgba(var(--mm-verde-rgb), 0.5);
+}
+
+/* Destello blanco-verde al encontrar rival */
+.mm__flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle, #fff 0%, rgba(var(--mm-verde-rgb), 0.85) 35%, transparent 75%);
+  opacity: 0;
+}
+.mm__flash.is-activo {
+  animation: mm-flash 0.7s ease-out;
+}
+
+.mm__cerrar {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--mm-suave);
+  transition: color 0.2s, border-color 0.2s;
+}
+.mm__cerrar:hover,
+.mm__cerrar:focus-visible {
+  color: var(--mm-texto);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.mm svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+.mm__cola,
+.mm__revelacion,
+.mm__vacio {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 460px;
+}
+.mm [hidden] {
+  display: none !important;
+}
+
+/* ---------- Tarjeta de vidrio (cola y sin rivales) ---------- */
+.mm__panel {
+  padding: 40px 32px 32px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 24px;
+  background: rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(40px);
+  backdrop-filter: blur(40px);
+  box-shadow: 0 0 50px rgba(34, 197, 94, 0.15), 0 40px 90px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ---------- Estado 1: buscando ---------- */
+.mm__etiqueta {
+  margin: 0;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: clamp(1.15rem, 4.6vw, 1.45rem);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.mm__radar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(62vw, 236px);
+  aspect-ratio: 1;
+  margin: 8px 0 4px;
+  /* "Vivo": crece y decrece lento mientras busca */
+  animation: mm-respira 3.2s ease-in-out infinite;
+}
+
+.mm__pulso {
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--mm-verde-rgb), 0.45);
+  animation: mm-pulso 3.2s ease-out infinite;
+}
+
+/* Marcas finas de reloj alrededor del anillo */
+.mm__marcas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  stroke: rgba(var(--mm-verde-rgb), 0.35) !important;
+  stroke-width: 2.5 !important;
+  stroke-linecap: butt !important;
+  stroke-dasharray: 1.5 8.76;
+}
+
+.mm__anillo {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  animation: mm-giro 1.6s linear infinite;
+  /* El brillo va en el <svg> (CSS) y no en el círculo: un filtro SVG se recorta a su caja y,
+     al girar, dibuja un cuadrado */
+  filter: drop-shadow(0 0 6px rgba(var(--mm-verde-rgb), 0.8)) drop-shadow(0 0 16px rgba(var(--mm-verde-rgb), 0.4));
+}
+.mm__anillo-pista {
+  stroke: rgba(var(--mm-verde-rgb), 0.1);
+  stroke-width: 6;
+}
+.mm__anillo-arco {
+  stroke-width: 6;
+  stroke-dasharray: 250 303;
+}
+
+.mm__disco {
+  display: grid;
+  place-items: center;
+  width: 74%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #18211a 0%, #070a08 70%);
+  box-shadow: inset 0 0 0 1px rgba(var(--mm-verde-rgb), 0.18), inset 0 10px 30px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(var(--mm-verde-rgb), 0.12);
+}
+
+.mm__reloj {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(2.3rem, 10vw, 3rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-shadow: 0 0 18px rgba(var(--mm-verde-rgb), 0.45);
+}
+
+/* "Procesando": el texto late en opacidad todo el tiempo */
+.mm__cola .mm__texto {
+  animation: mm-procesando 1.8s ease-in-out infinite;
+}
+.mm__texto {
+  min-height: 1.5em;
+  margin: 0;
+  color: var(--mm-suave);
+  font-size: 0.95rem;
+}
+.mm__texto.is-cambio {
+  animation: mm-texto 0.4s ease-out, mm-procesando 1.8s ease-in-out 0.4s infinite;
+}
+
+/* Parámetros de búsqueda activos */
+.mm__chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mm__chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px 7px 11px;
+  border: 1px solid rgba(var(--mm-verde-rgb), 0.28);
+  border-radius: 999px;
+  background: rgba(5, 8, 6, 0.85);
+  box-shadow: inset 0 0 12px rgba(var(--mm-verde-rgb), 0.06);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+}
+.mm__chips svg {
+  width: 15px;
+  height: 15px;
+  color: var(--mm-verde);
+  filter: drop-shadow(0 0 4px rgba(var(--mm-verde-rgb), 0.6));
+}
+
+/* Botón fantasma */
+.mm__cancelar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: min(100%, 240px);
+  margin-top: 8px;
+  padding: 12px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  background: transparent;
+  color: #c9d1c9;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.mm__cancelar svg {
+  width: 16px;
+  height: 16px;
+}
+.mm__cancelar:hover,
+.mm__cancelar:focus-visible {
+  color: #ff8080;
+  border-color: rgba(255, 99, 99, 0.55);
+  background: rgba(255, 60, 60, 0.06);
+  text-decoration: none;
+}
+
+/* ---------- Estado 2: rival encontrado ---------- */
+.mm__encontrado {
+  margin: 0;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: clamp(1.9rem, 8vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.05;
+  text-transform: uppercase;
+  color: var(--mm-verde);
+  filter: drop-shadow(0 0 14px rgba(var(--mm-verde-rgb), 0.7));
+}
+.mm__encontrado--apagado {
+  color: var(--mm-texto);
+  filter: none;
+}
+
+.mm__tarjeta {
+  width: 100%;
+  padding: 24px 20px;
+  border: 1px solid rgba(var(--mm-verde-rgb), 0.3);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 0 40px rgba(var(--mm-verde-rgb), 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.mm__vs {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.mm__lado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mm__escudo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 108px;
+  aspect-ratio: 1;
+  color: var(--mm-verde);
+  filter: drop-shadow(0 0 18px rgba(var(--mm-verde-rgb), 0.35));
+}
+.mm__escudo--chico {
+  width: 64px;
+  color: var(--mm-suave);
+  filter: none;
+}
+.mm__escudo svg {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  fill: rgba(var(--mm-verde-rgb), 0.08);
+  stroke-width: 1.2;
+}
+.mm__escudo--chico svg {
+  fill: rgba(255, 255, 255, 0.04);
+}
+.mm__escudo span {
+  position: relative;
+  margin-top: -6%;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #fff;
+}
+.mm__escudo--chico span {
+  font-size: 1.1rem;
+}
+.mm__escudo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.mm__versus {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-style: italic;
+  color: #fff;
+  text-shadow: 0 0 12px rgba(var(--mm-verde-rgb), 0.8);
+}
+
+.mm__nombre-chico {
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mm__rol {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--mm-suave);
+}
+.mm__rol--rival {
+  color: var(--mm-verde);
+}
+
+.mm__nombre {
+  margin: 18px 0 8px;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: clamp(1.4rem, 6vw, 1.9rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.mm__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.88rem;
+  color: var(--mm-suave);
+}
+.mm__meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.mm__meta svg {
+  width: 15px;
+  height: 15px;
+  color: var(--mm-verde);
+}
+
+.mm__acciones {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+}
+
+.mm__desafiar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 60px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--mm-verde);
+  color: #000;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 0 28px rgba(var(--mm-verde-rgb), 0.55);
+  transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+  animation: mm-latido 2s ease-in-out infinite;
+}
+.mm__desafiar svg {
+  width: 22px;
+  height: 22px;
+}
+.mm__desafiar:hover,
+.mm__desafiar:focus-visible {
+  box-shadow: 0 0 44px rgba(var(--mm-verde-rgb), 0.85);
+}
+.mm__desafiar:active {
+  transform: scale(0.97);
+}
+.mm__desafiar:disabled {
+  animation: none;
+  cursor: default;
+}
+.mm__desafiar.is-enviado {
+  background: transparent;
+  color: var(--mm-verde);
+  box-shadow: inset 0 0 0 2px var(--mm-verde);
+}
+
+.mm__resultado {
+  min-height: 1.3em;
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--mm-suave);
+}
+.mm__resultado.is-error {
+  color: #ff6b6b;
+}
+
+.mm__ver-desafios {
+  color: var(--mm-verde);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mm__otro {
+  padding: 10px 16px;
+  border: 0;
+  background: none;
+  color: var(--mm-suave);
+  font: inherit;
+  font-size: 0.92rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.mm__otro:hover,
+.mm__otro:focus-visible {
+  color: var(--mm-texto);
+}
+.mm__otro:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Entrada de la revelación: zoom del título, tarjeta desde abajo con rebote, botones después */
+.mm__revelacion.is-entrando .mm__encontrado {
+  animation: mm-zoom 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.mm__revelacion.is-entrando .mm__tarjeta {
+  animation: mm-rebote 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+}
+.mm__revelacion.is-entrando .mm__lado--propio {
+  animation: mm-desde-izq 0.5s ease-out 0.45s both;
+}
+.mm__revelacion.is-entrando .mm__lado--rival {
+  animation: mm-desde-der 0.5s ease-out 0.45s both;
+}
+.mm__revelacion.is-entrando .mm__versus {
+  animation: mm-zoom 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) 0.7s both;
+}
+.mm__revelacion.is-entrando .mm__acciones {
+  animation: mm-subir 0.5s ease-out 0.8s both;
+}
+
+@keyframes mm-giro {
+  to { transform: rotate(360deg); }
+}
+@keyframes mm-pulso {
+  from { transform: scale(0.9); opacity: 0.8; }
+  to { transform: scale(1.3); opacity: 0; }
+}
+@keyframes mm-respira {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+@keyframes mm-procesando {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes mm-texto {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes mm-flash {
+  0% { opacity: 0; transform: scale(0.6); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+@keyframes mm-zoom {
+  from { opacity: 0; transform: scale(2.2); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes mm-rebote {
+  from { opacity: 0; transform: translateY(120px) scale(0.92); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes mm-desde-izq {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes mm-desde-der {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes mm-subir {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes mm-latido {
+  0%, 100% { box-shadow: 0 0 22px rgba(var(--mm-verde-rgb), 0.45); }
+  50% { box-shadow: 0 0 40px rgba(var(--mm-verde-rgb), 0.85); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mm *,
+  .mm *::before {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+  }
+  .mm__anillo,
+  .mm__radar,
+  .mm__texto {
+    animation: none !important;
+  }
+}

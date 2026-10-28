@@ -16,13 +16,22 @@
       <p class="dash-hero__parrafo revelar">¿Listo para tu próxima pichanga? Encuentra cupos cerca de ti, reserva cancha y súmate a un equipo.</p>
 
       <div class="dash-hero__acciones revelar">
-        <button type="button" class="dash-cta" data-ripple="claro" data-proximamente="Muy pronto podrás buscar partidos cerca de ti.">
+        <!-- Pantalla de matchmaking (solo capitanes; a los demás /matchmaking les explica por qué).
+             Se mantiene presionado para activarlo (dashboard.js, sección "Mantener para buscar"); sin JS es un enlace normal. -->
+        <a class="dash-cta" data-ripple="claro" href="/matchmaking" data-mantener draggable="false" aria-describedby="dash-cta-ayuda">
           <span class="dash-cta__halo" aria-hidden="true"></span>
+          <svg class="dash-cta__progreso" aria-hidden="true"><rect /></svg>
           <span class="dash-cta__contenido">
             <svg class="dash-cta__icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2" /></svg>
-            Buscar partido
+            <!-- Los tres textos ocupan la misma celda: el botón no cambia de ancho al alternarlos -->
+            <span class="dash-cta__textos">
+              <span class="dash-cta__texto dash-cta__texto--reposo">Buscar partido</span>
+              <span class="dash-cta__texto dash-cta__texto--cargando" aria-hidden="true">Mantén presionado...</span>
+              <span class="dash-cta__texto dash-cta__texto--completo" aria-hidden="true">¡Buscando!</span>
+            </span>
           </span>
-        </button>
+        </a>
+        <span class="solo-lectores" id="dash-cta-ayuda">Mantén presionado para buscar partido.</span>
         <% if (usuario.rolInicio === 'equipo') { %>
           <% if (miEquipo) { %>
             <a class="dash-btn-vidrio" data-ripple href="/mi-equipo"><%= miEquipo.nombre ? 'Ir a ' + miEquipo.nombre : 'Ir a mi equipo' %></a>

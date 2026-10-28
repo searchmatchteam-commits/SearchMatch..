@@ -608,6 +608,37 @@ async function fotoSolicitud(req, res, next) {
 }
 
 // ---------------------------------------------------------------
+// GET /matchmaking → pantalla "Buscar partido" (matchmaking.js): simula la búsqueda y revela
+// un rival de listarRivales() sin desafío pendiente; "Enviar desafío" usa POST /mi-equipo/desafios/:id.
+// ?equipo= elige desde cuál de sus equipos busca el capitán (sin él, el principal).
+// ---------------------------------------------------------------
+async function matchmaking(req, res, next) {
+  const idEquipo = idDeParametro(req.query.equipo);
+  try {
+    const equipo = await equipoModel.obtenerMiEquipo(req.usuario.idAuth, idEquipo);
+    if (!equipo || !equipo.soyCapitan) {
+      return res.status(403).render('mensaje', {
+        titulo: 'Buscar partido',
+        pagina: 'equipo',
+        mensaje: 'Solo el capitán de un equipo puede buscar rivales y enviar desafíos.',
+        enlace: equipo ? { href: '/mi-equipo', texto: 'Volver a mi equipo' } : { href: '/equipos', texto: 'Ir a Equipos' },
+      });
+    }
+    const rivales = (await equipoModel.listarRivales(equipo.id)).filter((rival) => !rival.desafio);
+    return res.render('matchmaking', {
+      titulo: 'Buscar partido',
+      pagina: 'matchmaking',
+      matchmaking: true,
+      equipo,
+      // Solo lo que muestra la tarjeta del rival (va como JSON a matchmaking.js)
+      rivales: rivales.map(({ id, nombre, zona, nivel, modalidad, escudo }) => ({ id, nombre, zona, nivel, modalidad, escudo })),
+    });
+  } catch (err) {
+    return pasarError(err, next);
+  }
+}
+
+// ---------------------------------------------------------------
 // POST /mi-equipo/desafios/:id → desafiar a otro equipo (validarDesafio deja el mensaje listo)
 // Desde equipo.js (fetch) responde JSON; sin JavaScript vuelve al panel con el aviso.
 // ?equipo= dice desde cuál de sus equipos desafía el capitán (sin él, el primero que creó).
@@ -719,6 +750,7 @@ module.exports = {
   actualizarModalidades,
   subirEscudo,
   servirEscudo,
+  matchmaking,
   desafiar,
   invitar,
   responderInvitacion,
