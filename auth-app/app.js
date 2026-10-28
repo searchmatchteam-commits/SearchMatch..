@@ -19,6 +19,7 @@ const partidoRoutes = require('./routes/partidoRoutes');
 const torneoRoutes = require('./routes/torneoRoutes');
 const { contadorSinLeer } = require('./controllers/notificacionController');
 const { noEncontrado, manejarErrores } = require('./middlewares/errorHandler');
+const tareasProgramadas = require('./models/tareasProgramadas');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -63,4 +64,5 @@ app.use(manejarErrores);
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
   probarConexion();
+  if (process.env.TAREAS_PROGRAMADAS !== 'no') tareasProgramadas.iniciar();
 });
