@@ -1,0 +1,65 @@
+<%
+  // AP-003 · Barra de un listado del panel: buscador, filtros combinables, etiquetas quitables,
+  // Limpiar filtros y Exportar CSV. Todo es GET: la dirección guarda filtros y orden (se puede recargar o compartir).
+  //   include('../partials/listado-barra', { listado, filtrosVista, placeholder })
+  //   filtrosVista: [{ clave, etiqueta, tipo: 'opcion'|'fecha'|'numero', opciones?: [{valor, texto}] }]
+  const clavesFiltro = filtrosVista.map(function (f) { return f.clave; });
+%>
+<div class="dash-panel eq-panel sm-listado-barra">
+  <form class="sm-listado-barra__buscar" method="GET" action="<%= listado.base %>" role="search">
+    <% listado.ocultos(['texto']).forEach(function (par) { %><input type="hidden" name="<%= par[0] %>" value="<%= par[1] %>" /><% }) %>
+    <div class="campo">
+      <label class="solo-lectores" for="listado-texto">Buscar</label>
+      <input type="search" id="listado-texto" name="texto" value="<%= listado.texto %>" placeholder="<%= locals.placeholder || 'Buscar…' %>" />
+    </div>
+    <button type="submit" class="btn btn--verde btn--chico">Buscar</button>
+  </form>
+
+  <% if (filtrosVista.length > 0) { %>
+    <details class="sm-listado-barra__filtros" <%= Object.keys(listado.filtros).length > 0 ? 'open' : '' %>>
+      <summary>Filtros</summary>
+      <form method="GET" action="<%= listado.base %>" class="sm-listado-barra__campos">
+        <% listado.ocultos(clavesFiltro).forEach(function (par) { %><input type="hidden" name="<%= par[0] %>" value="<%= par[1] %>" /><% }) %>
+        <% filtrosVista.forEach(function (f) { const valor = listado.filtros[f.clave] === undefined ? '' : String(listado.filtros[f.clave]); %>
+          <div class="campo">
+            <label for="filtro-<%= f.clave %>"><%= f.etiqueta %></label>
+            <% if (f.tipo === 'opcion') { %>
+              <select id="filtro-<%= f.clave %>" name="<%= f.clave %>">
+                <option value="">Todos</option>
+                <% f.opciones.forEach(function (o) { %>
+                  <option value="<%= o.valor %>" <%= String(o.valor) === valor ? 'selected' : '' %>><%= o.texto %></option>
+                <% }) %>
+              </select>
+            <% } else if (f.tipo === 'fecha') { %>
+              <input type="date" id="filtro-<%= f.clave %>" name="<%= f.clave %>" value="<%= valor %>" />
+            <% } else { %>
+              <input type="number" min="0" step="1" inputmode="numeric" id="filtro-<%= f.clave %>" name="<%= f.clave %>" value="<%= valor %>" />
+            <% } %>
+          </div>
+        <% }) %>
+        <div class="sm-form__acciones"><button type="submit" class="btn btn--verde btn--chico">Aplicar filtros</button></div>
+      </form>
+    </details>
+  <% } %>
+
+  <div class="sm-listado-barra__pie">
+    <% if (listado.etiquetas.length > 0) { %>
+      <ul class="sm-etiquetas" aria-label="Filtros activos">
+        <% listado.etiquetas.forEach(function (e) { %>
+          <li><a class="sm-etiqueta" href="<%= e.url %>" title="Quitar este filtro"><%= e.texto %> <span aria-hidden="true">×</span><span class="solo-lectores"> (quitar)</span></a></li>
+        <% }) %>
+      </ul>
+      <a class="btn btn--contorno btn--chico" href="<%= listado.limpiar %>">Limpiar filtros</a>
+    <% } %>
+    <p class="sm-listado-barra__total"><%= listado.total === 1 ? '1 resultado' : listado.total.toLocaleString('es-CL') + ' resultados' %></p>
+    <% if (listado.total > 0) { %>
+      <form method="GET" action="<%= listado.base %>"
+            data-confirmar="Se descargará un CSV con los <%= listado.total.toLocaleString('es-CL') %> registros que cumplen los filtros, no solo los de esta página."
+            data-confirmar-titulo="¿Exportar a CSV?" data-confirmar-boton="Exportar">
+        <% listado.ocultos(['pagina']).forEach(function (par) { %><input type="hidden" name="<%= par[0] %>" value="<%= par[1] %>" /><% }) %>
+        <input type="hidden" name="formato" value="csv" />
+        <button type="submit" class="btn btn--contorno btn--chico">Exportar CSV</button>
+      </form>
+    <% } %>
+  </div>
+</div>

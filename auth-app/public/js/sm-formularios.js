@@ -50,6 +50,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   });
 
+  // AP-003: listas que se aplican al elegir (ej. "Por página"); sin JS queda el botón [data-sin-js].
+  document.querySelectorAll('select[data-enviar-al-cambiar]').forEach((lista) => {
+    const boton = lista.form && lista.form.querySelector('[data-sin-js]');
+    if (boton) boton.hidden = true;
+    lista.addEventListener('change', () => lista.form.requestSubmit());
+  });
+
   document.querySelectorAll('form[data-confirmar]').forEach((formulario) => {
     formulario.addEventListener('submit', async (evento) => {
       if (formulario.dataset.confirmado === 'si') return;

@@ -1,0 +1,115 @@
+<%- include('../partials/admin-inicio', { seccion }) %>
+
+<%
+  const fechaHora = new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Santiago' });
+  const fecha = new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeZone: 'America/Santiago' });
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <h1 class="eq-cabecera__titulo">Administradores</h1>
+        <p class="eq-cabecera__stats">Solo tú, como Administrador principal, eliges quién entra al panel.</p>
+      </div>
+    </header>
+
+    <details class="dash-panel eq-panel sm-desplegable" <%= Object.keys(erroresCampo).length > 0 ? 'open' : '' %>>
+      <summary class="dash-panel__titulo">+ Crear administrador</summary>
+      <form class="sm-form sm-filtros" action="/admin/administradores" method="POST" novalidate data-sm-validar
+            data-confirmar="Se creará su cuenta del panel y le enviaremos un correo para que defina su contraseña."
+            data-confirmar-titulo="¿Crear la cuenta de administrador?" data-confirmar-boton="Crear">
+        <div class="campo <%= erroresCampo.nombre ? 'campo--error' : '' %>">
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" name="nombre" value="<%= datos.nombre || '' %>" maxlength="100" required data-mensaje="Escribe el nombre." />
+          <small class="campo__error"><%= erroresCampo.nombre || '' %></small>
+        </div>
+        <div class="campo <%= erroresCampo.correo ? 'campo--error' : '' %>">
+          <label for="correo">Correo</label>
+          <input type="email" id="correo" name="correo" value="<%= datos.correo || '' %>" maxlength="150" required data-mensaje="Escribe un correo válido." />
+          <small class="campo__error"><%= erroresCampo.correo || '' %></small>
+        </div>
+        <div class="sm-form__acciones"><button type="submit" class="btn btn--verde">Crear y enviar invitación</button></div>
+      </form>
+    </details>
+
+    <%- include('../partials/listado-barra', { listado, filtrosVista, placeholder: 'Nombre o correo' }) %>
+
+    <% if (administradores.length === 0) { %>
+      <%- include('../partials/listado-vacio', { listado, mensaje: 'Aún no hay administradores' }) %>
+    <% } else { %>
+      <div class="dash-panel eq-panel sm-tabla-contenedor">
+        <table class="sm-tabla">
+          <thead>
+            <tr>
+              <%- include('../partials/listado-th', { listado, clave: 'nombre', texto: 'Nombre' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'correo', texto: 'Correo' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'estado', texto: 'Estado' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'acceso', texto: 'Último acceso' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'seleccion', texto: 'Seleccionado el' }) %>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% administradores.forEach(function (a) { %>
+              <tr class="<%= a.estado === 'activo' ? '' : 'sm-fila--inactiva' %>">
+                <td data-titulo="Nombre"><strong><%= a.nombre %></strong><% if (a.esPrincipal) { %> <span class="sm-rol">Principal</span><% } %></td>
+                <td data-titulo="Correo"><%= a.correo %></td>
+                <td data-titulo="Estado"><span class="sm-estado <%= a.estado === 'activo' ? 'sm-estado--activo' : 'sm-estado--inactivo' %>"><%= a.estadoTexto %></span></td>
+                <td data-titulo="Último acceso"><%= a.ultimoAcceso ? fechaHora.format(a.ultimoAcceso) : 'Nunca' %></td>
+                <td data-titulo="Seleccionado el"><%= a.seleccionadoEn ? fecha.format(a.seleccionadoEn) : '—' %><% if (a.seleccionadoPor) { %><br /><small>por <%= a.seleccionadoPor %></small><% } %></td>
+                <td data-titulo="Acciones" class="sm-tabla__acciones">
+                  <% if (a.id === miId) { %>
+                    <span class="sm-opcional">Tu cuenta</span>
+                  <% } else if (a.esPrincipal) { %>
+                    <span class="sm-opcional">Protegida</span>
+                  <% } else if (a.estado === 'revocado') { %>
+                    <%- include('../partials/admin-accion-motivo', {
+                      accion: `/admin/administradores/${a.id}/reactivar`, boton: 'Reactivar',
+                      titulo: `¿Reactivar el acceso de ${a.correo}?`, texto: 'Podrá volver a ingresar al panel con su contraseña.',
+                    }) %>
+                  <% } else if (a.estado === 'activo') { %>
+                    <%- include('../partials/admin-accion-motivo', {
+                      accion: `/admin/administradores/${a.id}/revocar`, boton: 'Revocar', peligro: true,
+                      titulo: `¿Revocar el acceso de ${a.correo}?`, texto: 'Su sesión del panel se cerrará de inmediato y no podrá volver a entrar.',
+                    }) %>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <%- include('../partials/listado-pie', { listado }) %>
+      </div>
+    <% } %>
+
+    <details class="dash-panel eq-panel sm-desplegable">
+      <summary class="dash-panel__titulo">Traspasar el rol de Administrador principal</summary>
+      <% if (candidatosPrincipal.length === 0) { %>
+        <p class="dash-panel__nota">Primero crea otro administrador con acceso vigente.</p>
+      <% } else { %>
+        <form class="sm-form sm-filtros" action="/admin/administradores/traspasar" method="POST" novalidate data-sm-validar
+              data-confirmar="La otra persona pasará a ser Administrador principal y tú quedarás como administrador: ya no podrás gestionar administradores."
+              data-confirmar-titulo="¿Traspasar el rol de principal?" data-confirmar-boton="Traspasar">
+          <div class="campo">
+            <label for="id_nuevo">Nuevo Administrador principal</label>
+            <select id="id_nuevo" name="id_nuevo" required data-mensaje="Elige a quién.">
+              <option value="">Elige un administrador</option>
+              <% candidatosPrincipal.forEach(function (a) { %><option value="<%= a.id %>"><%= a.nombre %> (<%= a.correo %>)</option><% }) %>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="motivo-traspaso">Motivo</label>
+            <textarea id="motivo-traspaso" name="motivo" rows="2" minlength="5" maxlength="500" required data-mensaje="Indica el motivo."></textarea>
+          </div>
+          <div class="campo">
+            <label for="password-traspaso">Tu contraseña (para confirmar)</label>
+            <input type="password" id="password-traspaso" name="password" autocomplete="current-password" required data-mensaje="Ingresa tu contraseña." />
+          </div>
+          <div class="sm-form__acciones"><button type="submit" class="btn btn--contorno sm-btn-peligro">Traspasar rol</button></div>
+        </form>
+      <% } %>
+    </details>
+  </div>
+</section>
+
+<%- include('../partials/admin-fin') %>

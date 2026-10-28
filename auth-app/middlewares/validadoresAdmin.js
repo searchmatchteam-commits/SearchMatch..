@@ -141,18 +141,19 @@ function validarCatalogo(req, res, next) {
   next();
 }
 
-// SA-2 / SA-3 · Torneos. El formulario llega como multipart (multer, ver subirImagenesTorneo):
-// la foto en "foto" y cada patrocinador nuevo en patrocinador_nombre_N + patrocinador_logo_N.
-// La cancha llega del buscador como "Recinto · Cancha (Comuna) [#123]": se toma el número final;
-// el controlador revisa que exista y sea de la modalidad del torneo.
+// SA-2 / SA-3 / SA-7 · Torneos. El formulario llega como multipart (multer, ver subirImagenesTorneo):
+// la foto en "foto", cada patrocinador nuevo en patrocinador_nombre_N + patrocinador_logo_N, las canchas
+// en "canchas" (casillas) y los medios de pago en "medios_pago".
 const multer = require('multer');
 const { detectarTipoImagen } = require('../controllers/jugadorController');
-const { MAX_PATROCINADORES, errorCantidad } = require('../config/torneos');
+const {
+  MAX_PATROCINADORES, FORMATOS, MEDIOS_PAGO, LIMITES, erroresCupos, erroresFechas, leerPrecio,
+} = require('../config/torneos');
 
 const MAX_IMAGEN = 2 * 1024 * 1024;
 const recibirArchivos = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_IMAGEN, files: MAX_PATROCINADORES + 1, fields: 60 },
+  limits: { fileSize: MAX_IMAGEN, files: MAX_PATROCINADORES + 1, fields: 150 },
 }).any();
 
 /** Lee el multipart; si un archivo pesa demasiado no corta la petición: lo deja en req.errorSubida. */
@@ -174,48 +175,97 @@ function imagenDe(archivo) {
   return tipo ? { datos: archivo.buffer, tipo } : { invalida: true };
 }
 
+/** Lista de valores de un campo repetido (checkboxes): con uno solo llega como texto, con varios como arreglo. */
+function lista(valor) {
+  if (valor === undefined || valor === null || valor === '') return [];
+  return Array.isArray(valor) ? valor : [valor];
+}
+
+function entero(valor) {
+  const t = String(valor ?? '').trim();
+  return /^\d{1,6}$/.test(t) ? Number(t) : null;
+}
+
+/**
+ * TO-001 / TO-002 / TO-003 · Lee y valida el formulario de torneo. Deja en req.datosFormulario los datos y en
+ * req.erroresCampo los errores por campo. Lo que necesita la base (recinto, canchas, niveles, medios
+ * habilitados, estado del torneo) lo revisa el controlador.
+ * req.camposEnviados: campos que vinieron en el formulario (al editar, los deshabilitados no llegan).
+ */
 function validarTorneo(req, res, next) {
   const b = req.body || {};
   const archivos = new Map((req.files || []).map((f) => [f.fieldname, f]));
-  const canchaTexto = texto(b.cancha);
-  const idCancha = canchaTexto.match(/\[#(\d+)\]$/);
-  const cantidad = Number(b.cantidad_equipos);
+  const precioIngresado = String(b.precio ?? '').trim();
   const datos = {
     nombre: texto(b.nombre),
-    formato: ['liga', 'relampago'].includes(b.formato) ? b.formato : null,
+    descripcion: String(b.descripcion || '').trim(),
+    reglamento: String(b.reglamento || '').trim(),
+    premios: texto(b.premios),
+    formato: Object.prototype.hasOwnProperty.call(FORMATOS, b.formato) ? b.formato : null,
     emparejamiento: ['llegada', 'sorteo'].includes(b.emparejamiento) ? b.emparejamiento : null,
     idModalidad: idValido(b.id_modalidad),
-    cantidadIngresada: String(b.cantidad_equipos || '').trim(),
-    cantidadEquipos: Number.isInteger(cantidad) ? cantidad : null,
-    canchaTexto,
-    idCancha: idCancha ? idValido(idCancha[1]) : null,
-    tienePatrocinadores: b.tiene_patrocinadores === 'si',
-    premios: texto(b.premios),
-    // SA-5: fecha y hora de inicio opcionales (vacías = "Por confirmar")
+    idNivelMin: idValido(b.id_nivel_min),
+    idNivelMax: idValido(b.id_nivel_max),
+    idRecinto: idValido(b.id_recinto),
+    idsCanchas: [...new Set(lista(b.canchas).map(idValido).filter(Boolean))].sort((x, y) => x - y),
     fechaInicio: texto(b.fecha_inicio) || null,
     horaInicio: texto(b.hora_inicio) || null,
+    fechaTermino: texto(b.fecha_termino) || null,
+    fechaLimite: texto(b.fecha_limite_inscripcion) || null,
+    cupoMin: entero(b.cupo_min),
+    cupoMax: entero(b.cupo_max),
+    minJugadores: entero(b.min_jugadores),
+    cantidadGrupos: b.formato === 'grupos' ? entero(b.cantidad_grupos) : null,
+    clasificanPorGrupo: b.formato === 'grupos' ? entero(b.clasifican_por_grupo) : null,
+    precioIngresado,
+    precio: leerPrecio(precioIngresado),
+    mediosPago: [...new Set(lista(b.medios_pago).filter((m) => Object.prototype.hasOwnProperty.call(MEDIOS_PAGO, m)))].sort(),
+    tienePatrocinadores: b.tiene_patrocinadores === 'si',
     patrocinadoresNuevos: [],
     // ids de patrocinadores ya guardados que se marcaron para quitar (solo al editar)
     quitarPatrocinadores: Object.keys(b).filter((k) => /^quitar_patrocinador_\d+$/.test(k) && b[k] === 'si')
       .map((k) => Number(k.split('_').pop())),
   };
   const e = {};
+  const obligatorio = (campo, valor, mensaje) => { if (!valor && valor !== 0) e[campo] = mensaje; };
   if (req.errorSubida) e.foto = req.errorSubida;
-  if (!datos.nombre) e.nombre = 'El nombre del torneo es obligatorio.';
-  else if (datos.nombre.length > 100) e.nombre = 'Máximo 100 caracteres.';
-  if (!datos.formato) e.formato = 'Elige si es una liga o un torneo relámpago.';
-  if (!datos.emparejamiento) e.emparejamiento = 'Elige cómo se arman los cruces.';
-  if (datos.fechaInicio && !fechaValida(datos.fechaInicio)) e.fecha_inicio = 'La fecha no es válida.';
-  if (datos.horaInicio && !REGEX_HORA.test(datos.horaInicio)) e.hora_inicio = 'La hora no es válida (HH:MM).';
-  else if (datos.horaInicio && !datos.fechaInicio) e.hora_inicio = 'Para indicar la hora, primero elige la fecha.';
-  if (!datos.idModalidad) e.id_modalidad = 'Elige la modalidad.';
-  if (!datos.cantidadIngresada) e.cantidad_equipos = 'Indica cuántos equipos participan.';
-  else if (!datos.cantidadEquipos) e.cantidad_equipos = 'Debe ser un número entero.';
-  else if (datos.formato) e.cantidad_equipos = errorCantidad(datos.formato, datos.cantidadEquipos) || undefined;
-  if (!e.cantidad_equipos) delete e.cantidad_equipos;
-  if (!datos.canchaTexto) e.cancha = 'Elige la cancha donde se jugará.';
-  else if (!datos.idCancha) e.cancha = 'Elige una cancha de la lista de sugerencias.';
+  obligatorio('nombre', datos.nombre, 'El nombre del torneo es obligatorio.');
+  if (datos.nombre.length > 100) e.nombre = 'Máximo 100 caracteres.';
+  obligatorio('descripcion', datos.descripcion, 'Describe el torneo para los equipos.');
+  if (datos.descripcion.length > LIMITES.descripcion) e.descripcion = `Máximo ${LIMITES.descripcion} caracteres.`;
+  obligatorio('reglamento', datos.reglamento, 'Escribe el reglamento: los capitanes deben aceptarlo al inscribirse.');
+  if (datos.reglamento.length > LIMITES.reglamento) e.reglamento = `Máximo ${LIMITES.reglamento} caracteres.`;
   if (datos.premios.length > 500) e.premios = 'Máximo 500 caracteres.';
+  obligatorio('formato', datos.formato, 'Elige el formato.');
+  obligatorio('emparejamiento', datos.emparejamiento, 'Elige cómo se arman los cruces.');
+  obligatorio('id_modalidad', datos.idModalidad, 'Elige la modalidad.');
+  obligatorio('id_nivel_min', datos.idNivelMin, 'Elige el nivel mínimo admitido.');
+  obligatorio('id_nivel_max', datos.idNivelMax, 'Elige el nivel máximo admitido.');
+  obligatorio('id_recinto', datos.idRecinto, 'Elige el recinto donde se jugará.');
+  if (datos.idsCanchas.length === 0) e.canchas = 'Elige al menos una cancha del recinto.';
+
+  [['fecha_inicio', 'fechaInicio', 'la fecha de inicio'], ['fecha_termino', 'fechaTermino', 'la fecha de término'],
+    ['fecha_limite_inscripcion', 'fechaLimite', 'la fecha límite de inscripción']].forEach(([campo, clave, nombre]) => {
+    if (!datos[clave]) e[campo] = `Indica ${nombre}.`;
+    else if (!fechaValida(datos[clave])) e[campo] = 'La fecha no es válida.';
+  });
+  if (datos.horaInicio && !REGEX_HORA.test(datos.horaInicio)) e.hora_inicio = 'La hora no es válida (HH:MM).';
+  if (!e.fecha_inicio) {
+    Object.entries(erroresFechas({
+      fechaInicio: datos.fechaInicio,
+      fechaTermino: e.fecha_termino ? null : datos.fechaTermino,
+      fechaLimite: e.fecha_limite_inscripcion ? null : datos.fechaLimite,
+    })).forEach(([k, v]) => { e[k] = v; });
+  }
+
+  Object.assign(e, erroresCupos(datos));
+  if (datos.minJugadores === null) e.min_jugadores = 'Indica el mínimo de jugadores por plantel.';
+  else if (datos.minJugadores < LIMITES.jugadores.min || datos.minJugadores > LIMITES.jugadores.max) {
+    e.min_jugadores = `Entre ${LIMITES.jugadores.min} y ${LIMITES.jugadores.max} jugadores.`;
+  }
+
+  if (!precioIngresado) e.precio = 'Indica el precio de inscripción por equipo (0 si es gratuito).';
+  else if (datos.precio === null) e.precio = 'El precio debe ser un número entero de pesos, sin decimales ni signo (ej. 15000).';
 
   const foto = imagenDe(archivos.get('foto'));
   if (foto.invalida) e.foto = 'La foto debe ser una imagen JPG, PNG o WebP.';
@@ -233,9 +283,25 @@ function validarTorneo(req, res, next) {
       else datos.patrocinadoresNuevos.push({ nombre, logo });
     }
   }
+  // Campos que llegaron (los deshabilitados no se envían). Patrocinadores y foto cuentan solo si traen algo.
+  const enviados = new Set(Object.keys(b).filter((k) => !/^(patrocinador_nombre|quitar_patrocinador)_\d+$/.test(k) && k !== 'tiene_patrocinadores'));
+  if (datos.patrocinadoresNuevos.length > 0 || datos.quitarPatrocinadores.length > 0) enviados.add('patrocinadores');
+  if (datos.foto) enviados.add('foto');
+  req.camposEnviados = enviados;
   req.datosFormulario = datos;
   req.erroresCampo = e;
   next();
 }
 
-module.exports = { validarRecinto, validarCancha, validarBloque, validarCatalogo, validarTorneo, subirImagenesTorneo, idValido };
+// AP-000: toda acción del panel que afecta a un usuario exige un motivo (se guarda en el registro y se le notifica).
+const { MOTIVO } = require('../config/panel');
+
+/** Motivo limpio o null si no cumple el largo. */
+function leerMotivo(valor) {
+  const motivo = texto(valor);
+  return motivo.length >= MOTIVO.min && motivo.length <= MOTIVO.max ? motivo : null;
+}
+
+const MSG_MOTIVO = `Indica el motivo (entre ${MOTIVO.min} y ${MOTIVO.max} caracteres).`;
+
+module.exports = { leerMotivo, MSG_MOTIVO, validarRecinto, validarCancha, validarBloque, validarCatalogo, validarTorneo, subirImagenesTorneo, idValido };

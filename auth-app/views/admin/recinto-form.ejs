@@ -1,6 +1,4 @@
-<%- include('../partials/header') %>
-
-<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<%- include('../partials/admin-inicio', { seccion }) %>
 
 <%
   const accion = recinto ? `/admin/recintos/${recinto.id}/editar` : '/admin/recintos';
@@ -81,6 +79,4 @@
   </div>
 </section>
 
-<%- include('../partials/dock', { activo: 'admin' }) %>
-
-<%- include('../partials/footer') %>
+<%- include('../partials/admin-fin') %>

@@ -9,7 +9,7 @@
     if (palabras.length === 1) return palabras[0].slice(0, 2).toUpperCase();
     return (palabras[0][0] + palabras[1][0]).toUpperCase();
   }
-  const proximos = torneos.filter((t) => t.estado === 'inscripcion').length;
+  const proximos = torneos.filter((t) => t.conInscripciones && !t.inscripcionVencida).length;
   const mios = torneos.filter((t) => misTorneos.includes(t.id)).length;
   // Opciones del menú "Filtrar por": formatos y modalidades presentes en la lista
   const formatos = [...new Map(torneos.map((t) => [t.formato, t.formatoTexto])).entries()];
@@ -71,7 +71,7 @@
       <ul class="tl-carrusel" data-galeria-torneos>
         <% torneos.forEach(function (t) {
              const mio = misTorneos.includes(t.id);
-             const abierto = t.estado === 'inscripcion';
+             const abierto = t.conInscripciones && !t.inscripcionVencida;
              const porcentaje = Math.round(100 * t.inscritos / t.cantidadEquipos);
              const premio = t.premios ? partirPremio(t.premios) : null;
              let cta = { texto: 'Ver resultados', href: `/torneos/${t.id}` };
@@ -79,7 +79,7 @@
              else if (abierto && t.cuposLibres > 0) cta = { texto: 'Inscribir equipo', href: `/torneos/${t.id}#inscripcion` };
              else if (abierto) cta = { texto: 'Ver torneo', href: `/torneos/${t.id}` };
              else if (t.estado === 'en_curso') cta = { texto: 'Ver cuadrante', href: `/torneos/${t.id}` }; %>
-          <li class="tl-carta" data-estado="<%= t.estado %>" data-mio="<%= mio %>" data-formato="<%= t.formato %>" data-modalidad="<%= t.modalidad %>" data-fecha="<%= t.fechaInicio ? 'confirmada' : 'por-confirmar' %>">
+          <li class="tl-carta" data-estado="<%= abierto ? 'abierto' : t.estado %>" data-mio="<%= mio %>" data-formato="<%= t.formato %>" data-modalidad="<%= t.modalidad %>" data-fecha="<%= t.fechaInicio ? 'confirmada' : 'por-confirmar' %>">
             <div class="tl-carta__media">
               <!-- Las iniciales quedan debajo: se ven si no hay foto o si no carga -->
               <span class="tl-carta__iniciales" aria-hidden="true"><%= iniciales(t.nombre) %></span>
@@ -91,7 +91,7 @@
             </div>
 
             <div class="tl-carta__cuerpo">
-              <span class="tl-estado tl-estado--<%= t.estado %>"><%= abierto ? 'Inscripciones abiertas' : t.estadoTexto %></span>
+              <span class="tl-estado tl-estado--<%= abierto ? 'abierto' : t.estado %>"><%= abierto ? 'Inscripciones abiertas' : t.estadoTexto %></span>
               <h2 class="tl-carta__titulo"><a class="tl-carta__enlace" href="/torneos/<%= t.id %>"><%= t.nombre %></a></h2>
 
               <p class="tl-carta__meta">

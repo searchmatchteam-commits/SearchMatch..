@@ -68,10 +68,14 @@ function renderNuevaPassword(res, { status = 200, erroresCampo = {} } = {}) {
 }
 
 async function abrirEnlaceRecuperacion(req, res, next) {
-  const { code, token_hash: tokenHash } = req.query;
+  const {
+    code, token_hash: tokenHash, type, access_token: accessToken, refresh_token: refreshToken,
+  } = req.query;
   try {
-    if (code || tokenHash) {
-      const { error } = await cuentaModel.validarEnlaceRecuperacion(req.supabase, { code, tokenHash });
+    if (code || tokenHash || (accessToken && refreshToken)) {
+      const { error } = await cuentaModel.validarEnlaceRecuperacion(req.supabase, {
+        code, tokenHash, type, accessToken, refreshToken,
+      });
       if (error) return res.redirect('/recuperar?msg=enlace-vencido');
       res.cookie(COOKIE_RECUPERACION, '1', {
         httpOnly: true,
@@ -101,6 +105,8 @@ async function guardarNuevaPassword(req, res, next) {
     }
     await req.supabase.auth.signOut({ scope: 'global' }).catch(() => {});
     res.clearCookie(COOKIE_RECUPERACION);
+    // AP-011: un administrador recién invitado (o que recupera su clave) ingresa por el login del panel.
+    if (req.usuario.esCuentaPanel) return res.redirect('/admin/login?msg=contrasena');
     return res.redirect('/login?msg=Contrasena_actualizada');
   } catch (err) {
     return next(err);

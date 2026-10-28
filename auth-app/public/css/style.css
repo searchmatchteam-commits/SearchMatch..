@@ -1785,6 +1785,12 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   color: #b9ffa8;
 }
 
+.alerta--info {
+  background: rgba(80, 160, 255, 0.08);
+  border-color: rgba(80, 160, 255, 0.35);
+  color: #b8d9ff;
+}
+
 /* Alerta de errores bajo el formulario */
 .formulario + .alerta {
   margin: 18px 0 0;

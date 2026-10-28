@@ -1,0 +1,13 @@
+<%- include('../partials/admin-inicio', { seccion }) %>
+
+<section class="eq">
+  <div class="contenedor">
+    <div class="dash-panel eq-panel sm-vacio">
+      <p class="sm-vacio__titulo">Sin permiso</p>
+      <p class="dash-panel__nota"><%= mensaje %></p>
+      <a class="btn btn--contorno" href="/admin">Ir al Resumen</a>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/admin-fin') %>

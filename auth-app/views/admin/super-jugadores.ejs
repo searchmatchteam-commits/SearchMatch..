@@ -1,6 +1,4 @@
-<%- include('../partials/header') %>
-
-<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<%- include('../partials/admin-inicio', { seccion }) %>
 
 <%
   const fechaHora = new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Santiago' });
@@ -15,8 +13,6 @@
         <p class="eq-cabecera__stats">Cada jugador con sus credenciales de usuario. Desactiva para bloquear el acceso, o elimina la cuenta de forma definitiva.</p>
       </div>
     </header>
-
-    <%- include('../partials/admin-nav', { seccion }) %>
 
     <form class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/super/jugadores" role="search">
       <div class="campo">
@@ -68,33 +64,25 @@
                   <span class="sm-opcional">Protegida</span>
                 <% } else { %>
                   <% if (j.activo) { %>
-                    <form action="/admin/super/jugadores/<%= j.id %>/desactivar" method="POST"
-                          data-confirmar="Perderá el acceso de inmediato (se cierra su sesión) hasta que la reactives."
-                          data-confirmar-titulo="¿Desactivar la cuenta de <%= j.correo %>?" data-confirmar-boton="Desactivar">
-                      <input type="hidden" name="texto" value="<%= texto %>" />
-                      <input type="hidden" name="filtro" value="<%= filtro %>" />
-                      <button type="submit" class="btn btn--contorno btn--chico">Desactivar</button>
-                    </form>
+                    <%- include('../partials/admin-accion-motivo', {
+                      accion: `/admin/super/jugadores/${j.id}/desactivar`, boton: 'Desactivar', ocultos: [['texto', texto], ['filtro', filtro]],
+                      titulo: `¿Desactivar la cuenta de ${j.correo}?`, texto: 'Perderá el acceso de inmediato (se cierra su sesión) hasta que la reactives.',
+                    }) %>
                   <% } else { %>
-                    <form action="/admin/super/jugadores/<%= j.id %>/activar" method="POST"
-                          data-confirmar="Podrá volver a iniciar sesión con su contraseña."
-                          data-confirmar-titulo="¿Reactivar la cuenta de <%= j.correo %>?" data-confirmar-boton="Reactivar">
-                      <input type="hidden" name="texto" value="<%= texto %>" />
-                      <input type="hidden" name="filtro" value="<%= filtro %>" />
-                      <button type="submit" class="btn btn--verde btn--chico">Reactivar</button>
-                    </form>
+                    <%- include('../partials/admin-accion-motivo', {
+                      accion: `/admin/super/jugadores/${j.id}/activar`, boton: 'Reactivar', ocultos: [['texto', texto], ['filtro', filtro]],
+                      titulo: `¿Reactivar la cuenta de ${j.correo}?`, texto: 'Podrá volver a iniciar sesión con su contraseña.',
+                    }) %>
                   <% } %>
                   <% if (j.equiposCreados > 0) { %>
                     <a class="btn btn--contorno btn--chico" href="/admin/super/equipos?texto=<%= encodeURIComponent(j.correo) %>"
                        title="Creó <%= j.equiposCreados %> equipo(s): elimínalos primero para poder borrar la cuenta">Ver sus equipos</a>
                   <% } else { %>
-                    <form action="/admin/super/jugadores/<%= j.id %>/eliminar" method="POST"
-                          data-confirmar="Se borran su cuenta, su perfil, sus reservas, comentarios y notificaciones, y sale de todos sus equipos. Esta acción no se puede deshacer."
-                          data-confirmar-titulo="¿Eliminar la cuenta de <%= j.correo %>?" data-confirmar-boton="Eliminar">
-                      <input type="hidden" name="texto" value="<%= texto %>" />
-                      <input type="hidden" name="filtro" value="<%= filtro %>" />
-                      <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Eliminar</button>
-                    </form>
+                    <%- include('../partials/admin-accion-motivo', {
+                      accion: `/admin/super/jugadores/${j.id}/eliminar`, boton: 'Eliminar', peligro: true, ocultos: [['texto', texto], ['filtro', filtro]],
+                      titulo: `¿Eliminar la cuenta de ${j.correo}?`,
+                      texto: 'Se borran su cuenta, su perfil, sus reservas, comentarios y notificaciones, y sale de todos sus equipos. Esta acción no se puede deshacer.',
+                    }) %>
                   <% } %>
                 <% } %>
               </span>
@@ -107,8 +95,4 @@
   </div>
 </section>
 
-<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
-
-<%- include('../partials/dock', { activo: 'admin' }) %>
-
-<%- include('../partials/footer') %>
+<%- include('../partials/admin-fin') %>

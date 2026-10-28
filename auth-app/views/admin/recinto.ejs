@@ -1,6 +1,4 @@
-<%- include('../partials/header') %>
-
-<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<%- include('../partials/admin-inicio', { seccion }) %>
 
 <%
   const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
@@ -34,8 +32,6 @@
         <% } %>
       </div>
     </header>
-
-    <%- include('../partials/admin-nav', { seccion }) %>
 
     <% if (!recinto.activo) { %>
       <p class="sm-aviso-limite" role="note">Este recinto está inactivo: ninguna de sus canchas se muestra a los usuarios.</p>
@@ -101,8 +97,4 @@
   </div>
 </section>
 
-<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
-
-<%- include('../partials/dock', { activo: 'admin' }) %>
-
-<%- include('../partials/footer') %>
+<%- include('../partials/admin-fin') %>

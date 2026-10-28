@@ -116,12 +116,15 @@
           <svg class="sm-tema__sol" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" /><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6" /></svg>
           <svg class="sm-tema__luna" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" /></svg>
         </button>
-        <% if (usuario) { %>
+        <% if (usuario && usuario.esCuentaPanel) { %>
+          <!-- AP-001: cuenta del panel. Solo su sesión del panel; salir pide confirmar y vuelve al login del panel -->
+          <form action="/admin/logout" method="POST" class="navbar__form"
+                data-confirmar="Volverás al ingreso del panel y sus páginas quedarán bloqueadas hasta que ingreses de nuevo."
+                data-confirmar-titulo="¿Cerrar sesión del panel?" data-confirmar-boton="Cerrar sesión">
+            <button type="submit" class="btn btn--verde btn--chico">Cerrar sesión</button>
+          </form>
+        <% } else if (usuario) { %>
           <!-- Usuario con sesión activa. Las páginas con dock ya llevan a Inicio desde la barra inferior -->
-          <% if (usuario.esSuperAdmin) { %>
-            <!-- El superadministrador no participa como jugador: solo su panel -->
-            <a class="btn btn--contorno btn--chico" href="/admin/super">Panel</a>
-          <% } else { %>
           <% if (!['dashboard', 'equipo', 'perfil'].includes(locals.pagina)) { %>
             <a class="btn btn--contorno btn--chico" href="/dashboard">Mi panel</a>
           <% } %>
@@ -134,11 +137,6 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 20a2 2 0 0 0 4 0" /></svg>
             <% if (locals.notificacionesSinLeer) { %><span class="sm-icono-nav__contador"><%= notificacionesSinLeer > 99 ? '99+' : notificacionesSinLeer %></span><% } %>
           </a>
-          <% } %>
-          <% if (usuario.esAdmin && !usuario.esSuperAdmin) { %>
-            <!-- NUEVO: AR-004 — acceso al módulo de administración, solo para administradores -->
-            <a class="btn btn--contorno btn--chico" href="/admin">Admin</a>
-          <% } %>
           <form action="/logout" method="POST" class="navbar__form">
             <button type="submit" class="btn btn--verde btn--chico">Cerrar sesión</button>
           </form>

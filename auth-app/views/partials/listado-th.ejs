@@ -1,0 +1,4 @@
+<%# AP-003 · Título de columna ordenable: alterna ascendente / descendente. include('../partials/listado-th', { listado, clave, texto }) %>
+<th scope="col" aria-sort="<%= listado.ariaSort(clave) %>">
+  <a class="sm-tabla__orden" href="<%= listado.urlOrden(clave) %>"><%= texto %><span aria-hidden="true"><%= listado.orden === clave ? (listado.dir === 'asc' ? ' ▲' : ' ▼') : '' %></span></a>
+</th>

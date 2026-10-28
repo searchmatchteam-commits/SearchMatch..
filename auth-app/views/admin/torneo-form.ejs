@@ -1,18 +1,15 @@
-<%- include('../partials/header') %>
-
-<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<%- include('../partials/admin-inicio', { seccion }) %>
 
 <%
-  const accion = torneo ? `/admin/super/torneos/${torneo.id}/editar` : '/admin/super/torneos';
-  const volverA = torneo ? `/admin/super/torneos/${torneo.id}` : '/admin/super/torneos';
+  const accion = torneo ? `/admin/torneos/${torneo.id}/editar` : '/admin/torneos';
+  const volverA = torneo ? `/admin/torneos/${torneo.id}` : '/admin/torneos';
   const error = (campo) => erroresCampo[campo] ? 'campo--error' : '';
-  // Ya empezado: formato, modalidad y cantidad quedan fijos.
-  const fijo = Boolean(torneo && torneo.estado !== 'inscripcion');
-  const cantidades = [];
-  for (let n = equiposLiga.min; n <= Math.max(equiposLiga.max, ...equiposRelampago); n += 1) {
-    if (n <= equiposLiga.max || equiposRelampago.includes(n)) cantidades.push(n);
-  }
+  // TO-003 c2: con el torneo publicado solo algunos campos se pueden cambiar (los demás van deshabilitados).
+  const fijo = (campo) => Boolean(editables) && !editables.includes(campo);
+  const dis = (campo) => fijo(campo) ? 'disabled' : '';
   const existentes = torneo ? torneo.patrocinadores : [];
+  const canchasElegidas = datos.idsCanchas || [];
+  const elegidos = datos.mediosPago || [];
 %>
 <section class="eq">
   <div class="contenedor sm-angosto">
@@ -20,11 +17,21 @@
       <div class="eq-cabecera__texto">
         <%- include('../partials/boton-volver', { fallbackUrl: volverA }) %>
         <h1 class="eq-cabecera__titulo"><%= torneo ? 'Editar torneo' : 'Crear torneo' %></h1>
-        <p class="eq-cabecera__stats"><%= torneo ? torneo.nombre : 'Liga o torneo relámpago. Se publica en la sección Torneos de los jugadores.' %></p>
+        <p class="eq-cabecera__stats"><%= torneo ? `${torneo.nombre} · ${torneo.estadoTexto}` : 'Se guarda en Borrador: los jugadores no lo ven hasta que lo publiques.' %></p>
       </div>
     </header>
 
     <div class="dash-panel eq-panel revelar">
+      <% if (editables) { %>
+        <div class="alerta alerta--info" role="note">
+          <% if (torneo.conInscripciones) { %>
+            Con las inscripciones abiertas solo puedes cambiar la descripción, el reglamento y los premios, ampliar el cupo máximo y extender la fecha límite.
+          <% } else { %>
+            Con el torneo en "<%= torneo.estadoTexto.toLowerCase() %>" solo puedes cambiar la descripción, el reglamento y los premios.
+          <% } %>
+          <% if (torneo.ocupados > 0) { %>Se avisará del cambio a los capitanes de los <%= torneo.ocupados %> equipos inscritos.<% } %>
+        </div>
+      <% } %>
       <% if (errores.length > 0) { %>
         <div class="alerta alerta--error" role="alert">
           Revisa los campos marcados en rojo.<% if (erroresCampo.reelegir) { %> <%= erroresCampo.reelegir %><% } %>
@@ -32,9 +39,10 @@
       <% } %>
 
       <form action="<%= accion %>" method="POST" enctype="multipart/form-data" class="formulario sm-form sm-form--torneo" novalidate data-torneo-form>
+        <h2 class="sm-subtitulo">Datos generales</h2>
         <div class="campo <%= error('nombre') %>">
           <label for="nombre">Nombre del torneo</label>
-          <input type="text" id="nombre" name="nombre" value="<%= datos.nombre || '' %>" maxlength="100"
+          <input type="text" id="nombre" name="nombre" value="<%= datos.nombre || '' %>" maxlength="100" <%= dis('nombre') %>
                  placeholder="Ej. Copa Primavera 2026" required aria-describedby="nombre-error" />
           <small class="campo__error" id="nombre-error"><%= erroresCampo.nombre || '' %></small>
         </div>
@@ -42,95 +50,206 @@
         <div class="campo <%= error('foto') %>">
           <label for="foto">Foto del torneo<% if (torneo) { %> <span class="sm-opcional">(déjala vacía para mantener la actual)</span><% } %></label>
           <% if (torneo && torneo.foto) { %><img class="sm-torneo-miniatura sm-torneo-miniatura--grande" src="<%= torneo.foto %>" alt="Foto actual" data-foto-vista /><% } else { %><img class="sm-torneo-miniatura sm-torneo-miniatura--grande" alt="" hidden data-foto-vista /><% } %>
-          <input type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/webp" <%= torneo ? '' : 'required' %> aria-describedby="foto-error foto-ayuda" data-foto-input />
+          <input type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/webp" <%= torneo ? '' : 'required' %> <%= dis('foto') %> aria-describedby="foto-error foto-ayuda" data-foto-input />
           <small class="campo__ayuda" id="foto-ayuda">JPG, PNG o WebP de hasta 2 MB.</small>
           <small class="campo__error" id="foto-error"><%= erroresCampo.foto || '' %></small>
         </div>
 
+        <div class="campo <%= error('descripcion') %>">
+          <label for="descripcion">Descripción</label>
+          <textarea id="descripcion" name="descripcion" rows="3" maxlength="<%= limites.descripcion %>" required <%= dis('descripcion') %>
+                    placeholder="Qué es el torneo, para quién es y cómo se juega." aria-describedby="descripcion-error"><%= datos.descripcion || '' %></textarea>
+          <small class="campo__error" id="descripcion-error"><%= erroresCampo.descripcion || '' %></small>
+        </div>
+
         <div class="formulario__fila">
           <div class="campo <%= error('formato') %>">
-            <label for="formato">Tipo</label>
-            <select id="formato" name="formato" required aria-describedby="formato-error formato-ayuda" <%= fijo ? 'disabled' : '' %> data-formato>
+            <label for="formato">Formato</label>
+            <select id="formato" name="formato" required aria-describedby="formato-error formato-ayuda" <%= dis('formato') %> data-formato>
               <option value="">Elige…</option>
               <% Object.entries(formatos).forEach(function ([clave, texto]) { %>
                 <option value="<%= clave %>" <%= datos.formato === clave ? 'selected' : '' %>><%= texto %></option>
               <% }) %>
             </select>
-            <% if (fijo) { %><input type="hidden" name="formato" value="<%= datos.formato %>" /><% } %>
-            <small class="campo__ayuda" id="formato-ayuda">Liga: todos contra todos, con tabla de posiciones. Relámpago: llaves de eliminación directa (octavos, cuartos, semifinal, final).</small>
+            <small class="campo__ayuda" id="formato-ayuda">Eliminación directa: llaves (si los equipos no son potencia de 2, algunos pasan directo). Liga: todos contra todos. Fase de grupos: grupos y luego llaves.</small>
             <small class="campo__error" id="formato-error"><%= erroresCampo.formato || '' %></small>
           </div>
           <div class="campo <%= error('id_modalidad') %>">
             <label for="id_modalidad">Modalidad</label>
-            <select id="id_modalidad" name="id_modalidad" required aria-describedby="id_modalidad-error" <%= fijo ? 'disabled' : '' %>>
+            <select id="id_modalidad" name="id_modalidad" required aria-describedby="id_modalidad-error" <%= dis('id_modalidad') %> data-modalidad>
               <option value="">Elige…</option>
               <% modalidades.forEach(function (m) { %>
                 <option value="<%= m.id %>" <%= datos.idModalidad === m.id ? 'selected' : '' %>><%= m.nombre %></option>
               <% }) %>
             </select>
-            <% if (fijo) { %><input type="hidden" name="id_modalidad" value="<%= datos.idModalidad %>" /><% } %>
             <small class="campo__error" id="id_modalidad-error"><%= erroresCampo.id_modalidad || '' %></small>
           </div>
         </div>
 
-        <div class="campo <%= error('cantidad_equipos') %>">
-          <label for="cantidad_equipos">Cantidad de equipos</label>
-          <select id="cantidad_equipos" name="cantidad_equipos" required aria-describedby="cantidad_equipos-error cantidad-ayuda" <%= fijo ? 'disabled' : '' %> data-cantidad>
-            <option value="">Elige…</option>
-            <% cantidades.forEach(function (n) { %>
-              <option value="<%= n %>" data-liga="<%= n <= equiposLiga.max %>" data-relampago="<%= equiposRelampago.includes(n) %>"
-                      <%= Number(datos.cantidadIngresada) === n ? 'selected' : '' %>><%= n %> equipos</option>
-            <% }) %>
-          </select>
-          <% if (fijo) { %><input type="hidden" name="cantidad_equipos" value="<%= datos.cantidadIngresada %>" /><% } %>
-          <small class="campo__ayuda" id="cantidad-ayuda">Relámpago: <%= equiposRelampago.join(', ') %> (para que cada ronda quede pareja). Liga: de <%= equiposLiga.min %> a <%= equiposLiga.max %>, también impares.</small>
-          <small class="campo__error" id="cantidad_equipos-error"><%= erroresCampo.cantidad_equipos || '' %></small>
-        </div>
-
         <div class="formulario__fila">
-          <div class="campo <%= error('fecha_inicio') %>">
-            <label for="fecha_inicio">Fecha de inicio <span class="sm-opcional">(opcional)</span></label>
-            <input type="date" id="fecha_inicio" name="fecha_inicio" value="<%= datos.fechaInicio || '' %>" aria-describedby="fecha_inicio-error fecha-ayuda" />
-            <small class="campo__ayuda" id="fecha-ayuda">Déjala en blanco y se mostrará "Por confirmar". Con fecha, el torneo aparece en el calendario.</small>
-            <small class="campo__error" id="fecha_inicio-error"><%= erroresCampo.fecha_inicio || '' %></small>
+          <div class="campo <%= error('id_nivel_min') %>">
+            <label for="id_nivel_min">Nivel mínimo admitido</label>
+            <select id="id_nivel_min" name="id_nivel_min" required aria-describedby="id_nivel_min-error" <%= dis('id_nivel_min') %>>
+              <option value="">Elige…</option>
+              <% niveles.forEach(function (n) { %><option value="<%= n.id %>" <%= datos.idNivelMin === n.id ? 'selected' : '' %>><%= n.nombre %></option><% }) %>
+            </select>
+            <small class="campo__error" id="id_nivel_min-error"><%= erroresCampo.id_nivel_min || '' %></small>
           </div>
-          <div class="campo <%= error('hora_inicio') %>">
-            <label for="hora_inicio">Hora de inicio <span class="sm-opcional">(opcional)</span></label>
-            <input type="time" id="hora_inicio" name="hora_inicio" value="<%= datos.horaInicio || '' %>" aria-describedby="hora_inicio-error" />
-            <small class="campo__error" id="hora_inicio-error"><%= erroresCampo.hora_inicio || '' %></small>
+          <div class="campo <%= error('id_nivel_max') %>">
+            <label for="id_nivel_max">Nivel máximo admitido</label>
+            <select id="id_nivel_max" name="id_nivel_max" required aria-describedby="id_nivel_max-error" <%= dis('id_nivel_max') %>>
+              <option value="">Elige…</option>
+              <% niveles.forEach(function (n) { %><option value="<%= n.id %>" <%= datos.idNivelMax === n.id ? 'selected' : '' %>><%= n.nombre %></option><% }) %>
+            </select>
+            <small class="campo__error" id="id_nivel_max-error"><%= erroresCampo.id_nivel_max || '' %></small>
           </div>
         </div>
 
         <div class="campo <%= error('emparejamiento') %>">
           <label for="emparejamiento">Emparejamiento</label>
-          <select id="emparejamiento" name="emparejamiento" required aria-describedby="emparejamiento-error emparejamiento-ayuda" <%= fijo ? 'disabled' : '' %>>
+          <select id="emparejamiento" name="emparejamiento" required aria-describedby="emparejamiento-error emparejamiento-ayuda" <%= dis('emparejamiento') %>>
             <% Object.entries(emparejamientos).forEach(function ([clave, texto]) { %>
               <option value="<%= clave %>" <%= (datos.emparejamiento || 'sorteo') === clave ? 'selected' : '' %>><%= texto %></option>
             <% }) %>
           </select>
-          <% if (fijo) { %><input type="hidden" name="emparejamiento" value="<%= datos.emparejamiento %>" /><% } %>
-          <small class="campo__ayuda" id="emparejamiento-ayuda">Tómbola: los cruces se sortean al empezar el torneo. Orden de llegada: 1° inscrito vs 2°, 3° vs 4°… (los capitanes ven su rival en el cuadrante mientras se inscriben).</small>
+          <small class="campo__ayuda" id="emparejamiento-ayuda">Tómbola: los cruces se sortean al generar el fixture. Orden de llegada: 1.° inscrito vs 2.°, 3.° vs 4.°…</small>
           <small class="campo__error" id="emparejamiento-error"><%= erroresCampo.emparejamiento || '' %></small>
         </div>
 
-        <div class="campo <%= error('cancha') %>">
-          <label for="cancha">Cancha donde se jugará</label>
-          <input type="text" id="cancha" name="cancha" list="lista-canchas" value="<%= datos.canchaTexto || '' %>" autocomplete="off"
-                 placeholder="Escribe el recinto o la comuna y elige de la lista" required aria-describedby="cancha-error cancha-ayuda" />
-          <datalist id="lista-canchas">
-            <% canchas.forEach(function (c) { %><option value="<%= c.texto %>"><%= c.modalidad %></option><% }) %>
-          </datalist>
-          <small class="campo__ayuda" id="cancha-ayuda">Debe ser de la misma modalidad del torneo (se indica en cada sugerencia).</small>
-          <small class="campo__error" id="cancha-error"><%= erroresCampo.cancha || '' %></small>
+        <h2 class="sm-subtitulo">Lugar</h2>
+        <div class="campo <%= error('id_recinto') %>">
+          <label for="id_recinto">Recinto</label>
+          <select id="id_recinto" name="id_recinto" required aria-describedby="id_recinto-error recinto-ayuda" <%= dis('id_recinto') %> data-recinto>
+            <option value="">Elige…</option>
+            <% recintos.forEach(function (r) { %>
+              <option value="<%= r.id %>" data-modalidades="<%= r.modalidades.join(',') %>" <%= datos.idRecinto === r.id ? 'selected' : '' %>><%= r.nombre %><%= r.comuna ? ` (${r.comuna})` : '' %></option>
+            <% }) %>
+          </select>
+          <small class="campo__ayuda" id="recinto-ayuda">Solo recintos activos con canchas activas de la modalidad<%= datos.idModalidad ? '' : ' (elige primero la modalidad)' %>.</small>
+          <small class="campo__error" id="id_recinto-error"><%= erroresCampo.id_recinto || '' %></small>
         </div>
 
+        <fieldset class="campo sm-casillas <%= error('canchas') %>" data-canchas aria-describedby="canchas-error">
+          <legend>Canchas del torneo</legend>
+          <div data-canchas-lista>
+            <% if (canchas.length === 0) { %>
+              <p class="dash-panel__nota" data-canchas-vacio><%= datos.idRecinto ? 'Ese recinto no tiene canchas activas de la modalidad.' : 'Elige el recinto para ver sus canchas.' %></p>
+            <% } %>
+            <% canchas.forEach(function (c) { %>
+              <label class="sm-casilla"><input type="checkbox" name="canchas" value="<%= c.id %>" <%= canchasElegidas.includes(c.id) ? 'checked' : '' %> <%= dis('canchas') %> /> <%= c.nombre %> <small>(<%= c.modalidad %>)</small></label>
+            <% }) %>
+          </div>
+          <% if (!fijo('id_recinto')) { %>
+            <button type="submit" name="accion" value="recargar" formnovalidate class="btn btn--contorno btn--chico" data-sin-js>Ver canchas del recinto elegido</button>
+          <% } %>
+          <small class="campo__error" id="canchas-error"><%= erroresCampo.canchas || '' %></small>
+        </fieldset>
+
+        <h2 class="sm-subtitulo">Fechas</h2>
+        <div class="formulario__fila">
+          <div class="campo <%= error('fecha_inicio') %>">
+            <label for="fecha_inicio">Fecha de inicio</label>
+            <input type="date" id="fecha_inicio" name="fecha_inicio" value="<%= datos.fechaInicio || '' %>" required <%= dis('fecha_inicio') %> aria-describedby="fecha_inicio-error" />
+            <small class="campo__error" id="fecha_inicio-error"><%= erroresCampo.fecha_inicio || '' %></small>
+          </div>
+          <div class="campo <%= error('hora_inicio') %>">
+            <label for="hora_inicio">Hora de inicio <span class="sm-opcional">(opcional)</span></label>
+            <input type="time" id="hora_inicio" name="hora_inicio" value="<%= datos.horaInicio || '' %>" <%= dis('hora_inicio') %> aria-describedby="hora_inicio-error" />
+            <small class="campo__error" id="hora_inicio-error"><%= erroresCampo.hora_inicio || '' %></small>
+          </div>
+        </div>
+        <div class="formulario__fila">
+          <div class="campo <%= error('fecha_termino') %>">
+            <label for="fecha_termino">Fecha de término</label>
+            <input type="date" id="fecha_termino" name="fecha_termino" value="<%= datos.fechaTermino || '' %>" required <%= dis('fecha_termino') %> aria-describedby="fecha_termino-error" />
+            <small class="campo__error" id="fecha_termino-error"><%= erroresCampo.fecha_termino || '' %></small>
+          </div>
+          <div class="campo <%= error('fecha_limite_inscripcion') %>">
+            <label for="fecha_limite_inscripcion">Fecha límite de inscripción</label>
+            <input type="date" id="fecha_limite_inscripcion" name="fecha_limite_inscripcion" value="<%= datos.fechaLimite || '' %>" required <%= dis('fecha_limite_inscripcion') %>
+                   <%- torneo && editables && !fijo('fecha_limite_inscripcion') ? `min="${torneo.fechaLimite}"` : '' %> aria-describedby="fecha_limite_inscripcion-error limite-ayuda" />
+            <small class="campo__ayuda" id="limite-ayuda">Último día para inscribirse; no puede ser posterior al inicio.</small>
+            <small class="campo__error" id="fecha_limite_inscripcion-error"><%= erroresCampo.fecha_limite_inscripcion || '' %></small>
+          </div>
+        </div>
+
+        <h2 class="sm-subtitulo">Cupos y planteles</h2>
+        <div class="formulario__fila">
+          <div class="campo <%= error('cupo_min') %>">
+            <label for="cupo_min">Cupo mínimo de equipos</label>
+            <input type="number" id="cupo_min" name="cupo_min" min="<%= limites.cupoMin %>" max="<%= limites.cupoMax %>" step="1" inputmode="numeric"
+                   value="<%= datos.cupoMin ?? '' %>" required <%= dis('cupo_min') %> aria-describedby="cupo_min-error" />
+            <small class="campo__error" id="cupo_min-error"><%= erroresCampo.cupo_min || '' %></small>
+          </div>
+          <div class="campo <%= error('cupo_max') %>">
+            <label for="cupo_max">Cupo máximo de equipos</label>
+            <input type="number" id="cupo_max" name="cupo_max" min="<%= torneo && editables && !fijo('cupo_max') ? torneo.cupoMax : limites.cupoMin %>" max="<%= limites.cupoMax %>" step="1" inputmode="numeric"
+                   value="<%= datos.cupoMax ?? '' %>" required <%= dis('cupo_max') %> aria-describedby="cupo_max-error" />
+            <small class="campo__error" id="cupo_max-error"><%= erroresCampo.cupo_max || '' %></small>
+          </div>
+        </div>
+        <div class="formulario__fila" data-solo-grupos>
+          <div class="campo <%= error('cantidad_grupos') %>">
+            <label for="cantidad_grupos">Cantidad de grupos <span class="sm-opcional">(fase de grupos)</span></label>
+            <input type="number" id="cantidad_grupos" name="cantidad_grupos" min="<%= limites.grupos.min %>" max="<%= limites.grupos.max %>" step="1" inputmode="numeric"
+                   value="<%= datos.cantidadGrupos ?? '' %>" <%= dis('cantidad_grupos') %> aria-describedby="cantidad_grupos-error" />
+            <small class="campo__error" id="cantidad_grupos-error"><%= erroresCampo.cantidad_grupos || '' %></small>
+          </div>
+          <div class="campo <%= error('clasifican_por_grupo') %>">
+            <label for="clasifican_por_grupo">Clasifican por grupo <span class="sm-opcional">(fase de grupos)</span></label>
+            <input type="number" id="clasifican_por_grupo" name="clasifican_por_grupo" min="<%= limites.clasifican.min %>" max="<%= limites.clasifican.max %>" step="1" inputmode="numeric"
+                   value="<%= datos.clasificanPorGrupo ?? '' %>" <%= dis('clasifican_por_grupo') %> aria-describedby="clasifican_por_grupo-error" />
+            <small class="campo__error" id="clasifican_por_grupo-error"><%= erroresCampo.clasifican_por_grupo || '' %></small>
+          </div>
+        </div>
+        <div class="campo <%= error('min_jugadores') %>">
+          <label for="min_jugadores">Mínimo de jugadores por plantel</label>
+          <input type="number" id="min_jugadores" name="min_jugadores" min="<%= limites.jugadores.min %>" max="<%= limites.jugadores.max %>" step="1" inputmode="numeric"
+                 value="<%= datos.minJugadores ?? '' %>" required <%= dis('min_jugadores') %> aria-describedby="min_jugadores-error" />
+          <small class="campo__error" id="min_jugadores-error"><%= erroresCampo.min_jugadores || '' %></small>
+        </div>
+
+        <h2 class="sm-subtitulo">Inscripción y pago</h2>
+        <div class="campo <%= error('precio') %>">
+          <label for="precio">Precio de inscripción por equipo (CLP)</label>
+          <input type="text" id="precio" name="precio" inputmode="numeric" value="<%= datos.precioIngresado ?? '' %>" required <%= dis('precio') %>
+                 placeholder="Ej. 15000 (0 = gratuito)" aria-describedby="precio-error precio-ayuda" data-precio data-tipo-cambio="<%= tipoCambio || '' %>" />
+          <small class="campo__ayuda" id="precio-ayuda">Pesos enteros, sin decimales. Con 0 el torneo es gratuito y las inscripciones se confirman sin pago.</small>
+          <small class="campo__error" id="precio-error"><%= erroresCampo.precio || '' %></small>
+        </div>
+        <fieldset class="campo sm-casillas <%= error('medios_pago') %>" aria-describedby="medios_pago-error medios-ayuda">
+          <legend>Medios de pago aceptados</legend>
+          <% medios.forEach(function (m) { const elegido = elegidos.includes(m.clave); %>
+            <label class="sm-casilla <%= m.habilitada ? '' : 'sm-casilla--deshabilitada' %>">
+              <input type="checkbox" name="medios_pago" value="<%= m.clave %>" <%= elegido ? 'checked' : '' %> <%= m.habilitada && !fijo('medios_pago') ? '' : 'disabled' %> <%- m.clave === 'paypal' ? 'data-paypal' : '' %> />
+              <%= m.texto %>
+              <% if (!m.habilitada) { %><small>(no disponible: sin credenciales probadas o desactivada)</small><% } else if (m.pruebas) { %><small>(modo de pruebas)</small><% } %>
+            </label>
+          <% }) %>
+          <small class="campo__ayuda" id="medios-ayuda">Las pasarelas se configuran en Configuración → Pasarelas de pago. Para publicar un torneo con precio hace falta al menos una.</small>
+          <p class="dash-panel__nota" data-usd <%= tipoCambio && datos.precio > 0 && elegidos.includes('paypal') ? '' : 'hidden' %>>
+            PayPal no cobra en pesos: cobrará <strong data-usd-monto>US$<%= tipoCambio && datos.precio ? (Math.ceil(datos.precio / tipoCambio * 100) / 100).toFixed(2) : '' %></strong>
+            (tipo de cambio $<%= tipoCambio || '' %> por dólar).
+          </p>
+          <small class="campo__error" id="medios_pago-error"><%= erroresCampo.medios_pago || '' %></small>
+        </fieldset>
+
+        <h2 class="sm-subtitulo">Premios y reglamento</h2>
         <div class="campo <%= error('premios') %>">
           <label for="premios">Premios <span class="sm-opcional">(opcional)</span></label>
-          <textarea id="premios" name="premios" rows="3" maxlength="500"
+          <textarea id="premios" name="premios" rows="3" maxlength="500" <%= dis('premios') %>
                     placeholder="Ej. 1.º lugar: copa y $300.000 · 2.º lugar: medallas" aria-describedby="premios-error"><%= datos.premios || '' %></textarea>
           <small class="campo__error" id="premios-error"><%= erroresCampo.premios || '' %></small>
         </div>
+        <div class="campo <%= error('reglamento') %>">
+          <label for="reglamento">Reglamento</label>
+          <textarea id="reglamento" name="reglamento" rows="6" maxlength="<%= limites.reglamento %>" required <%= dis('reglamento') %>
+                    placeholder="Reglas de juego, puntualidad, W.O., conducta, apelaciones…" aria-describedby="reglamento-error reglamento-ayuda"><%= datos.reglamento || '' %></textarea>
+          <small class="campo__ayuda" id="reglamento-ayuda">Los capitanes deben aceptarlo al inscribir a su equipo.</small>
+          <small class="campo__error" id="reglamento-error"><%= erroresCampo.reglamento || '' %></small>
+        </div>
 
+        <% if (!fijo('patrocinadores')) { %>
         <h2 class="sm-subtitulo">Patrocinadores</h2>
         <div class="campo">
           <label for="tiene_patrocinadores">¿Tiene patrocinadores?</label>
@@ -171,9 +290,10 @@
           <% } %>
           <button type="button" class="btn btn--contorno btn--chico" hidden data-agregar-patrocinador>+ Agregar otro patrocinador</button>
         </div>
+        <% } %>
 
         <div class="sm-form__acciones">
-          <button type="submit" class="btn btn--verde btn--grande"><%= torneo ? 'Guardar cambios' : 'Crear torneo' %></button>
+          <button type="submit" class="btn btn--verde btn--grande"><%= torneo ? 'Guardar cambios' : 'Guardar borrador' %></button>
           <a class="btn btn--contorno btn--grande" href="<%= volverA %>">Cancelar</a>
         </div>
       </form>
@@ -181,6 +301,4 @@
   </div>
 </section>
 
-<%- include('../partials/dock', { activo: 'admin' }) %>
-
-<%- include('../partials/footer') %>
+<%- include('../partials/admin-fin') %>

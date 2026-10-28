@@ -32,11 +32,7 @@
       <div class="dash-panel eq-panel sm-vacio revelar">
         <p class="sm-vacio__titulo">Aún no hay canchas disponibles</p>
         <p class="dash-panel__nota">Estamos sumando recintos deportivos. Mientras tanto, arma tu equipo y busca rivales.</p>
-        <% if (usuario.esAdmin) { %>
-          <a class="btn btn--verde" href="/admin/recintos/nuevo">Registrar un recinto</a>
-        <% } else { %>
-          <a class="btn btn--verde" href="/equipos">Ver equipos</a>
-        <% } %>
+        <a class="btn btn--verde" href="/equipos">Ver equipos</a>
       </div>
     <% } else { %>
       <form class="dash-panel eq-panel sm-filtros" method="GET" action="/canchas" role="search">

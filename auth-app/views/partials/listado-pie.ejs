@@ -1,0 +1,19 @@
+<%# AP-003 · Total, paginación y registros por página (25, 50 o 100). include('../partials/listado-pie', { listado }) %>
+<div class="sm-listado-pie">
+  <p class="dash-panel__nota">Mostrando <%= listado.desde %>–<%= listado.hasta %> de <%= listado.total.toLocaleString('es-CL') %></p>
+  <% if (listado.paginas > 1) { %>
+    <nav class="sm-paginas" aria-label="Páginas">
+      <% if (listado.pagina > 1) { %><a class="btn btn--contorno btn--chico" href="<%= listado.urlPagina(listado.pagina - 1) %>" rel="prev">Anterior</a><% } %>
+      <span>Página <%= listado.pagina %> de <%= listado.paginas %></span>
+      <% if (listado.pagina < listado.paginas) { %><a class="btn btn--contorno btn--chico" href="<%= listado.urlPagina(listado.pagina + 1) %>" rel="next">Siguiente</a><% } %>
+    </nav>
+  <% } %>
+  <form method="GET" action="<%= listado.base %>" class="sm-listado-pie__por">
+    <% listado.ocultos(['por']).forEach(function (par) { %><input type="hidden" name="<%= par[0] %>" value="<%= par[1] %>" /><% }) %>
+    <label for="listado-por">Por página</label>
+    <select id="listado-por" name="por" data-enviar-al-cambiar>
+      <% listado.porPagina.forEach(function (n) { %><option value="<%= n %>" <%= n === listado.por ? 'selected' : '' %>><%= n %></option><% }) %>
+    </select>
+    <button type="submit" class="btn btn--contorno btn--chico" data-sin-js>Ver</button>
+  </form>
+</div>

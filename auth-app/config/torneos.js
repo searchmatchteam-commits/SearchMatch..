@@ -1,13 +1,15 @@
 // config/torneos.js
-// Reglas de los torneos (SA-2 / SA-3). Funciones puras: no tocan la base de datos.
-//  - Relámpago: eliminación directa, por eso la cantidad de equipos es 4, 8, 16 o 32
-//    (cada ronda deja a la mitad: dieciseisavos → octavos → cuartos → semifinal → final).
-//  - Liga: todos contra todos a una vuelta (3 a 20 equipos, puede ser impar: cada fecha descansa uno).
+// Reglas de los torneos (SA-2 a SA-7). Funciones puras: no tocan la base de datos.
+//  - Eliminación directa (valor 'relampago' en la base): llaves; con una cantidad que no es potencia de 2,
+//    algunos equipos pasan directo a la ronda siguiente (fase 3).
+//  - Liga: todos contra todos a una vuelta (2 a 20 equipos, puede ser impar: cada fecha descansa uno).
+//  - Fase de grupos + eliminación ('grupos'): grupos de tamaño similar y los mejores de cada uno a las llaves.
 //  - Emparejamiento (SA-4): por orden de llegada (1° vs 2°, 3° vs 4°...) o tómbola (se barajan al empezar).
 
 const FORMATOS = {
+  relampago: 'Eliminación directa',
   liga: 'Liga',
-  relampago: 'Torneo relámpago',
+  grupos: 'Fase de grupos + eliminación',
 };
 
 const EMPAREJAMIENTOS = {
@@ -16,25 +18,165 @@ const EMPAREJAMIENTOS = {
 };
 
 const ESTADOS = {
-  inscripcion: 'Inscripciones abiertas',
+  borrador: 'Borrador',
+  abierto: 'Inscripciones abiertas',
+  completo: 'Cupos completos',
+  cerrado: 'Inscripciones cerradas',
   en_curso: 'En curso',
   finalizado: 'Finalizado',
+  cancelado: 'Cancelado',
+};
+
+// Estados en que el torneo recibe inscripciones (completo: todos los cupos ocupados o reservados).
+const CON_INSCRIPCIONES = ['abierto', 'completo'];
+
+const ESTADOS_INSCRIPCION = {
+  pendiente_pago: 'Pendiente de pago',
+  confirmada: 'Confirmada',
+  expirada: 'Expirada',
+  eliminada: 'Eliminada',
+  retiro_pendiente: 'Retiro pendiente',
+  retirada: 'Retirada',
+  reembolsada: 'Reembolsada',
+  finalizada: 'Finalizada',
+};
+
+// Inscripciones que son participantes del torneo (las pendiente_pago vigentes además ocupan cupo).
+const INSCRIPCION_PARTICIPA = ['confirmada', 'eliminada', 'retiro_pendiente', 'finalizada'];
+// Inscripciones activas: un equipo no puede tener otra en el mismo torneo mientras tenga una de estas.
+const INSCRIPCION_ACTIVA = ['pendiente_pago', ...INSCRIPCION_PARTICIPA];
+
+const MEDIOS_PAGO = { webpay: 'Webpay', mercadopago: 'Mercado Pago', paypal: 'PayPal' };
+
+// Campos del formulario (nombre del campo → texto), para avisos de cambios y de campos que faltan.
+const CAMPOS = {
+  nombre: 'Nombre', foto: 'Foto', descripcion: 'Descripción', reglamento: 'Reglamento', premios: 'Premios',
+  formato: 'Formato', emparejamiento: 'Emparejamiento', id_modalidad: 'Modalidad', id_nivel_min: 'Nivel mínimo',
+  id_nivel_max: 'Nivel máximo', id_recinto: 'Recinto', canchas: 'Canchas', fecha_inicio: 'Fecha de inicio',
+  hora_inicio: 'Hora de inicio', fecha_termino: 'Fecha de término', fecha_limite_inscripcion: 'Fecha límite de inscripción',
+  cupo_min: 'Cupo mínimo', cupo_max: 'Cupo máximo', min_jugadores: 'Mínimo de jugadores por plantel',
+  cantidad_grupos: 'Cantidad de grupos', clasifican_por_grupo: 'Clasificados por grupo', precio: 'Precio de inscripción',
+  medios_pago: 'Medios de pago', patrocinadores: 'Patrocinadores',
 };
 
 const EQUIPOS_RELAMPAGO = [4, 8, 16, 32];
-const EQUIPOS_LIGA = { min: 3, max: 20 };
+const EQUIPOS_LIGA = { min: 2, max: 20 };
+const LIMITES = {
+  cupoMin: 2,
+  cupoMax: 64,
+  grupos: { min: 2, max: 8 },
+  clasifican: { min: 1, max: 4 },
+  jugadores: { min: 1, max: 30 },
+  precioMax: 10000000,
+  descripcion: 2000,
+  reglamento: 10000,
+};
 const MAX_PATROCINADORES = 6;
 const PUNTOS = { victoria: 3, empate: 1 };
 
-/** Mensaje de error si la cantidad no sirve para el formato (null si está bien). */
-function errorCantidad(formato, cantidad) {
-  if (formato === 'relampago' && !EQUIPOS_RELAMPAGO.includes(cantidad)) {
-    return `Un torneo relámpago se juega por llaves: elige ${EQUIPOS_RELAMPAGO.join(', ').replace(/, (\d+)$/, ' o $1')} equipos.`;
+/**
+ * TO-001 c4 y c6 · Errores de cupos y grupos (objeto vacío si todo está bien).
+ * @param {{formato:string, cupoMin:number|null, cupoMax:number|null, cantidadGrupos?:number|null, clasificanPorGrupo?:number|null}} d
+ * @returns {Object<string,string>} claves: cupo_min, cupo_max, cantidad_grupos, clasifican_por_grupo
+ */
+function erroresCupos(d) {
+  const e = {};
+  if (!Number.isInteger(d.cupoMin)) e.cupo_min = 'Indica el cupo mínimo de equipos.';
+  else if (d.cupoMin < LIMITES.cupoMin) e.cupo_min = `El cupo mínimo debe ser de al menos ${LIMITES.cupoMin} equipos.`;
+  if (!Number.isInteger(d.cupoMax)) e.cupo_max = 'Indica el cupo máximo de equipos.';
+  else if (d.cupoMax > LIMITES.cupoMax) e.cupo_max = `El cupo máximo es de ${LIMITES.cupoMax} equipos.`;
+  else if (!e.cupo_min && d.cupoMax < d.cupoMin) e.cupo_max = 'El cupo máximo no puede ser menor que el mínimo.';
+  if (d.formato === 'liga' && !e.cupo_max && d.cupoMax > EQUIPOS_LIGA.max) {
+    e.cupo_max = `Una liga tiene como máximo ${EQUIPOS_LIGA.max} equipos (todos contra todos).`;
   }
-  if (formato === 'liga' && !(cantidad >= EQUIPOS_LIGA.min && cantidad <= EQUIPOS_LIGA.max)) {
-    return `Una liga tiene entre ${EQUIPOS_LIGA.min} y ${EQUIPOS_LIGA.max} equipos.`;
+  if (d.formato === 'grupos') {
+    const g = d.cantidadGrupos;
+    const c = d.clasificanPorGrupo;
+    if (!Number.isInteger(g)) e.cantidad_grupos = 'Indica la cantidad de grupos.';
+    else if (g < LIMITES.grupos.min || g > LIMITES.grupos.max) e.cantidad_grupos = `Entre ${LIMITES.grupos.min} y ${LIMITES.grupos.max} grupos.`;
+    if (!Number.isInteger(c)) e.clasifican_por_grupo = 'Indica cuántos equipos clasifican por grupo.';
+    else if (c < LIMITES.clasifican.min || c > LIMITES.clasifican.max) e.clasifican_por_grupo = `Entre ${LIMITES.clasifican.min} y ${LIMITES.clasifican.max} por grupo.`;
+    // Cada grupo necesita más equipos que clasificados, ya con el cupo mínimo.
+    if (!e.cantidad_grupos && !e.clasifican_por_grupo && !e.cupo_min && d.cupoMin < g * (c + 1)) {
+      e.cupo_min = `Con ${g} grupos y ${c} clasificados por grupo, el cupo mínimo debe ser de al menos ${g * (c + 1)} equipos.`;
+    }
   }
-  return null;
+  return e;
+}
+
+/**
+ * TO-001 c3 · Errores de fechas ('AAAA-MM-DD', ya validadas como fechas reales).
+ * La fecha límite de inscripción no puede ser posterior al inicio; el término no puede ser anterior al inicio.
+ */
+function erroresFechas({ fechaInicio, fechaTermino, fechaLimite }) {
+  const e = {};
+  if (fechaInicio && fechaLimite && fechaLimite > fechaInicio) e.fecha_limite_inscripcion = 'La fecha límite de inscripción no puede ser posterior a la fecha de inicio.';
+  if (fechaInicio && fechaTermino && fechaTermino < fechaInicio) e.fecha_termino = 'La fecha de término no puede ser anterior a la fecha de inicio.';
+  return e;
+}
+
+/**
+ * TO-003 · Campos que se pueden cambiar según el estado. null = todos (borrador); [] = ninguno.
+ * Con inscripciones abiertas: descripción, reglamento, premios, ampliar el cupo máximo y extender la fecha límite.
+ */
+function camposEditables(estado) {
+  if (estado === 'borrador') return null;
+  if (CON_INSCRIPCIONES.includes(estado)) return ['descripcion', 'reglamento', 'premios', 'cupo_max', 'fecha_limite_inscripcion'];
+  if (estado === 'cerrado' || estado === 'en_curso') return ['descripcion', 'reglamento', 'premios'];
+  return [];
+}
+
+/**
+ * AP-027 c4 · Acciones válidas para un torneo según su estado (en orden para el menú).
+ * @returns {string[]} de: ver, editar, publicar, eliminar, cerrar, fixture
+ */
+function accionesTorneo(estado) {
+  const acciones = ['ver'];
+  const editables = camposEditables(estado);
+  if (editables === null || editables.length > 0) acciones.push('editar');
+  if (estado === 'borrador') acciones.push('publicar', 'eliminar');
+  if (CON_INSCRIPCIONES.includes(estado)) acciones.push('cerrar');
+  if (estado === 'cerrado') acciones.push('fixture');
+  return acciones;
+}
+
+/** Fecha de hoy en Chile, 'AAAA-MM-DD' (el formato sueco sirve justo para eso). */
+function hoyChile(ahora = new Date()) {
+  return ahora.toLocaleDateString('sv-SE', { timeZone: 'America/Santiago' });
+}
+
+/** TO-004 c3 / TO-005 c4 · ¿Ya pasó la fecha límite de inscripción? (el día límite todavía se puede inscribir). */
+function inscripcionVencida(fechaLimite, hoy = hoyChile()) {
+  return Boolean(fechaLimite) && fechaLimite < hoy;
+}
+
+/** Estado según los cupos: 'completo' si los ocupados (confirmados + reservas vigentes) llegan al máximo. */
+function estadoPorCupos(estado, ocupados, cupoMax) {
+  if (!CON_INSCRIPCIONES.includes(estado)) return estado;
+  return ocupados >= cupoMax ? 'completo' : 'abierto';
+}
+
+/** Monto en pesos chilenos: 12000 → '$12.000'. */
+function formatoCLP(monto) {
+  return `$${Math.round(Number(monto) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
+}
+
+/** TO-002 c6 / TO-022 · Equivalente en USD (redondeado hacia arriba al centavo) o null sin tipo de cambio. */
+function aUSD(montoCLP, tipoCambio) {
+  const tc = Number(tipoCambio);
+  if (!(tc > 0)) return null;
+  return Math.ceil((Number(montoCLP) / tc) * 100) / 100;
+}
+
+/**
+ * TO-002 c1 y c3 · Precio entero en CLP ("12000" o "12.000"); null si es negativo, tiene decimales o no es número.
+ * @returns {number|null}
+ */
+function leerPrecio(valor) {
+  const t = String(valor ?? '').trim();
+  if (!/^(\d{1,3}(\.\d{3})+|\d+)$/.test(t)) return null;
+  const n = Number(t.replace(/\./g, ''));
+  return Number.isSafeInteger(n) && n <= LIMITES.precioMax ? n : null;
 }
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -158,6 +300,8 @@ function partirPremio(texto) {
 }
 
 module.exports = {
-  FORMATOS, ESTADOS, EMPAREJAMIENTOS, EQUIPOS_RELAMPAGO, EQUIPOS_LIGA, MAX_PATROCINADORES,
-  errorCantidad, textoFechaInicio, nombreRonda, fixtureLiga, primeraRondaLlave, tablaLiga, partirPremio,
+  FORMATOS, ESTADOS, CON_INSCRIPCIONES, ESTADOS_INSCRIPCION, INSCRIPCION_PARTICIPA, INSCRIPCION_ACTIVA, MEDIOS_PAGO, CAMPOS, EMPAREJAMIENTOS, EQUIPOS_RELAMPAGO, EQUIPOS_LIGA,
+  LIMITES, MAX_PATROCINADORES,
+  erroresCupos, erroresFechas, hoyChile, inscripcionVencida, estadoPorCupos, camposEditables, accionesTorneo, formatoCLP, aUSD, leerPrecio,
+  textoFechaInicio, nombreRonda, fixtureLiga, primeraRondaLlave, tablaLiga, partirPremio,
 };

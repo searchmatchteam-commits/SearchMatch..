@@ -1,6 +1,4 @@
-<%- include('../partials/header') %>
-
-<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<%- include('../partials/admin-inicio', { seccion }) %>
 
 <section class="eq">
   <div class="contenedor">
@@ -11,8 +9,6 @@
         <p class="eq-cabecera__stats">Elimina equipos de forma definitiva, junto con sus desafíos y partidos.</p>
       </div>
     </header>
-
-    <%- include('../partials/admin-nav', { seccion }) %>
 
     <form class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/super/equipos" role="search">
       <div class="campo">
@@ -43,12 +39,11 @@
               <span class="sm-rol"><%= e.integrantes %> <%= e.integrantes === 1 ? 'integrante' : 'integrantes' %></span>
               <span class="sm-estado <%= e.activo ? 'sm-estado--activo' : 'sm-estado--inactivo' %>"><%= e.activo ? 'Activo' : 'Inactivo' %></span>
               <span class="sm-fila__accion">
-                <form action="/admin/super/equipos/<%= e.id %>/eliminar" method="POST"
-                      data-confirmar="Esta acción no se puede deshacer. Se avisará a sus <%= e.integrantes %> integrantes.<%= avisoDesafios %>"
-                      data-confirmar-titulo="¿Eliminar el equipo <%= e.nombre %>?" data-confirmar-boton="Eliminar">
-                  <input type="hidden" name="texto" value="<%= texto %>" />
-                  <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Eliminar</button>
-                </form>
+                <%- include('../partials/admin-accion-motivo', {
+                  accion: `/admin/super/equipos/${e.id}/eliminar`, boton: 'Eliminar', peligro: true, ocultos: [['texto', texto]],
+                  titulo: `¿Eliminar el equipo ${e.nombre}?`,
+                  texto: `Esta acción no se puede deshacer. Se avisará a sus ${e.integrantes} integrantes.${avisoDesafios}`,
+                }) %>
               </span>
             </li>
           <% }) %>
@@ -59,8 +54,4 @@
   </div>
 </section>
 
-<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
-
-<%- include('../partials/dock', { activo: 'admin' }) %>
-
-<%- include('../partials/footer') %>
+<%- include('../partials/admin-fin') %>

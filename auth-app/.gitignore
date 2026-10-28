@@ -3,7 +3,6 @@ node_modules/
 
 # Variables de entorno (nunca subir secretos)
 .env
-.env.example
 # Archivos del sistema
 .DS_Store
 Thumbs.db
@@ -12,5 +11,3 @@ desktop.ini
 # Logs
 *.log
 npm-debug.log*
-.env.example
-.env.example

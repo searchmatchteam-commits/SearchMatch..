@@ -44,4 +44,17 @@
   </div>
 </section>
 
+<script>
+  // AP-011: algunas plantillas de Supabase (invitación de administrador) dejan los tokens en el fragmento
+  // (#access_token=...), que el servidor no ve. Se reenvían como parámetros para validarlos en el servidor.
+  (function () {
+    var datos = new URLSearchParams(location.hash.slice(1));
+    if (datos.get('access_token') && datos.get('refresh_token')) {
+      location.replace('/recuperar/nueva?' + new URLSearchParams({
+        access_token: datos.get('access_token'), refresh_token: datos.get('refresh_token'), type: datos.get('type') || '',
+      }).toString());
+    }
+  })();
+</script>
+
 <%- include('../partials/footer') %>

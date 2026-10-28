@@ -53,7 +53,7 @@
       cartas.forEach(function (c) {
         const porPestana = pestana === 'todos'
           || (pestana === 'mios' && c.dataset.mio === 'true')
-          || (pestana === 'proximos' && c.dataset.estado === 'inscripcion');
+          || (pestana === 'proximos' && c.dataset.estado === 'abierto');
         const porMenu = !campo || c.dataset[campo] === valor;
         c.hidden = !(porPestana && porMenu);
         if (!c.hidden) visibles++;

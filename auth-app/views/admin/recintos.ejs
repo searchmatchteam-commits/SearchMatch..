@@ -1,6 +1,4 @@
-<%- include('../partials/header') %>
-
-<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<%- include('../partials/admin-inicio', { seccion }) %>
 
 <%
   const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
@@ -17,8 +15,6 @@
         <a class="btn btn--verde btn--grande" href="/admin/recintos/nuevo"><span aria-hidden="true">+</span> Registrar recinto</a>
       </div>
     </header>
-
-    <%- include('../partials/admin-nav', { seccion }) %>
 
     <% if (!hayRecintos) { %>
       <div class="dash-panel eq-panel sm-vacio revelar">
@@ -86,8 +82,4 @@
   </div>
 </section>
 
-<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
-
-<%- include('../partials/dock', { activo: 'admin' }) %>
-
-<%- include('../partials/footer') %>
+<%- include('../partials/admin-fin') %>

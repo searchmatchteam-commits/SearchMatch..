@@ -204,8 +204,19 @@ async function iniciarSesion(req, res, next) {
       });
     }
 
-    const esSuperAdmin = Boolean(perfil && /^superadministrador$/i.test(perfil.rol || ''));
-    return res.redirect(rutaDeInicio(data.user.user_metadata && data.user.user_metadata.rol_inicio, esSuperAdmin));
+    // AP-001: las cuentas del panel solo entran por /admin/login; aquí valen lo mismo que unas credenciales malas.
+    if (perfil && /^(super)?administrador$/i.test(perfil.rol || '')) {
+      await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
+      return res.status(401).render('login', {
+        pagina: 'auth',
+        titulo: 'Iniciar sesión',
+        errores: [ERRORES_SUPABASE.invalid_credentials],
+        datos: { correo },
+        aviso: null,
+      });
+    }
+
+    return res.redirect(rutaDeInicio(data.user.user_metadata && data.user.user_metadata.rol_inicio));
   } catch (err) {
     return next(err);
   }

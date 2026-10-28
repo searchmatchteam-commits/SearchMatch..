@@ -1,6 +1,4 @@
-<%- include('../partials/header') %>
-
-<%- include('../partials/fondo-cyber', { variante: 'perspectiva' }) %>
+<%- include('../partials/admin-inicio', { seccion }) %>
 
 <%
   const advertenciaReservas = cancha.reservas_futuras > 0
@@ -35,8 +33,6 @@
         <% } %>
       </div>
     </header>
-
-    <%- include('../partials/admin-nav', { seccion }) %>
 
     <% if (!cancha.recinto_activo) { %>
       <p class="sm-aviso-limite" role="note">Su recinto está inactivo: esta cancha no se muestra a los usuarios aunque esté activa.</p>
@@ -134,8 +130,4 @@
   </div>
 </section>
 
-<p class="panel-aviso <%= aviso ? 'panel-aviso--visible' : '' %>" role="status" aria-live="polite" data-aviso><%= aviso || '' %></p>
-
-<%- include('../partials/dock', { activo: 'admin' }) %>
-
-<%- include('../partials/footer') %>
+<%- include('../partials/admin-fin') %>
