@@ -136,6 +136,8 @@ function filaMiEquipo(fila) {
     nombre: fila.nombre,
     zona: fila.zona,
     detalle: detalleEquipo(fila),
+    modalidad: modalidadesDe(fila), // 'Fútbol 5 y 11' (las tarjetas de "Mis equipos" lo muestran aparte)
+    nivel: fila.nivel,
     escudo: urlEscudo(fila),
     soyCapitan: Boolean(fila.soy_capitan),
     // Una alineación por modalidad que juega, de la más chica a la más grande: cuántos titulares

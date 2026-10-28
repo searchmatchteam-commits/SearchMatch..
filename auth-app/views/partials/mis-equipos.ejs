@@ -1,3 +1,15 @@
+  <%
+    // "Mis equipos" del dashboard: una tarjeta por equipo (grilla de 1 a 3 columnas, estilos .dash-tequipo en
+    // dashboard.css). Escudo con forma de escudo sobresaliendo arriba, nombre, rol (Capitán/Jugador), datos con
+    // íconos, "Ver plantel" desplegable y abajo "Administrar equipo" (capitán) o "Salir del equipo" (jugador).
+    const ICONO = {
+      lugar: '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" /><circle cx="12" cy="10" r="2.4" />',
+      balon: '<circle cx="12" cy="12" r="8.5" /><path d="M12 7.6l3.6 2.6-1.4 4.2H9.8l-1.4-4.2z" />',
+      nivel: '<path d="M5 19v-4M10 19V11M15 19V8M20 19V5" />',
+      jugadores: '<circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.2a3.2 3.2 0 0 1 0 6M17.5 14a5.5 5.5 0 0 1 3 5" />',
+    };
+    const svg = (nombre, clase) => `<svg class="${clase}" viewBox="0 0 24 24" aria-hidden="true">${ICONO[nombre]}</svg>`;
+  %>
   <% if (misEquipos === null) { %>
     <p class="dash-panel__nota">No pudimos cargar tus equipos. Vuelve a intentarlo en unos minutos.</p>
   <% } else if (misEquipos.length === 0) { %>
@@ -6,22 +18,30 @@
       <a class="dash-btn-vidrio" data-ripple href="/equipos">Buscar equipos</a>
     </div>
   <% } else { %>
-    <ul class="dash-equipos">
-      <% misEquipos.forEach(function (equipo) { %>
-        <li class="dash-equipo">
-          <details class="dash-equipo__detalle">
-            <summary class="dash-equipo__resumen">
-              <span class="dash-equipo__escudo" aria-hidden="true"><%- include('escudo-equipo', { equipo }) %></span>
-              <span class="dash-equipo__texto">
-                <span class="dash-equipo__nombre"><%= equipo.nombre %></span>
-                <span class="dash-equipo__meta">
-                  <%= equipo.soyCapitan ? 'Capitán' : 'Jugador' %> · <%= equipo.plantel.length %> <%= equipo.plantel.length === 1 ? 'jugador' : 'jugadores' %><%= equipo.detalle ? ' · ' + equipo.detalle : '' %>
-                </span>
-              </span>
-              <svg class="dash-equipo__flecha" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-            </summary>
+    <ul class="dash-tequipos">
+      <% misEquipos.forEach(function (equipo) {
+           const cantidad = equipo.plantel.length; %>
+        <li class="dash-tequipo">
+          <span class="dash-tequipo__escudo" aria-hidden="true">
+            <span class="dash-tequipo__escudo-forma"><span class="dash-tequipo__escudo-interior"><%- include('escudo-equipo', { equipo }) %></span></span>
+          </span>
 
-            <% if (equipo.plantel.length === 0) { %>
+          <h3 class="dash-tequipo__nombre"><%= equipo.nombre %></h3>
+          <span class="dash-tequipo__rol <%= equipo.soyCapitan ? '' : 'dash-tequipo__rol--jugador' %>"><%= equipo.soyCapitan ? 'Capitán' : 'Jugador' %></span>
+
+          <ul class="dash-tequipo__datos">
+            <% if (equipo.zona) { %><li><%- svg('lugar', 'dash-tequipo__icono') %><%= equipo.zona %></li><% } %>
+            <% if (equipo.modalidad) { %><li><%- svg('balon', 'dash-tequipo__icono') %><%= equipo.modalidad %></li><% } %>
+            <% if (equipo.nivel) { %><li><%- svg('nivel', 'dash-tequipo__icono') %><%= equipo.nivel %></li><% } %>
+            <li><%- svg('jugadores', 'dash-tequipo__icono') %><%= cantidad %> <%= cantidad === 1 ? 'jugador' : 'jugadores' %></li>
+          </ul>
+
+          <details class="dash-tequipo__plantel">
+            <summary class="dash-tequipo__ver">
+              Ver plantel
+              <svg class="dash-tequipo__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+            </summary>
+            <% if (cantidad === 0) { %>
               <p class="dash-panel__nota dash-equipo__vacio">Este equipo todavía no tiene jugadores en su plantel.</p>
             <% } else { %>
               <ul class="dash-plantel">
@@ -36,14 +56,19 @@
             <% } %>
           </details>
 
-          <% if (equipo.soyCapitan) { %>
-            <a class="dash-equipo__admin" data-ripple href="/mi-equipo?equipo=<%= equipo.id %>">Administrar</a>
-          <% } else { %>
-            <form class="dash-equipo__salir" action="/equipos/<%= equipo.id %>/salir" method="POST" data-salir data-nombre="<%= equipo.nombre %>">
-              <input type="hidden" name="volver" value="<%= locals.volver || '/dashboard' %>">
-              <button type="submit" class="dash-equipo__salir-boton">Salir del equipo</button>
-            </form>
-          <% } %>
+          <div class="dash-tequipo__pie">
+            <% if (equipo.soyCapitan) { %>
+              <a class="dash-tequipo__admin" data-ripple href="/mi-equipo?equipo=<%= equipo.id %>">
+                Administrar equipo
+                <svg class="dash-tequipo__admin-icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
+              </a>
+            <% } else { %>
+              <form class="dash-equipo__salir" action="/equipos/<%= equipo.id %>/salir" method="POST" data-salir data-nombre="<%= equipo.nombre %>">
+                <input type="hidden" name="volver" value="<%= locals.volver || '/dashboard' %>">
+                <button type="submit" class="dash-equipo__salir-boton dash-tequipo__salir">Salir del equipo</button>
+              </form>
+            <% } %>
+          </div>
         </li>
       <% }) %>
     </ul>

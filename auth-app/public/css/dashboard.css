@@ -1054,6 +1054,567 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
   color: var(--texto-suave);
 }
 
+/* ---------- "Mis equipos" en tarjetas (views/partials/mis-equipos.ejs) ----------
+   Grilla de 1 a 3 columnas. Cada tarjeta: fondo oscuro con brillo radial y rayas tenues, borde y halo
+   verdes; el escudo (forma de escudo con borde neón) sobresale por arriba, así que la grilla deja aire
+   arriba de cada fila y nada recorta (overflow visible). */
+.dash-tequipos__buscar {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: var(--texto);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dash-tequipos__buscar:hover,
+.dash-tequipos__buscar:focus-visible {
+  border-color: var(--verde-borde);
+  color: var(--verde);
+  box-shadow: 0 0 12px rgba(var(--verde-rgb), 0.25);
+}
+
+.dash-tequipos {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 64px 20px;
+  margin: 0;
+  padding: 44px 0 0;
+  overflow: visible;
+}
+
+.dash-tequipo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 20px 20px;
+  border-radius: 18px;
+  text-align: center;
+  background:
+    radial-gradient(90% 60% at 50% 0%, rgba(var(--verde-rgb), 0.1), transparent 70%),
+    repeating-linear-gradient(135deg, transparent 0 14px, rgba(255, 255, 255, 0.015) 14px 15px),
+    #0a0f0d;
+  border: 1px solid rgba(var(--verde-rgb), 0.45);
+  box-shadow: 0 0 20px rgba(var(--verde-rgb), 0.15), inset 0 0 24px rgba(var(--verde-rgb), 0.04);
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.dash-tequipo:hover {
+  border-color: rgba(var(--verde-rgb), 0.7);
+  box-shadow: 0 0 28px rgba(var(--verde-rgb), 0.25), inset 0 0 24px rgba(var(--verde-rgb), 0.06);
+}
+
+/* Escudo: forma de escudo (arriba recto, abajo en punta) con borde neón y resplandor */
+.dash-tequipo__escudo {
+  position: absolute;
+  top: -44px;
+  left: 50%;
+  width: 84px;
+  height: 94px;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 0 10px rgba(var(--verde-rgb), 0.55));
+}
+
+.dash-tequipo__escudo-forma,
+.dash-tequipo__escudo-interior {
+  display: block;
+  width: 100%;
+  height: 100%;
+  clip-path: polygon(0 0, 100% 0, 100% 72%, 50% 100%, 0 72%);
+}
+
+.dash-tequipo__escudo-forma {
+  padding: 3px;
+  background: var(--verde);
+}
+
+.dash-tequipo__escudo-interior {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #111;
+  font-family: var(--fuente-titulo);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--verde);
+}
+
+.dash-tequipo__escudo-interior .escudo-equipo__img {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  object-fit: cover;
+}
+
+.dash-tequipo__nombre {
+  max-width: 100%;
+  font-family: var(--fuente-titulo);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.dash-tequipo__rol {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--verde-borde);
+  background: rgba(var(--verde-rgb), 0.06);
+  color: var(--verde);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dash-tequipo__rol--jugador {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  color: #d1d5db;
+}
+
+.dash-tequipo__datos {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  font-size: 0.86rem;
+  color: #9ca3af;
+}
+
+.dash-tequipo__datos li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dash-tequipo__icono {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  fill: none;
+  stroke: var(--verde);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* "Ver plantel": desplegable; el plantel aparece dentro de la tarjeta */
+.dash-tequipo__plantel {
+  width: 100%;
+  text-align: left;
+}
+
+.dash-tequipo__ver {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: max-content;
+  margin: 0 auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  list-style: none;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+}
+
+.dash-tequipo__ver::-webkit-details-marker { display: none; }
+.dash-tequipo__ver:hover { background: rgba(255, 255, 255, 0.05); }
+
+.dash-tequipo__ver:focus-visible {
+  outline: 2px solid var(--verde-borde);
+  outline-offset: 2px;
+}
+
+.dash-tequipo__chevron {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.2s ease;
+}
+
+.dash-tequipo__plantel[open] .dash-tequipo__chevron { transform: rotate(180deg); }
+
+.dash-tequipo__plantel .dash-plantel { margin: 8px 0 0; }
+
+/* Pie: el botón queda abajo aunque las tarjetas de la fila tengan alturas distintas */
+.dash-tequipo__pie {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.dash-tequipo__admin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 18px;
+  border-radius: 999px;
+  background: var(--verde);
+  color: var(--sobre-verde);
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 0 14px rgba(var(--verde-rgb), 0.35);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.dash-tequipo__admin:hover,
+.dash-tequipo__admin:focus-visible {
+  background: var(--verde-hover);
+  box-shadow: 0 0 26px rgba(var(--verde-rgb), 0.65);
+}
+
+.dash-tequipo__admin-icono {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- Widget "Mi equipo" (views/partials/sm-equipo-inicio.ejs) ----------
+   Compacto y horizontal, con la estética de las tarjetas de "Mis equipos": fondo oscuro con brillo radial y
+   rejilla diagonal que se desvanece, borde y halo verdes. No se estira a la altura de la columna vecina
+   (align-self: start). Adentro: pestañas (la activa con brillo), la mini tarjeta del equipo
+   (escudo | nombre + rol + datos | "Administrar") y el estado de partidos. */
+.dash-miequipo {
+  align-self: start;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 18px;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(90% 70% at 15% 0%, rgba(var(--verde-rgb), 0.08), transparent 65%),
+    #0a0f0d;
+  border-color: rgba(var(--verde-rgb), 0.22);
+  box-shadow: 0 0 20px rgba(var(--verde-rgb), 0.1);
+}
+
+/* Rejilla diagonal tenue que se desvanece hacia abajo (decorativa, detrás del contenido) */
+.dash-miequipo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(45deg, transparent 0 18px, rgba(var(--verde-rgb), 0.045) 18px 19px),
+    repeating-linear-gradient(-45deg, transparent 0 18px, rgba(var(--verde-rgb), 0.045) 18px 19px);
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent 90%);
+  mask-image: linear-gradient(to bottom, #000, transparent 90%);
+}
+
+.dash-miequipo .dash-panel__titulo { font-size: 1.1rem; }
+
+/* ----- Pestañas ----- */
+.dash-miequipo__pestanas {
+  display: flex;
+  gap: 8px;
+  margin: 0 -4px;
+  padding: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.dash-miequipo__pestanas::-webkit-scrollbar { display: none; }
+
+.dash-miequipo__pestana {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: #9ca3af;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.dash-miequipo__pestana:hover { color: #fff; border-color: rgba(255, 255, 255, 0.3); }
+
+.dash-miequipo__pestana--activa,
+.dash-miequipo__pestana--activa:hover {
+  color: #fff;
+  border-color: var(--verde);
+  background: rgba(var(--verde-rgb), 0.08);
+  box-shadow: 0 0 10px rgba(var(--verde-rgb), 0.4);
+}
+
+.dash-miequipo__pestana-nombre { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.dash-miequipo__mini-escudo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #111;
+  border: 1px solid var(--verde-borde);
+  color: var(--verde);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+/* ----- Mini tarjeta del equipo: escudo | info | botón (en celular se apila) ----- */
+.dash-miequipo__tarjeta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(var(--verde-rgb), 0.18);
+}
+
+/* Escudo hexagonal con borde neón (forma verde) y resplandor (drop-shadow en el contenedor, no se recorta) */
+.dash-miequipo__escudo {
+  width: 58px;
+  height: 64px;
+  filter: drop-shadow(0 0 8px rgba(var(--verde-rgb), 0.5));
+}
+
+.dash-miequipo__escudo-forma,
+.dash-miequipo__escudo-interior {
+  display: block;
+  width: 100%;
+  height: 100%;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.dash-miequipo__escudo-forma {
+  padding: 2px;
+  background: var(--verde);
+}
+
+.dash-miequipo__escudo-interior {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #111;
+  font-family: var(--fuente-titulo);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--verde);
+}
+
+.dash-miequipo__mini-escudo .escudo-equipo__img,
+.dash-miequipo__escudo-interior .escudo-equipo__img {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  object-fit: cover;
+}
+
+.dash-miequipo__info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dash-miequipo__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 0;
+}
+
+.dash-miequipo__nombre {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--fuente-titulo);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+  text-decoration: none;
+}
+
+.dash-miequipo__nombre:hover { color: var(--verde); }
+
+.dash-miequipo__rol {
+  flex: none;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--verde-rgb), 0.5);
+  background: rgba(var(--verde-rgb), 0.15);
+  color: var(--verde);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dash-miequipo__rol--jugador {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: #d1d5db;
+}
+
+.dash-miequipo__datos {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 0;
+  font-size: 0.84rem;
+  color: #9ca3af;
+}
+
+.dash-miequipo__datos li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dash-miequipo__icono {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  fill: none;
+  stroke: var(--verde);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dash-miequipo__admin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--verde);
+  color: var(--sobre-verde);
+  font-size: 0.86rem;
+  font-weight: 800;
+  white-space: nowrap;
+  text-decoration: none;
+  box-shadow: 0 0 12px rgba(var(--verde-rgb), 0.35);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.dash-miequipo__admin:hover,
+.dash-miequipo__admin:focus-visible {
+  background: var(--verde-hover);
+  box-shadow: 0 0 22px rgba(var(--verde-rgb), 0.65);
+}
+
+/* Jugador (no capitán): botón secundario para ver el equipo */
+.dash-miequipo__admin--ver {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: var(--texto);
+  box-shadow: none;
+}
+
+.dash-miequipo__admin--ver:hover,
+.dash-miequipo__admin--ver:focus-visible {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--verde-borde);
+  color: var(--verde);
+  box-shadow: none;
+}
+
+.dash-miequipo__admin-icono {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Celular: escudo e info en una fila; el botón abajo, a todo el ancho */
+@media (max-width: 520px) {
+  .dash-miequipo__tarjeta { grid-template-columns: auto minmax(0, 1fr); }
+  .dash-miequipo__admin { grid-column: 1 / -1; }
+  .dash-miequipo__nombre { white-space: normal; overflow-wrap: anywhere; } /* hay alto de sobra: el nombre completo */
+}
+
+/* ----- Estado de partidos (pie) ----- */
+.dash-miequipo__estado {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.86rem;
+  color: #d1d5db;
+}
+
+.dash-miequipo__estado a {
+  color: var(--verde);
+  font-weight: 700;
+  text-decoration: none;
+  text-shadow: 0 0 8px rgba(var(--verde-rgb), 0.35);
+}
+
+.dash-miequipo__estado a:hover,
+.dash-miequipo__estado a:focus-visible { text-decoration: underline; }
+
+.dash-miequipo__estado-icono {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-top: 1px;
+  fill: none;
+  stroke: var(--verde);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.dash-miequipo__partido {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--verde-borde);
+  background: rgba(var(--verde-rgb), 0.06);
+  color: var(--texto);
+  text-decoration: none;
+}
+
+.dash-miequipo__partido small { color: var(--verde); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+.dash-miequipo__partido span { color: #9ca3af; font-size: 0.84rem; text-transform: capitalize; }
+
+.dash-tequipo .dash-equipo__salir { width: 100%; }
+.dash-tequipo__salir { width: 100%; min-height: 0; padding: 12px 18px; border-radius: 999px; }
+
 /* ---------- Skeletons con shimmer ---------- */
 .dash-skeletons {
   list-style: none;

@@ -1,33 +1,65 @@
 <%
+  // Widget compacto "Mi equipo" del dashboard (IN-005): pestañas para elegir equipo (si tiene varios),
+  // tarjeta del equipo elegido (escudo, nombre, datos) y su próximo partido. Estilos: .dash-miequipo en dashboard.css.
   const formatoDia = new Intl.DateTimeFormat('es-CL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 %>
 <% if (equipoInicio) { const e = equipoInicio.equipo; const p = equipoInicio.proximo; %>
-  <article class="dash-panel dash-panel--equipo-inicio revelar" id="equipo-inicio" aria-labelledby="titulo-equipo-inicio">
+  <article class="dash-panel dash-panel--equipo-inicio dash-miequipo revelar" id="equipo-inicio" aria-labelledby="titulo-equipo-inicio">
     <header class="dash-panel__cabecera">
       <h2 class="dash-panel__titulo" id="titulo-equipo-inicio">Mi equipo</h2>
       <a class="dash-panel__enlace" href="/agenda">Agenda →</a>
     </header>
+
     <% if (equipoInicio.equipos.length > 1) { %>
-      <nav class="sm-selector-equipos" aria-label="Elegir equipo">
-        <% equipoInicio.equipos.forEach(function (op) { %>
-          <a class="sm-selector-equipos__item <%= op.id === e.id ? 'sm-selector-equipos__item--activo' : '' %>" href="/inicio/equipo?id=<%= op.id %>"
-             <%- op.id === e.id ? 'aria-current="true"' : '' %>>
-            <span class="dash-equipo__escudo" aria-hidden="true"><%- include('escudo-equipo', { equipo: op }) %></span>
-            <span><%= op.nombre %></span>
+      <!-- Pestañas: en pantallas chicas se desplazan de lado en vez de romperse en varias líneas -->
+      <nav class="dash-miequipo__pestanas" aria-label="Elegir equipo">
+        <% equipoInicio.equipos.forEach(function (op) { const activo = op.id === e.id; %>
+          <a class="dash-miequipo__pestana <%= activo ? 'dash-miequipo__pestana--activa' : '' %>" href="/inicio/equipo?id=<%= op.id %>"
+             <%- activo ? 'aria-current="true"' : '' %>>
+            <span class="dash-miequipo__mini-escudo" aria-hidden="true"><%- include('escudo-equipo', { equipo: op }) %></span>
+            <span class="dash-miequipo__pestana-nombre"><%= op.nombre %></span>
           </a>
         <% }) %>
       </nav>
     <% } %>
-    <p class="sm-tarjeta__titulo"><a href="/equipos/<%= e.id %>"><%= e.nombre %></a></p>
-    <p class="dash-panel__nota"><%= e.detalle || 'Sin datos' %> · <%= e.soyCapitan ? 'Capitán' : 'Jugador' %></p>
+
+    <!-- Mini versión de las tarjetas de "Mis equipos": escudo | nombre, rol y datos | botón -->
+    <div class="dash-miequipo__tarjeta">
+      <span class="dash-miequipo__escudo" aria-hidden="true">
+        <span class="dash-miequipo__escudo-forma"><span class="dash-miequipo__escudo-interior"><%- include('escudo-equipo', { equipo: e }) %></span></span>
+      </span>
+      <div class="dash-miequipo__info">
+        <div class="dash-miequipo__titulo">
+          <a class="dash-miequipo__nombre" href="/equipos/<%= e.id %>"><%= e.nombre %></a>
+          <span class="dash-miequipo__rol <%= e.soyCapitan ? '' : 'dash-miequipo__rol--jugador' %>"><%= e.soyCapitan ? 'Capitán' : 'Jugador' %></span>
+        </div>
+        <ul class="dash-miequipo__datos">
+          <% if (e.zona) { %><li><svg class="dash-miequipo__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" /><circle cx="12" cy="10" r="2.4" /></svg><%= e.zona %></li><% } %>
+          <% if (e.modalidad) { %><li><svg class="dash-miequipo__icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.6l3.6 2.6-1.4 4.2H9.8l-1.4-4.2z" /></svg><%= e.modalidad %></li><% } %>
+          <% if (e.plantel) { %><li><svg class="dash-miequipo__icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.2a3.2 3.2 0 0 1 0 6M17.5 14a5.5 5.5 0 0 1 3 5" /></svg><%= e.plantel.length %> <%= e.plantel.length === 1 ? 'jugador' : 'jugadores' %></li><% } %>
+        </ul>
+      </div>
+      <% if (e.soyCapitan) { %>
+        <a class="dash-miequipo__admin" data-ripple href="/mi-equipo?equipo=<%= e.id %>">
+          Administrar
+          <svg class="dash-miequipo__admin-icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
+        </a>
+      <% } else { %>
+        <a class="dash-miequipo__admin dash-miequipo__admin--ver" href="/equipos/<%= e.id %>">Ver equipo</a>
+      <% } %>
+    </div>
+
     <% if (p) { %>
-      <a class="sm-proximo" href="/partidos/<%= p.id %>">
+      <a class="dash-miequipo__partido" href="/partidos/<%= p.id %>">
         <small>Próximo partido</small>
         <strong><%= p.desafiante %> vs <%= p.desafiado %></strong>
         <span><%= formatoDia.format(new Date(p.fecha + 'T00:00:00Z')) %> · <%= p.hora %> · <%= p.cancha %></span>
       </a>
     <% } else { %>
-      <p class="dash-panel__nota">No hay partidos programados. <a href="/desafios?equipo=<%= e.id %>">Revisa sus desafíos</a>.</p>
+      <p class="dash-miequipo__estado">
+        <svg class="dash-miequipo__estado-icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2.5" /><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" /></svg>
+        <span>No hay partidos programados. <a href="/desafios?equipo=<%= e.id %>">Revisa sus desafíos</a>.</span>
+      </p>
     <% } %>
   </article>
 <% } %>

@@ -1363,3 +1363,52 @@ html[data-theme="light"] .sm-cal__ev-estado { color: #4b5563; }
 html[data-theme="light"] .sm-cal__ev + .sm-cal__ev { border-top-color: var(--borde); }
 html[data-theme="light"] .sm-cal__cta { --cal-dorado: #a16207; }
 html[data-theme="light"] .sm-cal__cta:hover { color: #854d0e; box-shadow: none; }
+
+/* "Mis equipos" en tarjetas: blanco con borde verde, textos oscuros, escudo con borde verde sólido */
+html[data-theme="light"] .dash-tequipos__buscar { border-color: var(--borde-fuerte); color: #111827; }
+html[data-theme="light"] .dash-tequipos__buscar:hover { border-color: #16a34a; color: #15803d; box-shadow: none; }
+html[data-theme="light"] .dash-tequipo {
+  background: radial-gradient(90% 60% at 50% 0%, rgba(22, 163, 74, 0.08), transparent 70%), #ffffff;
+  border-color: rgba(22, 163, 74, 0.45);
+  box-shadow: var(--sombra-media);
+}
+html[data-theme="light"] .dash-tequipo__escudo { filter: drop-shadow(0 4px 10px rgba(22, 163, 74, 0.3)); }
+html[data-theme="light"] .dash-tequipo__escudo-forma { background: #16a34a; }
+html[data-theme="light"] .dash-tequipo__escudo-interior { background: #f1f5f9; color: #15803d; }
+html[data-theme="light"] .dash-tequipo__nombre,
+html[data-theme="light"] .dash-tequipo__ver { color: #111827; }
+html[data-theme="light"] .dash-tequipo__rol { color: #15803d; border-color: rgba(22, 163, 74, 0.45); background: rgba(22, 163, 74, 0.06); }
+html[data-theme="light"] .dash-tequipo__rol--jugador { color: #374151; border-color: var(--borde-fuerte); background: #f8fafc; }
+html[data-theme="light"] .dash-tequipo__datos { color: #4b5563; }
+html[data-theme="light"] .dash-tequipo__icono { stroke: #16a34a; }
+html[data-theme="light"] .dash-tequipo__ver:hover { background: rgba(17, 24, 39, 0.05); }
+html[data-theme="light"] .dash-tequipo__admin { background: var(--neon); color: #fff; box-shadow: none; }
+html[data-theme="light"] .dash-tequipo__admin:hover { background: var(--neon-hover); box-shadow: 0 6px 16px rgba(22, 163, 74, 0.3); }
+
+/* Widget "Mi equipo" compacto: blanco con borde verde, rejilla casi invisible, escudo con borde verde sólido */
+html[data-theme="light"] .dash-miequipo { background: #ffffff; border-color: rgba(22, 163, 74, 0.3); box-shadow: var(--sombra-media); }
+html[data-theme="light"] .dash-miequipo::after { opacity: 0.35; }
+html[data-theme="light"] .dash-miequipo__pestana { color: #4b5563; border-color: var(--borde-fuerte); }
+html[data-theme="light"] .dash-miequipo__pestana:hover { color: #111827; }
+html[data-theme="light"] .dash-miequipo__pestana--activa,
+html[data-theme="light"] .dash-miequipo__pestana--activa:hover { color: #111827; border-color: #16a34a; background: rgba(22, 163, 74, 0.08); box-shadow: none; }
+html[data-theme="light"] .dash-miequipo__mini-escudo,
+html[data-theme="light"] .dash-miequipo__escudo-interior { background: #f1f5f9; color: #15803d; }
+html[data-theme="light"] .dash-miequipo__mini-escudo { border-color: rgba(22, 163, 74, 0.4); }
+html[data-theme="light"] .dash-miequipo__escudo { filter: drop-shadow(0 3px 6px rgba(22, 163, 74, 0.3)); }
+html[data-theme="light"] .dash-miequipo__escudo-forma { background: #16a34a; }
+html[data-theme="light"] .dash-miequipo__tarjeta { background: #f8fafc; border-color: rgba(22, 163, 74, 0.25); }
+html[data-theme="light"] .dash-miequipo__nombre { color: #111827; }
+html[data-theme="light"] .dash-miequipo__rol { color: #15803d; border-color: rgba(22, 163, 74, 0.45); background: rgba(22, 163, 74, 0.08); }
+html[data-theme="light"] .dash-miequipo__rol--jugador { color: #374151; border-color: var(--borde-fuerte); background: #f8fafc; }
+html[data-theme="light"] .dash-miequipo__datos,
+html[data-theme="light"] .dash-miequipo__partido span { color: #4b5563; }
+html[data-theme="light"] .dash-miequipo__icono,
+html[data-theme="light"] .dash-miequipo__estado-icono { stroke: #16a34a; }
+html[data-theme="light"] .dash-miequipo__admin { background: var(--neon); color: #fff; box-shadow: none; }
+html[data-theme="light"] .dash-miequipo__admin:hover { background: var(--neon-hover); box-shadow: 0 6px 14px rgba(22, 163, 74, 0.3); }
+html[data-theme="light"] .dash-miequipo__admin--ver { background: transparent; color: #111827; border-color: var(--borde-fuerte); }
+html[data-theme="light"] .dash-miequipo__admin--ver:hover { background: #f8fafc; color: #15803d; box-shadow: none; }
+html[data-theme="light"] .dash-miequipo__estado { color: #374151; }
+html[data-theme="light"] .dash-miequipo__estado a { color: #15803d; text-shadow: none; }
+html[data-theme="light"] .dash-miequipo__partido small { color: #15803d; }
