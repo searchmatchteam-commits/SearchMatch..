@@ -24,13 +24,18 @@ const AVISOS = {
 
 async function listar(req, res, next) {
   try {
+    const [torneos, misTorneos, capitan] = await Promise.all([
+      torneoModel.listar(),
+      torneoModel.idsMisTorneos(req.usuario.idAuth),
+      torneoModel.resumenCapitan(req.usuario.idAuth),
+    ]);
     return res.render('torneos', {
       titulo: 'Torneos',
       pagina: 'equipo',
       torneoLista: true, // carga torneos-lista.css/.js (cartas y pestañas)
-      torneos: await torneoModel.listar(),
-      misTorneos: await torneoModel.idsMisTorneos(req.usuario.idAuth),
-      capitan: await torneoModel.resumenCapitan(req.usuario.idAuth),
+      torneos,
+      misTorneos,
+      capitan,
       partirPremio,
       aviso: AVISOS[req.query.aviso] || null,
     });

@@ -179,15 +179,6 @@ async function listar(authId, tipo = null) {
 }
 
 /** Cantidad sin leer (la campana de la barra superior). */
-async function contarSinLeer(authId) {
-  const { rows } = await pool.query(
-    `SELECT count(*)::int AS total FROM notificacion n JOIN usuario u ON u.id = n.id_usuario
-      WHERE u.auth_id = $1 AND NOT n.leida`,
-    [authId]
-  );
-  return rows[0].total;
-}
-
 /**
  * NT-003 / NT-004 · Marca una notificación de la cuenta como leída y devuelve su enlace.
  * Solo toca las que siguen sin leer (las leídas quedan igual).
@@ -228,7 +219,6 @@ module.exports = {
   equipoDeCapitan,
   idUsuarioDe,
   listar,
-  contarSinLeer,
   abrir,
   marcarTodas,
 };

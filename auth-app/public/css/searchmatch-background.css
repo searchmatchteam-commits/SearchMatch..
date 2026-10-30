@@ -71,6 +71,11 @@ body.sm-con-fondo::after {
   animation: sm-fondo-deriva-a 22s ease-in-out infinite alternate-reverse;
 }
 
+/* Va después del atajo "animation" de cada capa. --sm-fondo-t (header.ejs) continúa la deriva entre páginas. */
+.sm-fondo__malla span:nth-child(n) {
+  animation-delay: var(--sm-fondo-t, 0s);
+}
+
 @keyframes sm-fondo-deriva-a {
   to { transform: translate(14vw, 10vh) scale(1.15); }
 }

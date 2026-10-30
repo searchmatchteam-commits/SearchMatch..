@@ -9,7 +9,7 @@ const raiz = path.join(__dirname, '..');
 const codigo = fs.readFileSync(path.join(raiz, 'public/js/searchmatch-background.js'), 'utf8');
 
 // Reloj y eventos controlados: comprueba el ciclo de vida sin navegador ni servicios externos.
-function escenario({ reducido = false, liviano = false, sinCanvas = false } = {}) {
+function escenario({ reducido = false, liviano = false, sinCanvas = false, almacen = null } = {}) {
   const clases = new Set(liviano ? ['modo-liviano'] : []);
   const pausas = new Set();
   const raf = new Map();
@@ -42,6 +42,7 @@ function escenario({ reducido = false, liviano = false, sinCanvas = false } = {}
   });
   const contexto = vm.createContext({
     document: documento, window: ventana, AbortController,
+    ...(almacen ? { sessionStorage: almacen } : {}),
     Math: Object.assign(Object.create(Math), { random: () => 0.25 }),
     requestAnimationFrame: (fn) => { const id = ++secuencia; raf.set(id, fn); return id; },
     cancelAnimationFrame: (id) => raf.delete(id),
@@ -172,6 +173,28 @@ test('BFCache pausa y restaura una instancia; la salida definitiva limpia evento
   e.ventana.dispatchEvent(new Event('resize'));
   assert.equal(e.raf.size, 0);
   assert.equal(e.timers.size, 0);
+});
+
+test('la página siguiente retoma las partículas donde iban y no se reinicia', () => {
+  const datos = new Map();
+  const almacen = { getItem: (k) => datos.get(k) ?? null, setItem: (k, v) => datos.set(k, v) };
+  const a = escenario({ almacen });
+  for (let i = 0; i < 30; i++) a.cuadro(i * 16);
+  a.salir(false);
+
+  const b = escenario({ almacen });
+  b.cuadro(0);
+  const ultimo = a.posiciones.slice(-a.dibujadas)[0];
+  const siguiente = b.posiciones[0];
+  assert.ok(Math.abs(siguiente[1] - ultimo[1]) < 1, 'continúa desde la última posición');
+  assert.ok(ultimo[1] !== 225, 'la primera página sí avanzó');
+
+  // Otra medida de ventana no reutiliza el estado guardado
+  datos.set('sm-fondo-estado', datos.get('sm-fondo-estado').replace('"ancho":1440', '"ancho":800'));
+  const c = escenario({ almacen });
+  c.cuadro(0);
+  assert.equal(c.dibujadas, Math.round(1440 * 900 / 14000));
+  assert.ok(Math.abs(c.posiciones[0][1] - ultimo[1]) > 1, 'parte de nuevo');
 });
 
 test('las partículas recorren la misma distancia a 60 y 120 Hz', () => {

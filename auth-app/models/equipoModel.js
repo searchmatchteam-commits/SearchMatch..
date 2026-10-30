@@ -214,7 +214,11 @@ async function listarEquiposActivosDeJugador(idJugador) {
  * @returns {Promise<Array<{id, nombre, zona, detalle, soyCapitan: boolean, plantel: Array}>>}
  */
 async function listarMisEquiposConPlantel(authId) {
-  const equipos = await listarMisEquipos(authId);
+  return agregarPlanteles(await listarMisEquipos(authId));
+}
+
+/** Suma a cada equipo su plantel (el dashboard lo pide aparte para consultar a la vez el próximo partido). */
+async function agregarPlanteles(equipos) {
   const planteles = await Promise.all(equipos.map((equipo) => listarPlantel(equipo.id)));
   return equipos.map((equipo, i) => ({ ...equipo, plantel: planteles[i] }));
 }
@@ -1278,6 +1282,7 @@ module.exports = {
   obtenerMiEquipo,
   listarMisEquipos,
   listarMisEquiposConPlantel,
+  agregarPlanteles,
   listarEquiposActivosDeJugador, // PE-010
   listarPlantel,
   guardarAlineacion,

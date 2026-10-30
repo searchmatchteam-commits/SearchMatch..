@@ -395,9 +395,10 @@ async function panel(req, res, next) {
 // ---------------------------------------------------------------
 async function misEquipos(req, res, next) {
   try {
-    const [equipos, creacion] = await Promise.all([
+    const [equipos, creacion, equiposInactivos] = await Promise.all([
       equipoModel.listarMisEquiposConPlantel(req.usuario.idAuth),
       estadoCreacionEquipo(req.usuario), // CORRECCIÓN: regla 5
+      equipoFichaModel.listarInactivosDeCapitan(req.usuario.idAuth), // NUEVO: PE-017
     ]);
     return res.render('mis-equipos', {
       titulo: 'Mis equipos',
@@ -405,7 +406,7 @@ async function misEquipos(req, res, next) {
       misEquipos: equipos,
       puedeCrear: creacion === 'puede', // CORRECCIÓN: regla 5 (MAX_EQUIPOS_COMO_CAPITAN); jugadores no
       avisoLimite: creacion === 'limite' ? AVISO_LIMITE_EQUIPOS : null, // CORRECCIÓN: regla 5
-      equiposInactivos: await equipoFichaModel.listarInactivosDeCapitan(req.usuario.idAuth), // NUEVO: PE-017
+      equiposInactivos,
       aviso: AVISOS_SALIDA[req.query.salida] || (req.query.aviso === 'limite' ? AVISO_LIMITE_EQUIPOS : null),
     });
   } catch (err) {
@@ -418,10 +419,11 @@ async function misEquipos(req, res, next) {
 // ---------------------------------------------------------------
 async function directorio(req, res, next) {
   try {
-    const [equipos, miEquipo, creacion] = await Promise.all([
+    const [equipos, miEquipo, creacion, equiposQueBuscan] = await Promise.all([
       equipoModel.listarEquipos(req.usuario.idAuth),
       equipoModel.obtenerMiEquipo(req.usuario.idAuth),
       estadoCreacionEquipo(req.usuario), // CORRECCIÓN: regla 5
+      equipoFichaModel.listarEquiposQueBuscan(), // NUEVO: PE-021
     ]);
     return res.render('equipos', {
       titulo: 'Directorio de Equipos',
@@ -430,7 +432,7 @@ async function directorio(req, res, next) {
       tieneEquipo: Boolean(miEquipo),
       puedeCrear: creacion === 'puede', // CORRECCIÓN: regla 5 (MAX_EQUIPOS_COMO_CAPITAN); jugadores no
       avisoLimite: creacion === 'limite' ? AVISO_LIMITE_EQUIPOS : null, // CORRECCIÓN: regla 5
-      equiposQueBuscan: await equipoFichaModel.listarEquiposQueBuscan(), // NUEVO: PE-021
+      equiposQueBuscan,
       LONGITUD_MENSAJE: LONGITUD_MAXIMA_MENSAJE_SOLICITUD,
       aviso: AVISOS_UNION[req.query.aviso] || (req.query.aviso === 'solo-jugador' ? AVISO_SOLO_JUGADOR : null),
     });

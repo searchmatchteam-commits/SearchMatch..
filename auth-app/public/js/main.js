@@ -11,10 +11,20 @@
 //  8) Modo claro / oscuro: botón [data-cambiar-tema] del navbar. Guarda la elección en localStorage
 //     ("sm-tema") y la aplica como html[data-theme="light"]; el oscuro es el predeterminado.
 //     El tema guardado se aplica antes del primer pintado (script del <head> en partials/header.ejs).
+//  9) Dock: marca al instante la sección elegida; la página precargada que quedó vieja se vuelve a pedir.
 // La validación de login/registro está en auth.js (y la real, en el servidor).
 
 const COLOR_BARRA = { light: '#ffffff', dark: '#0b0d0b' }; // <meta name="theme-color"> (barra del navegador en celulares)
 const DURACION_CAMBIO_TEMA = 350;
+const MAX_ESPERA_PRECARGA_MS = 30000; // una sección preparada hace más que esto se vuelve a pedir al abrirla
+
+/* ---------- 9) Sección precargada ---------- */
+if (document.prerendering) {
+  document.addEventListener('prerenderingchange', () => {
+    const [navegacion] = performance.getEntriesByType('navigation');
+    if (navegacion && navegacion.activationStart > MAX_ESPERA_PRECARGA_MS) window.location.reload();
+  }, { once: true });
+}
 
 /** Tema actual: 'light' | 'dark'. */
 function temaActual() {
@@ -259,6 +269,30 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  /* ---------- 9) Dock: respuesta inmediata al elegir sección ---------- */
+  const dock = document.querySelector('.dock');
+  if (dock) {
+    const activoInicial = dock.querySelector('.dock__item--activo');
+    const marcar = (item) => {
+      dock.querySelectorAll('.dock__item--activo').forEach((el) => {
+        el.classList.remove('dock__item--activo');
+        el.removeAttribute('aria-current');
+      });
+      if (item) {
+        item.classList.add('dock__item--activo');
+        item.setAttribute('aria-current', 'page');
+      }
+    };
+    dock.addEventListener('click', (evento) => {
+      const item = evento.target.closest('a.dock__item');
+      // Ctrl/Cmd/Mayús + clic abre otra pestaña: esta sigue en su sección
+      if (!item || evento.button !== 0 || evento.ctrlKey || evento.metaKey || evento.shiftKey) return;
+      marcar(item);
+    });
+    // Volver con "Atrás" puede restaurar esta página tal como quedó
+    window.addEventListener('pageshow', (evento) => { if (evento.persisted) marcar(activoInicial); });
+  }
 
   /* ---------- 5) Timeline que se rellena con el scroll ---------- */
   const timeline = document.querySelector('[data-timeline]');

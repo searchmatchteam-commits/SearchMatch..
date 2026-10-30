@@ -1,9 +1,18 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 
+// Abrir una conexión a Supabase cuesta mucho más que una consulta (más de 1 s desde Chile, contra ~180 ms):
+// por defecto el pool las cierra a los 10 s sin uso y cada navegación tras leer una página las reabría.
+// Por eso CONEXIONES_ACTIVAS quedan siempre abiertas (el dashboard usa 5 a la vez). allowExitOnIdle deja
+// terminar a los scripts de una sola pasada aunque queden abiertas.
+const CONEXIONES_ACTIVAS = 5;
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
+  min: CONEXIONES_ACTIVAS,
+  keepAlive: true,
+  allowExitOnIdle: true,
 });
 
 if (!process.env.DATABASE_URL) {
@@ -33,7 +42,10 @@ async function probarConexion() {
   }
 
   try {
-    const resultado = await pool.query('SELECT NOW() AS ahora');
+    // Varias a la vez: deja abiertas las conexiones antes de la primera visita.
+    const [resultado] = await Promise.all(
+      Array.from({ length: CONEXIONES_ACTIVAS }, () => pool.query('SELECT NOW() AS ahora'))
+    );
     console.log('✅ Conectado a Supabase (PostgreSQL) correctamente.');
     console.log('   Hora del servidor de la base de datos:', resultado.rows[0].ahora);
   } catch (err) {

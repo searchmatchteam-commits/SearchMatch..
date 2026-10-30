@@ -3,6 +3,15 @@ const disponibilidadModel = require('../models/disponibilidadModel');
 const ubicacionModel = require('../models/ubicacionModel');
 const { idValido } = require('../middlewares/validadoresAdmin');
 const { DIAS_SEMANA, LARGO_MINIMO_BUSQUEDA, CANCHAS_POR_LOTE, DIAS_DISPONIBILIDAD, ZONA_HORARIA } = require('../config/canchas');
+const { cacheBreve } = require('../config/cacheBreve');
+
+// /canchas sin filtros: catálogo público e igual para todos. Son más de mil filas, lo más pesado del dock.
+// Un cambio del panel se ve aquí en un par de minutos; la ficha de cada cancha y las búsquedas con filtros son en vivo.
+const PLAZO_CATALOGO_MS = 60 * 1000;
+const leerRegiones = cacheBreve(PLAZO_CATALOGO_MS, () => ubicacionModel.listarRegionesConComunas());
+const leerModalidades = cacheBreve(PLAZO_CATALOGO_MS, () => canchaModel.listarModalidades());
+const leerHayCanchas = cacheBreve(PLAZO_CATALOGO_MS, () => canchaModel.hayCanchasVisibles());
+const leerCanchasSinFiltros = cacheBreve(PLAZO_CATALOGO_MS, () => canchaModel.buscarCanchas());
 
 /** Entero >= 0 de la URL (desde / mostrar); cualquier otra cosa da 0. */
 function enteroNoNegativo(valor) {
@@ -45,22 +54,26 @@ function recintosParaMapa(canchas) {
 async function listar(req, res, next) {
   const filtros = leerFiltros(req.query);
   try {
-    const [regiones, modalidades] = await Promise.all([
-      ubicacionModel.listarRegionesConComunas(),
-      canchaModel.listarModalidades(),
+    // Las tarjetas solo se dibujan con al menos un filtro aplicado (un texto muy corto no cuenta).
+    const conFiltros = () => Boolean(filtros.texto || filtros.idRegion || filtros.idComuna || filtros.idModalidad);
+    // Sin filtros la lista no muestra tarjetas: solo el mapa necesita la búsqueda completa.
+    const buscarCanchas = () => {
+      if (conFiltros()) return canchaModel.buscarCanchas(filtros);
+      return filtros.vista === 'mapa' ? leerCanchasSinFiltros() : [];
+    };
+    // Solo la comuna depende de las regiones: sin ella, la búsqueda va junto con el resto de las consultas.
+    const [regiones, modalidades, hayCanchas, canchasSinComuna] = await Promise.all([
+      leerRegiones(),
+      leerModalidades(),
+      leerHayCanchas(),
+      filtros.idComuna ? null : buscarCanchas(),
     ]);
     if (filtros.idComuna && filtros.idRegion) {
       const region = regiones.find((r) => r.id === filtros.idRegion);
       if (!region || !region.comunas.some((c) => c.id === filtros.idComuna)) filtros.idComuna = null;
     }
-    // Las tarjetas solo se dibujan con al menos un filtro aplicado (un texto muy corto no cuenta).
-    const hayFiltrosActivos = Boolean(filtros.texto || filtros.idRegion || filtros.idComuna || filtros.idModalidad);
-    // Sin filtros la lista no muestra tarjetas: solo el mapa necesita la búsqueda completa.
-    const buscar = hayFiltrosActivos || filtros.vista === 'mapa';
-    const [canchas, hayCanchas] = await Promise.all([
-      buscar ? canchaModel.buscarCanchas(filtros) : [],
-      canchaModel.hayCanchasVisibles(),
-    ]);
+    const canchas = canchasSinComuna || await buscarCanchas();
+    const hayFiltrosActivos = conFiltros();
 
     // "Cargar más canchas" con JavaScript: devuelve solo el siguiente lote de tarjetas (sin la página).
     if (req.query.parcial === '1') {

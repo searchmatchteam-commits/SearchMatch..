@@ -91,6 +91,12 @@
     <script type="speculationrules">
       { "prerender": [{ "where": { "href_matches": ["/login", "/registro"] }, "eagerness": "moderate" }] }
     </script>
+  <% } else if (!usuario.esCuentaPanel) { %>
+    <!-- Dock: la sección se prepara al detener el cursor sobre ella y se abre al instante con el clic.
+         Ninguna de estas páginas escribe datos al cargarse; las descarta main.js si llevan mucho preparadas. -->
+    <script type="speculationrules">
+      { "prerender": [{ "where": { "selector_matches": ".dock__item[href]:not([aria-current])" }, "eagerness": "moderate" }] }
+    </script>
   <% } %>
 </body>
 </html>

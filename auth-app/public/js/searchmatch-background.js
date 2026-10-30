@@ -1,4 +1,5 @@
 // Partículas originales de /perfil. Una instancia por documento, independiente de la carta.
+// Al cambiar de página se guardan en sessionStorage: la siguiente las retoma donde iban.
 document.addEventListener('DOMContentLoaded', () => {
   const fondo = document.querySelector('[data-searchmatch-background]');
   if (!fondo || fondo.dataset.inicializado) return;
@@ -13,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const { signal } = eventos;
   const FORMAS = ['punto', 'punto', 'punto', 'triangulo', 'rombo', 'cuadro'];
   const DESPLAZAMIENTO_MAX = 38;
+  const CLAVE_ESTADO = 'sm-fondo-estado';
   const cursor = { x: 0, y: 0 };
   const suave = { x: 0, y: 0 };
   let ancho = 0;
@@ -42,6 +44,27 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  function guardarEstado() {
+    if (!particulas.length) return;
+    try {
+      sessionStorage.setItem(CLAVE_ESTADO, JSON.stringify({ ancho, alto, tiempo, cursor, suave, particulas }));
+    } catch (e) { /* sin sessionStorage: la siguiente página parte de cero */ }
+  }
+
+  /** Retoma las partículas de la página anterior si la ventana mide lo mismo. */
+  function restaurarEstado() {
+    try {
+      const estado = JSON.parse(sessionStorage.getItem(CLAVE_ESTADO));
+      if (!estado || estado.ancho !== ancho || estado.alto !== alto) return false;
+      ({ tiempo, particulas } = estado);
+      Object.assign(cursor, estado.cursor);
+      Object.assign(suave, estado.suave);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   function redimensionar() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     ancho = window.innerWidth;
@@ -50,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     lienzo.height = Math.round(alto * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const cantidad = Math.round(Math.min(110, (ancho * alto) / 14000));
-    particulas = Array.from({ length: cantidad }, crearParticula);
+    if (particulas.length || !restaurarEstado()) particulas = Array.from({ length: cantidad }, crearParticula);
     necesitaResize = false;
   }
 
@@ -158,7 +181,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   observarModo();
 
+  // Sección precargada: al abrirla retoma el estado de la página que se acaba de dejar.
+  document.addEventListener('prerenderingchange', () => {
+    particulas = [];
+    necesitaResize = true;
+    actualizarEstado();
+  }, { signal });
+
   window.addEventListener('pagehide', (evento) => {
+    guardarEstado();
     fuera = true;
     actualizarEstado();
     clearTimeout(esperaResize);

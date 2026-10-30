@@ -53,6 +53,7 @@ async function construirUsuario(usuarioAuth) {
     terminosVersion: perfil ? perfil.terminos_version : null, // NUEVO: AR-011
     privacidadVersion: perfil ? perfil.privacidad_version : null, // NUEVO: AR-011
     correoGuardado: perfil ? perfil.correo : null, // NUEVO: AR-012 (para sincronizar un cambio de correo)
+    notificacionesSinLeer: perfil ? perfil.sin_leer : 0, // NT-002: viene con el perfil, sin otra consulta
   };
 }
 

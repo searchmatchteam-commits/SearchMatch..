@@ -60,7 +60,8 @@ async function findByAuthId(authId) {
            u.activo, -- CORRECCIÓN: regla 7 (cuenta inactiva no entra)
            (SELECT r.nombre FROM rol_aplicacion r WHERE r.id = u.id_rol_aplicacion) AS rol, -- NUEVO: AR-004
            u.terminos_version, u.privacidad_version, -- NUEVO: AR-011
-           u.admin_revocado_en, u.admin_nombre -- AP-001 / AP-011: cuentas del panel
+           u.admin_revocado_en, u.admin_nombre, -- AP-001 / AP-011: cuentas del panel
+           (SELECT count(*)::int FROM notificacion n WHERE n.id_usuario = u.id AND NOT n.leida) AS sin_leer -- NT-002
     FROM usuario u
     LEFT JOIN jugador j ON j.id_usuario = u.id
     WHERE u.auth_id = $1

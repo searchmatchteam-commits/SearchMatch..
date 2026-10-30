@@ -89,6 +89,12 @@
         var modo = localStorage.getItem('sm-liviano') || (sessionStorage.getItem('sm-gpu') === 'software' ? 'si' : 'no');
         if (modo === 'si') raiz.classList.add('modo-liviano');
       } catch (e) { /* sin localStorage: modo normal */ }
+      // El fondo sigue donde iba al cambiar de página: la malla parte adelantada lo que lleva la pestaña abierta.
+      try {
+        var inicioFondo = Number(sessionStorage.getItem('sm-fondo-inicio'));
+        if (!inicioFondo) sessionStorage.setItem('sm-fondo-inicio', inicioFondo = Date.now());
+        raiz.style.setProperty('--sm-fondo-t', (inicioFondo - Date.now()) / 1000 + 's');
+      } catch (e) { /* sin sessionStorage: la malla parte de cero */ }
     })();
   </script>
 </head>

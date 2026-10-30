@@ -27,7 +27,15 @@ async function leerMiEquipo(usuario) {
 }
 
 async function leerMisEquipos(usuario) {
-  return equipoModel.listarMisEquiposConPlantel(usuario.idAuth).catch((err) => {
+  return equipoModel.listarMisEquipos(usuario.idAuth).catch((err) => {
+    console.error('⚠️  No se pudieron leer los equipos para el dashboard:', err.message);
+    return null;
+  });
+}
+
+async function leerPlanteles(equipos) {
+  if (!equipos) return null;
+  return equipoModel.agregarPlanteles(equipos).catch((err) => {
     console.error('⚠️  No se pudieron leer los equipos para el dashboard:', err.message);
     return null;
   });
@@ -54,14 +62,18 @@ function resumenCarta(perfil) {
 
 async function dashboard(req, res, next) {
   try {
-    const [perfil, miEquipo, misEquipos, invitaciones] = await Promise.all([
+    const [perfil, miEquipo, equipos, invitaciones] = await Promise.all([
       leerPerfilJugador(req.usuario),
       leerMiEquipo(req.usuario),
       leerMisEquipos(req.usuario),
       leerInvitaciones(req.usuario),
     ]);
     if (perfil && !perfil.perfilCompleto) return res.redirect('/perfil-jugador');
-    const equipoInicio = await agendaController.datosEquipoInicio(req, misEquipos);
+    const [misEquipos, inicio] = await Promise.all([leerPlanteles(equipos), agendaController.datosEquipoInicio(req, equipos)]);
+    // El equipo de inicio se elige de la lista básica; a la vista llega con su plantel.
+    const equipoInicio = inicio && misEquipos
+      ? { ...inicio, equipos: misEquipos, equipo: misEquipos.find((e) => e.id === inicio.equipo.id) }
+      : null;
 
     res.render('dashboard', {
       titulo: 'Mi panel',

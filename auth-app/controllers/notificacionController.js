@@ -7,14 +7,8 @@ const AVISOS = {
   inexistente: 'Esa notificación ya no existe.',
 };
 
-async function contadorSinLeer(req, res, next) {
-  res.locals.notificacionesSinLeer = 0;
-  if (!req.usuario || req.method !== 'GET') return next();
-  try {
-    res.locals.notificacionesSinLeer = await notificacionModel.contarSinLeer(req.usuario.idAuth);
-  } catch (err) {
-    console.error('⚠️  No se pudo contar las notificaciones:', err.message);
-  }
+function contadorSinLeer(req, res, next) {
+  res.locals.notificacionesSinLeer = req.usuario ? req.usuario.notificacionesSinLeer : 0;
   return next();
 }
 
