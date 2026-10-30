@@ -117,12 +117,12 @@ function erroresFechas({ fechaInicio, fechaTermino, fechaLimite }) {
 
 /**
  * TO-003 · Campos que se pueden cambiar según el estado. null = todos (borrador); [] = ninguno.
- * Con inscripciones abiertas: descripción, reglamento, premios, ampliar el cupo máximo y extender la fecha límite.
+ * Con inscripciones abiertas: foto, descripción, reglamento, premios, ampliar el cupo máximo y extender la fecha límite.
  */
 function camposEditables(estado) {
   if (estado === 'borrador') return null;
-  if (CON_INSCRIPCIONES.includes(estado)) return ['descripcion', 'reglamento', 'premios', 'cupo_max', 'fecha_limite_inscripcion'];
-  if (estado === 'cerrado' || estado === 'en_curso') return ['descripcion', 'reglamento', 'premios'];
+  if (CON_INSCRIPCIONES.includes(estado)) return ['foto', 'descripcion', 'reglamento', 'premios', 'cupo_max', 'fecha_limite_inscripcion'];
+  if (estado === 'cerrado' || estado === 'en_curso') return ['foto', 'descripcion', 'reglamento', 'premios'];
   return [];
 }
 

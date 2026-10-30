@@ -71,7 +71,9 @@
     modal.querySelector('[data-cerrar-modal]').addEventListener('click', cerrar);
     modal.addEventListener('click', function (e) { if (e.target === modal) cerrar(); });
 
-    if (new URLSearchParams(location.search).get('aviso') === 'modalidad-agregada') abrir();
+    // También lo abre el botón "Inscribir a mi equipo" de la lista de torneos (?inscribir=1).
+    const consulta = new URLSearchParams(location.search);
+    if (consulta.get('aviso') === 'modalidad-agregada' || consulta.has('inscribir')) abrir();
   }
 
   // ---------- Modal de victoria ----------

@@ -1,8 +1,8 @@
 /* public/css/torneos-lista.css
-   Galería de torneos (/torneos): carrusel horizontal de cartas sobre un fondo de hexágonos.
+   Galería de torneos (/torneos): grilla de cartas sobre un fondo de hexágonos.
    Se carga después de tema-claro.css, así que sus reglas de modo claro van al final.
-   Secciones: tokens · fondo · cabecera · barra (filtros, filtrar por, flechas) · carrusel · carta ·
-   cupos · premio · CTA · modo claro. */
+   Secciones: tokens · fondo · cabecera · barra (filtros, filtrar por) · grilla · carta ·
+   cupos · premio y dinero · CTA · modo claro. */
 
 /* ---------- Tokens ---------- */
 .tl {
@@ -53,7 +53,7 @@
 .tl .boton-volver:hover,
 .tl .boton-volver:focus-visible { border: 0; box-shadow: none; color: var(--tl-neon); }
 
-/* ---------- Barra: filtros a la izquierda, "Filtrar por" y flechas a la derecha ---------- */
+/* ---------- Barra: filtros a la izquierda, "Filtrar por" a la derecha ---------- */
 .tl-barra {
   display: flex;
   flex-wrap: wrap;
@@ -144,59 +144,21 @@
 .tl-filtrar select option,
 .tl-filtrar select optgroup { background: #121212; color: var(--tl-texto); }
 
-.tl-flecha {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 1px solid var(--tl-borde);
-  background: rgba(18, 18, 18, 0.8);
-  color: var(--tl-texto);
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.tl-flecha:hover { border-color: var(--tl-neon); color: var(--tl-neon); }
-.tl-flecha:disabled { opacity: 0.35; cursor: default; border-color: var(--tl-borde); color: var(--tl-texto); }
-
-.tl-flecha svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* En pantallas táctiles se desliza con el dedo: las flechas sobran */
-@media (hover: none) { .tl-flecha { display: none; } }
-
-/* ---------- Carrusel horizontal ---------- */
-.tl-carrusel {
+/* ---------- Grilla: 2 o 3 cartas por fila en escritorio, 1 en móvil ---------- */
+.tl-grilla {
   list-style: none;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 24px;
-  padding: 4px 4px 32px;
-  margin: 0 -4px 64px; /* el margen inferior deja libre el dock */
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
+  margin-bottom: 96px; /* deja libre el dock */
 }
-
-.tl-carrusel::-webkit-scrollbar { display: none; }
 
 /* ---------- Carta ---------- */
 .tl-carta {
   position: relative;
-  flex: 0 0 320px;
-  min-width: 320px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  scroll-snap-align: center;
   border-radius: 18px;
   overflow: hidden;
   /* Rejilla diagonal (~7 %) y brillo radial abajo, como en "Mis equipos" */
@@ -208,8 +170,6 @@
   box-shadow: 0 0 20px rgba(var(--tl-neon-rgb), 0.15), inset 0 0 24px rgba(var(--tl-neon-rgb), 0.05);
   transition: border-color 0.25s ease, transform 0.25s var(--curva), box-shadow 0.25s ease;
 }
-
-@media (max-width: 380px) { .tl-carta { flex-basis: 85vw; min-width: 85vw; } }
 
 .tl-carta[hidden] { display: none; }
 .tl-carta:hover {
@@ -223,7 +183,7 @@
   position: relative;
   height: 180px;
   overflow: hidden;
-  background: radial-gradient(ellipse at 50% 45%, rgba(var(--tl-neon-rgb), 0.12), transparent 70%);
+  background: var(--tl-carta);
   isolation: isolate;
 }
 
@@ -236,48 +196,16 @@
   background: linear-gradient(180deg, transparent 35%, rgba(10, 15, 13, 0.75) 72%, var(--tl-carta) 100%);
 }
 
-.tl-carta__iniciales {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
-  font-size: 3rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--tl-neon);
-  text-shadow: 0 0 18px rgba(var(--tl-neon-rgb), 0.6);
-}
-
 .tl-carta__foto {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s ease, opacity 0.2s ease;
+  transition: transform 0.4s ease;
 }
 
 .tl-carta:hover .tl-carta__foto { transform: scale(1.04); }
-
-/* Con foto, las iniciales de abajo sobran (con screen se transparentarían) */
-.tl-carta__media:has(.tl-carta__foto--lista) .tl-carta__iniciales { display: none; }
-
-/* Con JS la foto aparece recién cuando se revisó su fondo (evita el destello blanco) */
-.js .tl-carta__foto { opacity: 0; }
-.js .tl-carta__foto--lista { opacity: 1; }
-
-/* Foto con fondo blanco (la detecta torneos-lista.js): invertida queda con fondo negro y el
-   dibujo claro; hue-rotate recupera los colores, contrast lleva a negro puro los grises casi
-   blancos del fondo y screen hace desaparecer ese negro. La máscara borra el borde del recorte. */
-.tl-carta__foto--fondo-claro {
-  object-fit: contain;
-  padding: 14px 0 26px;
-  filter: invert(1) hue-rotate(180deg) contrast(1.6) brightness(1.05);
-  mix-blend-mode: screen;
-  -webkit-mask-image: radial-gradient(ellipse 60% 65% at 50% 45%, #000 55%, transparent 100%);
-  mask-image: radial-gradient(ellipse 60% 65% at 50% 45%, #000 55%, transparent 100%);
-}
 
 /* ---------- Badges sobre la imagen ---------- */
 .tl-badge {
@@ -295,12 +223,12 @@
   text-transform: uppercase;
 }
 
-/* Formato: contorno neón; el desenfoque mantiene el texto legible sobre cualquier foto */
+/* Formato: contorno neón; el fondo oscuro y el desenfoque mantienen el texto legible sobre cualquier foto */
 .tl-badge--formato {
   left: 12px;
   max-width: calc(100% - 130px);
   color: var(--tl-neon);
-  background: transparent;
+  background: rgba(0, 0, 0, 0.6);
   border: 1px solid var(--tl-neon);
   text-shadow: 0 0 8px rgba(var(--tl-neon-rgb), 0.7);
   box-shadow: 0 0 10px rgba(var(--tl-neon-rgb), 0.25), inset 0 0 8px rgba(var(--tl-neon-rgb), 0.12);
@@ -445,7 +373,7 @@
   color: #fff;
 }
 
-/* ---------- Premio ---------- */
+/* ---------- Premio y dinero (fondo total y cuota, en dos columnas) ---------- */
 .tl-premio {
   display: flex;
   align-items: center;
@@ -487,6 +415,30 @@
 
 .tl-premio__texto strong span { font-size: 0.75rem; font-weight: 600; color: var(--tl-gris); }
 
+.tl-dinero {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tl-dinero .tl-premio { min-width: 0; }
+.tl-dinero .tl-premio__texto small { text-transform: none; }
+.tl-dinero .tl-premio__texto strong { font-size: 1.05rem; }
+
+/* Botones de la carta: inscribir (sólido) y ver ficha (contorno), siempre al fondo */
+.tl-botones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.tl-botones__nota {
+  font-size: 0.82rem;
+  text-align: center;
+  color: var(--tl-gris);
+}
+
 /* ---------- CTA: píldora verde neón sólida, igual que "Administrar equipo" ---------- */
 .tl-cta {
   position: relative;
@@ -495,7 +447,6 @@
   justify-content: center;
   align-items: center;
   gap: 8px;
-  margin-top: auto;
   padding: 13px 18px;
   border-radius: 999px;
   font-weight: 800;
@@ -513,6 +464,22 @@
   color: #000;
   background: var(--tl-neon-hover);
   box-shadow: 0 0 22px rgba(var(--tl-neon-rgb), 0.7), 0 0 48px rgba(var(--tl-neon-rgb), 0.35);
+}
+
+.tl-cta--contorno {
+  color: var(--tl-neon);
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Inscripción no disponible: se ve el botón, sin brillo ni reacción, y el motivo debajo */
+.tl-cta--apagado,
+.tl-cta--apagado:hover {
+  color: var(--tl-gris);
+  background: var(--tl-superficie);
+  border-color: var(--tl-borde);
+  box-shadow: none;
+  cursor: not-allowed;
 }
 
 .tl-cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
@@ -544,7 +511,6 @@
 .tl-vacio__titulo { margin-bottom: 4px; font-weight: 800; color: var(--tl-texto); }
 
 @media (prefers-reduced-motion: reduce) {
-  .tl-carrusel { scroll-behavior: auto; }
   .tl-carta, .tl-carta__foto, .tl-cta, .tl-cta__icono { transition: none; }
   .tl-estado--abierto::before { animation: none; }
 }
@@ -562,27 +528,26 @@ html[data-theme="light"] .tl {
   --tl-gris-claro: #4b5563;
 }
 html[data-theme="light"] .tl-filtro,
-html[data-theme="light"] .tl-filtrar select,
-html[data-theme="light"] .tl-flecha { background-color: #fff; }
+html[data-theme="light"] .tl-filtrar select { background-color: #fff; }
 html[data-theme="light"] .tl-filtrar select option,
 html[data-theme="light"] .tl-filtrar select optgroup { background: #fff; }
-html[data-theme="light"] .tl-filtro[aria-selected="true"] { color: #fff; }
+html[data-theme="light"] .tl-filtro[aria-selected="true"] { color: #fff; background-color: var(--tl-neon); }
 html[data-theme="light"] .tl-filtro__cuenta { background: rgba(17, 24, 39, 0.08); }
-html[data-theme="light"] .tl-carta__media { background: #f3f4f6; }
 html[data-theme="light"] .tl-carta { background: #fff; border-color: rgba(var(--tl-neon-rgb), 0.45); box-shadow: 0 8px 24px rgba(17, 24, 39, 0.08); }
 html[data-theme="light"] .tl-carta:hover { box-shadow: 0 0 0 1px var(--tl-neon), 0 14px 30px rgba(17, 24, 39, 0.12); }
 html[data-theme="light"] .tl-carta__media::after { background: linear-gradient(180deg, transparent 50%, rgba(255, 255, 255, 0.7) 80%, #fff 100%); }
-/* En claro el fondo blanco ya combina: sin invertir */
-html[data-theme="light"] .tl-carta__foto--fondo-claro { filter: none; mix-blend-mode: multiply; -webkit-mask-image: none; mask-image: none; }
 html[data-theme="light"] .tl-carta__enlace { color: #111827; }
 html[data-theme="light"] .tl-badge--formato { background: rgba(255, 255, 255, 0.9); text-shadow: none; box-shadow: none; }
 html[data-theme="light"] .tl-badge--mio { color: #fff; box-shadow: none; }
-html[data-theme="light"] .tl-estado--abierto,
-html[data-theme="light"] .tl-carta__iniciales { text-shadow: none; }
+html[data-theme="light"] .tl-estado--abierto { text-shadow: none; }
 html[data-theme="light"] .tl-carta__meta svg { filter: none; }
 html[data-theme="light"] .tl-anillo { background: #fff; box-shadow: none; }
 html[data-theme="light"] .tl-anillo__pista { stroke: #e5e7eb; }
 html[data-theme="light"] .tl-anillo__valor { filter: none; }
+html[data-theme="light"] .tl-anillo__texto { color: var(--tl-texto); }
 html[data-theme="light"] .tl-cta { color: #fff; box-shadow: none; }
+html[data-theme="light"] .tl-cta--contorno { color: var(--tl-neon-hover); }
+html[data-theme="light"] .tl-cta.tl-cta--apagado,
+html[data-theme="light"] .tl-cta.tl-cta--apagado:hover { color: var(--tl-gris); border-color: var(--tl-borde); box-shadow: none; }
 html[data-theme="light"] .tl-cta:hover,
 html[data-theme="light"] .tl-cta:focus-visible { color: #fff; border-color: var(--tl-neon-hover); box-shadow: 0 6px 18px rgba(var(--tl-neon-rgb), 0.3); }

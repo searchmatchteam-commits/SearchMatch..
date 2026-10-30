@@ -213,7 +213,8 @@ async function revisar(datos, erroresCampo, { torneo = null, revisarMedios = tru
       }
     }
   }
-  if (!torneo && !datos.foto && !erroresCampo.foto) erroresCampo.foto = 'Sube una foto para el torneo.';
+  // Obligatoria también al editar: un torneo antiguo sin foto debe subir una para guardar.
+  if (!datos.foto && !(torneo && torneo.foto) && !erroresCampo.foto) erroresCampo.foto = 'La foto del torneo es obligatoria: sube una imagen JPG, PNG o WebP.';
 
   const quedan = torneo ? torneo.patrocinadores.filter((p) => !datos.quitarPatrocinadores.includes(p.id)).length : 0;
   if (datos.tienePatrocinadores && quedan + datos.patrocinadoresNuevos.length === 0
@@ -301,7 +302,7 @@ function aplicarRestricciones(torneo, editables, datos, erroresCampo, enviados) 
   ['foto', 'patrocinadores'].forEach((campo) => {
     if (!editables.includes(campo) && enviados.has(campo)) erroresCampo[campo === 'foto' ? 'foto' : 'patrocinador_0'] = `Con el torneo en "${estadoTexto}" no se puede cambiar.`;
   });
-  datos.foto = null;
+  if (!editables.includes('foto')) datos.foto = null;
   datos.patrocinadoresNuevos = [];
   datos.quitarPatrocinadores = [];
   datos.tienePatrocinadores = actuales.tienePatrocinadores;

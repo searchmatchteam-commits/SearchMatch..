@@ -2,14 +2,6 @@
 
 <%
   // partirPremio (config/torneos.js) llega desde el controlador: "1er lugar $500.000" → "$500.000" y "1er lugar"
-  // Iniciales para la imagen de un torneo sin foto: "Copa de Verano" → "CV"
-  function iniciales(nombre) {
-    const palabras = nombre.split(/\s+/).filter((p) => p && !/^(de|del|la|las|el|los|y)$/i.test(p));
-    if (palabras.length === 0) return '?';
-    if (palabras.length === 1) return palabras[0].slice(0, 2).toUpperCase();
-    return (palabras[0][0] + palabras[1][0]).toUpperCase();
-  }
-  const proximos = torneos.filter((t) => t.conInscripciones && !t.inscripcionVencida).length;
   const mios = torneos.filter((t) => misTorneos.includes(t.id)).length;
   // Opciones del menú "Filtrar por": formatos y modalidades presentes en la lista
   const formatos = [...new Map(torneos.map((t) => [t.formato, t.formatoTexto])).entries()];
@@ -33,7 +25,7 @@
       <div class="tl-barra">
         <!-- Filtros (los aplica torneos-lista.js sin recargar la página) -->
         <div class="tl-filtros" role="tablist" aria-label="Filtrar torneos" data-filtros-torneos>
-          <% [['todos', 'Todos', torneos.length], ['mios', 'Mis torneos', mios], ['proximos', 'Próximos', proximos]].forEach(function ([clave, texto, cuenta], i) { %>
+          <% [['todos', 'Todos', torneos.length], ['mios', 'Mis torneos', mios]].forEach(function ([clave, texto, cuenta], i) { %>
             <button type="button" class="tl-filtro" role="tab" data-filtro="<%= clave %>" aria-selected="<%= i === 0 %>" tabindex="<%= i === 0 ? 0 : -1 %>">
               <%= texto %> <span class="tl-filtro__cuenta tl-num"><%= cuenta %></span>
             </button>
@@ -58,31 +50,28 @@
               </optgroup>
             </select>
           </label>
-          <button type="button" class="tl-flecha" data-carrusel-mover="-1" aria-label="Torneos anteriores">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
-          </button>
-          <button type="button" class="tl-flecha" data-carrusel-mover="1" aria-label="Más torneos">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-          </button>
         </div>
       </div>
 
-      <ul class="tl-carrusel" data-galeria-torneos>
+      <ul class="tl-grilla" data-galeria-torneos>
         <% torneos.forEach(function (t) {
              const mio = misTorneos.includes(t.id);
              const abierto = t.conInscripciones && !t.inscripcionVencida;
              const porcentaje = Math.round(100 * t.inscritos / t.cantidadEquipos);
              const premio = t.premios ? partirPremio(t.premios) : null;
-             let cta = { texto: 'Ver resultados', href: `/torneos/${t.id}` };
-             if (mio && abierto) cta = { texto: 'Ver mi inscripción', href: `/torneos/${t.id}#inscripcion` };
-             else if (abierto && t.cuposLibres > 0) cta = { texto: 'Inscribir equipo', href: `/torneos/${t.id}#inscripcion` };
-             else if (abierto) cta = { texto: 'Ver torneo', href: `/torneos/${t.id}` };
-             else if (t.estado === 'en_curso') cta = { texto: 'Ver cuadrante', href: `/torneos/${t.id}` }; %>
-          <li class="tl-carta" data-estado="<%= abierto ? 'abierto' : t.estado %>" data-mio="<%= mio %>" data-formato="<%= t.formato %>" data-modalidad="<%= t.modalidad %>" data-fecha="<%= t.fechaInicio ? 'confirmada' : 'por-confirmar' %>">
+             // Solo el capitán inscribe; con más de un equipo elige cuál en el modal del detalle (?inscribir=1).
+             const yaInscritos = capitan.inscritos[t.id] || 0;
+             const quedanEquipos = capitan.total > yaInscritos;
+             // El botón siempre está: si no se puede usar, va apagado y con el motivo debajo.
+             let motivo = null;
+             if (!abierto) motivo = 'Las inscripciones están cerradas.';
+             else if (t.cuposLibres === 0) motivo = 'Este torneo no tiene cupos.';
+             else if (capitan.total === 0) motivo = 'Solo el capitán del equipo puede inscribirlo.';
+             else if (t.precio > 0) motivo = 'La inscripción con pago en línea se habilita muy pronto.'; %>
+          <li class="tl-carta" data-mio="<%= mio %>" data-formato="<%= t.formato %>" data-modalidad="<%= t.modalidad %>" data-fecha="<%= t.fechaInicio ? 'confirmada' : 'por-confirmar' %>">
             <div class="tl-carta__media">
-              <!-- Las iniciales quedan debajo: se ven si no hay foto o si no carga -->
-              <span class="tl-carta__iniciales" aria-hidden="true"><%= iniciales(t.nombre) %></span>
-              <% if (t.foto) { %><img class="tl-carta__foto" src="<%= t.foto %>" alt="" loading="lazy" data-foto-torneo /><% } %>
+              <!-- Sin foto (torneos antiguos) o si no carga, queda la imagen por defecto -->
+              <img class="tl-carta__foto" src="<%= t.foto || '/img/torneo-placeholder.svg' %>" alt="" loading="lazy" data-foto-torneo />
               <span class="tl-badge tl-badge--formato">
                 <span aria-hidden="true"><%= t.formato === 'relampago' ? '⚡' : '📅' %></span><span class="tl-badge__texto"><%= t.formatoTexto %></span>
               </span>
@@ -120,6 +109,21 @@
                 </div>
               </div>
 
+              <div class="tl-dinero">
+                <div class="tl-premio">
+                  <div class="tl-premio__texto">
+                    <small>Fondo total</small>
+                    <strong class="tl-num"><%= t.fondoTotalTexto %></strong>
+                  </div>
+                </div>
+                <div class="tl-premio">
+                  <div class="tl-premio__texto">
+                    <small>Cuota por equipo</small>
+                    <strong class="tl-num"><%= t.precio > 0 ? t.precioTexto : 'Gratis' %></strong>
+                  </div>
+                </div>
+              </div>
+
               <% if (premio) { %>
                 <div class="tl-premio">
                   <svg class="tl-premio__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4v3h-4z" /></svg>
@@ -134,10 +138,20 @@
                 </div>
               <% } %>
 
-              <a class="tl-cta" href="<%= cta.href %>">
-                <%= cta.texto %>
-                <svg class="tl-cta__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-              </a>
+              <div class="tl-botones">
+                <% if (abierto && yaInscritos > 0 && !(quedanEquipos && !motivo)) { %>
+                  <a class="tl-cta" href="/torneos/<%= t.id %>#inscripcion">Ver mi inscripción</a>
+                <% } else if (motivo) { %>
+                  <span class="tl-cta tl-cta--apagado" aria-disabled="true">Inscribir a mi equipo</span>
+                  <p class="tl-botones__nota"><%= motivo %></p>
+                <% } else { %>
+                  <a class="tl-cta" href="/torneos/<%= t.id %>?inscribir=1#inscripcion">
+                    Inscribir a mi equipo
+                    <svg class="tl-cta__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                  </a>
+                <% } %>
+                <a class="tl-cta tl-cta--contorno" href="/torneos/<%= t.id %>">Ver ficha del torneo</a>
+              </div>
             </div>
           </li>
         <% }) %>

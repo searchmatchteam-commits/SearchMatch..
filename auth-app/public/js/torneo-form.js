@@ -1,6 +1,6 @@
 // public/js/torneo-form.js
 // Formulario de torneo del panel (/admin/torneos/nuevo y /editar).
-//  - Vista previa de la foto elegida.
+//  - Vista previa de la foto elegida; avisa si falta, si el tipo no sirve o si pesa más de 5 MB (el servidor lo revalida).
 //  - Patrocinadores: muestra un bloque y "+ Agregar otro patrocinador" revela el siguiente.
 //  - TO-001 c5: al elegir la modalidad solo quedan los recintos con canchas activas de ella; al elegir el recinto
 //    se cargan sus canchas activas de la modalidad (GET /admin/torneos/canchas).
@@ -16,11 +16,34 @@
   const inputFoto = form.querySelector('[data-foto-input]');
   const vistaFoto = form.querySelector('[data-foto-vista]');
   if (inputFoto && vistaFoto) {
+    const campoFoto = inputFoto.closest('.campo');
+    const errorFoto = form.querySelector('#foto-error');
+    function marcarFoto(mensaje) {
+      campoFoto.classList.toggle('campo--error', Boolean(mensaje));
+      errorFoto.textContent = mensaje;
+    }
+
     inputFoto.addEventListener('change', () => {
       const archivo = inputFoto.files[0];
       if (!archivo) return;
+      let mensaje = '';
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(archivo.type)) mensaje = 'La foto debe ser una imagen JPG, PNG o WebP.';
+      else if (archivo.size > 5 * 1024 * 1024) mensaje = 'La foto puede pesar como máximo 5 MB.';
+      marcarFoto(mensaje);
+      if (mensaje) {
+        inputFoto.value = '';
+        return;
+      }
       vistaFoto.src = URL.createObjectURL(archivo);
       vistaFoto.hidden = false;
+    });
+
+    // El formulario es novalidate: sin este aviso, recién el servidor diría que falta la foto.
+    form.addEventListener('submit', (e) => {
+      if (inputFoto.disabled || !inputFoto.required || inputFoto.files.length > 0) return;
+      e.preventDefault();
+      marcarFoto('La foto del torneo es obligatoria: sube una imagen JPG, PNG o WebP.');
+      inputFoto.focus();
     });
   }
 

@@ -25,9 +25,9 @@
       <% if (editables) { %>
         <div class="alerta alerta--info" role="note">
           <% if (torneo.conInscripciones) { %>
-            Con las inscripciones abiertas solo puedes cambiar la descripción, el reglamento y los premios, ampliar el cupo máximo y extender la fecha límite.
+            Con las inscripciones abiertas solo puedes cambiar la foto, la descripción, el reglamento y los premios, ampliar el cupo máximo y extender la fecha límite.
           <% } else { %>
-            Con el torneo en "<%= torneo.estadoTexto.toLowerCase() %>" solo puedes cambiar la descripción, el reglamento y los premios.
+            Con el torneo en "<%= torneo.estadoTexto.toLowerCase() %>" solo puedes cambiar la foto, la descripción, el reglamento y los premios.
           <% } %>
           <% if (torneo.ocupados > 0) { %>Se avisará del cambio a los capitanes de los <%= torneo.ocupados %> equipos inscritos.<% } %>
         </div>
@@ -48,10 +48,10 @@
         </div>
 
         <div class="campo <%= error('foto') %>">
-          <label for="foto">Foto del torneo<% if (torneo) { %> <span class="sm-opcional">(déjala vacía para mantener la actual)</span><% } %></label>
+          <label for="foto">Foto del torneo<% if (torneo && torneo.foto) { %> <span class="sm-opcional">(déjala vacía para mantener la actual)</span><% } %></label>
           <% if (torneo && torneo.foto) { %><img class="sm-torneo-miniatura sm-torneo-miniatura--grande" src="<%= torneo.foto %>" alt="Foto actual" data-foto-vista /><% } else { %><img class="sm-torneo-miniatura sm-torneo-miniatura--grande" alt="" hidden data-foto-vista /><% } %>
-          <input type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/webp" <%= torneo ? '' : 'required' %> <%= dis('foto') %> aria-describedby="foto-error foto-ayuda" data-foto-input />
-          <small class="campo__ayuda" id="foto-ayuda">JPG, PNG o WebP de hasta 2 MB.</small>
+          <input type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/webp" <%= torneo && torneo.foto ? '' : 'required' %> <%= dis('foto') %> aria-describedby="foto-error foto-ayuda" data-foto-input />
+          <small class="campo__ayuda" id="foto-ayuda">Obligatoria. JPG, PNG o WebP de hasta 5 MB.</small>
           <small class="campo__error" id="foto-error"><%= erroresCampo.foto || '' %></small>
         </div>
 

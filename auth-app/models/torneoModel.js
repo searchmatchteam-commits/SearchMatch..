@@ -94,6 +94,8 @@ function aTorneo(f) {
     faltanParaMinimo: Math.max(0, f.cupo_min - f.confirmados),
     precio: f.precio,
     precioTexto: f.precio > 0 ? reglas.formatoCLP(f.precio) : 'Gratuito',
+    // Fondo total: lo que se junta con todos los cupos pagados (no hay un campo propio en la base).
+    fondoTotalTexto: reglas.formatoCLP(f.precio * f.cupo_max),
     mediosPago: f.medios_pago || [],
     mediosTexto: (f.medios_pago || []).map((m) => reglas.MEDIOS_PAGO[m] || m).join(', '),
     recaudado: f.recaudado,
@@ -676,6 +678,25 @@ async function equiposDelCapitan(authId, idTorneo, cliente = pool) {
   return rows.map((f) => ({ id: f.id, nombre: f.nombre, juegaModalidad: f.juega_modalidad, inscrito: f.inscrito }));
 }
 
+/**
+ * Equipos de los que la cuenta es capitán y en qué torneos ya ocupan cupo (botón "Inscribir a mi equipo" de /torneos).
+ * @returns {Promise<{total:number, inscritos:Object<number, number>}>} inscritos: id de torneo → equipos del capitán en él.
+ */
+async function resumenCapitan(authId) {
+  const { rows } = await pool.query(
+    `SELECT e.id, coalesce(array_agg(te.id_torneo) FILTER (WHERE te.id IS NOT NULL), '{}') AS torneos
+       FROM equipo e
+       JOIN usuario u ON u.id = e.id_usuario_creador AND u.auth_id = $1
+       LEFT JOIN torneo_equipo te ON te.id_equipo = e.id AND ${SQL_OCUPA}
+      WHERE e.activo
+      GROUP BY e.id`,
+    [authId]
+  );
+  const inscritos = {};
+  rows.forEach((f) => f.torneos.forEach((id) => { inscritos[id] = (inscritos[id] || 0) + 1; }));
+  return { total: rows.length, inscritos };
+}
+
 /** Ids de los torneos donde juega algún equipo de la cuenta (lo creó o está en su plantel). Pestaña "Mis torneos". */
 async function idsMisTorneos(authId) {
   const { rows } = await pool.query(
@@ -921,5 +942,5 @@ async function registrarResultado(admin, idTorneo, idPartido, golesLocal, golesV
 module.exports = {
   LISTADO, listar, listarAdmin, catalogos, recintosParaTorneo, canchasDeRecinto, nivelesPorId, obtener, modalidades,
   crear, editar, publicar, cerrarInscripciones, cerrarVencidos, eliminar, obtenerFoto, obtenerLogo,
-  equiposDelCapitan, idsMisTorneos, eventosCalendario, inscribir, retirar, quitarEquipo, empezar, registrarResultado,
+  equiposDelCapitan, idsMisTorneos, resumenCapitan, eventosCalendario, inscribir, retirar, quitarEquipo, empezar, registrarResultado,
 };

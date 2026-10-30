@@ -25,7 +25,7 @@ test('TO-001 c3: fecha límite no posterior al inicio y término no anterior', (
 
 test('TO-003: campos editables por estado', () => {
   assert.equal(r.camposEditables('borrador'), null);
-  assert.deepEqual(r.camposEditables('abierto'), ['descripcion', 'reglamento', 'premios', 'cupo_max', 'fecha_limite_inscripcion']);
+  assert.deepEqual(r.camposEditables('abierto'), ['foto', 'descripcion', 'reglamento', 'premios', 'cupo_max', 'fecha_limite_inscripcion']);
   assert.deepEqual(r.camposEditables('completo'), r.camposEditables('abierto'));
   assert.deepEqual(r.camposEditables('finalizado'), []);
   assert.deepEqual(r.camposEditables('cancelado'), []);

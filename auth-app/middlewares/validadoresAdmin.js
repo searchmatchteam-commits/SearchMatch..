@@ -150,17 +150,18 @@ const {
   MAX_PATROCINADORES, FORMATOS, MEDIOS_PAGO, LIMITES, erroresCupos, erroresFechas, leerPrecio,
 } = require('../config/torneos');
 
-const MAX_IMAGEN = 2 * 1024 * 1024;
+const MAX_FOTO = 5 * 1024 * 1024;
+const MAX_LOGO = 2 * 1024 * 1024;
 const recibirArchivos = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_IMAGEN, files: MAX_PATROCINADORES + 1, fields: 150 },
+  limits: { fileSize: MAX_FOTO, files: MAX_PATROCINADORES + 1, fields: 150 },
 }).any();
 
 /** Lee el multipart; si un archivo pesa demasiado no corta la petición: lo deja en req.errorSubida. */
 function subirImagenesTorneo(req, res, next) {
   recibirArchivos(req, res, (err) => {
     if (err instanceof multer.MulterError) {
-      req.errorSubida = err.code === 'LIMIT_FILE_SIZE' ? 'Cada imagen puede pesar como máximo 2 MB.' : 'No se pudieron leer las imágenes.';
+      req.errorSubida = err.code === 'LIMIT_FILE_SIZE' ? 'La imagen pesa demasiado: la foto puede tener hasta 5 MB y cada logo hasta 2 MB.' : 'No se pudieron leer las imágenes.';
       req.body = req.body || {};
       req.files = [];
       return next();
@@ -280,6 +281,7 @@ function validarTorneo(req, res, next) {
       else if (nombre.length > 100) e[`patrocinador_${i}`] = 'Máximo 100 caracteres.';
       else if (logo.vacia) e[`patrocinador_${i}`] = `Sube el logo de ${nombre}.`;
       else if (logo.invalida) e[`patrocinador_${i}`] = 'El logo debe ser una imagen JPG, PNG o WebP.';
+      else if (logo.datos.length > MAX_LOGO) e[`patrocinador_${i}`] = 'El logo puede pesar como máximo 2 MB.';
       else datos.patrocinadoresNuevos.push({ nombre, logo });
     }
   }

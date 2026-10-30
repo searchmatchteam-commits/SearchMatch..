@@ -392,11 +392,10 @@ html.js .trn-grid--ancha .trn-lateral.revelar {
   html.js .trn-grid--ancha .trn-lateral.revelar { transition-property: opacity, transform; }
 }
 
-/* Información: foto sobre los datos, completa (sin recortar el afiche) y centrada */
-.trn .sm-torneo-ficha:has(.sm-torneo-ficha__foto) { grid-template-columns: minmax(0, 1fr); }
-
+/* Información: foto sobre los datos, completa (sin recortar el afiche) y centrada.
+   La ficha es un .dash-panel en columna flex, que estira a sus hijos: align-self los deja a su tamaño. */
 .trn .sm-torneo-ficha__foto {
-  justify-self: center;
+  align-self: center;
   width: auto;
   max-width: 100%;
   height: auto;

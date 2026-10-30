@@ -27,9 +27,10 @@ async function listar(req, res, next) {
     return res.render('torneos', {
       titulo: 'Torneos',
       pagina: 'equipo',
-      torneoLista: true, // carga torneos-lista.css/.js (cartas, pestañas, foto con fondo blanco)
+      torneoLista: true, // carga torneos-lista.css/.js (cartas y pestañas)
       torneos: await torneoModel.listar(),
       misTorneos: await torneoModel.idsMisTorneos(req.usuario.idAuth),
+      capitan: await torneoModel.resumenCapitan(req.usuario.idAuth),
       partirPremio,
       aviso: AVISOS[req.query.aviso] || null,
     });

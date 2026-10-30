@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Torneo sin foto">
+  <defs>
+    <radialGradient id="halo" cx="50%" cy="42%" r="60%">
+      <stop offset="0" stop-color="#00ff41" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#00ff41" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="rejilla" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <path d="M0 0v22" stroke="#00ff41" stroke-opacity=".07"/>
+    </pattern>
+  </defs>
+  <rect width="640" height="360" fill="#0a0f0d"/>
+  <rect width="640" height="360" fill="url(#rejilla)"/>
+  <rect width="640" height="360" fill="url(#halo)"/>
+  <g transform="translate(272 122) scale(4)" fill="none" stroke="#00ff41" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 9H4.500a2.500 2.500 0 0 1 0-5H6"/>
+    <path d="M18 9h1.500a2.500 2.500 0 0 0 0-5H18"/>
+    <path d="M4 22h16"/>
+    <path d="M10 14.660V17c0 .55-.47.98-.97 1.210C7.850 18.750 7 20.240 7 22"/>
+    <path d="M14 14.660V17c0 .55.47.98.97 1.210C16.150 18.750 17 20.240 17 22"/>
+    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+  </g>
+</svg>
