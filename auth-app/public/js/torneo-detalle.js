@@ -2,7 +2,8 @@
    Detalle de un torneo (/torneos/:id):
    - Pestañas Información | Equipos inscritos | Cuadrante (clic y flechas del teclado).
    - "Inscribir equipo": modal para elegir el equipo y aceptar las reglas.
-   - Cuadrante: al pasar el mouse (o el foco) por un equipo, se ilumina en verde su camino en la llave.
+   - Cuadrante: la llave ancha parte centrada en la final; al pasar el mouse (o el foco) por un equipo,
+     se ilumina en verde su camino.
    - Victoria: si el capitán ganó el torneo, modal "¡Campeones!" la primera vez que entra. */
 (function () {
   'use strict';
@@ -19,6 +20,10 @@
         const panel = document.getElementById(p.getAttribute('aria-controls'));
         if (panel) panel.hidden = !activa;
       });
+      // La caja usa todo el ancho solo en el cuadrante; Información y Equipos van angostas
+      const ancha = pestana.id === 'pestana-cuadrante';
+      contenedor.classList.toggle('is-wide', ancha);
+      contenedor.classList.toggle('is-narrow', !ancha);
       if (enfocar) pestana.focus();
     }
 
@@ -115,6 +120,14 @@
       document.addEventListener('keydown', teclasVictoria);
     }
   }
+
+  // ---------- Llave más ancha que la pantalla: parte centrada en la final ----------
+  // ResizeObserver: también recentra al volver a la pestaña (ocultarla pierde el scroll) y mientras la caja se ensancha.
+  document.querySelectorAll('[data-llave-scroll]').forEach(function (el) {
+    new ResizeObserver(function () {
+      el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
+    }).observe(el);
+  });
 
   // ---------- Camino de un equipo en la llave ----------
   document.querySelectorAll('[data-llave]').forEach(function (llave) {

@@ -61,6 +61,9 @@
       </div>
     </div>
   <% } %>
+  <% if (esLlave && !admin) { %>
+    <%- include('torneo-llave', { torneo, resaltar }) %>
+  <% } else { %>
   <div class="<%= esLlave ? 'sm-llave' : 'sm-fechas' %>" <%- esLlave ? 'data-llave' : '' %>>
     <% torneo.rondas.forEach(function (ronda) { %>
       <section class="sm-ronda" aria-label="<%= ronda.nombre %>">
@@ -137,5 +140,6 @@
       </section>
     <% }) %>
   </div>
+  <% } %>
   <% if (admin) { %><p class="dash-panel__nota sm-cargar__vacio" data-sin-partidos hidden>Ningún partido coincide con la búsqueda.</p><% } %>
 </div>

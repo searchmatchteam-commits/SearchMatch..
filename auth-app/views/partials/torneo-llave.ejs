@@ -1,0 +1,82 @@
+<%
+  // Llave simétrica de un torneo ya empezado (solo lectura): la primera mitad de cada ronda va a la
+  // izquierda, la segunda a la derecha y la final al centro. Uso: include('partials/torneo-llave', { torneo, resaltar })
+  //   resaltar: ids de equipos a destacar (los del jugador)
+  // Las rondas siguientes se crean recién cuando termina la anterior, así que el tamaño sale de la primera
+  // ronda y lo que aún no existe se dibuja como "Por definir". Los partidos 1 y 2 alimentan al 1 de la ronda
+  // siguiente, los 3 y 4 al 2, etc. (el mismo cruce de registrarResultado en models/torneoModel.js).
+  // Líneas: cada columna reparte el mismo alto en celdas iguales, así el centro de cada partido queda
+  // en el punto medio del par que lo alimenta (estilos: .llv-* en torneo-detalle.css).
+  const resaltarLlv = locals.resaltar || [];
+  let cupos = 2;
+  const equiposPrimera = torneo.rondas.length > 0 ? torneo.rondas[0].partidos.length * 2 : torneo.cantidadEquipos;
+  while (cupos < equiposPrimera) cupos *= 2;
+
+  function tituloRonda(total) {
+    return { 1: 'FINAL', 2: 'SEMIFINALES', 4: 'CUARTOS DE FINAL', 8: 'OCTAVOS DE FINAL' }[total] || `${total}AVOS DE FINAL`;
+  }
+
+  const rondasLlave = [];
+  for (let total = cupos / 2, r = 0; total >= 1; total /= 2, r++) {
+    const existentes = torneo.rondas[r] ? torneo.rondas[r].partidos : [];
+    rondasLlave.push({
+      titulo: tituloRonda(total),
+      partidos: Array.from({ length: total }, (_, i) => existentes[i] || null),
+    });
+  }
+  const final = rondasLlave[rondasLlave.length - 1];
+  const previas = rondasLlave.slice(0, -1);
+  const filas = previas.length > 0 ? previas[0].partidos.length / 2 : 1;
+  const COLUMNAS_LADO = { izquierdo: previas, derecho: [...previas].reverse() };
+%>
+<% function equipoLlv(p, e, visita) {
+     const gano = p && p.jugado && e && p.idGanador === e.id;
+     const clase = `sm-partido__equipo ${visita ? 'sm-partido__equipo--visita' : ''} ${gano ? 'sm-partido__equipo--gano' : ''}`;
+     if (e) { %>
+       <span class="<%= clase %>" title="<%= e.nombre %>" data-equipo="<%= e.id %>"><span class="llv-nombre"><%= e.nombre %></span></span>
+  <% } else if (p && p.jugado) { %>
+       <span class="<%= clase %>"><span class="llv-nombre">Equipo eliminado</span></span>
+  <% } else { %>
+       <span class="<%= clase %> llv-por-definir"><span class="llv-nombre">Por definir</span></span>
+  <% }
+   } %>
+<% function partidoLlv(p) {
+     const penales = p && p.jugado && p.golesLocal === p.golesVisita;
+     const mio = p && ((p.local && resaltarLlv.includes(p.local.id)) || (p.visita && resaltarLlv.includes(p.visita.id))); %>
+  <div class="sm-partido llv-partido <%= mio ? 'sm-partido--mio' : '' %>" <%- p ? `id="partido-${p.id}"` : '' %>>
+    <% equipoLlv(p, p && p.local, false); %>
+    <span class="sm-partido__marcador">
+      <%= p && p.jugado ? `${p.golesLocal} - ${p.golesVisita}` : 'vs' %>
+      <% if (penales) { %><small>(penales)</small><% } %>
+    </span>
+    <% equipoLlv(p, p && p.visita, true); %>
+  </div>
+<% } %>
+<% function columnaLlv(ronda, lado, recibe) {
+     const mitad = ronda.partidos.length / 2;
+     const partidos = lado === 'izquierdo' ? ronda.partidos.slice(0, mitad) : ronda.partidos.slice(mitad); %>
+  <section class="llv-columna llv-columna--<%= lado %> <%= recibe ? 'llv-columna--recibe' : '' %>" aria-label="<%= ronda.titulo %>, lado <%= lado %>">
+    <h3 class="sm-ronda__titulo llv-titulo"><%= ronda.titulo %></h3>
+    <div class="llv-cuerpo">
+      <% for (let i = 0; i < partidos.length; i += 2) { %>
+        <div class="llv-par <%= partidos.length > 1 ? 'llv-par--doble' : '' %>">
+          <% partidos.slice(i, i + 2).forEach(function (p) { %>
+            <div class="llv-celda"><% partidoLlv(p); %></div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+  </section>
+<% } %>
+<div class="llv-scroll" data-llave-scroll tabindex="0" role="region" aria-label="Llave del torneo">
+  <div class="llv" data-llave style="--llv-filas: <%= filas %>">
+    <% COLUMNAS_LADO.izquierdo.forEach(function (ronda, c) { columnaLlv(ronda, 'izquierdo', c > 0); }) %>
+    <section class="llv-columna llv-columna--final <%= previas.length > 0 ? 'llv-columna--recibe' : '' %>" aria-label="<%= final.titulo %>">
+      <h3 class="sm-ronda__titulo llv-titulo"><%= final.titulo %></h3>
+      <div class="llv-cuerpo">
+        <div class="llv-celda"><% partidoLlv(final.partidos[0]); %></div>
+      </div>
+    </section>
+    <% COLUMNAS_LADO.derecho.forEach(function (ronda, c) { columnaLlv(ronda, 'derecho', c < previas.length - 1); }) %>
+  </div>
+</div>

@@ -17,45 +17,53 @@
   const bloqueadoModalidad = enInscripcion && faltan > 0 && disponibles.length === 0 && otraModalidad.length > 0;
   // Pestaña por defecto: el cuadrante (vacío mientras se llenan los cupos, con resultados después)
   const pestanaInicial = 'cuadrante';
+  // Eliminación directa: la cabecera es solo "Volver" y el nombre. Mientras hay inscripciones sigue el panel
+  // con las acciones (inscribir, retirar, habilitar modalidad); después la llave ocupa todo el ancho.
+  const conPanel = !esLlave || enInscripcion;
 %>
 <section class="eq trn">
-  <div class="contenedor">
-    <div class="trn-grid">
+  <div class="contenedor <%= conPanel ? '' : 'trn-contenedor--ancho' %>">
+    <div class="trn-grid <%= conPanel ? '' : 'trn-grid--ancha' %>">
       <!-- Columna izquierda: resumen e inscripción -->
       <aside class="trn-lateral revelar">
         <%- include('../partials/boton-volver', { fallbackUrl: '/torneos' }) %>
         <h1 class="trn-titulo"><%= torneo.nombre %></h1>
-        <p class="trn-etiquetas">
-          <span class="sm-rol"><%= torneo.formatoTexto %></span>
-          <span class="sm-rol"><%= torneo.modalidad %></span>
-          <span class="sm-estado sm-estado--torneo-<%= torneo.estado %>"><%= torneo.estadoTexto %></span>
-        </p>
-        <% if (enInscripcion && torneo.fechaInicio) { %>
-          <p class="trn-fecha">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2.5" /><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" /></svg>
-            Inicia el <%= torneo.fechaInicioTexto.corta %><%= torneo.horaInicio ? ` · ${torneo.horaInicio} hrs` : '' %>
+        <% if (!esLlave) { %>
+          <p class="trn-etiquetas">
+            <span class="sm-rol"><%= torneo.formatoTexto %></span>
+            <span class="sm-rol"><%= torneo.modalidad %></span>
+            <span class="sm-estado sm-estado--torneo-<%= torneo.estado %>"><%= torneo.estadoTexto %></span>
           </p>
+          <% if (enInscripcion && torneo.fechaInicio) { %>
+            <p class="trn-fecha">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2.5" /><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" /></svg>
+              Inicia el <%= torneo.fechaInicioTexto.corta %><%= torneo.horaInicio ? ` · ${torneo.horaInicio} hrs` : '' %>
+            </p>
+          <% } %>
         <% } %>
 
+        <% if (conPanel) { %>
         <div class="dash-panel eq-panel trn-energia" id="inscripcion">
-          <div class="trn-energia__cabecera">
-            <span class="trn-energia__etiqueta">Cupos</span>
-            <span class="trn-num trn-energia__cuenta"><strong><%= torneo.inscritos %></strong>/<%= torneo.cantidadEquipos %></span>
-          </div>
-          <div class="trn-energia__barra <%= enInscripcion ? 'trn-energia__barra--cargando' : '' %>" role="progressbar"
-               aria-valuemin="0" aria-valuemax="<%= torneo.cantidadEquipos %>" aria-valuenow="<%= torneo.inscritos %>" aria-label="Cupos llenos"
-               style="--segmentos: <%= torneo.cantidadEquipos %>">
-            <span class="trn-energia__relleno" style="width: <%= porcentaje %>%"></span>
-          </div>
-          <p class="trn-energia__texto">
-            <% if (!enInscripcion) { %>
-              <%= torneo.conInscripciones ? 'Inscripciones cerradas' : torneo.estadoTexto %>
-            <% } else if (faltan === 0) { %>
-              ¡Cupos completos! El torneo está por comenzar
-            <% } else { %>
-              <span class="trn-num"><%= faltan === 1 ? 'Falta 1 equipo' : `Faltan ${faltan} equipos` %></span> para el inicio
-            <% } %>
-          </p>
+          <% if (!esLlave) { %>
+            <div class="trn-energia__cabecera">
+              <span class="trn-energia__etiqueta">Cupos</span>
+              <span class="trn-num trn-energia__cuenta"><strong><%= torneo.inscritos %></strong>/<%= torneo.cantidadEquipos %></span>
+            </div>
+            <div class="trn-energia__barra <%= enInscripcion ? 'trn-energia__barra--cargando' : '' %>" role="progressbar"
+                 aria-valuemin="0" aria-valuemax="<%= torneo.cantidadEquipos %>" aria-valuenow="<%= torneo.inscritos %>" aria-label="Cupos llenos"
+                 style="--segmentos: <%= torneo.cantidadEquipos %>">
+              <span class="trn-energia__relleno" style="width: <%= porcentaje %>%"></span>
+            </div>
+            <p class="trn-energia__texto">
+              <% if (!enInscripcion) { %>
+                <%= torneo.conInscripciones ? 'Inscripciones cerradas' : torneo.estadoTexto %>
+              <% } else if (faltan === 0) { %>
+                ¡Cupos completos! El torneo está por comenzar
+              <% } else { %>
+                <span class="trn-num"><%= faltan === 1 ? 'Falta 1 equipo' : `Faltan ${faltan} equipos` %></span> para el inicio
+              <% } %>
+            </p>
+          <% } %>
 
           <% inscritos.forEach(function (e) { %>
             <form class="trn-mi-equipo" action="/torneos/<%= torneo.id %>/retirar/<%= e.id %>" method="POST"
@@ -97,10 +105,11 @@
             <% } %>
           <% } %>
         </div>
+        <% } %>
       </aside>
 
       <!-- Columna derecha: pestañas (Información | Equipos inscritos | Cuadrante) -->
-      <div class="trn-principal revelar" data-pestanas>
+      <div class="trn-principal revelar <%= pestanaInicial === 'cuadrante' ? 'is-wide' : 'is-narrow' %>" data-pestanas>
         <div class="trn-pestanas" role="tablist" aria-label="Secciones del torneo">
           <% [['informacion', 'Información'], ['equipos', 'Equipos inscritos'], ['cuadrante', 'Cuadrante']].forEach(function ([clave, texto]) { %>
             <button type="button" class="trn-pestana" role="tab" id="pestana-<%= clave %>" aria-controls="panel-<%= clave %>"

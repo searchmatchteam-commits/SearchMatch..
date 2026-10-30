@@ -2,7 +2,8 @@
    Detalle de un torneo (/torneos/:id). Se carga después de tema-claro.css, así que sus reglas de
    modo claro van al final de este archivo.
    Secciones: tipografía · grilla de dos columnas · volver · barra de energía ·
-   mi equipo · pestañas · fixture vacío · cuadrante (llave vacía) · llave en curso · dock · modo claro. */
+   mi equipo · pestañas · fixture vacío · cuadrante (llave vacía) · llave simétrica · llave en curso ·
+   dock · modo claro. */
 
 .trn {
   position: relative;
@@ -47,6 +48,11 @@
   flex-wrap: wrap;
   gap: 6px;
 }
+
+/* Sin panel lateral (llave en curso o terminada): el contenido usa todo el ancho */
+.trn .trn-contenedor--ancho { max-width: 1900px; }
+.trn-grid--ancha { grid-template-columns: minmax(0, 1fr); }
+.trn-grid--ancha .trn-lateral { position: static; }
 
 @media (max-width: 900px) {
   .trn-grid { grid-template-columns: minmax(0, 1fr); }
@@ -359,6 +365,46 @@
   overflow: hidden;
 }
 
+/* Ancho según la pestaña (clase is-wide / is-narrow, la cambia torneo-detalle.js). width: 100% porque
+   un elemento de grilla con margen automático deja de estirarse. En pantallas chicas el tope no alcanza
+   a aplicar: todas las pestañas ocupan el 100 %. El título acompaña a la caja para no quedar descolgado. */
+.trn { --trn-angosto: 960px; }
+
+.trn-principal,
+.trn-grid--ancha .trn-lateral {
+  width: 100%;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.trn-principal.is-narrow,
+.trn-grid--ancha:has(.trn-principal.is-narrow) .trn-lateral { max-width: var(--trn-angosto); }
+
+/* Conserva la aparición de .revelar y le suma el cambio de ancho */
+html.js .trn-principal.revelar,
+html.js .trn-grid--ancha .trn-lateral.revelar {
+  transition: opacity 0.7s ease, transform 0.7s var(--curva), max-width 0.25s ease;
+  transition-delay: var(--retraso, 0ms), var(--retraso, 0ms), 0ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js .trn-principal.revelar,
+  html.js .trn-grid--ancha .trn-lateral.revelar { transition-property: opacity, transform; }
+}
+
+/* Información: foto sobre los datos, completa (sin recortar el afiche) y centrada */
+.trn .sm-torneo-ficha:has(.sm-torneo-ficha__foto) { grid-template-columns: minmax(0, 1fr); }
+
+.trn .sm-torneo-ficha__foto {
+  justify-self: center;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 360px;
+  aspect-ratio: auto;
+  object-fit: contain;
+}
+
 .trn-pestanas {
   display: flex;
   gap: 4px;
@@ -415,6 +461,8 @@
 
 .trn-panel .dash-panel + .dash-panel { margin-top: 26px; }
 
+.trn-equipos { grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
+.trn-equipos a { min-width: 0; overflow-wrap: anywhere; }
 .trn-equipos__mio a { color: var(--verde); font-weight: 700; }
 
 /* ---------- Fixture vacío de una liga (antes de llenar los cupos) ---------- */
@@ -743,6 +791,117 @@ a.cq-equipo:hover { text-decoration: none; color: #fff; box-shadow: 0 0 20px rgb
   box-shadow: 0 0 8px var(--cq-neon);
 }
 
+/* ---------- Llave simétrica (partials/torneo-llave) ----------
+   Todas las columnas miden lo mismo de alto (--llv-filas filas de --llv-alto) y lo reparten en celdas
+   iguales, así cada partido cae en el punto medio de los dos que lo alimentan. El "]" (::after del par)
+   cubre la mitad de la separación y la línea de entrada (::before de la celda) la otra mitad. */
+.llv-scroll {
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+}
+
+.llv {
+  --llv-ancho: 232px;
+  --llv-alto: 78px;
+  --llv-separacion: 28px;
+  --llv-linea: 1px solid rgba(255, 255, 255, 0.18);
+  display: flex;
+  gap: var(--llv-separacion);
+  width: max-content;
+  margin: 0 auto; /* centrada si cabe; si no, los márgenes automáticos valen 0 y se puede deslizar entera */
+}
+
+.llv-columna { flex: 0 0 var(--llv-ancho); min-width: 0; }
+
+.llv-titulo {
+  height: 30px;
+  margin: 0;
+  font-size: 0.7rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.llv-cuerpo {
+  display: flex;
+  flex-direction: column;
+  height: calc(var(--llv-filas) * var(--llv-alto));
+}
+
+.llv-par {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.llv-celda {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Caja de partido: la de siempre, con alto parejo y nombres de hasta 2 líneas */
+.llv-partido {
+  width: 100%;
+  min-height: 62px;
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+
+.llv-nombre {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.llv-por-definir { font-weight: 500; color: var(--texto-suave); }
+
+/* "]" que une los dos partidos de un par, hacia el centro de la llave */
+.llv-par--doble::after {
+  content: "";
+  position: absolute;
+  top: 25%;
+  bottom: 25%;
+  width: calc(var(--llv-separacion) / 2);
+  border: var(--llv-linea);
+  pointer-events: none;
+}
+
+.llv-columna--izquierdo .llv-par--doble::after { left: 100%; border-left: 0; }
+.llv-columna--derecho .llv-par--doble::after { right: 100%; border-right: 0; }
+
+/* Líneas de entrada a cada partido desde la columna anterior */
+.llv-columna--recibe .llv-celda::before,
+.llv-columna--final.llv-columna--recibe .llv-celda::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: calc(var(--llv-separacion) / 2);
+  border-top: var(--llv-linea);
+  pointer-events: none;
+}
+
+.llv-columna--izquierdo .llv-celda::before { right: 100%; }
+.llv-columna--derecho .llv-celda::before { left: 100%; }
+
+/* La final recibe por ambos lados; las semifinales no llevan "]", así que la línea cruza toda la separación */
+.llv-columna--final .llv-celda::before,
+.llv-columna--final .llv-celda::after { width: var(--llv-separacion); }
+.llv-columna--final .llv-celda::before { right: 100%; }
+.llv-columna--final .llv-celda::after { left: 100%; }
+
+@media (max-width: 600px) {
+  .llv { --llv-ancho: 204px; --llv-separacion: 20px; }
+  .llv-partido { padding: 8px; gap: 6px; font-size: 0.78rem; }
+}
+
 /* ---------- Llave en curso: camino del equipo al pasar el mouse ---------- */
 .trn [data-llave] .sm-partido,
 .trn [data-llave] .sm-partido__equipo {
@@ -782,6 +941,7 @@ body:has(.trn) .dock {
 }
 
 /* ---------- Modo claro ---------- */
+html[data-theme="light"] .llv { --llv-linea: 1px solid rgba(15, 23, 42, 0.22); }
 html[data-theme="light"] .cq { --cq-neon: #16a34a; --cq-brillo: none; }
 html[data-theme="light"] .cq-equipo { background: #fff; border-color: var(--cq-neon); color: #111827; box-shadow: none; }
 html[data-theme="light"] .trn-pestana[aria-selected="true"] { color: #fff; background: #16a34a; box-shadow: none; }
