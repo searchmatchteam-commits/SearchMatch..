@@ -252,6 +252,8 @@
 .sm-catalogo__nuevo > .btn { align-self: flex-end; margin-bottom: 2px; }
 
 /* ---------- Mapa de canchas (DE-003) ---------- */
+/* Leaflet usa z-index de 400 a 1000: sin esto sus pines y controles pasan por encima del dock (z-index 50) */
+.leaflet-container { isolation: isolate; }
 .sm-mapa {
   width: 100%; height: 460px; border-radius: var(--radio-chico); overflow: hidden;
   border: 1px solid var(--borde-fuerte); background: #0a0a0a;
