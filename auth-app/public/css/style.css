@@ -317,6 +317,26 @@ svg {
   margin-top: 6px;
 }
 
+/* Píldora verde maciza: sin borde (el borde transparente de .btn dejaba un filo oscuro en las puntas
+   redondeadas), sin pseudo-elementos y con brillo solo exterior. El padding suma el px del borde. */
+.hero__acciones .btn--verde {
+  background: var(--verde);
+  background-clip: border-box;
+  border: 0;
+  outline: 0;
+  padding: 17px 32px;
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.5);
+}
+
+.hero__acciones .btn--verde:hover {
+  box-shadow: 0 0 22px rgba(57, 255, 20, 0.6);
+}
+
+.hero__acciones .btn--verde::before,
+.hero__acciones .btn--verde::after {
+  content: none;
+}
+
 .hero__visual {
   display: flex;
   flex-direction: column;

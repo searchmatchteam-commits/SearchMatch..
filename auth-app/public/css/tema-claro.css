@@ -1036,8 +1036,7 @@ html[data-theme="light"] .auth__tarjeta .formulario .btn--verde:hover {
 }
 
 /* Halos que son un elemento propio (detrás de los botones principales) */
-html[data-theme="light"] .dash-cta__halo,
-html[data-theme="light"] .auth-btn__halo {
+html[data-theme="light"] .dash-cta__halo {
   display: none;
 }
 

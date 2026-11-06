@@ -290,75 +290,55 @@
   filter: drop-shadow(0 0 5px rgba(var(--verde-rgb), 0.6));
 }
 
-.pagina-auth .auth-btn {
-  position: relative;
-  isolation: isolate;
+/* Botón principal de auth: píldora verde maciza. Sin borde, anillo, outline, sombra interior,
+   pseudo-elementos ni halo: solo un brillo exterior. Las reglas van con .formulario para ganarle
+   a .btn--verde:hover y .auth__tarjeta .formulario .btn--verde:hover, que traen un anillo de 1px. */
+.pagina-auth .auth__tarjeta .formulario .auth-btn,
+.pagina-auth .auth__tarjeta .formulario .auth-btn:hover,
+.pagina-auth .auth__tarjeta .formulario .auth-btn:active {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-top: 12px;
-  padding: 18px 26px;
-  background: linear-gradient(135deg, #5dff86 0%, var(--verde) 40%, var(--verde-oscuro) 100%);
-  color: var(--sobre-verde);
+  padding: 16px 32px;
+  border: 0;
+  border-radius: 9999px;
+  outline: 0;
+  background: #4ade80;
+  color: #000000;
   font-family: var(--fuente-titulo);
   font-weight: 700;
   letter-spacing: 0.12em;
-  box-shadow: 0 0 0 1px rgba(var(--verde-rgb), 0.6), 0 0 22px rgba(var(--verde-rgb), 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.45);
-  transition: transform 0.3s var(--curva), box-shadow 0.3s ease;
-}
-
-.auth-btn__halo {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  box-shadow: 0 0 30px 6px rgba(var(--verde-rgb), 0.55), 0 0 90px 26px rgba(var(--verde-rgb), 0.22);
-  opacity: 0;
-  transform: scale(0.92);
-  transition: opacity 0.35s ease, transform 0.5s var(--curva);
-  pointer-events: none;
-}
-
-.pagina-auth .auth-btn::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  border-radius: inherit;
-  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.6) 48%, transparent 62%) no-repeat;
-  background-size: 250% 100%;
-  background-position: 160% 0;
-  pointer-events: none;
+  box-shadow: 0 0 20px rgba(74, 222, 128, 0.4);
+  transition: all 0.3s ease;
 }
 
 .pagina-auth .auth__tarjeta .formulario .auth-btn:hover {
-  background: linear-gradient(135deg, #7dff9f 0%, var(--verde-hover) 40%, var(--verde) 100%);
-  transform: translateY(-1px) scale(1.02);
-  box-shadow: 0 0 0 1px rgba(var(--verde-rgb), 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-.pagina-auth .auth-btn:hover .auth-btn__halo {
-  opacity: 1;
-  transform: scale(1.06);
-}
-
-.pagina-auth .auth-btn:hover::after {
-  background-position: -60% 0;
-  transition: background-position 0.9s ease;
-}
-
-.pagina-auth .auth-btn .btn__flecha {
-  transition: transform 0.3s var(--curva);
-}
-
-.pagina-auth .auth-btn:hover .btn__flecha {
-  transform: translateX(4px);
+  transform: translateY(-1px);
+  box-shadow: 0 0 28px rgba(74, 222, 128, 0.55);
 }
 
 .pagina-auth .auth__tarjeta .formulario .auth-btn:active {
   transform: scale(0.98);
 }
 
-.pagina-auth .auth-btn.btn--cargando .auth-btn__halo {
-  opacity: 0.6;
-  transform: scale(1);
+/* Foco con teclado: el mismo brillo exterior, más intenso (sin outline ni anillo) */
+.pagina-auth .auth__tarjeta .formulario .auth-btn:focus-visible {
+  box-shadow: 0 0 30px rgba(74, 222, 128, 0.8);
+}
+
+.pagina-auth .auth-btn::before,
+.pagina-auth .auth-btn::after {
+  content: none;
+}
+
+.pagina-auth .auth-btn .btn__flecha {
+  transition: transform 0.3s ease;
+}
+
+.pagina-auth .auth-btn:hover .btn__flecha {
+  transform: translateX(4px);
 }
 
 .auth__filo::after {
