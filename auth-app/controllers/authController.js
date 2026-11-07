@@ -3,8 +3,8 @@ const { rutaDeInicio } = require('../middlewares/authMiddleware');
 const cuentaModel = require('../models/cuentaModel');
 const { TERMINOS, PRIVACIDAD } = require('../config/legal');
 const { proveedorHabilitado } = require('../config/supabase');
-const jugadorModel = require('../models/jugadorModel');
-const { detectarTipoImagen } = require('./jugadorController');
+const { validarFechaNacimiento, ALTURA_CM, PESO_KG } = require('../middlewares/validators');
+const { POSICIONES } = require('../config/perfilJugador');
 
 const MSG_CORREO_REGISTRADO = 'Este correo ya está registrado. Inicia sesión o usa otro correo.';
 const MSG_CUENTA_DESACTIVADA = 'Tu cuenta está desactivada. Si crees que es un error, escríbenos.';
@@ -71,6 +71,9 @@ function mostrarRegistro(req, res) {
     titulo: 'Crear cuenta',
     errores: [],
     datos: {},
+    aviso: req.query.msg === 'Google_sin_cuenta'
+      ? 'Aún no tienes una cuenta en SearchMatch. Créala aquí y después podrás entrar con Google usando el mismo correo.'
+      : null,
   });
 }
 
@@ -149,7 +152,6 @@ function mostrarLogin(req, res) {
     Google_cancelado: 'Cancelaste el acceso con Google. Puedes intentarlo de nuevo cuando quieras.',
     Google_no_configurado: 'El inicio de sesión con Google no está configurado aún. Por favor, usa correo y contraseña.',
     Google_error: 'No pudimos iniciar sesión con Google. Inténtalo de nuevo o entra con tu correo.',
-    Google_correo_en_uso: 'Ese correo de Google ya está asociado a otra cuenta. Entra con tu correo y contraseña.',
   };
 
   res.render('login', {
@@ -285,41 +287,9 @@ async function iniciarConGoogle(req, res, next) {
   }
 }
 
-/** Nombre y apellido de un usuario de Google (user_metadata trae given_name/family_name o full_name). */
-function nombreDesdeGoogle(usuarioAuth) {
-  const meta = usuarioAuth.user_metadata || {};
-  const completo = (meta.full_name || meta.name || '').trim();
-  const [primero = '', ...resto] = completo.split(/\s+/);
-  const nombre = (meta.given_name || primero || (usuarioAuth.email || '').split('@')[0]).trim();
-  const apellido = (meta.family_name || resto.join(' ')).trim();
-  return { nombre: nombre.slice(0, 100), apellido: apellido.slice(0, 100) };
-}
-
-const MAX_FOTO_GOOGLE = 2 * 1024 * 1024; // el mismo límite que la subida de fotos del perfil
-
-/**
- * Copia la foto de Google (user_metadata.avatar_url) en jugador.foto. Es opcional: si falla, el
- * perfil queda sin foto y el usuario puede subirla después. Solo se descarga de googleusercontent.com.
- */
-async function guardarFotoDeGoogle(idJugador, usuarioAuth) {
-  const meta = usuarioAuth.user_metadata || {};
-  try {
-    const url = new URL(meta.avatar_url || meta.picture || '');
-    if (url.protocol !== 'https:' || !/(^|\.)googleusercontent\.com$/.test(url.hostname)) return;
-    // Google la entrega en 96 px; se pide a 256 px para la carta del jugador
-    const respuesta = await fetch(url.href.replace(/=s\d+-c$/, '=s256-c'), { signal: AbortSignal.timeout(5000) });
-    if (!respuesta.ok) return;
-    const datos = Buffer.from(await respuesta.arrayBuffer());
-    const tipo = datos.length <= MAX_FOTO_GOOGLE ? detectarTipoImagen(datos) : null;
-    if (tipo) await jugadorModel.guardarFoto(idJugador, datos, tipo);
-  } catch (err) {
-    console.error('⚠️  No se pudo copiar la foto de Google:', err.message);
-  }
-}
-
 // ---------------------------------------------------------------
-// GET /auth/callback → Google vuelve aquí con ?code: se crea la sesión y,
-// si es la primera vez, el perfil (los términos se aceptan en /aceptar-terminos).
+// GET /auth/callback → Google vuelve aquí con ?code: se crea la sesión si el correo ya
+// tiene cuenta en SearchMatch; si no, se manda a /registro.
 // ---------------------------------------------------------------
 async function callbackGoogle(req, res, next) {
   const { code, error: errorOAuth } = req.query;
@@ -335,7 +305,7 @@ async function callbackGoogle(req, res, next) {
     }
 
     const usuarioAuth = data.user;
-    let perfil = await userModel.findByAuthId(usuarioAuth.id);
+    const perfil = await userModel.findByAuthId(usuarioAuth.id);
 
     if (perfil && perfil.activo === false) {
       await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
@@ -348,27 +318,76 @@ async function callbackGoogle(req, res, next) {
       return res.redirect('/login?msg=Google_error');
     }
 
+    // Sin cuenta en SearchMatch: Google no crea cuentas, se manda a registrarse.
     if (!perfil) {
-      const { nombre, apellido } = nombreDesdeGoogle(usuarioAuth);
-      try {
-        const { idJugador } = await userModel.create({
-          authId: usuarioAuth.id,
-          nombre,
-          apellido,
-          correo: usuarioAuth.email,
-          telefono: null,
-          fechaNacimiento: null,
-        });
-        await guardarFotoDeGoogle(idJugador, usuarioAuth);
-      } catch (err) {
-        await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
-        // El correo ya pertenece a otra fila de usuario (otra cuenta de Auth).
-        if (err.code === '23505') return res.redirect('/login?msg=Google_correo_en_uso');
-        throw err;
+      await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
+      // Supabase acaba de crear el usuario de Auth al volver de Google: se borra para que el
+      // correo quede libre en /registro (solo si es exclusivamente de Google).
+      const proveedores = (usuarioAuth.app_metadata && usuarioAuth.app_metadata.providers) || [];
+      if (proveedores.length === 1 && proveedores[0] === 'google' && !(await userModel.eliminarDeAuth(usuarioAuth.id))) {
+        console.error(`⚠️  No se pudo borrar la cuenta de Auth ${usuarioAuth.id} creada por Google sin perfil.`);
       }
+      return res.redirect('/registro?msg=Google_sin_cuenta');
     }
 
+    // Cuenta antigua creada con Google sin estos datos: se completan antes de seguir.
+    if (!perfil.fecha_nacimiento) return res.redirect('/completar-perfil');
+
     return res.redirect(rutaDeInicio(usuarioAuth.user_metadata && usuarioAuth.user_metadata.rol_inicio));
+  } catch (err) {
+    return next(err);
+  }
+}
+
+// ---------------------------------------------------------------
+// GET/POST /completar-perfil → onboarding tras el primer acceso con Google
+// ---------------------------------------------------------------
+function renderCompletarPerfil(res, { status = 200, errores = [], datos = {} } = {}) {
+  return res.status(status).render('completar-perfil', {
+    titulo: 'Completa tu carta',
+    pagina: 'equipo',
+    errores,
+    datos,
+    posiciones: POSICIONES,
+    rangos: { ALTURA_CM, PESO_KG },
+  });
+}
+
+function mostrarCompletarPerfil(req, res) {
+  if (!req.usuario.faltaEdad) return res.redirect('/dashboard');
+  return renderCompletarPerfil(res);
+}
+
+async function guardarCompletarPerfil(req, res, next) {
+  const datos = {
+    fecha_nacimiento: (req.body.fecha_nacimiento || '').trim(),
+    altura: (req.body.altura || '').trim(),
+    peso: (req.body.peso || '').trim(),
+    posicion: req.body.posicion || '',
+  };
+  const altura = Number(datos.altura);
+  const peso = Number(datos.peso);
+
+  const errores = [];
+  const errorFecha = validarFechaNacimiento(datos.fecha_nacimiento);
+  if (errorFecha) errores.push(errorFecha);
+  if (!(altura >= ALTURA_CM.min && altura <= ALTURA_CM.max)) {
+    errores.push(`La altura debe estar entre ${ALTURA_CM.min} y ${ALTURA_CM.max} cm.`);
+  }
+  if (!(peso >= PESO_KG.min && peso <= PESO_KG.max)) {
+    errores.push(`El peso debe estar entre ${PESO_KG.min} y ${PESO_KG.max} kg.`);
+  }
+  if (!Object.hasOwn(POSICIONES, datos.posicion)) errores.push('Elige tu posición.');
+  if (errores.length) return renderCompletarPerfil(res, { status: 400, errores, datos });
+
+  try {
+    await userModel.completarPerfil(req.usuario.idAuth, {
+      fechaNacimiento: datos.fecha_nacimiento,
+      altura,
+      peso,
+      posicionDb: POSICIONES[datos.posicion].db,
+    });
+    return res.redirect('/dashboard');
   } catch (err) {
     return next(err);
   }
@@ -390,5 +409,7 @@ module.exports = {
   iniciarSesion,
   iniciarConGoogle,
   callbackGoogle,
+  mostrarCompletarPerfil,
+  guardarCompletarPerfil,
   cerrarSesion,
 };

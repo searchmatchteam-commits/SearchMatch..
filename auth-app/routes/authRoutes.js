@@ -4,7 +4,7 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const { validarRegistro, validarLogin } = require('../middlewares/validators');
 const { validarRecuperar } = require('../middlewares/validadoresCuenta');
-const { redirectIfAuthenticated } = require('../middlewares/authMiddleware');
+const { redirectIfAuthenticated, requireAuth } = require('../middlewares/authMiddleware');
 
 router.get('/registro', redirectIfAuthenticated, authController.mostrarRegistro);
 
@@ -23,6 +23,10 @@ router.post('/login', redirectIfAuthenticated, validarLogin, authController.inic
 router.get('/auth/google', redirectIfAuthenticated, authController.iniciarConGoogle);
 
 router.get('/auth/callback', authController.callbackGoogle);
+
+// Primer acceso con Google: se piden los datos que Google no entrega
+router.get('/completar-perfil', requireAuth, authController.mostrarCompletarPerfil);
+router.post('/completar-perfil', requireAuth, authController.guardarCompletarPerfil);
 
 router.post('/logout', authController.cerrarSesion);
 

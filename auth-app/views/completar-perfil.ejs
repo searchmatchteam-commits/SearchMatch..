@@ -1,0 +1,66 @@
+<%- include('partials/header') %>
+
+<%- include('partials/cursor-luz') %>
+
+<section class="eq">
+  <div class="contenedor sm-legal">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Último paso</span>
+        <h1 class="eq-cabecera__titulo">¡Bienvenido a SearchMatch! Completa tu carta</h1>
+        <p class="eq-cabecera__stats">Necesitamos estos datos para armar tu carta de jugador. SearchMatch es solo para mayores de 18 años.</p>
+      </div>
+    </header>
+
+    <div class="dash-panel eq-panel revelar">
+      <% if (errores.length) { %>
+        <div class="alerta alerta--error" role="alert">
+          <% errores.forEach((error) => { %><p><%= error %></p><% }) %>
+        </div>
+      <% } %>
+
+      <form action="/completar-perfil" method="POST" class="sm-form">
+        <div class="campo">
+          <label for="fecha_nacimiento">Fecha de nacimiento</label>
+          <div class="campo__control">
+            <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" value="<%= datos.fecha_nacimiento || '' %>"
+                   max="<%= new Date().toISOString().slice(0, 10) %>" autocomplete="bday" required />
+          </div>
+        </div>
+
+        <div class="formulario__fila">
+          <div class="campo">
+            <label for="altura">Altura</label>
+            <div class="campo__unidad" data-unidad="cm">
+              <input type="number" id="altura" name="altura" value="<%= datos.altura || '' %>"
+                     inputmode="numeric" min="<%= rangos.ALTURA_CM.min %>" max="<%= rangos.ALTURA_CM.max %>" required />
+            </div>
+          </div>
+          <div class="campo">
+            <label for="peso">Peso</label>
+            <div class="campo__unidad" data-unidad="kg">
+              <input type="number" id="peso" name="peso" value="<%= datos.peso || '' %>"
+                     inputmode="numeric" min="<%= rangos.PESO_KG.min %>" max="<%= rangos.PESO_KG.max %>" required />
+            </div>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="posicion">Posición</label>
+          <select id="posicion" name="posicion" required>
+            <option value="" disabled <%= datos.posicion ? '' : 'selected' %>>Elige tu posición</option>
+            <% Object.entries(posiciones).forEach(([clave, pos]) => { %>
+              <option value="<%= clave %>" <%= datos.posicion === clave ? 'selected' : '' %>><%= pos.etiqueta %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="sm-form__acciones">
+          <button type="submit" class="btn btn--verde btn--grande">Guardar y jugar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

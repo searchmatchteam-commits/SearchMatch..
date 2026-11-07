@@ -131,8 +131,40 @@ async function guardarFechaNacimiento(authId, fechaNacimiento) {
   );
 }
 
+// /completar-perfil: datos que Google no entrega (fecha, altura, peso y posición principal).
+async function completarPerfil(authId, { fechaNacimiento, altura, peso, posicionDb }) {
+  const cliente = await pool.connect();
+  try {
+    await cliente.query('BEGIN');
+    const jugador = await cliente.query(
+      `UPDATE jugador j SET fecha_nacimiento = $2, altura = $3, peso = $4
+         FROM usuario u
+        WHERE j.id_usuario = u.id AND u.auth_id = $1
+        RETURNING j.id`,
+      [authId, fechaNacimiento, altura, peso]
+    );
+    if (jugador.rowCount === 0) throw new Error('El usuario no tiene perfil de jugador.');
+    const idJugador = jugador.rows[0].id;
+
+    await cliente.query('DELETE FROM jugador_posicion WHERE id_jugador = $1', [idJugador]);
+    await cliente.query(
+      `INSERT INTO jugador_posicion (id_jugador, id_posicion)
+       SELECT $1, id FROM posicion WHERE lower(nombre) = ANY($2) ORDER BY id LIMIT 1`,
+      [idJugador, posicionDb.map((n) => n.toLowerCase())]
+    );
+
+    await cliente.query('COMMIT');
+  } catch (err) {
+    await cliente.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    cliente.release();
+  }
+}
+
 module.exports = {
   guardarFechaNacimiento,
+  completarPerfil,
   registrarEnAuth,
   iniciarSesionEnAuth,
   urlInicioConGoogle,

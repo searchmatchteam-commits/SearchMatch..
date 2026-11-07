@@ -1,6 +1,6 @@
 const { aceptoVersionesVigentes } = require('../config/legal');
 
-const RUTAS_LIBRES = ['/', '/login', '/registro', '/logout', '/terminos', '/privacidad', '/aceptar-terminos'];
+const RUTAS_LIBRES = ['/', '/login', '/registro', '/logout', '/terminos', '/privacidad', '/aceptar-terminos', '/completar-perfil'];
 const PREFIJOS_LIBRES = ['/auth/', '/recuperar'];
 
 function rutaLibre(ruta) {
