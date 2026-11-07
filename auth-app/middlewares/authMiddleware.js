@@ -21,9 +21,15 @@ const ROLES_INICIO = {
 // Cookies de la versión anterior (tokens guardados a mano). Se borran si aparecen.
 const COOKIES_ANTIGUAS = ['sm_access_token', 'sm_refresh_token'];
 
-/** ¿La petición trae alguna cookie de sesión de Supabase? */
+// Rutas que canjean un código PKCE por la sesión (Google y confirmación de correo).
+// Ahí no se verifica la sesión previa: si era inválida, Supabase la limpia y con ella borra
+// los verificadores PKCE (_removeSession), y el canje falla con pkce_code_verifier_not_found.
+const RUTAS_CANJE_PKCE = ['/auth/callback', '/auth/confirmar'];
+
+/** ¿La petición trae alguna cookie de sesión de Supabase? (los verificadores PKCE no cuentan) */
 function tieneCookieDeSesion(req) {
-  return Object.keys(req.cookies || {}).some((nombre) => nombre.startsWith('sb-') && nombre.includes('-auth-token'));
+  return Object.keys(req.cookies || {}).some((nombre) =>
+    nombre.startsWith('sb-') && nombre.includes('-auth-token') && !nombre.endsWith('-code-verifier'));
 }
 
 /**
@@ -53,6 +59,9 @@ async function construirUsuario(usuarioAuth) {
     terminosVersion: perfil ? perfil.terminos_version : null, // NUEVO: AR-011
     privacidadVersion: perfil ? perfil.privacidad_version : null, // NUEVO: AR-011
     correoGuardado: perfil ? perfil.correo : null, // NUEVO: AR-012 (para sincronizar un cambio de correo)
+    // Registro con Google: el perfil de jugador nace sin fecha de nacimiento; se pide (18+) en /aceptar-terminos
+    faltaEdad: Boolean(perfil && perfil.id_jugador && !perfil.fecha_nacimiento)
+      && !/^(super)?administrador$/i.test((perfil && perfil.rol) || ''),
     notificacionesSinLeer: perfil ? perfil.sin_leer : 0, // NT-002: viene con el perfil, sin otra consulta
   };
 }
@@ -71,7 +80,7 @@ async function cargarSesion(req, res, next) {
   });
 
   // Sin cookie de sesión no hay nada que verificar (ahorra una llamada a Supabase).
-  if (!tieneCookieDeSesion(req)) return next();
+  if (!tieneCookieDeSesion(req) || RUTAS_CANJE_PKCE.includes(req.path)) return next();
 
   try {
     // getUser valida el token con Supabase. Si el access token expiró, el cliente

@@ -341,6 +341,57 @@
   transform: translateX(4px);
 }
 
+/* "Continuar con Google": oscuro con borde gris; en hover el borde se enciende en verde */
+.auth-google {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 24px;
+  border: 1px solid #1f2937;
+  border-radius: 9999px;
+  background: #121212;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.auth-google:hover,
+.auth-google:focus-visible {
+  border-color: #4ade80;
+  background: #1c1c1c;
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 0 14px rgba(74, 222, 128, 0.25);
+  outline: 0;
+}
+
+.auth-google__icono {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.auth-separador {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0 4px;
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+}
+
+.auth-separador::before,
+.auth-separador::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #1f2937;
+}
+
 .auth__filo::after {
   content: "";
   position: absolute;

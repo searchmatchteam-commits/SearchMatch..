@@ -18,6 +18,19 @@ function iniciarSesionEnAuth(supabase, { correo, password }) {
   return supabase.auth.signInWithPassword({ email: correo, password });
 }
 
+// Inicio con Google (OAuth, PKCE): el cliente de @supabase/ssr guarda el code verifier en una
+// cookie y devuelve la URL de Google; /auth/callback cambia el código por la sesión.
+function urlInicioConGoogle(supabase, urlRedireccion) {
+  return supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: urlRedireccion, skipBrowserRedirect: true },
+  });
+}
+
+function canjearCodigoOAuth(supabase, code) {
+  return supabase.auth.exchangeCodeForSession(code);
+}
+
 function obtenerUsuarioActual(supabase) {
   return supabase.auth.getUser();
 }
@@ -56,7 +69,7 @@ async function findByEmail(correo) {
 
 async function findByAuthId(authId) {
   const consulta = `
-    SELECT u.id, u.correo, u.telefono, j.nombre_apodo AS nombre, j.apellido, j.fecha_nacimiento,
+    SELECT u.id, u.correo, u.telefono, j.id AS id_jugador, j.nombre_apodo AS nombre, j.apellido, j.fecha_nacimiento,
            u.activo, -- CORRECCIÓN: regla 7 (cuenta inactiva no entra)
            (SELECT r.nombre FROM rol_aplicacion r WHERE r.id = u.id_rol_aplicacion) AS rol, -- NUEVO: AR-004
            u.terminos_version, u.privacidad_version, -- NUEVO: AR-011
@@ -91,14 +104,15 @@ async function create({ authId, nombre, apellido, correo, correoSecundario = nul
     );
     const idUsuario = usuario.rows[0].id;
 
-    await cliente.query(
+    const jugador = await cliente.query(
       `INSERT INTO jugador (nombre_apodo, apellido, fecha_nacimiento, id_usuario)
-       VALUES ($1, $2, $3, $4)`,
+       VALUES ($1, $2, $3, $4)
+       RETURNING id`,
       [nombre, apellido, fechaNacimiento, idUsuario]
     );
 
     await cliente.query('COMMIT');
-    return { id: idUsuario };
+    return { id: idUsuario, idJugador: jugador.rows[0].id };
   } catch (err) {
     await cliente.query('ROLLBACK').catch(() => {});
     throw err;
@@ -107,9 +121,22 @@ async function create({ authId, nombre, apellido, correo, correoSecundario = nul
   }
 }
 
+// Fecha de nacimiento de quien se registró con Google (llega sin ella): se pide en /aceptar-terminos.
+async function guardarFechaNacimiento(authId, fechaNacimiento) {
+  await pool.query(
+    `UPDATE jugador j SET fecha_nacimiento = $2
+       FROM usuario u
+      WHERE j.id_usuario = u.id AND u.auth_id = $1`,
+    [authId, fechaNacimiento]
+  );
+}
+
 module.exports = {
+  guardarFechaNacimiento,
   registrarEnAuth,
   iniciarSesionEnAuth,
+  urlInicioConGoogle,
+  canjearCodigoOAuth,
   obtenerUsuarioActual,
   confirmarCorreoEnAuth,
   reenviarVerificacionEnAuth,

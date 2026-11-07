@@ -527,6 +527,7 @@ module.exports = {
   LONGITUD_MAXIMA_MENSAJE_SOLICITUD,
   normalizarTelefono,
   calcularEdad,
+  validarFechaNacimiento, // también la usa /aceptar-terminos (registro con Google)
   ALTURA_CM,
   PESO_KG,
 };

@@ -6,9 +6,15 @@
   <div class="contenedor sm-legal">
     <header class="eq-cabecera revelar">
       <div class="eq-cabecera__texto">
-        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Actualización</span>
-        <h1 class="eq-cabecera__titulo">Actualizamos nuestros términos</h1>
-        <p class="eq-cabecera__stats">Léelos y acéptalos para seguir usando SearchMatch.</p>
+        <% if (pedirEdad) { %>
+          <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Último paso</span>
+          <h1 class="eq-cabecera__titulo">Completa tu registro</h1>
+          <p class="eq-cabecera__stats">SearchMatch es solo para mayores de 18 años. Confirma tu fecha de nacimiento y acepta los términos.</p>
+        <% } else { %>
+          <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Actualización</span>
+          <h1 class="eq-cabecera__titulo">Actualizamos nuestros términos</h1>
+          <p class="eq-cabecera__stats">Léelos y acéptalos para seguir usando SearchMatch.</p>
+        <% } %>
       </div>
     </header>
 
@@ -29,9 +35,24 @@
       <% } %>
 
       <form action="/aceptar-terminos" method="POST" class="sm-form" data-requiere-aceptar>
+        <% if (pedirEdad) { %>
+          <div class="campo<%= errorFecha ? ' campo--error' : '' %>">
+            <label for="fecha_nacimiento">Fecha de nacimiento</label>
+            <div class="campo__control">
+              <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" value="<%= fechaNacimiento %>"
+                     max="<%= new Date().toISOString().slice(0, 10) %>" autocomplete="bday"
+                     aria-describedby="fecha_nacimiento-error" required />
+            </div>
+            <small class="campo__error" id="fecha_nacimiento-error"><%= errorFecha || '' %></small>
+          </div>
+        <% } %>
         <label class="sm-check">
           <input type="checkbox" name="acepto" value="si" data-casilla-aceptar />
-          <span>Leí y acepto los <strong>términos y condiciones</strong> y la <strong>política de privacidad</strong>.</span>
+          <% if (pedirEdad) { %>
+            <span>Tengo 18 años o más y acepto los <strong>términos y condiciones</strong> y la <strong>política de privacidad</strong>.</span>
+          <% } else { %>
+            <span>Leí y acepto los <strong>términos y condiciones</strong> y la <strong>política de privacidad</strong>.</span>
+          <% } %>
         </label>
         <div class="sm-form__acciones">
           <button type="submit" class="btn btn--verde btn--grande" data-boton-aceptar>Aceptar y continuar</button>

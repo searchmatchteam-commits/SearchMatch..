@@ -9,9 +9,13 @@ function rutaLibre(ruta) {
 
 function exigirTerminos(req, res, next) {
   // Las cuentas del panel (AP-001) no son de jugador: no aceptan los términos de los usuarios.
-  if (!req.usuario || req.usuario.esCuentaPanel || rutaLibre(req.path) || aceptoVersionesVigentes(req.usuario)) return next();
+  if (!req.usuario || req.usuario.esCuentaPanel || rutaLibre(req.path)) return next();
+  if (aceptoVersionesVigentes(req.usuario) && !req.usuario.faltaEdad) return next();
   if (req.accepts(['html', 'json']) === 'json') {
-    return res.status(403).json({ ok: false, error: 'Debes aceptar los términos vigentes para continuar.' });
+    const error = req.usuario.faltaEdad
+      ? 'Debes confirmar tu fecha de nacimiento y aceptar los términos para continuar.'
+      : 'Debes aceptar los términos vigentes para continuar.';
+    return res.status(403).json({ ok: false, error });
   }
   return res.redirect('/aceptar-terminos');
 }

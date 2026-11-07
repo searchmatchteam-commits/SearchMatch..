@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { createServerClient } = require('@supabase/ssr');
 const { createClient } = require('@supabase/supabase-js');
+const { cacheBreve } = require('./cacheBreve');
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
 
@@ -49,4 +50,23 @@ function crearClienteTemporal() {
   });
 }
 
-module.exports = { crearClienteServidor, supabaseAdmin, crearClienteTemporal };
+// Proveedores de acceso habilitados en el panel de Supabase (GET /auth/v1/settings → external).
+// signInWithOAuth no lo revisa: con Google apagado, Supabase muestra un JSON de error en su propio dominio.
+const leerAjustesAuth = cacheBreve(30 * 1000, async () => {
+  const respuesta = await fetch(`${SUPABASE_URL}/auth/v1/settings`, { headers: { apikey: SUPABASE_ANON_KEY } });
+  if (!respuesta.ok) throw new Error(`/auth/v1/settings respondió ${respuesta.status}`);
+  return respuesta.json();
+});
+
+/** ¿Está habilitado el proveedor en Supabase? Si no se puede consultar, se asume que sí (no bloquea el acceso). */
+async function proveedorHabilitado(proveedor) {
+  try {
+    const ajustes = await leerAjustesAuth();
+    return Boolean(ajustes && ajustes.external && ajustes.external[proveedor]);
+  } catch (err) {
+    console.error('⚠️  No se pudieron leer los ajustes de Auth de Supabase:', err.message);
+    return true;
+  }
+}
+
+module.exports = { crearClienteServidor, supabaseAdmin, crearClienteTemporal, proveedorHabilitado };

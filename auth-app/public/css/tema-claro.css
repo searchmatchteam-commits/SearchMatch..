@@ -1399,3 +1399,23 @@ html[data-theme="light"] .sm-estado--torneo-completo, html[data-theme="light"] .
 html[data-theme="light"] .sm-estado--inscripcion-pendiente_pago, html[data-theme="light"] .sm-estado--inscripcion-retiro_pendiente { color: #1d4f91; }
 html[data-theme="light"] .sm-estado--torneo-cancelado, html[data-theme="light"] .sm-estado--inscripcion-eliminada,
 html[data-theme="light"] .sm-estado--inscripcion-reembolsada { color: #b42318; }
+
+/* "Continuar con Google" en tema claro: botón blanco con borde gris, mismo verde en hover */
+html[data-theme="light"] .auth-google {
+  background: #ffffff;
+  color: #111827;
+  border-color: #d1d5db;
+}
+
+html[data-theme="light"] .auth-google:hover,
+html[data-theme="light"] .auth-google:focus-visible {
+  background: #f9fafb;
+  color: #111827;
+  border-color: var(--verde);
+  box-shadow: none;
+}
+
+html[data-theme="light"] .auth-separador::before,
+html[data-theme="light"] .auth-separador::after {
+  background: #e5e7eb;
+}

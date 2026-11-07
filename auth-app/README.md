@@ -54,10 +54,10 @@ auth-app/
 | `SUPABASE_ANON_KEY`         | Clave anon / publishable (también se acepta `SUPABASE_PUBLISHABLE_KEY`).  |
 | `SUPABASE_SERVICE_ROLE_KEY` | Opcional, solo servidor: deshace el registro si falla el guardado del perfil. |
 | `DATABASE_URL`              | URI de conexión de Postgres (Project Settings → Database).                |
-| `APP_URL`                   | URL pública de la app, para el enlace del correo de confirmación.         |
+| `APP_URL`                   | URL pública de la app, para el enlace del correo de confirmación y la vuelta de Google (`APP_URL/auth/callback`). Abre la app siempre en este host: las cookies de PKCE son por host. |
 | `PORT`                      | Puerto (por defecto `3000`).                                              |
 
-3. **Supabase Auth:** en *Authentication → URL Configuration* define *Site URL* = `APP_URL` y agrega `APP_URL/auth/confirmar` a *Redirect URLs*.
+3. **Supabase Auth:** en *Authentication → URL Configuration* define *Site URL* = `APP_URL` y agrega `APP_URL/auth/confirmar` y `APP_URL/auth/callback` a *Redirect URLs*. Para "Continuar con Google", habilita *Sign In / Providers → Google* con el Client ID y Secret de Google Cloud (URI de redirección en Google: `https://<proyecto>.supabase.co/auth/v1/callback`).
    - Opcional (recomendado): para que el enlace funcione aunque se abra en otro navegador o en el celular, cambia la plantilla *Confirm signup* (*Authentication → Emails*) para que apunte a `{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email`.
 
 ---

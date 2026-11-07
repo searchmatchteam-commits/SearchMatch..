@@ -2,6 +2,9 @@ const userModel = require('../models/userModel');
 const { rutaDeInicio } = require('../middlewares/authMiddleware');
 const cuentaModel = require('../models/cuentaModel');
 const { TERMINOS, PRIVACIDAD } = require('../config/legal');
+const { proveedorHabilitado } = require('../config/supabase');
+const jugadorModel = require('../models/jugadorModel');
+const { detectarTipoImagen } = require('./jugadorController');
 
 const MSG_CORREO_REGISTRADO = 'Este correo ya está registrado. Inicia sesión o usa otro correo.';
 const MSG_CUENTA_DESACTIVADA = 'Tu cuenta está desactivada. Si crees que es un error, escríbenos.';
@@ -143,6 +146,10 @@ function mostrarLogin(req, res) {
     Sesion_cerrada: 'Cerraste sesión correctamente.',
     Cuenta_desactivada: MSG_CUENTA_DESACTIVADA,
     Contrasena_actualizada: 'Tu contraseña se actualizó. Inicia sesión con la nueva.',
+    Google_cancelado: 'Cancelaste el acceso con Google. Puedes intentarlo de nuevo cuando quieras.',
+    Google_no_configurado: 'El inicio de sesión con Google no está configurado aún. Por favor, usa correo y contraseña.',
+    Google_error: 'No pudimos iniciar sesión con Google. Inténtalo de nuevo o entra con tu correo.',
+    Google_correo_en_uso: 'Ese correo de Google ya está asociado a otra cuenta. Entra con tu correo y contraseña.',
   };
 
   res.render('login', {
@@ -151,6 +158,8 @@ function mostrarLogin(req, res) {
     errores: [],
     datos: {},
     aviso: mensajes[req.query.msg] || null,
+    // El acceso con Google falló: se muestra como error (cancelar es decisión del usuario: aviso normal)
+    avisoError: /^Google_/.test(req.query.msg || '') && req.query.msg !== 'Google_cancelado',
     mostrarReenvio: req.query.msg === 'Enlace_invalido', // AR-007
   });
 }
@@ -252,6 +261,119 @@ async function iniciarSesion(req, res, next) {
   }
 }
 
+// ---------------------------------------------------------------
+// GET /auth/google → manda a la pantalla de Google (Supabase OAuth)
+// ---------------------------------------------------------------
+async function iniciarConGoogle(req, res, next) {
+  try {
+    if (!(await proveedorHabilitado('google'))) {
+      console.error('⚠️  Google no está habilitado en Supabase (Authentication → Sign In / Providers → Google).');
+      return res.redirect('/login?msg=Google_no_configurado');
+    }
+    const appUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`;
+    // El verificador PKCE es una cookie de este host: si se entró por otro (p. ej. 127.0.0.1 en vez
+    // de localhost), se reinicia desde APP_URL para que la cookie llegue a /auth/callback.
+    if (req.get('host') !== new URL(appUrl).host) return res.redirect(`${appUrl}/auth/google`);
+    const { data, error } = await userModel.urlInicioConGoogle(req.supabase, `${appUrl}/auth/callback`);
+    if (error || !data.url) {
+      if (error) console.error('⚠️  No se pudo iniciar el acceso con Google:', error.code, error.message);
+      return res.redirect('/login?msg=Google_error');
+    }
+    return res.redirect(data.url);
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/** Nombre y apellido de un usuario de Google (user_metadata trae given_name/family_name o full_name). */
+function nombreDesdeGoogle(usuarioAuth) {
+  const meta = usuarioAuth.user_metadata || {};
+  const completo = (meta.full_name || meta.name || '').trim();
+  const [primero = '', ...resto] = completo.split(/\s+/);
+  const nombre = (meta.given_name || primero || (usuarioAuth.email || '').split('@')[0]).trim();
+  const apellido = (meta.family_name || resto.join(' ')).trim();
+  return { nombre: nombre.slice(0, 100), apellido: apellido.slice(0, 100) };
+}
+
+const MAX_FOTO_GOOGLE = 2 * 1024 * 1024; // el mismo límite que la subida de fotos del perfil
+
+/**
+ * Copia la foto de Google (user_metadata.avatar_url) en jugador.foto. Es opcional: si falla, el
+ * perfil queda sin foto y el usuario puede subirla después. Solo se descarga de googleusercontent.com.
+ */
+async function guardarFotoDeGoogle(idJugador, usuarioAuth) {
+  const meta = usuarioAuth.user_metadata || {};
+  try {
+    const url = new URL(meta.avatar_url || meta.picture || '');
+    if (url.protocol !== 'https:' || !/(^|\.)googleusercontent\.com$/.test(url.hostname)) return;
+    // Google la entrega en 96 px; se pide a 256 px para la carta del jugador
+    const respuesta = await fetch(url.href.replace(/=s\d+-c$/, '=s256-c'), { signal: AbortSignal.timeout(5000) });
+    if (!respuesta.ok) return;
+    const datos = Buffer.from(await respuesta.arrayBuffer());
+    const tipo = datos.length <= MAX_FOTO_GOOGLE ? detectarTipoImagen(datos) : null;
+    if (tipo) await jugadorModel.guardarFoto(idJugador, datos, tipo);
+  } catch (err) {
+    console.error('⚠️  No se pudo copiar la foto de Google:', err.message);
+  }
+}
+
+// ---------------------------------------------------------------
+// GET /auth/callback → Google vuelve aquí con ?code: se crea la sesión y,
+// si es la primera vez, el perfil (los términos se aceptan en /aceptar-terminos).
+// ---------------------------------------------------------------
+async function callbackGoogle(req, res, next) {
+  const { code, error: errorOAuth } = req.query;
+  if (errorOAuth || !code) {
+    return res.redirect(errorOAuth === 'access_denied' ? '/login?msg=Google_cancelado' : '/login?msg=Google_error');
+  }
+
+  try {
+    const { data, error } = await userModel.canjearCodigoOAuth(req.supabase, code);
+    if (error || !data.user) {
+      if (error) console.error('⚠️  No se pudo completar el acceso con Google:', error.code, error.message);
+      return res.redirect('/login?msg=Google_error');
+    }
+
+    const usuarioAuth = data.user;
+    let perfil = await userModel.findByAuthId(usuarioAuth.id);
+
+    if (perfil && perfil.activo === false) {
+      await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
+      return res.redirect('/login?msg=Cuenta_desactivada');
+    }
+
+    // AP-001: las cuentas del panel solo entran por /admin/login.
+    if (perfil && /^(super)?administrador$/i.test(perfil.rol || '')) {
+      await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
+      return res.redirect('/login?msg=Google_error');
+    }
+
+    if (!perfil) {
+      const { nombre, apellido } = nombreDesdeGoogle(usuarioAuth);
+      try {
+        const { idJugador } = await userModel.create({
+          authId: usuarioAuth.id,
+          nombre,
+          apellido,
+          correo: usuarioAuth.email,
+          telefono: null,
+          fechaNacimiento: null,
+        });
+        await guardarFotoDeGoogle(idJugador, usuarioAuth);
+      } catch (err) {
+        await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
+        // El correo ya pertenece a otra fila de usuario (otra cuenta de Auth).
+        if (err.code === '23505') return res.redirect('/login?msg=Google_correo_en_uso');
+        throw err;
+      }
+    }
+
+    return res.redirect(rutaDeInicio(usuarioAuth.user_metadata && usuarioAuth.user_metadata.rol_inicio));
+  } catch (err) {
+    return next(err);
+  }
+}
+
 async function cerrarSesion(req, res) {
   const { error } = await userModel.cerrarSesionEnAuth(req.supabase).catch((err) => ({ error: err }));
   if (error) console.error('⚠️  No se pudo revocar la sesión en Supabase:', error.message);
@@ -266,5 +388,7 @@ module.exports = {
   mostrarLogin,
   reenviarVerificacion,
   iniciarSesion,
+  iniciarConGoogle,
+  callbackGoogle,
   cerrarSesion,
 };

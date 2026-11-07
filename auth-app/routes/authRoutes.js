@@ -19,6 +19,11 @@ router.get('/login', redirectIfAuthenticated, authController.mostrarLogin);
 
 router.post('/login', redirectIfAuthenticated, validarLogin, authController.iniciarSesion);
 
+// Acceso con Google (Supabase OAuth): ida a Google y vuelta con el código
+router.get('/auth/google', redirectIfAuthenticated, authController.iniciarConGoogle);
+
+router.get('/auth/callback', authController.callbackGoogle);
+
 router.post('/logout', authController.cerrarSesion);
 
 module.exports = router;

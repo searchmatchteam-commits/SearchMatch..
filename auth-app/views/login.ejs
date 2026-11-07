@@ -18,7 +18,11 @@
     <p class="auth__subtitulo">Entra para ver tus partidos, equipos y reservas.</p>
 
     <% if (aviso) { %>
-      <div class="alerta alerta--exito" role="status"><%= aviso %></div>
+      <% if (locals.avisoError) { %>
+        <div class="alerta alerta--error" role="alert"><%= aviso %></div>
+      <% } else { %>
+        <div class="alerta alerta--exito" role="status"><%= aviso %></div>
+      <% } %>
     <% } %>
 
     <% if (locals.mostrarReenvio) { %>
@@ -33,6 +37,8 @@
         <button type="submit" class="btn btn--contorno btn--bloque">Reenviar enlace</button>
       </form>
     <% } %>
+
+    <%- include('partials/auth-google') %>
 
     <form action="/login" method="POST" class="formulario" data-validar="login" novalidate>
       <div class="campo">
