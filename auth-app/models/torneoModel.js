@@ -531,7 +531,7 @@ async function editar(admin, idTorneo, estadoEsperado, datos, foto, patrocinador
  * TO-004 · Publica un borrador: pasa a Inscripciones abiertas y avisa a los capitanes de equipos cuya
  * modalidad y nivel calzan con el torneo.
  * @param {Object<string, object>} habilitadas - Pasarelas activas (pasarelaModel.habilitadas()).
- * @returns {Promise<{resultado:'publicado'|'inexistente'|'estado'|'incompleto'|'sin-medios'|'medio-inactivo'|'fecha-vencida', faltan?:string[], medios?:string[], notificados?:number}>}
+ * @returns {Promise<{resultado:'publicado'|'inexistente'|'estado'|'incompleto'|'formato'|'llave-cupos'|'sin-medios'|'medio-inactivo'|'fecha-vencida', faltan?:string[], medios?:string[], notificados?:number}>}
  */
 async function publicar(admin, idTorneo, habilitadas) {
   return enTransaccion(async (cliente) => {
@@ -544,6 +544,9 @@ async function publicar(admin, idTorneo, habilitadas) {
       fecha_limite_inscripcion: t.fecha_limite, cupo_min: t.cupo_min, cupo_max: t.cupo_max, min_jugadores: t.min_jugadores };
     Object.entries(revisar).forEach(([campo, valor]) => { if (!valor) faltan.push(reglas.CAMPOS[campo]); });
     if (faltan.length > 0) return { resultado: 'incompleto', faltan };
+    // Sin TO-007 no se podría empezar: ni la fase de grupos ni una llave que no puede llegar a 4, 8, 16 o 32.
+    if (!reglas.FORMATOS_DISPONIBLES.includes(t.formato)) return { resultado: 'formato' };
+    if (t.formato === 'relampago' && reglas.tamanosLlave(t.cupo_min, t.cupo_max).length === 0) return { resultado: 'llave-cupos' };
     if (t.precio > 0 && t.medios_pago.length === 0) return { resultado: 'sin-medios' };
     const inactivos = t.precio > 0 ? t.medios_pago.filter((m) => !habilitadas[m]) : [];
     if (inactivos.length > 0) return { resultado: 'medio-inactivo', medios: inactivos.map((m) => reglas.MEDIOS_PAGO[m]) };
@@ -574,7 +577,9 @@ async function publicar(admin, idTorneo, habilitadas) {
 /**
  * TO-005 · Cierra las inscripciones: exige el cupo mínimo de Confirmadas, expira las Pendientes de pago
  * (liberan su cupo) y avisa a los capitanes confirmados. admin = null → cierre automático por fecha límite.
- * @returns {Promise<{resultado:'cerrado'|'inexistente'|'estado'|'faltan', faltan?:number, expiradas?:number, notificados?:number}>}
+ * Sin TO-007 tampoco cierra lo que después no se podría empezar: la fase de grupos ('formato') ni una llave con
+ * una cantidad de confirmados distinta de 4, 8, 16 o 32 ('llave', con el mensaje de reglas.errorLlave).
+ * @returns {Promise<{resultado:'cerrado'|'inexistente'|'estado'|'faltan'|'formato'|'llave', faltan?:number, mensaje?:string, expiradas?:number, notificados?:number}>}
  */
 async function cerrarInscripciones(admin, idTorneo) {
   return enTransaccion(async (cliente) => {
@@ -583,6 +588,9 @@ async function cerrarInscripciones(admin, idTorneo) {
     if (!reglas.CON_INSCRIPCIONES.includes(t.estado)) return { resultado: 'estado' };
     const { confirmados } = await contarInscripciones(cliente, idTorneo);
     if (confirmados < t.cupo_min) return { resultado: 'faltan', faltan: t.cupo_min - confirmados, confirmados, cupoMin: t.cupo_min };
+    if (!reglas.FORMATOS_DISPONIBLES.includes(t.formato)) return { resultado: 'formato' };
+    const errorLlave = t.formato === 'relampago' ? reglas.errorLlave(confirmados, t.cupo_max) : null;
+    if (errorLlave) return { resultado: 'llave', mensaje: errorLlave, confirmados };
 
     const expiradas = await cliente.query(
       `UPDATE torneo_equipo SET estado = 'expirada', actualizada_en = now(), motivo = 'Inscripciones cerradas antes de confirmar el pago.'
@@ -606,8 +614,9 @@ async function cerrarInscripciones(admin, idTorneo) {
 
 /**
  * TO-005 c4 · Tarea programada (idempotente): cierra los torneos cuya fecha límite ya pasó y que cumplen el
- * cupo mínimo. Los que no lo cumplen quedan abiertos y aparecen como alerta del panel (alertaModel).
- * @returns {Promise<{cerrados:number[], sinMinimo:number[]}>}
+ * cupo mínimo. Los que no lo cumplen, o que no se podrían empezar (llave incompleta, formato no disponible), quedan
+ * abiertos y aparecen como alerta del panel (alertaModel).
+ * @returns {Promise<{cerrados:number[], sinMinimo:number[], sinLlave:number[]}>}
  */
 async function cerrarVencidos() {
   const { rows } = await pool.query(
@@ -615,12 +624,14 @@ async function cerrarVencidos() {
   );
   const cerrados = [];
   const sinMinimo = [];
+  const sinLlave = [];
   for (const { id } of rows) {
     const r = await cerrarInscripciones(null, id);
     if (r.resultado === 'cerrado') cerrados.push(id);
     else if (r.resultado === 'faltan') sinMinimo.push(id);
+    else if (r.resultado === 'llave' || r.resultado === 'formato') sinLlave.push(id);
   }
-  return { cerrados, sinMinimo };
+  return { cerrados, sinMinimo, sinLlave };
 }
 
 /**
@@ -839,8 +850,9 @@ async function insertarPartidos(cliente, idTorneo, partidos) {
 
 /**
  * Genera el fixture y empieza el torneo: solo con las inscripciones cerradas. Arma el fixture (liga) o la
- * primera ronda (eliminación directa). Byes y fase de grupos llegan con TO-007 (fase 3).
- * @returns {{resultado:'empezado'|'inexistente'|'estado'|'faltan'|'byes'|'grupos', equipos?:number[]}}
+ * primera ronda (eliminación directa). Byes y fase de grupos llegan con TO-007 (fase 3): mientras tanto responde
+ * 'formato' o 'llave' (con el mensaje de reglas.errorLlave) en vez de empezar.
+ * @returns {{resultado:'empezado'|'inexistente'|'estado'|'faltan'|'llave'|'formato', mensaje?:string, equipos?:number[]}}
  */
 async function empezar(admin, idTorneo) {
   return enTransaccion(async (cliente) => {
@@ -853,8 +865,9 @@ async function empezar(admin, idTorneo) {
     );
     const equipos = rows.map((f) => f.id_equipo);
     if (equipos.length < t.cupo_min) return { resultado: 'faltan' };
-    if (t.formato === 'grupos') return { resultado: 'grupos' };
-    if (t.formato === 'relampago' && !reglas.EQUIPOS_RELAMPAGO.includes(equipos.length)) return { resultado: 'byes' };
+    if (!reglas.FORMATOS_DISPONIBLES.includes(t.formato)) return { resultado: 'formato' };
+    const errorLlave = t.formato === 'relampago' ? reglas.errorLlave(equipos.length) : null;
+    if (errorLlave) return { resultado: 'llave', mensaje: errorLlave };
     const partidos = t.formato === 'liga' ? reglas.fixtureLiga(equipos, t.emparejamiento) : reglas.primeraRondaLlave(equipos, t.emparejamiento);
     await insertarPartidos(cliente, idTorneo, partidos);
     await cliente.query(`UPDATE torneo SET estado = 'en_curso' WHERE id = $1`, [idTorneo]);

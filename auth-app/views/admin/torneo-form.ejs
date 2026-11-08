@@ -68,11 +68,15 @@
             <label for="formato">Formato</label>
             <select id="formato" name="formato" required aria-describedby="formato-error formato-ayuda" <%= dis('formato') %> data-formato>
               <option value="">Elige…</option>
-              <% Object.entries(formatos).forEach(function ([clave, texto]) { %>
-                <option value="<%= clave %>" <%= datos.formato === clave ? 'selected' : '' %>><%= texto %></option>
+              <% Object.entries(formatos).forEach(function ([clave, texto]) { const disponible = formatosDisponibles.includes(clave); %>
+                <% if (disponible || datos.formato === clave) { %>
+                  <option value="<%= clave %>" <%= datos.formato === clave ? 'selected' : '' %>><%= texto %><%= disponible ? '' : ' (no disponible)' %></option>
+                <% } else { %>
+                  <option value="<%= clave %>" disabled><%= texto %> (próximamente)</option>
+                <% } %>
               <% }) %>
             </select>
-            <small class="campo__ayuda" id="formato-ayuda">Eliminación directa: llaves (si los equipos no son potencia de 2, algunos pasan directo). Liga: todos contra todos. Fase de grupos: grupos y luego llaves.</small>
+            <small class="campo__ayuda" id="formato-ayuda">Eliminación directa: llaves con exactamente 4, 8, 16 o 32 equipos (los byes llegan más adelante). Liga: todos contra todos. La fase de grupos llega con la generación del fixture.</small>
             <small class="campo__error" id="formato-error"><%= erroresCampo.formato || '' %></small>
           </div>
           <div class="campo <%= error('id_modalidad') %>">
