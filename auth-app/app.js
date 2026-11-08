@@ -42,11 +42,12 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use(cookieParser());
 
-// R2: token CSRF en res.locals y validación de todo POST (antes de abrir la sesión: no gasta consultas).
+// R2: token CSRF en res.locals y validación de todo POST (después de cargarSesion: la página de error usa el usuario).
 app.use(prepararCsrf);
-app.use(verificarCsrf);
 
 app.use(cargarSesion);
+
+app.use(verificarCsrf);
 
 app.use(exigirTerminos);
 

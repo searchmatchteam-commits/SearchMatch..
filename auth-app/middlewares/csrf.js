@@ -82,7 +82,7 @@ function verificarCsrf(req, res, next) {
   if (tokenValido(tokenEnviado(req), req.cookies[COOKIE_CSRF])) return next();
   const mensaje = 'La página expiró por seguridad. Recárgala e inténtalo de nuevo.';
   if (req.accepts(['html', 'json']) === 'json') return res.status(403).json({ ok: false, error: mensaje, mensaje });
-  return res.status(403).render('error', { titulo: 'Error', codigo: 403, mensaje });
+  return res.status(403).render('error', { titulo: 'Error', codigo: 403, mensaje, usuario: res.locals.usuario || null });
 }
 
 module.exports = {
