@@ -34,7 +34,7 @@
         <div class="alerta alerta--error" role="alert"><%= error %></div>
       <% } %>
 
-      <form action="/aceptar-terminos" method="POST" class="sm-form" data-requiere-aceptar>
+      <form action="/aceptar-terminos" method="POST" class="sm-form" data-requiere-aceptar><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <% if (pedirEdad) { %>
           <div class="campo<%= errorFecha ? ' campo--error' : '' %>">
             <label for="fecha_nacimiento">Fecha de nacimiento</label>
@@ -59,7 +59,7 @@
         </div>
       </form>
 
-      <form action="/logout" method="POST" class="sm-form__secundaria">
+      <form action="/logout" method="POST" class="sm-form__secundaria"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <button type="submit" class="sm-enlace">No acepto, cerrar sesión</button>
       </form>
     </div>

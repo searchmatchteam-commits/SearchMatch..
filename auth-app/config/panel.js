@@ -23,7 +23,7 @@ const SECCIONES = [
   { clave: 'partidos', texto: 'Partidos', href: '/admin/partidos', fase: 5 },
   { clave: 'reservas', texto: 'Reservas', href: '/admin/reservas', fase: 5 },
   { clave: 'valoraciones', texto: 'Valoraciones', href: '/admin/valoraciones', fase: 5 },
-  { clave: 'comentarios', texto: 'Comentarios', href: '/admin/comentarios', fase: 5 },
+  { clave: 'comentarios', texto: 'Comentarios', href: '/admin/comentarios' },
   { clave: 'anuncios', texto: 'Anuncios', href: '/admin/anuncios', fase: 5 },
   { clave: 'torneos', texto: 'Torneos', href: '/admin/torneos' },
   { clave: 'apelaciones', texto: 'Apelaciones', href: '/admin/apelaciones', fase: 4 },

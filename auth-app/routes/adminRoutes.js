@@ -10,6 +10,7 @@ const catalogos = require('../controllers/adminCatalogosController');
 const superAdmin = require('../controllers/superAdminController');
 const torneos = require('../controllers/adminTorneosController');
 const config = require('../controllers/adminConfigController');
+const comentarios = require('../controllers/adminComentariosController');
 const { requireAdmin, requirePrincipal } = require('../middlewares/rolMiddleware');
 const {
   validarRecinto, validarCancha, validarBloque, validarCatalogo, validarTorneo, subirImagenesTorneo,
@@ -85,6 +86,11 @@ router.post('/torneos/:id/empezar', torneos.empezar);
 router.post('/torneos/:id/equipos/:idEquipo/quitar', torneos.quitarEquipo);
 router.post('/torneos/:id/partidos/:idPartido', torneos.registrarResultado);
 
+// Comentarios (AP-025): moderación con motivo obligatorio.
+router.get('/comentarios', comentarios.listar);
+router.post('/comentarios/:id/ocultar', comentarios.ocultar);
+router.post('/comentarios/:id/mostrar', comentarios.mostrar);
+
 // Configuración → Pasarelas de pago (TO-013)
 router.get('/configuracion', (req, res) => res.redirect('/admin/catalogos'));
 router.get('/configuracion/pasarelas', config.mostrar);
@@ -94,7 +100,7 @@ router.post('/configuracion/pasarelas/:clave/activar', config.activar);
 router.post('/configuracion/pasarelas/:clave/desactivar', config.desactivar);
 
 // Secciones de fases siguientes (AP-002: el menú ya las muestra)
-['desafios', 'partidos', 'reservas', 'valoraciones', 'comentarios', 'anuncios', 'apelaciones', 'pagos', 'estadisticas']
+['desafios', 'partidos', 'reservas', 'valoraciones', 'anuncios', 'apelaciones', 'pagos', 'estadisticas']
   .forEach((clave) => router.get(`/${clave}`, panel.proximamente(clave)));
 
 router.get('/super', (req, res) => res.redirect('/admin'));

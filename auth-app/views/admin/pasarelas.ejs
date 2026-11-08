@@ -40,7 +40,7 @@
         <% } %>
 
         <form class="sm-form sm-filtros" action="/admin/configuracion/pasarelas/<%= p.clave %>" method="POST" autocomplete="off"
-              data-confirmar="Si cambias credenciales o entorno, la pasarela queda inactiva hasta probarla de nuevo." data-confirmar-titulo="¿Guardar <%= def.nombre %>?" data-confirmar-boton="Guardar">
+              data-confirmar="Si cambias credenciales o entorno, la pasarela queda inactiva hasta probarla de nuevo." data-confirmar-titulo="¿Guardar <%= def.nombre %>?" data-confirmar-boton="Guardar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
           <% def.campos.forEach(function (c) { %>
             <div class="campo <%= err[c.clave] ? 'campo--error' : '' %>">
               <label for="<%= p.clave %>-<%= c.clave %>"><%= c.texto %></label>
@@ -73,17 +73,17 @@
         </form>
 
         <div class="sm-form__acciones">
-          <form action="/admin/configuracion/pasarelas/<%= p.clave %>/probar" method="POST">
+          <form action="/admin/configuracion/pasarelas/<%= p.clave %>/probar" method="POST"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
             <button type="submit" class="btn btn--contorno btn--chico" <%= p.configurada && claveDisponible ? '' : 'disabled' %>>Probar conexión</button>
           </form>
           <% if (p.activa) { %>
             <form action="/admin/configuracion/pasarelas/<%= p.clave %>/desactivar" method="POST"
-                  data-confirmar="Dejará de ofrecerse en los pagos nuevos. Los pagos ya aprobados no cambian." data-confirmar-titulo="¿Desactivar <%= def.nombre %>?" data-confirmar-boton="Desactivar">
+                  data-confirmar="Dejará de ofrecerse en los pagos nuevos. Los pagos ya aprobados no cambian." data-confirmar-titulo="¿Desactivar <%= def.nombre %>?" data-confirmar-boton="Desactivar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
               <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Desactivar</button>
             </form>
           <% } else { %>
             <form action="/admin/configuracion/pasarelas/<%= p.clave %>/activar" method="POST"
-                  data-confirmar="Se ofrecerá a los capitanes en los torneos que la habiliten." data-confirmar-titulo="¿Activar <%= def.nombre %>?" data-confirmar-boton="Activar">
+                  data-confirmar="Se ofrecerá a los capitanes en los torneos que la habiliten." data-confirmar-titulo="¿Activar <%= def.nombre %>?" data-confirmar-boton="Activar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
               <button type="submit" class="btn btn--verde btn--chico" <%= p.probada ? '' : 'disabled' %> title="<%= p.probada ? '' : 'Prueba la conexión primero' %>">Activar</button>
             </form>
           <% } %>

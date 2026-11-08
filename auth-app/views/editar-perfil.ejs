@@ -35,7 +35,7 @@
   </header>
 
   <div class="perfil__info">
-    <form action="/perfil/editar" method="POST" class="formulario editor__form" data-editor>
+    <form action="/perfil/editar" method="POST" class="formulario editor__form" data-editor><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
       <!-- Errores del servidor o de editar-perfil.js -->
       <div class="alerta alerta--error" role="alert" data-alerta-errores <%= errores.length > 0 ? '' : 'hidden' %>>
         <ul>

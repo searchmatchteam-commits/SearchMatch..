@@ -21,7 +21,7 @@
         <div class="alerta alerta--error" role="alert">Revisa los campos marcados en rojo.</div>
       <% } %>
 
-      <form action="/cuenta" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+      <form action="/cuenta" method="POST" class="formulario sm-form" novalidate data-sm-validar><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <div class="campo <%= erroresCampo.correo ? 'campo--error' : '' %>">
           <label for="correo">Correo principal</label>
           <input type="email" id="correo" name="correo" value="<%= datos.correo %>" maxlength="150" autocomplete="email"
@@ -74,7 +74,7 @@
 
     <% if (verificado === false) { %>
       <!-- Formulario aparte (no se puede anidar en el de datos): el botón de arriba lo envía con form="..." -->
-      <form id="form-reenviar-verificacion" action="/cuenta/verificacion" method="POST" hidden></form>
+      <form id="form-reenviar-verificacion" action="/cuenta/verificacion" method="POST" hidden><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" /></form>
     <% } %>
 
     <div class="dash-panel eq-panel revelar">

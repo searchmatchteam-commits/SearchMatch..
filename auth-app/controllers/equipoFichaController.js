@@ -11,7 +11,6 @@ const { NIVELES } = require('../config/perfilJugador');
 const AVISOS = {
   editado: 'Datos del equipo actualizados.',
   comentado: 'Comentario publicado.',
-  retirado: 'Comentario retirado por moderación: ya nadie lo ve.',
   posiciones: 'Posiciones buscadas actualizadas.',
   desactivado: 'Equipo desactivado. Sus desafíos pendientes y partidos futuros se cancelaron y avisamos a los rivales.',
   reactivado: '¡Equipo reactivado con su puntaje anterior!',
@@ -92,20 +91,6 @@ async function comentar(req, res, next) {
         `/equipos/${idEquipo}#comentarios`);
     }
     return res.redirect(`/equipos/${idEquipo}?aviso=comentado#comentarios`);
-  } catch (err) {
-    return next(err);
-  }
-}
-
-async function ocultarComentario(req, res, next) {
-  try {
-    const idComentario = idValido(req.params.id);
-    const datos = idComentario ? await equipoFichaModel.ocultarComentario(idComentario) : null;
-    if (!datos) return res.redirect('/equipos');
-    await notificacionModel.notificarUsuario(datos.idUsuario, 'moderacion',
-      `Tu comentario en la ficha de ${datos.equipo} fue retirado por moderación por no cumplir las reglas de la comunidad.`,
-      '/terminos');
-    return res.redirect(`/equipos/${datos.idEquipo}?aviso=retirado#comentarios`);
   } catch (err) {
     return next(err);
   }
@@ -298,7 +283,6 @@ async function desactivarCuenta(req, res, next) {
 module.exports = {
   ficha,
   comentar,
-  ocultarComentario,
   formularioPosiciones,
   guardarPosiciones,
   formularioEditar,

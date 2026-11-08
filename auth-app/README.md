@@ -56,6 +56,7 @@ auth-app/
 | `DATABASE_URL`              | URI de conexión de Postgres (Project Settings → Database).                |
 | `APP_URL`                   | URL pública de la app, para el enlace del correo de confirmación y la vuelta de Google (`APP_URL/auth/callback`). Abre la app siempre en este host: las cookies de PKCE son por host. |
 | `PORT`                      | Puerto (por defecto `3000`).                                              |
+| `SESSION_SECRET`            | Firma de los tokens CSRF (mínimo 32 caracteres al azar). Para crear una: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`. |
 
 3. **Supabase Auth:** en *Authentication → URL Configuration* define *Site URL* = `APP_URL` y agrega `APP_URL/auth/confirmar` y `APP_URL/auth/callback` a *Redirect URLs*. Para "Continuar con Google", habilita *Sign In / Providers → Google* con el Client ID y Secret de Google Cloud (URI de redirección en Google: `https://<proyecto>.supabase.co/auth/v1/callback`).
    - Opcional (recomendado): para que el enlace funcione aunque se abra en otro navegador o en el celular, cambia la plantilla *Confirm signup* (*Authentication → Emails*) para que apunte a `{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email`.
@@ -71,6 +72,20 @@ npm run dev     # o npm start
 ```
 
 Abre [http://localhost:3000](http://localhost:3000).
+
+### Límite de conexiones de Supabase (`EMAXCONNSESSION`)
+
+La base es compartida y el pooler de Supabase en **modo sesión** (puerto `5432`) admite como máximo **15 clientes** a la vez. El pool de `config/db.js` deja **5 conexiones abiertas por proceso** (`CONEXIONES_ACTIVAS`), así que con 3 procesos corriendo al mismo tiempo (por ejemplo, tres personas del equipo con `npm run dev`, o un `npm run dev` más scripts) se agota y aparece:
+
+```
+(EMAXCONNSESSION) max clients reached in session mode - max clients are limited to pool_size: 15
+```
+
+Opciones (no aplicadas todavía; hay que decidirlo en equipo):
+
+- **Pooler en modo transacción:** usar en `DATABASE_URL` el puerto **`6543`** del pooler (*Project Settings → Database → Connection pooling*). Admite muchos más clientes. Antes de cambiarlo hay que revisar que nada dependa de la sesión entre consultas (las transacciones con `BEGIN`/`COMMIT` en un mismo cliente sí funcionan).
+- **Bajar el pool:** reducir `CONEXIONES_ACTIVAS` (y/o poner `max`) en `config/db.js` para desarrollo local, a costa de algo de latencia al abrir conexiones nuevas.
+- Mientras tanto: cerrar los servidores y scripts que no se estén usando.
 
 ---
 

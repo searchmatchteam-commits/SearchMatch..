@@ -160,16 +160,7 @@ async function crearComentario(authId, idEquipo, mensaje) {
   );
 }
 
-/** AD-013 · Oculta un comentario a todos. @returns {Promise<{idUsuario, idEquipo, equipo}|null>} */
-async function ocultarComentario(idComentario) {
-  const { rows } = await pool.query(
-    `UPDATE comentario c SET oculto = TRUE, oculto_en = now() FROM equipo e
-      WHERE c.id = $1 AND NOT c.oculto AND e.id = c.id_equipo
-      RETURNING c.id_usuario, c.id_equipo, e.nombre AS equipo`,
-    [idComentario]
-  );
-  return rows[0] ? { idUsuario: rows[0].id_usuario, idEquipo: rows[0].id_equipo, equipo: rows[0].equipo } : null;
-}
+// AD-013 / AP-025: ocultar y volver a mostrar comentarios se hace desde el panel (models/comentarioModel.js).
 
 /* =====================================================================
    PE-021 · Posiciones que busca el equipo
@@ -401,7 +392,6 @@ module.exports = {
   pendientesDeEquipo,
   listarComentarios,
   crearComentario,
-  ocultarComentario,
   posicionesDelEquipo,
   guardarPosicionesBuscadas,
   listarEquiposQueBuscan,

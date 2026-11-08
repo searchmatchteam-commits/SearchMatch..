@@ -1,0 +1,70 @@
+<%- include('../partials/admin-inicio', { seccion }) %>
+
+<%
+  const fechaHora = new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Santiago' });
+  // Las acciones vuelven a esta misma página del listado (filtros, orden y página).
+  const volver = listado.urlPagina(listado.pagina).split('?')[1] || '';
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <h1 class="eq-cabecera__titulo">Comentarios</h1>
+        <p class="eq-cabecera__stats">Comentarios de las fichas de equipo. Ocultar o volver a mostrar uno pide un motivo, que se le avisa a su autor.</p>
+      </div>
+    </header>
+
+    <% if (aviso) { %><div class="alerta alerta--<%= tipoAviso %>" role="status"><%= aviso %></div><% } %>
+
+    <%- include('../partials/listado-barra', { listado, filtrosVista, placeholder: 'Texto del comentario, equipo o autor' }) %>
+
+    <% if (comentarios.length === 0) { %>
+      <%- include('../partials/listado-vacio', { listado, mensaje: 'Aún no hay comentarios' }) %>
+    <% } else { %>
+      <div class="dash-panel eq-panel sm-tabla-contenedor">
+        <table class="sm-tabla sm-tabla--listado">
+          <thead>
+            <tr>
+              <%- include('../partials/listado-th', { listado, clave: 'fecha', texto: 'Fecha' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'equipo', texto: 'Equipo' }) %>
+              <%- include('../partials/listado-th', { listado, clave: 'autor', texto: 'Autor' }) %>
+              <th scope="col">Comentario</th>
+              <%- include('../partials/listado-th', { listado, clave: 'estado', texto: 'Estado' }) %>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% comentarios.forEach(function (c) { %>
+              <tr>
+                <td data-titulo="Fecha"><%= fechaHora.format(c.fecha) %></td>
+                <td data-titulo="Equipo"><%= c.equipo %></td>
+                <td data-titulo="Autor"><%= c.autor %></td>
+                <td data-titulo="Comentario" class="sm-tabla__texto">
+                  <%= c.mensaje %>
+                  <% if (c.motivo) { %><small class="sm-tabla__sub">Moderación: <%= c.motivo %></small><% } %>
+                </td>
+                <td data-titulo="Estado"><span class="sm-estado <%= c.oculto ? 'sm-estado--inactivo' : 'sm-estado--activo' %>"><%= c.estadoTexto %></span></td>
+                <td data-titulo="Acciones">
+                  <% if (c.oculto) { %>
+                    <%- include('../partials/admin-accion-motivo', {
+                      accion: `/admin/comentarios/${c.id}/mostrar`, boton: 'Mostrar', ocultos: [['volver', volver]],
+                      titulo: '¿Volver a mostrar este comentario?', texto: 'Se verá otra vez en la ficha del equipo y le avisaremos a su autor.',
+                    }) %>
+                  <% } else { %>
+                    <%- include('../partials/admin-accion-motivo', {
+                      accion: `/admin/comentarios/${c.id}/ocultar`, boton: 'Ocultar', peligro: true, ocultos: [['volver', volver]],
+                      titulo: '¿Ocultar este comentario?', texto: 'Dejará de verse para todos en la ficha del equipo y le avisaremos a su autor con el motivo.',
+                    }) %>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <%- include('../partials/listado-pie', { listado }) %>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('../partials/admin-fin') %>

@@ -42,19 +42,19 @@
         <% if (puedeResponder) { %>
           <form action="/desafios/<%= desafio.id %>/aceptar" method="POST"
                 data-confirmar="Confirmarás que quieren jugar contra <%= desafio.desafiante %>. Después podrán programar el partido."
-                data-confirmar-titulo="¿Aceptar el desafío?" data-confirmar-boton="Aceptar">
+                data-confirmar-titulo="¿Aceptar el desafío?" data-confirmar-boton="Aceptar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
             <button type="submit" class="btn btn--verde btn--grande">Aceptar</button>
           </form>
           <form action="/desafios/<%= desafio.id %>/rechazar" method="POST"
                 data-confirmar="<%= desafio.desafiante %> será notificado. Podrán volver a desafiarse más adelante."
-                data-confirmar-titulo="¿Rechazar el desafío?" data-confirmar-boton="Rechazar">
+                data-confirmar-titulo="¿Rechazar el desafío?" data-confirmar-boton="Rechazar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
             <button type="submit" class="btn btn--contorno btn--grande sm-btn-peligro">Rechazar</button>
           </form>
         <% } %>
         <% if (puedeCancelar) { %>
           <form action="/desafios/<%= desafio.id %>/cancelar" method="POST"
                 data-confirmar="El desafío quedará cancelado y <%= desafio.desafiado %> será notificado. Podrás desafiarlos de nuevo después."
-                data-confirmar-titulo="¿Cancelar el desafío?" data-confirmar-boton="Cancelar desafío">
+                data-confirmar-titulo="¿Cancelar el desafío?" data-confirmar-boton="Cancelar desafío"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
             <button type="submit" class="btn btn--contorno btn--grande sm-btn-peligro">Cancelar desafío</button>
           </form>
         <% } %>

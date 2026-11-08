@@ -28,7 +28,7 @@
         </div>
       <% } else { %>
         <form action="/cuenta/desactivar" method="POST" class="sm-form" novalidate data-sm-validar data-requiere-aceptar
-              data-confirmar="Tu cuenta quedará inactiva y se cerrará tu sesión." data-confirmar-titulo="¿Desactivar tu cuenta?" data-confirmar-boton="Desactivar">
+              data-confirmar="Tu cuenta quedará inactiva y se cerrará tu sesión." data-confirmar-titulo="¿Desactivar tu cuenta?" data-confirmar-boton="Desactivar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
           <label class="sm-check">
             <input type="checkbox" name="confirmo" value="si" data-casilla-aceptar />
             <span>Entiendo las consecuencias y quiero desactivar mi cuenta.</span>

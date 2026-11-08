@@ -147,7 +147,7 @@ function validarCatalogo(req, res, next) {
 const multer = require('multer');
 const { detectarTipoImagen } = require('../controllers/jugadorController');
 const {
-  MAX_PATROCINADORES, FORMATOS, MEDIOS_PAGO, LIMITES, erroresCupos, erroresFechas, leerPrecio,
+  MAX_PATROCINADORES, FORMATOS, FORMATOS_DISPONIBLES, MSG_FORMATO_NO_DISPONIBLE, MEDIOS_PAGO, LIMITES, erroresCupos, erroresFechas, leerPrecio,
 } = require('../config/torneos');
 
 const MAX_FOTO = 5 * 1024 * 1024;
@@ -238,6 +238,7 @@ function validarTorneo(req, res, next) {
   if (datos.reglamento.length > LIMITES.reglamento) e.reglamento = `Máximo ${LIMITES.reglamento} caracteres.`;
   if (datos.premios.length > 500) e.premios = 'Máximo 500 caracteres.';
   obligatorio('formato', datos.formato, 'Elige el formato.');
+  if (datos.formato && !FORMATOS_DISPONIBLES.includes(datos.formato)) e.formato = MSG_FORMATO_NO_DISPONIBLE;
   obligatorio('emparejamiento', datos.emparejamiento, 'Elige cómo se arman los cruces.');
   obligatorio('id_modalidad', datos.idModalidad, 'Elige la modalidad.');
   obligatorio('id_nivel_min', datos.idNivelMin, 'Elige el nivel mínimo admitido.');

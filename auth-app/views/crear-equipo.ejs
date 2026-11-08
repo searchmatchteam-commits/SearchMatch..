@@ -98,7 +98,7 @@
         </div>
       </div>
     <% } else { %>
-      <form action="/crear-equipo" method="POST" class="formulario wizard__form" data-wizard-equipo data-paso-inicial="<%= paso %>" novalidate>
+      <form action="/crear-equipo" method="POST" class="formulario wizard__form" data-wizard-equipo data-paso-inicial="<%= paso %>" novalidate><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <!-- ============ PASO 1: IDENTIDAD ============ -->
         <fieldset class="wizard__paso" data-paso="1">
           <legend class="wizard__titulo">Crea tu equipo</legend>

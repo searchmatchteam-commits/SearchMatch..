@@ -17,7 +17,7 @@
       <summary class="dash-panel__titulo">+ Crear administrador</summary>
       <form class="sm-form sm-filtros" action="/admin/administradores" method="POST" novalidate data-sm-validar
             data-confirmar="Se creará su cuenta del panel y le enviaremos un correo para que defina su contraseña."
-            data-confirmar-titulo="¿Crear la cuenta de administrador?" data-confirmar-boton="Crear">
+            data-confirmar-titulo="¿Crear la cuenta de administrador?" data-confirmar-boton="Crear"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <div class="campo <%= erroresCampo.nombre ? 'campo--error' : '' %>">
           <label for="nombre">Nombre</label>
           <input type="text" id="nombre" name="nombre" value="<%= datos.nombre || '' %>" maxlength="100" required data-mensaje="Escribe el nombre." />
@@ -89,7 +89,7 @@
       <% } else { %>
         <form class="sm-form sm-filtros" action="/admin/administradores/traspasar" method="POST" novalidate data-sm-validar
               data-confirmar="La otra persona pasará a ser Administrador principal y tú quedarás como administrador: ya no podrás gestionar administradores."
-              data-confirmar-titulo="¿Traspasar el rol de principal?" data-confirmar-boton="Traspasar">
+              data-confirmar-titulo="¿Traspasar el rol de principal?" data-confirmar-boton="Traspasar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
           <div class="campo">
             <label for="id_nuevo">Nuevo Administrador principal</label>
             <select id="id_nuevo" name="id_nuevo" required data-mensaje="Elige a quién.">

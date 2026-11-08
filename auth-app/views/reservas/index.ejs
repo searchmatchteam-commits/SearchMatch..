@@ -43,9 +43,9 @@
             <% if (r.id_partido) { %><p class="sm-tarjeta__linea">Reserva de un partido · <a href="/partidos/<%= r.id_partido %>">Ver partido</a></p><% } %>
             <% if (!cancelada && r.futura) { %>
               <% if (r.id_partido) { %>
-                <p class="dash-panel__nota">Para liberarla, cancela o reprograma el partido.</p>
+                <p class="dash-panel__nota">Para liberarla, cancela el partido desde su ficha.</p>
               <% } else { %>
-                <form action="/reservas/<%= r.id %>/cancelar" method="POST" data-confirmar="El horario quedará libre para otros usuarios." data-confirmar-titulo="¿Cancelar la reserva de <%= r.cancha %>?" data-confirmar-boton="Cancelar reserva">
+                <form action="/reservas/<%= r.id %>/cancelar" method="POST" data-confirmar="El horario quedará libre para otros usuarios." data-confirmar-titulo="¿Cancelar la reserva de <%= r.cancha %>?" data-confirmar-boton="Cancelar reserva"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                   <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Cancelar reserva</button>
                 </form>
               <% } %>

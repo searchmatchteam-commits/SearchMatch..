@@ -15,7 +15,7 @@
       <div class="alerta alerta--exito" role="status"><%= aviso %></div>
     <% } %>
 
-    <form action="/admin/login" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+    <form action="/admin/login" method="POST" class="formulario sm-form" novalidate data-sm-validar><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
       <div class="campo">
         <label for="correo">Correo</label>
         <div class="campo__control">

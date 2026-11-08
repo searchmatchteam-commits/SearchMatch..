@@ -71,3 +71,28 @@ test('AP-027 c4: publicar solo en borrador y generar fixture solo con inscripcio
   ['abierto', 'completo', 'cerrado', 'en_curso', 'finalizado', 'cancelado'].forEach((e) => assert.ok(!r.accionesTorneo(e).includes('publicar')));
   ['borrador', 'abierto', 'completo', 'en_curso', 'finalizado', 'cancelado'].forEach((e) => assert.ok(!r.accionesTorneo(e).includes('fixture')));
 });
+
+test('TO-007 (pendiente): la fase de grupos no está disponible para crear ni publicar', () => {
+  assert.deepEqual(r.FORMATOS_DISPONIBLES, ['relampago', 'liga']);
+  assert.match(r.MSG_FORMATO_NO_DISPONIBLE, /todavía no está disponible/);
+});
+
+test('TO-007 (pendiente): en eliminación directa el rango de cupos debe admitir 4, 8, 16 o 32 equipos', () => {
+  assert.deepEqual(r.tamanosLlave(5, 20), [8, 16]);
+  assert.deepEqual(r.tamanosLlave(5, 7), []);
+  assert.match(r.erroresCupos({ formato: 'relampago', cupoMin: 5, cupoMax: 7 }).cupo_max, /4, 8, 16 o 32/);
+  assert.deepEqual(r.erroresCupos({ formato: 'relampago', cupoMin: 4, cupoMax: 6 }), {});
+  assert.deepEqual(r.erroresCupos({ formato: 'liga', cupoMin: 5, cupoMax: 7 }), {}, 'la liga admite cualquier cantidad');
+});
+
+test('TO-007 (pendiente): errorLlave dice cuántos faltan o sobran y respeta el cupo máximo', () => {
+  [4, 8, 16, 32].forEach((n) => assert.equal(r.errorLlave(n), null));
+  const seis = r.errorLlave(6, 16);
+  assert.match(seis, /hay 6/);
+  assert.match(seis, /faltan 2 equipos para llegar a 8/);
+  assert.match(seis, /sobran 2 equipos para quedar en 4/);
+  const cinco = r.errorLlave(5, 6);
+  assert.doesNotMatch(cinco, /llegar a 8/, 'no sugiere llegar a 8 si el cupo máximo es 6');
+  assert.match(cinco, /sobra 1 equipo para quedar en 4/);
+  assert.match(r.errorLlave(3), /falta 1 equipo para llegar a 4/);
+});

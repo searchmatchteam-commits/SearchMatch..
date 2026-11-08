@@ -21,7 +21,7 @@
         </div>
       <% } %>
 
-      <form action="/equipos/<%= equipo.id %>/editar" method="POST" class="formulario sm-form" novalidate data-sm-validar data-editar-equipo>
+      <form action="/equipos/<%= equipo.id %>/editar" method="POST" class="formulario sm-form" novalidate data-sm-validar data-editar-equipo><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <div class="ceq-identidad">
           <span class="ceq-escudo ceq-escudo--grande" data-escudo><% if (datos.escudo) { %><img src="<%= datos.escudo %>" alt="" /><% } else { %><%- include('../partials/escudo-equipo', { equipo }) %><% } %></span>
           <span class="ceq-identidad__texto">

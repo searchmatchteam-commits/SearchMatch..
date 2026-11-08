@@ -56,27 +56,27 @@
                       <% if (t.acciones.includes('publicar')) { %>
                         <form action="/admin/torneos/<%= t.id %>/publicar" method="POST"
                               data-confirmar="Pasará a Inscripciones abiertas, lo verán los jugadores y se avisará a los capitanes de equipos que calzan con el torneo."
-                              data-confirmar-titulo="¿Publicar <%= t.nombre %>?" data-confirmar-boton="Publicar">
+                              data-confirmar-titulo="¿Publicar <%= t.nombre %>?" data-confirmar-boton="Publicar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                           <button type="submit" class="btn btn--chico btn--verde">Publicar</button>
                         </form>
                       <% } %>
                       <% if (t.acciones.includes('cerrar')) { %>
                         <form action="/admin/torneos/<%= t.id %>/cerrar" method="POST"
                               data-confirmar="Ya no se aceptarán inscripciones nuevas y las pendientes de pago expiran."
-                              data-confirmar-titulo="¿Cerrar las inscripciones de <%= t.nombre %>?" data-confirmar-boton="Cerrar inscripciones">
+                              data-confirmar-titulo="¿Cerrar las inscripciones de <%= t.nombre %>?" data-confirmar-boton="Cerrar inscripciones"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                           <button type="submit" class="btn btn--chico btn--contorno">Cerrar inscripciones</button>
                         </form>
                       <% } %>
                       <% if (t.acciones.includes('fixture')) { %>
                         <form action="/admin/torneos/<%= t.id %>/empezar" method="POST"
                               data-confirmar="Se arma el fixture con los equipos confirmados y el torneo pasa a En curso."
-                              data-confirmar-titulo="¿Generar el fixture de <%= t.nombre %>?" data-confirmar-boton="Generar fixture">
+                              data-confirmar-titulo="¿Generar el fixture de <%= t.nombre %>?" data-confirmar-boton="Generar fixture"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                           <button type="submit" class="btn btn--chico btn--verde">Generar fixture</button>
                         </form>
                       <% } %>
                       <% if (t.acciones.includes('eliminar')) { %>
                         <form action="/admin/torneos/<%= t.id %>/eliminar" method="POST"
-                              data-confirmar="El borrador se elimina definitivamente." data-confirmar-titulo="¿Eliminar <%= t.nombre %>?" data-confirmar-boton="Eliminar">
+                              data-confirmar="El borrador se elimina definitivamente." data-confirmar-titulo="¿Eliminar <%= t.nombre %>?" data-confirmar-boton="Eliminar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                           <button type="submit" class="btn btn--chico btn--contorno sm-btn-peligro">Eliminar</button>
                         </form>
                       <% } %>

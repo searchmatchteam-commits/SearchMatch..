@@ -12,7 +12,7 @@
       </div>
     </header>
 
-    <form class="dash-panel eq-panel sm-form" action="/equipos/<%= equipo.id %>/posiciones" method="POST">
+    <form class="dash-panel eq-panel sm-form" action="/equipos/<%= equipo.id %>/posiciones" method="POST"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
       <p class="dash-panel__nota">Marca una o más posiciones. Los jugadores las verán en el directorio y podrán postular.</p>
       <div class="sm-chequeos">
         <% posiciones.forEach(function (p) { %>

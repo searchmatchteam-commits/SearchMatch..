@@ -29,12 +29,17 @@ const AVISOS = {
   'sin-permiso': 'Solo el Administrador principal puede eliminar un torneo ya publicado.',
   motivo: MSG_MOTIVO,
   guardado: 'Resultado guardado.',
+  campeon: 'Resultado corregido y cambió el campeón: quedó en el registro de actividad y se avisó a los equipos.',
+  'confirmar-finalizado': 'El torneo ya está finalizado: para corregir un resultado marca la confirmación e indica el motivo.',
   penales: 'En eliminación directa no hay empates: indica quién ganó por penales.',
   goles: 'Los goles deben ser números enteros entre 0 y 99.',
-  byes: 'Con una cantidad de equipos que no es 4, 8, 16 o 32 la llave necesita byes: llega con la generación del fixture (TO-007, fase 3).',
-  grupos: 'La fase de grupos se sortea con la generación del fixture (TO-007, fase 3).',
+  formato: reglas.MSG_FORMATO_NO_DISPONIBLE,
   faltan: 'Aún no se alcanza el cupo mínimo de equipos confirmados.',
 };
+// Avisos que se muestran como error (rojo) y no como confirmación.
+const AVISOS_ERROR = new Set([
+  'estado', 'no-editable', 'con-pago', 'con-pagos', 'sin-permiso', 'motivo', 'penales', 'goles', 'formato', 'faltan', 'confirmar-finalizado',
+]);
 
 function admin(req) {
   return { id: req.usuario.id, nombre: req.usuario.nombre };
@@ -118,7 +123,7 @@ async function renderDetalle(req, res, torneo, { status = 200, mensaje = null, t
     usd: torneo.mediosPago.includes('paypal') && torneo.precio > 0 ? { monto: reglas.aUSD(torneo.precio, tipoCambio), tipoCambio } : null,
     formatoCLP: reglas.formatoCLP,
     aviso: mensaje || aviso(req),
-    tipoAviso: mensaje ? tipoMensaje : 'exito',
+    tipoAviso: mensaje ? tipoMensaje : (AVISOS_ERROR.has(req.query.aviso) ? 'error' : 'exito'),
     ...extra,
   });
 }
@@ -186,6 +191,7 @@ async function renderFormulario(req, res, { status = 200, torneo = null, datos =
     })),
     tipoCambio: paypal ? paypal.tipoCambio : null,
     formatos: reglas.FORMATOS,
+    formatosDisponibles: reglas.FORMATOS_DISPONIBLES,
     emparejamientos: reglas.EMPAREJAMIENTOS,
     limites: reglas.LIMITES,
     maxPatrocinadores: reglas.MAX_PATROCINADORES,
@@ -388,6 +394,8 @@ async function publicar(req, res, next) {
       'sin-medios': `El torneo cuesta ${torneo.precioTexto}: habilita al menos un medio de pago antes de publicarlo (o déjalo gratuito con precio 0).`,
       'medio-inactivo': `${(r.medios || []).join(' y ')} ya no está disponible (desactivada o sin credenciales): quítala de los medios de pago o actívala en Configuración.`,
       'fecha-vencida': 'La fecha límite de inscripción ya pasó: extiéndela en Editar antes de publicar.',
+      formato: `${reglas.MSG_FORMATO_NO_DISPONIBLE} Cámbialo en Editar antes de publicar.`,
+      'llave-cupos': `En eliminación directa, entre el cupo mínimo (${torneo.cupoMin}) y el máximo (${torneo.cupoMax}) debe caber 4, 8, 16 o 32 equipos (todavía no hay byes). Ajusta los cupos en Editar.`,
     };
     return await renderDetalle(req, res, torneo, { status: 409, mensaje: mensajes[r.resultado], tipoMensaje: 'error' });
   } catch (err) {
@@ -400,8 +408,18 @@ async function cerrar(req, res, next) {
     const idTorneo = idValido(req.params.id);
     if (!idTorneo) return res.redirect(`${BASE}?aviso=inexistente`);
     const r = await torneoModel.cerrarInscripciones(admin(req), idTorneo);
-    if (r.resultado !== 'faltan') return res.redirect(`${BASE}/${idTorneo}?aviso=${r.resultado}`);
+    if (!['faltan', 'llave', 'formato'].includes(r.resultado)) return res.redirect(`${BASE}/${idTorneo}?aviso=${r.resultado}`);
     const torneo = await torneoModel.obtener(idTorneo, { admin: true });
+    if (r.resultado !== 'faltan') {
+      return await renderDetalle(req, res, torneo, {
+        status: 409,
+        tipoMensaje: 'error',
+        mensaje: r.resultado === 'llave'
+          ? `No se pueden cerrar las inscripciones. ${r.mensaje} Puedes extender la fecha límite, ampliar el cupo o quitar equipos.`
+          : `No se pueden cerrar las inscripciones. ${reglas.MSG_FORMATO_NO_DISPONIBLE}`,
+        extra: { ofrecerExtender: r.resultado === 'llave' },
+      });
+    }
     return await renderDetalle(req, res, torneo, {
       status: 409,
       tipoMensaje: 'error',
@@ -449,7 +467,11 @@ async function empezar(req, res, next) {
   try {
     const idTorneo = idValido(req.params.id);
     if (!idTorneo) return res.redirect(`${BASE}?aviso=inexistente`);
-    const { resultado, equipos } = await torneoModel.empezar(admin(req), idTorneo);
+    const { resultado, equipos, mensaje } = await torneoModel.empezar(admin(req), idTorneo);
+    if (resultado === 'llave') {
+      const torneo = await torneoModel.obtener(idTorneo, { admin: true });
+      return await renderDetalle(req, res, torneo, { status: 409, tipoMensaje: 'error', mensaje: `No se puede generar el fixture. ${mensaje}` });
+    }
     if (resultado === 'empezado') {
       const torneo = await torneoModel.obtener(idTorneo, { admin: true });
       await Promise.all(equipos.map((idEquipo) => notificarIntegrantes(idEquipo, 'torneo',
@@ -474,7 +496,11 @@ async function registrarResultado(req, res, next) {
     const golesVisita = goles(req.body.goles_visita);
     const resultado = golesLocal === null || golesVisita === null
       ? 'goles'
-      : await torneoModel.registrarResultado(admin(req), idTorneo, idPartido, golesLocal, golesVisita, req.body.ganador_penales);
+      : await torneoModel.registrarResultado(admin(req), idTorneo, idPartido, golesLocal, golesVisita, req.body.ganador_penales, {
+        // R9: solo cuentan si el torneo ya terminó (el modelo lo decide con el torneo bloqueado).
+        confirmarFinalizado: req.body.confirmar_finalizado === 'si',
+        motivo: leerMotivo(req.body.motivo),
+      });
     return res.redirect(`${BASE}/${idTorneo}?aviso=${resultado}#partido-${idPartido}`);
   } catch (err) {
     return next(err);

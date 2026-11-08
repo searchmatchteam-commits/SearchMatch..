@@ -531,7 +531,7 @@ async function editar(admin, idTorneo, estadoEsperado, datos, foto, patrocinador
  * TO-004 · Publica un borrador: pasa a Inscripciones abiertas y avisa a los capitanes de equipos cuya
  * modalidad y nivel calzan con el torneo.
  * @param {Object<string, object>} habilitadas - Pasarelas activas (pasarelaModel.habilitadas()).
- * @returns {Promise<{resultado:'publicado'|'inexistente'|'estado'|'incompleto'|'sin-medios'|'medio-inactivo'|'fecha-vencida', faltan?:string[], medios?:string[], notificados?:number}>}
+ * @returns {Promise<{resultado:'publicado'|'inexistente'|'estado'|'incompleto'|'formato'|'llave-cupos'|'sin-medios'|'medio-inactivo'|'fecha-vencida', faltan?:string[], medios?:string[], notificados?:number}>}
  */
 async function publicar(admin, idTorneo, habilitadas) {
   return enTransaccion(async (cliente) => {
@@ -544,6 +544,9 @@ async function publicar(admin, idTorneo, habilitadas) {
       fecha_limite_inscripcion: t.fecha_limite, cupo_min: t.cupo_min, cupo_max: t.cupo_max, min_jugadores: t.min_jugadores };
     Object.entries(revisar).forEach(([campo, valor]) => { if (!valor) faltan.push(reglas.CAMPOS[campo]); });
     if (faltan.length > 0) return { resultado: 'incompleto', faltan };
+    // Sin TO-007 no se podría empezar: ni la fase de grupos ni una llave que no puede llegar a 4, 8, 16 o 32.
+    if (!reglas.FORMATOS_DISPONIBLES.includes(t.formato)) return { resultado: 'formato' };
+    if (t.formato === 'relampago' && reglas.tamanosLlave(t.cupo_min, t.cupo_max).length === 0) return { resultado: 'llave-cupos' };
     if (t.precio > 0 && t.medios_pago.length === 0) return { resultado: 'sin-medios' };
     const inactivos = t.precio > 0 ? t.medios_pago.filter((m) => !habilitadas[m]) : [];
     if (inactivos.length > 0) return { resultado: 'medio-inactivo', medios: inactivos.map((m) => reglas.MEDIOS_PAGO[m]) };
@@ -574,7 +577,9 @@ async function publicar(admin, idTorneo, habilitadas) {
 /**
  * TO-005 · Cierra las inscripciones: exige el cupo mínimo de Confirmadas, expira las Pendientes de pago
  * (liberan su cupo) y avisa a los capitanes confirmados. admin = null → cierre automático por fecha límite.
- * @returns {Promise<{resultado:'cerrado'|'inexistente'|'estado'|'faltan', faltan?:number, expiradas?:number, notificados?:number}>}
+ * Sin TO-007 tampoco cierra lo que después no se podría empezar: la fase de grupos ('formato') ni una llave con
+ * una cantidad de confirmados distinta de 4, 8, 16 o 32 ('llave', con el mensaje de reglas.errorLlave).
+ * @returns {Promise<{resultado:'cerrado'|'inexistente'|'estado'|'faltan'|'formato'|'llave', faltan?:number, mensaje?:string, expiradas?:number, notificados?:number}>}
  */
 async function cerrarInscripciones(admin, idTorneo) {
   return enTransaccion(async (cliente) => {
@@ -583,6 +588,9 @@ async function cerrarInscripciones(admin, idTorneo) {
     if (!reglas.CON_INSCRIPCIONES.includes(t.estado)) return { resultado: 'estado' };
     const { confirmados } = await contarInscripciones(cliente, idTorneo);
     if (confirmados < t.cupo_min) return { resultado: 'faltan', faltan: t.cupo_min - confirmados, confirmados, cupoMin: t.cupo_min };
+    if (!reglas.FORMATOS_DISPONIBLES.includes(t.formato)) return { resultado: 'formato' };
+    const errorLlave = t.formato === 'relampago' ? reglas.errorLlave(confirmados, t.cupo_max) : null;
+    if (errorLlave) return { resultado: 'llave', mensaje: errorLlave, confirmados };
 
     const expiradas = await cliente.query(
       `UPDATE torneo_equipo SET estado = 'expirada', actualizada_en = now(), motivo = 'Inscripciones cerradas antes de confirmar el pago.'
@@ -606,8 +614,9 @@ async function cerrarInscripciones(admin, idTorneo) {
 
 /**
  * TO-005 c4 · Tarea programada (idempotente): cierra los torneos cuya fecha límite ya pasó y que cumplen el
- * cupo mínimo. Los que no lo cumplen quedan abiertos y aparecen como alerta del panel (alertaModel).
- * @returns {Promise<{cerrados:number[], sinMinimo:number[]}>}
+ * cupo mínimo. Los que no lo cumplen, o que no se podrían empezar (llave incompleta, formato no disponible), quedan
+ * abiertos y aparecen como alerta del panel (alertaModel).
+ * @returns {Promise<{cerrados:number[], sinMinimo:number[], sinLlave:number[]}>}
  */
 async function cerrarVencidos() {
   const { rows } = await pool.query(
@@ -615,12 +624,14 @@ async function cerrarVencidos() {
   );
   const cerrados = [];
   const sinMinimo = [];
+  const sinLlave = [];
   for (const { id } of rows) {
     const r = await cerrarInscripciones(null, id);
     if (r.resultado === 'cerrado') cerrados.push(id);
     else if (r.resultado === 'faltan') sinMinimo.push(id);
+    else if (r.resultado === 'llave' || r.resultado === 'formato') sinLlave.push(id);
   }
-  return { cerrados, sinMinimo };
+  return { cerrados, sinMinimo, sinLlave };
 }
 
 /**
@@ -839,8 +850,9 @@ async function insertarPartidos(cliente, idTorneo, partidos) {
 
 /**
  * Genera el fixture y empieza el torneo: solo con las inscripciones cerradas. Arma el fixture (liga) o la
- * primera ronda (eliminación directa). Byes y fase de grupos llegan con TO-007 (fase 3).
- * @returns {{resultado:'empezado'|'inexistente'|'estado'|'faltan'|'byes'|'grupos', equipos?:number[]}}
+ * primera ronda (eliminación directa). Byes y fase de grupos llegan con TO-007 (fase 3): mientras tanto responde
+ * 'formato' o 'llave' (con el mensaje de reglas.errorLlave) en vez de empezar.
+ * @returns {{resultado:'empezado'|'inexistente'|'estado'|'faltan'|'llave'|'formato', mensaje?:string, equipos?:number[]}}
  */
 async function empezar(admin, idTorneo) {
   return enTransaccion(async (cliente) => {
@@ -853,8 +865,9 @@ async function empezar(admin, idTorneo) {
     );
     const equipos = rows.map((f) => f.id_equipo);
     if (equipos.length < t.cupo_min) return { resultado: 'faltan' };
-    if (t.formato === 'grupos') return { resultado: 'grupos' };
-    if (t.formato === 'relampago' && !reglas.EQUIPOS_RELAMPAGO.includes(equipos.length)) return { resultado: 'byes' };
+    if (!reglas.FORMATOS_DISPONIBLES.includes(t.formato)) return { resultado: 'formato' };
+    const errorLlave = t.formato === 'relampago' ? reglas.errorLlave(equipos.length) : null;
+    if (errorLlave) return { resultado: 'llave', mensaje: errorLlave };
     const partidos = t.formato === 'liga' ? reglas.fixtureLiga(equipos, t.emparejamiento) : reglas.primeraRondaLlave(equipos, t.emparejamiento);
     await insertarPartidos(cliente, idTorneo, partidos);
     await cliente.query(`UPDATE torneo SET estado = 'en_curso' WHERE id = $1`, [idTorneo]);
@@ -870,14 +883,20 @@ async function empezar(admin, idTorneo) {
  * Guarda el resultado de un partido. En la llave no hay empates: si los goles empatan, ganadorPenales
  * dice quién pasó (local/visita). Cuando se completa una ronda se crea la siguiente; con la final
  * (o con todos los partidos de la liga jugados) el torneo queda finalizado y se guarda el campeón.
- * @returns {'guardado'|'inexistente'|'cerrado'|'penales'|'vacio'}
+ * R9 · Con el torneo ya finalizado, corregir exige confirmarlo y un motivo; si cambia el campeón se registra
+ * aparte en la actividad y se avisa a los capitanes de los equipos participantes.
+ * @param {{confirmarFinalizado?:boolean, motivo?:string|null}} [correccion]
+ * @returns {'guardado'|'campeon'|'inexistente'|'cerrado'|'penales'|'vacio'|'confirmar-finalizado'|'motivo'}
  */
-async function registrarResultado(admin, idTorneo, idPartido, golesLocal, golesVisita, ganadorPenales) {
+async function registrarResultado(admin, idTorneo, idPartido, golesLocal, golesVisita, ganadorPenales, { confirmarFinalizado = false, motivo = null } = {}) {
   return enTransaccion(async (cliente) => {
-    const t = await cliente.query('SELECT nombre, formato, estado FROM torneo WHERE id = $1 FOR UPDATE', [idTorneo]);
+    const t = await cliente.query('SELECT nombre, formato, estado, id_campeon FROM torneo WHERE id = $1 FOR UPDATE', [idTorneo]);
     if (!t.rows[0]) return 'inexistente';
-    const { formato, estado } = t.rows[0];
+    const { nombre, formato, estado, id_campeon: campeonAntes } = t.rows[0];
     if (!['en_curso', 'finalizado'].includes(estado)) return 'cerrado';
+    const finalizado = estado === 'finalizado';
+    if (finalizado && !confirmarFinalizado) return 'confirmar-finalizado';
+    if (finalizado && !motivo) return 'motivo';
     const p = await cliente.query('SELECT * FROM torneo_partido WHERE id = $1 AND id_torneo = $2', [idPartido, idTorneo]);
     const partido = p.rows[0];
     if (!partido) return 'inexistente';
@@ -900,43 +919,65 @@ async function registrarResultado(admin, idTorneo, idPartido, golesLocal, golesV
       [golesLocal, golesVisita, idGanador, idPartido]
     );
     await actividad.registrar(cliente, {
-      admin, seccion: 'torneos', accion: 'Registrar resultado', elementoTipo: 'torneo_partido', elementoId: idPartido,
-      elemento: t.rows[0].nombre,
+      admin, seccion: 'torneos', accion: finalizado ? 'Corregir resultado (torneo finalizado)' : 'Registrar resultado',
+      elementoTipo: 'torneo_partido', elementoId: idPartido, elemento: nombre, motivo: finalizado ? motivo : null,
       anterior: partido.jugado ? { goles_local: partido.goles_local, goles_visita: partido.goles_visita } : null,
       nuevo: { goles_local: golesLocal, goles_visita: golesVisita, ganador: idGanador },
     });
 
-    const ronda = await cliente.query(
-      'SELECT orden, id_ganador, jugado FROM torneo_partido WHERE id_torneo = $1 AND ronda = $2 ORDER BY orden',
-      [idTorneo, formato === 'liga' ? partido.ronda : ultimaRonda]
-    );
-    if (formato === 'relampago') {
-      if (!ronda.rows.every((f) => f.jugado)) return 'guardado';
-      if (ronda.rows.length === 1) {
-        await cliente.query(`UPDATE torneo SET estado = 'finalizado', id_campeon = $1 WHERE id = $2`, [idGanador, idTorneo]);
-        return 'guardado';
-      }
-      const siguientes = [];
-      for (let i = 0; i < ronda.rows.length; i += 2) {
-        siguientes.push({ ronda: ultimaRonda + 1, orden: i / 2, local: ronda.rows[i].id_ganador, visita: ronda.rows[i + 1].id_ganador });
-      }
-      await insertarPartidos(cliente, idTorneo, siguientes);
-      return 'guardado';
-    }
+    await avanzarCompetencia(cliente, idTorneo, formato, partido, ultimaRonda, idGanador);
+    if (!finalizado) return 'guardado';
 
-    // Liga: termina cuando se jugaron todas las fechas; campeón = primero de la tabla.
-    const pendientes = await cliente.query('SELECT 1 FROM torneo_partido WHERE id_torneo = $1 AND NOT jugado LIMIT 1', [idTorneo]);
-    if (pendientes.rowCount === 0) {
-      const equipos = await cliente.query(
-        `SELECT e.id, e.nombre FROM torneo_equipo te JOIN equipo e ON e.id = te.id_equipo WHERE te.id_torneo = $1 AND te.estado = ANY(${SQL_PARTICIPA})`,
-        [idTorneo]
-      );
-      const todos = await cliente.query('SELECT * FROM torneo_partido WHERE id_torneo = $1', [idTorneo]);
-      const [primero] = reglas.tablaLiga(equipos.rows, todos.rows);
-      await cliente.query(`UPDATE torneo SET estado = 'finalizado', id_campeon = $1 WHERE id = $2`, [primero ? primero.id : null, idTorneo]);
-    }
-    return 'guardado';
+    const { rows: [{ id_campeon: campeonDespues }] } = await cliente.query('SELECT id_campeon FROM torneo WHERE id = $1', [idTorneo]);
+    if (campeonDespues === campeonAntes) return 'guardado';
+    const nombres = await cliente.query('SELECT id, nombre FROM equipo WHERE id = ANY($1::int[])', [[campeonAntes, campeonDespues].filter(Boolean)]);
+    const nombreDe = (id) => (nombres.rows.find((f) => f.id === id) || { nombre: 'Sin campeón' }).nombre;
+    await actividad.registrar(cliente, {
+      admin, seccion: 'torneos', accion: 'Cambiar campeón', elementoTipo: 'torneo', elementoId: idTorneo, elemento: nombre, motivo,
+      anterior: { campeon: campeonAntes, nombre: nombreDe(campeonAntes) }, nuevo: { campeon: campeonDespues, nombre: nombreDe(campeonDespues) },
+    });
+    const { participantes } = await contarInscripciones(cliente, idTorneo);
+    await notificarCapitanesEnTransaccion(cliente, participantes, 'torneo',
+      `Se corrigió un resultado del torneo "${nombre}" y cambió el campeón: ahora es ${nombreDe(campeonDespues)}. Motivo: ${motivo}`,
+      `/torneos/${idTorneo}`);
+    return 'campeon';
   });
+}
+
+/**
+ * Tras guardar un resultado: en la llave, al completarse la ronda crea la siguiente o, con la final, fija el campeón;
+ * en la liga, con todas las fechas jugadas, el campeón es el primero de la tabla. Ambos dejan el torneo finalizado.
+ */
+async function avanzarCompetencia(cliente, idTorneo, formato, partido, ultimaRonda, idGanador) {
+  const ronda = await cliente.query(
+    'SELECT orden, id_ganador, jugado FROM torneo_partido WHERE id_torneo = $1 AND ronda = $2 ORDER BY orden',
+    [idTorneo, formato === 'liga' ? partido.ronda : ultimaRonda]
+  );
+  if (formato === 'relampago') {
+    if (!ronda.rows.every((f) => f.jugado)) return;
+    if (ronda.rows.length === 1) {
+      await cliente.query(`UPDATE torneo SET estado = 'finalizado', id_campeon = $1 WHERE id = $2`, [idGanador, idTorneo]);
+      return;
+    }
+    const siguientes = [];
+    for (let i = 0; i < ronda.rows.length; i += 2) {
+      siguientes.push({ ronda: ultimaRonda + 1, orden: i / 2, local: ronda.rows[i].id_ganador, visita: ronda.rows[i + 1].id_ganador });
+    }
+    await insertarPartidos(cliente, idTorneo, siguientes);
+    return;
+  }
+
+  // Liga: termina cuando se jugaron todas las fechas; campeón = primero de la tabla.
+  const pendientes = await cliente.query('SELECT 1 FROM torneo_partido WHERE id_torneo = $1 AND NOT jugado LIMIT 1', [idTorneo]);
+  if (pendientes.rowCount === 0) {
+    const equipos = await cliente.query(
+      `SELECT e.id, e.nombre FROM torneo_equipo te JOIN equipo e ON e.id = te.id_equipo WHERE te.id_torneo = $1 AND te.estado = ANY(${SQL_PARTICIPA})`,
+      [idTorneo]
+    );
+    const todos = await cliente.query('SELECT * FROM torneo_partido WHERE id_torneo = $1', [idTorneo]);
+    const [primero] = reglas.tablaLiga(equipos.rows, todos.rows);
+    await cliente.query(`UPDATE torneo SET estado = 'finalizado', id_campeon = $1 WHERE id = $2`, [primero ? primero.id : null, idTorneo]);
+  }
 }
 
 module.exports = {

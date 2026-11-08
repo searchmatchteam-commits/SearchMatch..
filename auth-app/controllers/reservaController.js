@@ -15,7 +15,7 @@ const AVISOS = {
   creada: '¡Reserva confirmada! Aquí está en tu lista.',
   cancelada: 'Reserva cancelada: el horario quedó libre.',
   pasada: 'Esa reserva ya pasó: no se puede cancelar.',
-  partido: 'Esa reserva es de un partido: reprograma o cancela el partido para liberarla.',
+  partido: 'Esa reserva es de un partido: cancela el partido desde su ficha para liberarla.',
   inexistente: 'Esa reserva no existe o ya estaba cancelada.',
 };
 

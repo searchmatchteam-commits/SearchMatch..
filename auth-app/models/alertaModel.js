@@ -25,6 +25,23 @@ const CONSULTAS = {
            GROUP BY t.id, t.nombre, t.cupo_min
           HAVING count(te.id_equipo) < t.cupo_min`,
   },
+  // Sin TO-007: venció la inscripción (o ya se cerró antes de esta regla) y el torneo no se puede empezar, porque es
+  // de fase de grupos o porque la llave no tiene 4, 8, 16 o 32 confirmados. La tarea programada no lo cierra.
+  'torneo-no-se-puede-empezar': {
+    titulo: 'Torneos que no se pueden empezar (llave incompleta o fase de grupos)',
+    sql: `SELECT t.id, 'El torneo "' || t.nombre || '" tiene ' || count(te.id_equipo) || ' equipos confirmados y '
+                 || CASE WHEN t.formato = 'grupos' THEN 'es de fase de grupos, que todavía no está disponible.'
+                         ELSE 'la eliminación directa necesita exactamente 4, 8, 16 o 32: ajusta las inscripciones.' END AS texto,
+                 '/admin/torneos/' || t.id AS enlace
+            FROM torneo t
+            LEFT JOIN torneo_equipo te ON te.id_torneo = t.id AND te.estado IN ('confirmada', 'eliminada', 'retiro_pendiente', 'finalizada')
+           WHERE t.formato IN ('relampago', 'grupos')
+             AND (t.estado = 'cerrado'
+                  OR (t.estado IN ('abierto', 'completo') AND t.fecha_limite_inscripcion < (now() AT TIME ZONE 'America/Santiago')::date))
+           GROUP BY t.id, t.nombre, t.formato, t.cupo_min
+          HAVING count(te.id_equipo) >= t.cupo_min
+             AND (t.formato = 'grupos' OR count(te.id_equipo) NOT IN (4, 8, 16, 32))`,
+  },
 };
 
 /** Alertas pendientes, opcionalmente de un solo tipo. */

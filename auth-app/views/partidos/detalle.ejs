@@ -43,7 +43,7 @@
 
     <% if (puedeRegistrar) { %>
       <form class="dash-panel eq-panel sm-form" action="/partidos/<%= partido.id %>/resultado" method="POST" novalidate data-sm-validar
-            data-confirmar="El resultado no se podrá modificar después y avisaremos al capitán rival." data-confirmar-titulo="¿Registrar este resultado?" data-confirmar-boton="Registrar">
+            data-confirmar="El resultado no se podrá modificar después y avisaremos al capitán rival." data-confirmar-titulo="¿Registrar este resultado?" data-confirmar-boton="Registrar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <h2 class="dash-panel__titulo">Registrar resultado</h2>
         <div class="formulario__fila">
           <div class="campo">
@@ -64,7 +64,7 @@
     <% if (puedeCancelar) { %>
       <form class="dash-panel eq-panel sm-form sm-peligro" action="/partidos/<%= partido.id %>/cancelar" method="POST"
             data-confirmar="Se liberará la reserva de la cancha y avisaremos a los integrantes de ambos equipos. El puntaje no cambia."
-            data-confirmar-titulo="¿Cancelar el partido?" data-confirmar-boton="Cancelar partido">
+            data-confirmar-titulo="¿Cancelar el partido?" data-confirmar-boton="Cancelar partido"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <h2 class="dash-panel__titulo">Cancelar partido</h2>
         <div class="campo">
           <label for="motivo">Motivo <span class="sm-opcional">(opcional)</span></label>

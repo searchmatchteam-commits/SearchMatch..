@@ -12,6 +12,11 @@ const FORMATOS = {
   grupos: 'Fase de grupos + eliminación',
 };
 
+// Formatos que se pueden crear o publicar hoy. 'grupos' vuelve cuando exista su fixture (TO-007): mientras tanto
+// se rechaza en el formulario, en el validador y al publicar, para que no queden torneos que no se pueden empezar.
+const FORMATOS_DISPONIBLES = ['relampago', 'liga'];
+const MSG_FORMATO_NO_DISPONIBLE = 'La fase de grupos + eliminación todavía no está disponible (llega con la generación del fixture, TO-007). Elige Eliminación directa o Liga.';
+
 const EMPAREJAMIENTOS = {
   sorteo: 'Tómbola (sorteo al empezar)',
   llegada: 'Orden de llegada',
@@ -86,6 +91,10 @@ function erroresCupos(d) {
   if (!Number.isInteger(d.cupoMax)) e.cupo_max = 'Indica el cupo máximo de equipos.';
   else if (d.cupoMax > LIMITES.cupoMax) e.cupo_max = `El cupo máximo es de ${LIMITES.cupoMax} equipos.`;
   else if (!e.cupo_min && d.cupoMax < d.cupoMin) e.cupo_max = 'El cupo máximo no puede ser menor que el mínimo.';
+  // Sin byes (TO-007), la llave solo se puede armar con 4, 8, 16 o 32 equipos: alguno debe caber en el rango.
+  if (d.formato === 'relampago' && !e.cupo_min && !e.cupo_max && tamanosLlave(d.cupoMin, d.cupoMax).length === 0) {
+    e.cupo_max = `En eliminación directa, entre el cupo mínimo y el máximo debe caber ${EQUIPOS_RELAMPAGO.join(', ').replace(/, (\d+)$/, ' o $1')} equipos (todavía no hay byes).`;
+  }
   if (d.formato === 'liga' && !e.cupo_max && d.cupoMax > EQUIPOS_LIGA.max) {
     e.cupo_max = `Una liga tiene como máximo ${EQUIPOS_LIGA.max} equipos (todos contra todos).`;
   }
@@ -102,6 +111,28 @@ function erroresCupos(d) {
     }
   }
   return e;
+}
+
+/** Cantidades de equipos con que se puede armar la llave dentro de un rango de cupos. */
+function tamanosLlave(cupoMin, cupoMax) {
+  return EQUIPOS_RELAMPAGO.filter((n) => n >= cupoMin && n <= cupoMax);
+}
+
+/**
+ * Error de la llave con esta cantidad de confirmados (null si se puede armar). Sin byes (TO-007), la eliminación
+ * directa necesita exactamente 4, 8, 16 o 32 equipos: dice cuántos faltan para la siguiente o cuántos sobran.
+ * @param {number} confirmados
+ * @param {number} [cupoMax] - Para no sugerir una cantidad que no cabe.
+ */
+function errorLlave(confirmados, cupoMax = Infinity) {
+  if (EQUIPOS_RELAMPAGO.includes(confirmados)) return null;
+  const arriba = EQUIPOS_RELAMPAGO.find((n) => n > confirmados && n <= cupoMax);
+  const abajo = [...EQUIPOS_RELAMPAGO].reverse().find((n) => n < confirmados);
+  const opciones = [];
+  if (arriba) opciones.push(`${arriba - confirmados === 1 ? 'falta 1 equipo' : `faltan ${arriba - confirmados} equipos`} para llegar a ${arriba}`);
+  if (abajo) opciones.push(`${confirmados - abajo === 1 ? 'sobra 1 equipo' : `sobran ${confirmados - abajo} equipos`} para quedar en ${abajo}`);
+  return `La eliminación directa necesita exactamente ${EQUIPOS_RELAMPAGO.join(', ').replace(/, (\d+)$/, ' o $1')} equipos confirmados y hay ${confirmados}`
+    + `${opciones.length > 0 ? `: ${opciones.join(', o ')}` : ''}. Los cruces con equipos que pasan directo (byes) llegan con TO-007.`;
 }
 
 /**
@@ -300,8 +331,8 @@ function partirPremio(texto) {
 }
 
 module.exports = {
-  FORMATOS, ESTADOS, CON_INSCRIPCIONES, ESTADOS_INSCRIPCION, INSCRIPCION_PARTICIPA, INSCRIPCION_ACTIVA, MEDIOS_PAGO, CAMPOS, EMPAREJAMIENTOS, EQUIPOS_RELAMPAGO, EQUIPOS_LIGA,
+  FORMATOS, FORMATOS_DISPONIBLES, MSG_FORMATO_NO_DISPONIBLE, ESTADOS, CON_INSCRIPCIONES, ESTADOS_INSCRIPCION, INSCRIPCION_PARTICIPA, INSCRIPCION_ACTIVA, MEDIOS_PAGO, CAMPOS, EMPAREJAMIENTOS, EQUIPOS_RELAMPAGO, EQUIPOS_LIGA,
   LIMITES, MAX_PATROCINADORES,
-  erroresCupos, erroresFechas, hoyChile, inscripcionVencida, estadoPorCupos, camposEditables, accionesTorneo, formatoCLP, aUSD, leerPrecio,
+  erroresCupos, tamanosLlave, errorLlave, erroresFechas, hoyChile, inscripcionVencida, estadoPorCupos, camposEditables, accionesTorneo, formatoCLP, aUSD, leerPrecio,
   textoFechaInicio, nombreRonda, fixtureLiga, primeraRondaLlave, tablaLiga, partirPremio,
 };

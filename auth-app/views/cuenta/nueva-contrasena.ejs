@@ -12,7 +12,7 @@
     <h1 class="auth__titulo">Crea tu nueva contraseña</h1>
     <p class="auth__subtitulo">Mínimo 8 caracteres, combinando letras y números.</p>
 
-    <form action="/recuperar/nueva" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+    <form action="/recuperar/nueva" method="POST" class="formulario sm-form" novalidate data-sm-validar><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
       <% [['password', 'Contraseña nueva', 'new-password'], ['confirmar_password', 'Confirmar contraseña', 'new-password']].forEach(function ([nombre, etiqueta, auto]) { %>
         <div class="campo <%= erroresCampo[nombre] ? 'campo--error' : '' %>">
           <label for="<%= nombre %>"><%= etiqueta %></label>
