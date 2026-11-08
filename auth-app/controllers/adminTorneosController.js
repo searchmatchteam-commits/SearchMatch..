@@ -29,13 +29,17 @@ const AVISOS = {
   'sin-permiso': 'Solo el Administrador principal puede eliminar un torneo ya publicado.',
   motivo: MSG_MOTIVO,
   guardado: 'Resultado guardado.',
+  campeon: 'Resultado corregido y cambió el campeón: quedó en el registro de actividad y se avisó a los equipos.',
+  'confirmar-finalizado': 'El torneo ya está finalizado: para corregir un resultado marca la confirmación e indica el motivo.',
   penales: 'En eliminación directa no hay empates: indica quién ganó por penales.',
   goles: 'Los goles deben ser números enteros entre 0 y 99.',
   formato: reglas.MSG_FORMATO_NO_DISPONIBLE,
   faltan: 'Aún no se alcanza el cupo mínimo de equipos confirmados.',
 };
 // Avisos que se muestran como error (rojo) y no como confirmación.
-const AVISOS_ERROR = new Set(['estado', 'no-editable', 'con-pago', 'con-pagos', 'sin-permiso', 'motivo', 'penales', 'goles', 'formato', 'faltan']);
+const AVISOS_ERROR = new Set([
+  'estado', 'no-editable', 'con-pago', 'con-pagos', 'sin-permiso', 'motivo', 'penales', 'goles', 'formato', 'faltan', 'confirmar-finalizado',
+]);
 
 function admin(req) {
   return { id: req.usuario.id, nombre: req.usuario.nombre };
@@ -492,7 +496,11 @@ async function registrarResultado(req, res, next) {
     const golesVisita = goles(req.body.goles_visita);
     const resultado = golesLocal === null || golesVisita === null
       ? 'goles'
-      : await torneoModel.registrarResultado(admin(req), idTorneo, idPartido, golesLocal, golesVisita, req.body.ganador_penales);
+      : await torneoModel.registrarResultado(admin(req), idTorneo, idPartido, golesLocal, golesVisita, req.body.ganador_penales, {
+        // R9: solo cuentan si el torneo ya terminó (el modelo lo decide con el torneo bloqueado).
+        confirmarFinalizado: req.body.confirmar_finalizado === 'si',
+        motivo: leerMotivo(req.body.motivo),
+      });
     return res.redirect(`${BASE}/${idTorneo}?aviso=${resultado}#partido-${idPartido}`);
   } catch (err) {
     return next(err);

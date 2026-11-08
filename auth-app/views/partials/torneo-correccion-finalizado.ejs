@@ -1,0 +1,15 @@
+<%
+  // R9 · Campos extra del formulario de resultado cuando el torneo ya terminó: corregir puede cambiar al campeón,
+  // así que pide confirmarlo y un motivo (el servidor vuelve a exigir ambos).
+  //   include('torneo-correccion-finalizado', { idPartido })
+%>
+<div class="campo sm-casillas">
+  <label class="sm-casilla">
+    <input type="checkbox" name="confirmar_finalizado" value="si" required />
+    El torneo ya terminó: confirmo la corrección (si cambia el campeón, se avisa a los equipos).
+  </label>
+</div>
+<div class="campo">
+  <label for="motivo-<%= idPartido %>">Motivo de la corrección</label>
+  <textarea id="motivo-<%= idPartido %>" name="motivo" rows="2" minlength="5" maxlength="500" required></textarea>
+</div>

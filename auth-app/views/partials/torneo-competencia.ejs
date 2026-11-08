@@ -92,6 +92,7 @@
                     <label class="solo-lectores" for="gv-<%= p.id %>">Goles de <%= nombreEquipo(p.visita) %></label>
                     <input class="sm-marcador__caja" type="number" inputmode="numeric" id="gv-<%= p.id %>" name="goles_visita" min="0" max="99" value="<%= p.golesVisita ?? '' %>" placeholder="0" required />
                   </div>
+                  <% if (torneo.estado === 'finalizado') { %><%- include('torneo-correccion-finalizado', { idPartido: p.id }) %><% } %>
                   <div class="sm-pcard__pie">
                     <% if (esLlave) { %>
                       <label class="sm-pcard__penales">
@@ -131,6 +132,7 @@
                       <option value="visita" <%= penales && p.visita && p.idGanador === p.visita.id ? 'selected' : '' %>>Penales: <%= nombreEquipo(p.visita) %></option>
                     </select>
                   <% } %>
+                  <% if (torneo.estado === 'finalizado') { %><%- include('torneo-correccion-finalizado', { idPartido: p.id }) %><% } %>
                   <button type="submit" class="btn btn--verde btn--chico"><%= p.jugado ? 'Corregir' : 'Guardar' %></button>
                 </form>
               <% } %>
