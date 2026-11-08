@@ -17,7 +17,7 @@
         <div class="alerta alerta--error" role="alert">Revisa los campos marcados en rojo.</div>
       <% } %>
 
-      <form action="/cuenta/contrasena" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+      <form action="/cuenta/contrasena" method="POST" class="formulario sm-form" novalidate data-sm-validar><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <% [
              ['password_actual', 'Contraseña actual', 'current-password', 'Escribe tu contraseña actual.'],
              ['password', 'Contraseña nueva', 'new-password', 'Escribe la contraseña nueva.'],

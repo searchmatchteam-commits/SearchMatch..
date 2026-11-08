@@ -16,7 +16,7 @@
       </div>
     </header>
 
-    <form class="dash-panel eq-panel sm-form" action="/partidos/programar/<%= desafio.id %>" method="POST" novalidate data-sm-validar>
+    <form class="dash-panel eq-panel sm-form" action="/partidos/programar/<%= desafio.id %>" method="POST" novalidate data-sm-validar><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
       <% if (error) { %><div class="alerta alerta--error" role="alert"><%= error %></div><% } %>
       <div class="formulario__fila">
         <div class="campo <%= erroresCampo.fecha ? 'campo--error' : '' %>">

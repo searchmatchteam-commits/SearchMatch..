@@ -27,7 +27,7 @@
           <% cat.elementos.forEach(function (el) {
                const usoTexto = el.usos.map(function (u) { return u.total + ' ' + u.etiqueta; }).join(', '); %>
             <li class="sm-catalogo__fila">
-              <form action="/admin/catalogos/<%= cat.tipo %>/<%= el.id %>" method="POST" class="sm-catalogo__form" novalidate data-sm-validar>
+              <form action="/admin/catalogos/<%= cat.tipo %>/<%= el.id %>" method="POST" class="sm-catalogo__form" novalidate data-sm-validar><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                 <div class="campo">
                   <label class="solo-lectores" for="<%= cat.tipo %>-<%= el.id %>-nombre">Nombre</label>
                   <input type="text" id="<%= cat.tipo %>-<%= el.id %>-nombre" name="nombre" value="<%= el.nombre %>" maxlength="50" required
@@ -63,7 +63,7 @@
               <% if (!el.protegido && !usoTexto) { %>
                 <form action="/admin/catalogos/<%= cat.tipo %>/<%= el.id %>/eliminar" method="POST"
                       data-confirmar="Se eliminará del catálogo."
-                      data-confirmar-titulo="¿Eliminar <%= el.nombre %>?" data-confirmar-boton="Eliminar">
+                      data-confirmar-titulo="¿Eliminar <%= el.nombre %>?" data-confirmar-boton="Eliminar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                   <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Eliminar</button>
                 </form>
               <% } %>
@@ -71,7 +71,7 @@
           <% }) %>
         </ul>
 
-        <form action="/admin/catalogos/<%= cat.tipo %>" method="POST" class="sm-catalogo__form sm-catalogo__nuevo" novalidate data-sm-validar>
+        <form action="/admin/catalogos/<%= cat.tipo %>" method="POST" class="sm-catalogo__form sm-catalogo__nuevo" novalidate data-sm-validar><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
           <div class="campo">
             <label for="<%= cat.tipo %>-nuevo-nombre">Nueva <%= cat.singular %></label>
             <input type="text" id="<%= cat.tipo %>-nuevo-nombre" name="nombre" maxlength="50" required placeholder="Nombre"

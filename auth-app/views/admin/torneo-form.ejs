@@ -38,7 +38,8 @@
         </div>
       <% } %>
 
-      <form action="<%= accion %>" method="POST" enctype="multipart/form-data" class="formulario sm-form sm-form--torneo" novalidate data-torneo-form>
+      <%# R2: multipart se lee después del control CSRF, por eso el token va en la dirección (middlewares/csrf.js) %>
+      <form action="<%= accion %>?_csrf=<%= locals.csrfToken %>" method="POST" enctype="multipart/form-data" class="formulario sm-form sm-form--torneo" novalidate data-torneo-form>
         <h2 class="sm-subtitulo">Datos generales</h2>
         <div class="campo <%= error('nombre') %>">
           <label for="nombre">Nombre del torneo</label>

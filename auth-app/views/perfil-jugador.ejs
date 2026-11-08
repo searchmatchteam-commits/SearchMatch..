@@ -77,7 +77,7 @@
       </ol>
     </div>
 
-    <form action="/perfil-jugador" method="POST" class="formulario wizard__form" data-wizard data-paso-inicial="<%= paso %>" novalidate>
+    <form action="/perfil-jugador" method="POST" class="formulario wizard__form" data-wizard data-paso-inicial="<%= paso %>" novalidate><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
       <!-- ============ PASO 2: DATOS PERSONALES ============ -->
       <fieldset class="wizard__paso" data-paso="2">
         <legend class="wizard__titulo">Datos personales</legend>

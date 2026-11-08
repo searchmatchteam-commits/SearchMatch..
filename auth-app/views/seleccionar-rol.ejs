@@ -10,7 +10,7 @@
   <!-- Por ahora no se elige rol: todos parten como jugador (rol oculto) y siguen a sus datos (/perfil-jugador).
        Se sigue guardando con POST porque requireRol pide un rol para entrar al resto de la app.
        rol.js solo muestra "Cargando..." y evita el doble envío. -->
-  <form action="/select-role" method="POST" class="rol__formulario" data-seleccion-rol>
+  <form action="/select-role" method="POST" class="rol__formulario" data-seleccion-rol><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
     <input type="hidden" name="rol" value="jugador" />
 
     <% if (errores && errores.length > 0) { %>

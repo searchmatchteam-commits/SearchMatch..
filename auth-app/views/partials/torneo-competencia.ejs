@@ -84,7 +84,7 @@
                 <span class="sm-pcard__equipo sm-pcard__equipo--visita <%= gano(p.visita) ? 'sm-pcard__equipo--gano' : '' %>"><span><%= nombreEquipo(p.visita) %></span><%- svg('escudo', 'sm-pcard__escudo') %></span>
               </div>
               <% if (cargable) { %>
-                <form class="sm-pcard__form" method="POST" action="/admin/torneos/<%= torneo.id %>/partidos/<%= p.id %>">
+                <form class="sm-pcard__form" method="POST" action="/admin/torneos/<%= torneo.id %>/partidos/<%= p.id %>"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                   <div class="sm-marcador">
                     <label class="solo-lectores" for="gl-<%= p.id %>">Goles de <%= nombreEquipo(p.local) %></label>
                     <input class="sm-marcador__caja" type="number" inputmode="numeric" id="gl-<%= p.id %>" name="goles_local" min="0" max="99" value="<%= p.golesLocal ?? '' %>" placeholder="0" required />
@@ -118,7 +118,7 @@
               </span>
               <span class="sm-partido__equipo sm-partido__equipo--visita <%= gano(p.visita) ? 'sm-partido__equipo--gano' : '' %>" <%- p.visita ? `data-equipo="${p.visita.id}"` : '' %>><%= nombreEquipo(p.visita) %></span>
               <% if (admin && p.editable) { %>
-                <form class="sm-resultado" method="POST" action="/admin/torneos/<%= torneo.id %>/partidos/<%= p.id %>">
+                <form class="sm-resultado" method="POST" action="/admin/torneos/<%= torneo.id %>/partidos/<%= p.id %>"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                   <label class="solo-lectores" for="gl-<%= p.id %>">Goles de <%= nombreEquipo(p.local) %></label>
                   <input type="number" id="gl-<%= p.id %>" name="goles_local" min="0" max="99" value="<%= p.golesLocal ?? '' %>" required />
                   <span aria-hidden="true">-</span>

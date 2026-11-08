@@ -16,7 +16,7 @@
       </div>
       <% if (sinLeer > 0) { %>
         <div class="eq-cabecera__acciones">
-          <form action="/notificaciones/leidas" method="POST">
+          <form action="/notificaciones/leidas" method="POST"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
             <button type="submit" class="btn btn--contorno btn--grande">Marcar todas como leídas</button>
           </form>
         </div>

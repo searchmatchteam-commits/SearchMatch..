@@ -8,7 +8,7 @@
 <details class="sm-accion">
   <summary class="btn btn--chico btn--contorno <%= locals.peligro ? 'sm-btn-peligro' : '' %>"><%= boton %></summary>
   <form class="sm-accion__form" action="<%= accion %>" method="POST"
-        data-confirmar="<%= texto %>" data-confirmar-titulo="<%= titulo %>" data-confirmar-boton="<%= boton %>">
+        data-confirmar="<%= texto %>" data-confirmar-titulo="<%= titulo %>" data-confirmar-boton="<%= boton %>"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
     <% (locals.ocultos || []).forEach(function (par) { %><input type="hidden" name="<%= par[0] %>" value="<%= par[1] %>" /><% }) %>
     <%- locals.extra || '' %>
     <div class="campo">

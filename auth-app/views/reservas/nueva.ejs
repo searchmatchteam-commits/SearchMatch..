@@ -18,7 +18,7 @@
 
     <div class="sm-columnas">
       <form class="dash-panel eq-panel sm-form" action="/canchas/<%= cancha.id %>/reservar" method="POST" novalidate data-sm-validar
-            data-costo-por-hora="<%= cancha.precio %>">
+            data-costo-por-hora="<%= cancha.precio %>"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <h2 class="dash-panel__titulo">Tu reserva</h2>
         <% if (error) { %><div class="alerta alerta--error" role="alert"><%= error %></div><% } %>
         <div class="campo <%= erroresCampo.fecha ? 'campo--error' : '' %>">

@@ -122,10 +122,10 @@
                 </span>
                 <span class="eq-solicitud__acciones">
                   <a class="btn btn--contorno btn--chico" href="/mi-equipo/solicitudes/<%= solicitud.id %>">Ver perfil</a>
-                  <form action="/mi-equipo/solicitudes/<%= solicitud.id %>/aceptar?equipo=<%= equipo.id %>" method="POST" data-responder>
+                  <form action="/mi-equipo/solicitudes/<%= solicitud.id %>/aceptar?equipo=<%= equipo.id %>" method="POST" data-responder><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                     <button type="submit" class="btn btn--verde btn--chico">Aceptar</button>
                   </form>
-                  <form action="/mi-equipo/solicitudes/<%= solicitud.id %>/rechazar?equipo=<%= equipo.id %>" method="POST" data-responder>
+                  <form action="/mi-equipo/solicitudes/<%= solicitud.id %>/rechazar?equipo=<%= equipo.id %>" method="POST" data-responder><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                     <button type="submit" class="btn btn--contorno btn--chico">Rechazar</button>
                   </form>
                 </span>
@@ -229,7 +229,7 @@
                   <button type="button" class="btn eq-club__boton" disabled><%= estadosDesafio[rival.desafio] %></button>
                 <% } else { %>
                   <form action="/mi-equipo/desafios/<%= rival.id %>?equipo=<%= equipo.id %>" method="POST" data-desafiar data-rival="<%= rival.nombre %>"
-                        data-comunes="<%= rival.comunes.join(',') %>">
+                        data-comunes="<%= rival.comunes.join(',') %>"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                     <button type="submit" class="btn btn--verde eq-club__boton">Enviar Desafío</button>
                   </form>
                 <% } %>
@@ -329,7 +329,7 @@
                     <% if (jugador.invitado) { %>
                       <button type="button" class="btn eq-invitar" disabled>Invitación Enviada</button>
                     <% } else { %>
-                      <form action="/equipos/<%= equipo.id %>/invitaciones/<%= jugador.id %>" method="POST" data-invitar>
+                      <form action="/equipos/<%= equipo.id %>/invitaciones/<%= jugador.id %>" method="POST" data-invitar><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                         <button type="submit" class="btn btn--verde eq-invitar">
                           <svg class="eq-invitar__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
                           Invitar
@@ -369,7 +369,7 @@
       </div>
 
       <% if (equipo.soyCapitan) { %>
-        <form class="eq-tipos" action="/equipos/<%= equipo.id %>/modalidades" method="POST" data-form-modalidades>
+        <form class="eq-tipos" action="/equipos/<%= equipo.id %>/modalidades" method="POST" data-form-modalidades><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
           <span class="eq-tipos__titulo" id="eq-tipos-titulo">Tipos de fútbol que juega</span>
           <div class="eq-tipos__opciones" role="group" aria-labelledby="eq-tipos-titulo">
             <% Object.entries(MODALIDADES).forEach(function ([jugadores, nombre]) {
@@ -494,7 +494,7 @@
               <span><%= j.posicion %></span>
               <form action="/equipos/<%= equipo.id %>/capitania/<%= j.id %>" method="POST"
                     data-confirmar="<%= j.nombre %><% if (j.nombreCarta && j.nombreCarta !== j.nombre) { %> («<%= j.nombreCarta %>»)<% } %> pasará a ser el capitán de <%= equipo.nombre %> y tú quedarás como jugador. Solo el nuevo capitán podrá devolverte la capitanía."
-                    data-confirmar-titulo="¿Transferir la capitanía?" data-confirmar-boton="Transferir">
+                    data-confirmar-titulo="¿Transferir la capitanía?" data-confirmar-boton="Transferir"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                 <button type="submit" class="btn btn--contorno btn--chico">Hacer capitán</button>
               </form>
             </li>

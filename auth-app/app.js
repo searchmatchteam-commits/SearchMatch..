@@ -8,6 +8,7 @@ const { probarConexion } = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const indexRoutes = require('./routes/indexRoutes');
 const { cargarSesion } = require('./middlewares/authMiddleware');
+const { prepararCsrf, verificarCsrf } = require('./middlewares/csrf');
 const cuentaRoutes = require('./routes/cuentaRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const canchasRoutes = require('./routes/canchasRoutes');
@@ -40,6 +41,10 @@ app.use(express.static(path.join(__dirname, 'public'), {
 app.use(express.urlencoded({ extended: false }));
 
 app.use(cookieParser());
+
+// R2: token CSRF en res.locals y validación de todo POST (antes de abrir la sesión: no gasta consultas).
+app.use(prepararCsrf);
+app.use(verificarCsrf);
 
 app.use(cargarSesion);
 

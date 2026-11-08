@@ -32,12 +32,12 @@
             <a class="btn btn--contorno btn--grande" href="/equipos/<%= equipo.id %>/editar">Editar equipo</a>
             <a class="btn btn--contorno btn--grande" href="/equipos/<%= equipo.id %>/posiciones">Posiciones que buscamos</a>
           <% } else { %>
-            <form action="/equipos/<%= equipo.id %>/reactivar" method="POST" data-confirmar="Volverá a aparecer en búsquedas con su puntaje anterior (<%= equipo.puntaje_nivel %> pts)." data-confirmar-titulo="¿Reactivar <%= equipo.nombre %>?" data-confirmar-boton="Reactivar">
+            <form action="/equipos/<%= equipo.id %>/reactivar" method="POST" data-confirmar="Volverá a aparecer en búsquedas con su puntaje anterior (<%= equipo.puntaje_nivel %> pts)." data-confirmar-titulo="¿Reactivar <%= equipo.nombre %>?" data-confirmar-boton="Reactivar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
               <button type="submit" class="btn btn--verde btn--grande">Reactivar equipo</button>
             </form>
           <% } %>
         <% } else if (relacion.esIntegrante) { %>
-          <form action="/equipos/<%= equipo.id %>/salir" method="POST" data-confirmar="Dejarás de ser parte del plantel de <%= equipo.nombre %>." data-confirmar-titulo="¿Salir del equipo?" data-confirmar-boton="Salir">
+          <form action="/equipos/<%= equipo.id %>/salir" method="POST" data-confirmar="Dejarás de ser parte del plantel de <%= equipo.nombre %>." data-confirmar-titulo="¿Salir del equipo?" data-confirmar-boton="Salir"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
             <input type="hidden" name="volver" value="/mis-equipos" />
             <button type="submit" class="btn btn--contorno btn--grande sm-btn-peligro">Salir del equipo</button>
           </form>
@@ -67,7 +67,7 @@
     <% } %>
 
     <% if (equipo.activo && !relacion.esIntegrante && !relacion.postulo) { %>
-      <form class="dash-panel eq-panel sm-form" id="postular" action="/equipos/<%= equipo.id %>/unirme" method="POST" novalidate data-sm-validar>
+      <form class="dash-panel eq-panel sm-form" id="postular" action="/equipos/<%= equipo.id %>/unirme" method="POST" novalidate data-sm-validar><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <h2 class="dash-panel__titulo">Postular a <%= equipo.nombre %></h2>
         <div class="campo">
           <label for="mensaje-postular">Mensaje para el capitán</label>
@@ -78,7 +78,7 @@
       </form>
     <% } %>
     <% if (equipo.activo && relacion.idEquipoParaDesafiar && !desafioPendiente && !relacion.esIntegrante) { %>
-      <form class="dash-panel eq-panel sm-form" id="desafiar" action="/mi-equipo/desafios/<%= equipo.id %>?equipo=<%= relacion.idEquipoParaDesafiar %>" method="POST">
+      <form class="dash-panel eq-panel sm-form" id="desafiar" action="/mi-equipo/desafios/<%= equipo.id %>?equipo=<%= relacion.idEquipoParaDesafiar %>" method="POST"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <h2 class="dash-panel__titulo">Desafiar a <%= equipo.nombre %></h2>
         <%# Modalidad del partido: una de las que juegan los dos equipos (equipoFichaModel.relacionConFicha) %>
         <% if (relacion.modalidadesParaDesafiar.length > 1) { %>
@@ -157,7 +157,7 @@
               <p class="sm-comentario__autor"><strong><%= c.autor %></strong> · <small><%= formatoFecha.format(c.fecha) %></small></p>
               <p class="sm-comentario__texto"><%= c.mensaje %></p>
               <% if (usuario.esAdmin) { %>
-                <form action="/comentarios/<%= c.id %>/ocultar" method="POST" data-confirmar="El comentario dejará de verse para todos y avisaremos a su autor." data-confirmar-titulo="¿Retirar este comentario?" data-confirmar-boton="Retirar">
+                <form action="/comentarios/<%= c.id %>/ocultar" method="POST" data-confirmar="El comentario dejará de verse para todos y avisaremos a su autor." data-confirmar-titulo="¿Retirar este comentario?" data-confirmar-boton="Retirar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                   <button type="submit" class="sm-enlace">Retirar por moderación</button>
                 </form>
               <% } %>
@@ -165,7 +165,7 @@
           <% }) %>
         </ul>
       <% } %>
-      <form action="/equipos/<%= equipo.id %>/comentarios#comentarios" method="POST" class="sm-form" novalidate data-sm-validar>
+      <form action="/equipos/<%= equipo.id %>/comentarios#comentarios" method="POST" class="sm-form" novalidate data-sm-validar><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <div class="campo <%= errorComentario ? 'campo--error' : '' %>">
           <label for="comentario">Deja tu comentario</label>
           <textarea id="comentario" name="mensaje" maxlength="<%= largoComentario %>" required data-mensaje="El comentario no puede estar vacío."
@@ -181,7 +181,7 @@
       <section class="dash-panel eq-panel sm-peligro" aria-labelledby="titulo-peligro">
         <h2 class="dash-panel__titulo" id="titulo-peligro">Desactivar equipo</h2>
         <p class="dash-panel__nota"><%= advertencia %></p>
-        <form action="/equipos/<%= equipo.id %>/desactivar" method="POST" data-confirmar="<%= advertencia %>" data-confirmar-titulo="¿Desactivar <%= equipo.nombre %>?" data-confirmar-boton="Desactivar">
+        <form action="/equipos/<%= equipo.id %>/desactivar" method="POST" data-confirmar="<%= advertencia %>" data-confirmar-titulo="¿Desactivar <%= equipo.nombre %>?" data-confirmar-boton="Desactivar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
           <button type="submit" class="btn btn--contorno sm-btn-peligro">Desactivar equipo</button>
         </form>
       </section>

@@ -23,7 +23,7 @@
         <div class="alerta alerta--error" role="alert">Revisa los campos marcados en rojo.</div>
       <% } %>
 
-      <form action="<%= accion %>" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+      <form action="<%= accion %>" method="POST" class="formulario sm-form" novalidate data-sm-validar><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <% campos.forEach(function (c) { %>
           <div class="campo <%= erroresCampo[c.nombre] ? 'campo--error' : '' %>">
             <label for="<%= c.nombre %>"><%= c.etiqueta %></label>

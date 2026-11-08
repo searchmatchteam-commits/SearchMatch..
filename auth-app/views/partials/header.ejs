@@ -6,6 +6,7 @@
   <title><%= titulo %> | SearchMatch</title>
   <meta name="description" content="SearchMatch conecta jugadores, equipos y canchas de fútbol amateur en Chile." />
   <meta name="theme-color" content="#0b0d0b" />
+  <meta name="csrf-token" content="<%= locals.csrfToken || '' %>" />
   <link rel="icon" href="/img/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -95,6 +96,22 @@
         if (!inicioFondo) sessionStorage.setItem('sm-fondo-inicio', inicioFondo = Date.now());
         raiz.style.setProperty('--sm-fondo-t', (inicioFondo - Date.now()) / 1000 + 's');
       } catch (e) { /* sin sessionStorage: la malla parte de cero */ }
+      // R2: todo fetch a este mismo sitio que no sea GET lleva el token CSRF en la cabecera X-CSRF-Token.
+      var tokenCsrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+      var fetchOriginal = window.fetch;
+      if (tokenCsrf && fetchOriginal) {
+        window.fetch = function (recurso, opciones) {
+          var metodo = ((opciones && opciones.method) || (recurso && recurso.method) || 'GET').toUpperCase();
+          var url = new URL(typeof recurso === 'string' || recurso instanceof URL ? recurso : recurso.url, location.href);
+          if (metodo !== 'GET' && metodo !== 'HEAD' && url.origin === location.origin) {
+            opciones = Object.assign({}, opciones);
+            var cabeceras = new Headers(opciones.headers || (recurso && recurso.headers) || {});
+            cabeceras.set('X-CSRF-Token', tokenCsrf);
+            opciones.headers = cabeceras;
+          }
+          return fetchOriginal.call(window, recurso, opciones);
+        };
+      }
     })();
   </script>
 </head>
@@ -128,7 +145,7 @@
           <!-- AP-001: cuenta del panel. Solo su sesión del panel; salir pide confirmar y vuelve al login del panel -->
           <form action="/admin/logout" method="POST" class="navbar__form"
                 data-confirmar="Volverás al ingreso del panel y sus páginas quedarán bloqueadas hasta que ingreses de nuevo."
-                data-confirmar-titulo="¿Cerrar sesión del panel?" data-confirmar-boton="Cerrar sesión">
+                data-confirmar-titulo="¿Cerrar sesión del panel?" data-confirmar-boton="Cerrar sesión"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
             <button type="submit" class="btn btn--verde btn--chico">Cerrar sesión</button>
           </form>
         <% } else if (usuario) { %>
@@ -147,7 +164,7 @@
           </a>
           <form action="/logout" method="POST" class="navbar__form"
                 data-confirmar="Tendrás que volver a iniciar sesión para entrar a tu cuenta."
-                data-confirmar-titulo="¿Cerrar sesión?" data-confirmar-boton="Cerrar sesión">
+                data-confirmar-titulo="¿Cerrar sesión?" data-confirmar-boton="Cerrar sesión"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
             <button type="submit" class="btn btn--verde btn--chico">Cerrar sesión</button>
           </form>
         <% } else { %>

@@ -22,7 +22,7 @@
     <% } %>
 
     <form action="/registro" method="POST" class="formulario" data-validar="registro" novalidate
-          data-requiere-aceptar>
+          data-requiere-aceptar><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
       <div class="formulario__fila">
         <div class="campo">
           <label for="nombre">Nombre</label>

@@ -20,7 +20,7 @@
       <div class="alerta alerta--exito" role="status"><%= mensajeEnviado %></div>
       <p class="auth__pie">¿No llegó? Espera unos minutos y <a href="/recuperar">pide otro enlace</a>.</p>
     <% } else { %>
-      <form action="/recuperar" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+      <form action="/recuperar" method="POST" class="formulario sm-form" novalidate data-sm-validar><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
         <div class="campo <%= erroresCampo.correo ? 'campo--error' : '' %>">
           <label for="correo">Correo</label>
           <div class="campo__control">

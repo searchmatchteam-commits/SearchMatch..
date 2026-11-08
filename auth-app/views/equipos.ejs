@@ -102,7 +102,7 @@
             <% } else if (equipo.relacion) { %>
               <button type="button" class="eq-mis__accion" disabled><%= estados[equipo.relacion] %></button>
             <% } else { %>
-              <form class="eq-mis__form" action="/equipos/<%= equipo.id %>/unirme" method="POST" data-unirme data-equipo="<%= equipo.nombre %>">
+              <form class="eq-mis__form" action="/equipos/<%= equipo.id %>/unirme" method="POST" data-unirme data-equipo="<%= equipo.nombre %>"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
                 <button type="submit" class="eq-mis__accion eq-mis__accion--principal">Solicitar unirme</button>
               </form>
             <% } %>
