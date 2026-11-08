@@ -148,6 +148,7 @@ function mostrarLogin(req, res) {
     Debes_iniciar_sesion: 'Debes iniciar sesión para acceder a esa página.',
     Sesion_cerrada: 'Cerraste sesión correctamente.',
     Cuenta_desactivada: MSG_CUENTA_DESACTIVADA,
+    Cuenta_eliminada: 'Tu cuenta y todos sus datos se eliminaron. Gracias por haber jugado en SearchMatch.',
     Contrasena_actualizada: 'Tu contraseña se actualizó. Inicia sesión con la nueva.',
     Google_cancelado: 'Cancelaste el acceso con Google. Puedes intentarlo de nuevo cuando quieras.',
     Google_no_configurado: 'El inicio de sesión con Google no está configurado aún. Por favor, usa correo y contraseña.',

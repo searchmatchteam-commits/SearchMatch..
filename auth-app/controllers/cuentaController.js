@@ -243,7 +243,31 @@ async function guardarCuenta(req, res, next) {
   }
 }
 
+// ---------------------------------------------------------------
+// POST /cuenta/eliminar → borra la cuenta y todo lo que la vincula a equipos (botón rojo de "Editar perfil")
+// ---------------------------------------------------------------
+const FRASE_ELIMINAR_CUENTA = 'Quiero eliminar mi cuenta';
+
+async function eliminarCuenta(req, res, next) {
+  const frase = String(req.body.confirmacion || '').trim();
+  if (frase !== FRASE_ELIMINAR_CUENTA) return res.redirect('/perfil/editar?aviso=frase-eliminar');
+  try {
+    const { idAuth } = req.usuario;
+    await cuentaModel.eliminarCuenta(idAuth);
+    await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
+    if (!(await userModel.eliminarDeAuth(idAuth).catch(() => false))) {
+      console.error('⚠️  Se borraron los datos de la cuenta, pero no su usuario de Supabase Auth:', idAuth);
+    }
+    res.set('Clear-Site-Data', '"cache"');
+    return res.redirect('/login?msg=Cuenta_eliminada');
+  } catch (err) {
+    return next(err);
+  }
+}
+
 module.exports = {
+  FRASE_ELIMINAR_CUENTA,
+  eliminarCuenta,
   mostrarRecuperar,
   enviarRecuperacion,
   abrirEnlaceRecuperacion,

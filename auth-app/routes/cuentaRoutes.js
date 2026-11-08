@@ -27,5 +27,6 @@ router.post('/cuenta', requireAuth, validarDatosCuenta, cuentaController.guardar
 router.post('/cuenta/verificacion', requireAuth, cuentaController.reenviarVerificacion); // AR-007
 router.get('/cuenta/contrasena', requireAuth, cuentaController.mostrarCambiarPassword);
 router.post('/cuenta/contrasena', requireAuth, validarCambioPassword, cuentaController.cambiarPassword);
+router.post('/cuenta/eliminar', requireAuth, cuentaController.eliminarCuenta);
 
 module.exports = router;

@@ -152,6 +152,40 @@
 
       <p class="perfil__estado" role="status" aria-live="polite" data-estado></p>
     </form>
+
+    <!-- ============ ZONA DE PELIGRO: ELIMINAR LA CUENTA ============ -->
+    <!-- Formulario aparte (no se envía con "Guardar cambios"). El botón rojo despliega la confirmación:
+         hay que escribir la frase exacta; el servidor la vuelve a comprobar (POST /cuenta/eliminar). -->
+    <section class="perfil__tarjeta editor__peligro" aria-labelledby="titulo-eliminar" data-eliminar-cuenta>
+      <h2 class="perfil__tarjeta-titulo" id="titulo-eliminar">Eliminar mi cuenta</h2>
+      <p class="editor__peligro-texto">
+        Se borran para siempre tu cuenta, tu carta y todas tus vinculaciones con equipos: sales de los planteles
+        donde juegas y se eliminan los equipos que capitaneas, con sus desafíos y partidos. No se puede deshacer.
+      </p>
+
+      <button type="button" class="btn btn--grande editor__btn-eliminar" data-eliminar-abrir
+              aria-expanded="<%= locals.errorEliminar ? 'true' : 'false' %>" aria-controls="form-eliminar"
+              <%= locals.errorEliminar ? 'hidden' : '' %>>
+        Eliminar mi cuenta
+      </button>
+
+      <form action="/cuenta/eliminar" method="POST" class="editor__eliminar-form" id="form-eliminar"
+            data-eliminar-form <%= locals.errorEliminar ? '' : 'hidden' %>>
+        <% if (locals.errorEliminar) { %><div class="alerta alerta--error" role="alert"><%= errorEliminar %></div><% } %>
+        <div class="campo">
+          <label for="confirmacion">Para confirmar, escribe <strong>“<%= fraseEliminar %>”</strong></label>
+          <input type="text" id="confirmacion" name="confirmacion" autocomplete="off" autocapitalize="off"
+                 spellcheck="false" placeholder="<%= fraseEliminar %>" required
+                 data-eliminar-input data-frase="<%= fraseEliminar %>" />
+        </div>
+        <div class="perfil__acciones">
+          <button type="submit" class="btn btn--grande editor__btn-eliminar" data-eliminar-confirmar disabled>
+            Eliminar mi cuenta definitivamente
+          </button>
+          <button type="button" class="btn btn--contorno btn--grande" data-eliminar-cancelar>Cancelar</button>
+        </div>
+      </form>
+    </section>
   </div>
 </section>
 

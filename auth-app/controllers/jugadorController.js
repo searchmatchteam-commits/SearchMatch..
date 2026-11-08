@@ -14,6 +14,7 @@ const jugadorModel = require('../models/jugadorModel');
 const equipoModel = require('../models/equipoModel');
 const ubicacionModel = require('../models/ubicacionModel');
 const userModel = require('../models/userModel');
+const { FRASE_ELIMINAR_CUENTA } = require('./cuentaController');
 const { calcularEdad, ALTURA_CM, PESO_KG } = require('../middlewares/validators');
 const {
   POSICIONES,
@@ -276,7 +277,7 @@ async function perfilPublico(req, res, next) {
   }
 }
 
-function renderEditor(res, { status = 200, perfil, datos, errores = [] }) {
+function renderEditor(res, { status = 200, perfil, datos, errores = [], errorEliminar = null }) {
   // La carta muestra la posición principal: la primera marcada
   const posicion = POSICIONES[datos.posiciones[0]] || { sigla: '—' };
   return res.status(status).render('editar-perfil', {
@@ -285,6 +286,8 @@ function renderEditor(res, { status = 200, perfil, datos, errores = [] }) {
     editorPerfil: true,
     datos,
     errores,
+    errorEliminar, // zona "Eliminar mi cuenta" (POST /cuenta/eliminar)
+    fraseEliminar: FRASE_ELIMINAR_CUENTA,
     catalogos: { POSICIONES },
     rangos: { ALTURA_CM, PESO_KG, STAT: STAT_RANGO },
     // Carta de vista previa: editar-perfil.js la actualiza mientras el jugador cambia el formulario
@@ -308,6 +311,9 @@ async function mostrarEditor(req, res, next) {
 
     return renderEditor(res, {
       perfil,
+      errorEliminar: req.query.aviso === 'frase-eliminar'
+        ? `Para eliminar tu cuenta escribe exactamente “${FRASE_ELIMINAR_CUENTA}”.`
+        : null,
       datos: {
         nombre: perfil.nombre || '', // PE-002
         apellido: perfil.apellido || '',

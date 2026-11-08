@@ -192,3 +192,50 @@ document.addEventListener('DOMContentLoaded', () => {
     formulario.submit();
   });
 });
+
+// Zona "Eliminar mi cuenta": el botón rojo muestra la confirmación y el envío solo se habilita
+// cuando el texto coincide con la frase exacta (el servidor la vuelve a comprobar).
+document.addEventListener('DOMContentLoaded', () => {
+  const zona = document.querySelector('[data-eliminar-cuenta]');
+  if (!zona) return;
+  const abrir = zona.querySelector('[data-eliminar-abrir]');
+  const form = zona.querySelector('[data-eliminar-form]');
+  const input = zona.querySelector('[data-eliminar-input]');
+  const confirmar = zona.querySelector('[data-eliminar-confirmar]');
+  const cancelar = zona.querySelector('[data-eliminar-cancelar]');
+  const frase = input.dataset.frase;
+
+  const actualizar = () => {
+    confirmar.disabled = input.value.trim() !== frase;
+  };
+
+  abrir.addEventListener('click', () => {
+    abrir.hidden = true;
+    abrir.setAttribute('aria-expanded', 'true');
+    form.hidden = false;
+    input.focus();
+  });
+
+  cancelar.addEventListener('click', () => {
+    form.hidden = true;
+    input.value = '';
+    actualizar();
+    abrir.hidden = false;
+    abrir.setAttribute('aria-expanded', 'false');
+    abrir.focus();
+  });
+
+  input.addEventListener('input', actualizar);
+  input.addEventListener('paste', (evento) => evento.preventDefault()); // que se escriba, no se pegue
+
+  form.addEventListener('submit', (evento) => {
+    if (input.value.trim() !== frase) {
+      evento.preventDefault();
+      return;
+    }
+    confirmar.disabled = true;
+    confirmar.textContent = 'Eliminando…';
+  });
+
+  actualizar();
+});
