@@ -156,11 +156,6 @@
             <li class="sm-comentario">
               <p class="sm-comentario__autor"><strong><%= c.autor %></strong> · <small><%= formatoFecha.format(c.fecha) %></small></p>
               <p class="sm-comentario__texto"><%= c.mensaje %></p>
-              <% if (usuario.esAdmin) { %>
-                <form action="/comentarios/<%= c.id %>/ocultar" method="POST" data-confirmar="El comentario dejará de verse para todos y avisaremos a su autor." data-confirmar-titulo="¿Retirar este comentario?" data-confirmar-boton="Retirar"><input type="hidden" name="_csrf" value="<%= locals.csrfToken %>" />
-                  <button type="submit" class="sm-enlace">Retirar por moderación</button>
-                </form>
-              <% } %>
             </li>
           <% }) %>
         </ul>

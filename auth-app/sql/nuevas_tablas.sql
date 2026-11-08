@@ -552,3 +552,12 @@ ALTER TABLE pasarela_config ADD CONSTRAINT pasarela_activa_probada CHECK (NOT ac
 -- Notificaciones de torneos (TO-026).
 INSERT INTO tipo_notificacion (nombre)
 SELECT 'torneo' WHERE NOT EXISTS (SELECT 1 FROM tipo_notificacion WHERE lower(nombre) = 'torneo');
+
+-- ============================================================
+-- MOD-1) MODERACIÓN DE COMENTARIOS DESDE EL PANEL (/admin/comentarios, AP-025)
+-- ============================================================
+-- El último motivo con que se ocultó o se volvió a mostrar el comentario (el historial completo queda en
+-- admin_actividad). oculto_en: cuándo se ocultó; NULL si está visible.
+ALTER TABLE comentario
+    ADD COLUMN IF NOT EXISTS moderacion_motivo VARCHAR(500);
+CREATE INDEX IF NOT EXISTS ix_comentario_fecha ON comentario (fecha DESC, id DESC);
