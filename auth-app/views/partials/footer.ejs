@@ -88,14 +88,28 @@
     <script src="/js/torneo-form.js?v=<%= versionAssets %>" defer></script>
   <% } %>
   <% if (!usuario) { %>
-    <script type="speculationrules">
-      { "prerender": [{ "where": { "href_matches": ["/login", "/registro"] }, "eagerness": "moderate" }] }
+    <script>
+      // Precarga de páginas (speculationrules), solo con buena conexión: con red lenta gastaría datos de más
+      if (HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules')
+          && !document.documentElement.classList.contains('red-lenta')) {
+        var reglas = document.createElement('script');
+        reglas.type = 'speculationrules';
+        reglas.textContent = JSON.stringify({ prerender: [{ where: { href_matches: ["/login", "/registro"] }, eagerness: "moderate" }] });
+        document.body.appendChild(reglas);
+      }
     </script>
   <% } else if (!usuario.esCuentaPanel) { %>
     <!-- Dock: la sección se prepara al detener el cursor sobre ella y se abre al instante con el clic.
          Ninguna de estas páginas escribe datos al cargarse; las descarta main.js si llevan mucho preparadas. -->
-    <script type="speculationrules">
-      { "prerender": [{ "where": { "selector_matches": ".dock__item[href]:not([aria-current])" }, "eagerness": "moderate" }] }
+    <script>
+      // Precarga de páginas (speculationrules), solo con buena conexión: con red lenta gastaría datos de más
+      if (HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules')
+          && !document.documentElement.classList.contains('red-lenta')) {
+        var reglas = document.createElement('script');
+        reglas.type = 'speculationrules';
+        reglas.textContent = JSON.stringify({ prerender: [{ where: { selector_matches: ".dock__item[href]:not([aria-current])" }, eagerness: "moderate" }] });
+        document.body.appendChild(reglas);
+      }
     </script>
   <% } %>
 </body>

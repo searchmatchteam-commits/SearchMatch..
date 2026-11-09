@@ -36,3 +36,15 @@ test('la precarga del dock es solo para jugadores con sesión', async () => {
   assert.doesNotMatch(await pie({ esCuentaPanel: true }), /speculationrules/);
   assert.doesNotMatch(await pie(null), /dock__item/);
 });
+
+test('red lenta: se detecta antes de las fuentes y sin ella no hay fuentes externas, Three.js ni precargas', async () => {
+  const cabecera = await ejs.renderFile(path.join(raiz, 'views/partials/header.ejs'), { titulo: 't', usuario: null, versionAssets: 'test', pagina: 'auth' });
+  const deteccion = cabecera.indexOf("classList.add('red-lenta')");
+  assert.ok(deteccion > 0, 'detecta 2G/3G y ahorro de datos');
+  assert.ok(deteccion < cabecera.indexOf('fonts.googleapis.com/css2'), 'la detección va antes de las fuentes');
+  assert.match(cabecera, /if\(!document\.documentElement\.classList\.contains\('red-lenta'\)\)this\.rel='stylesheet'/);
+  assert.doesNotMatch(cabecera, /<link rel="prefetch"[^>]*three/, 'Three.js ya no se precarga sin condición');
+  const pie = await ejs.renderFile(path.join(raiz, 'views/partials/footer.ejs'), { usuario: { esCuentaPanel: false }, versionAssets: 'test' });
+  assert.doesNotMatch(pie, /<script type="speculationrules">/, 'las precargas se insertan con JS solo con buena conexión');
+  assert.match(pie, /contains\('red-lenta'\)/);
+});

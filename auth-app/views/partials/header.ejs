@@ -3,6 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Red lenta (2G/3G o "ahorro de datos" del celular): sin fuentes externas, balón 3D, precargas ni mapa
+       automático; también el modo liviano (sin animaciones de fondo). Va primero: lo usan los enlaces de abajo. -->
+  <script>
+    (function () {
+      // ?datos=bajo lo fuerza (queda guardado, útil con planes de datos limitados) y ?datos=normal lo apaga.
+      var preferencia = null;
+      try {
+        var pedido = new URLSearchParams(location.search).get('datos');
+        if (pedido) localStorage.setItem('sm-datos', pedido === 'bajo' ? 'bajo' : 'normal');
+        preferencia = localStorage.getItem('sm-datos');
+      } catch (e) { /* sin localStorage: solo la detección automática */ }
+      try {
+        var c = navigator.connection;
+        var lenta = c && (c.saveData || /(^|-)2g$|^3g$/.test(c.effectiveType || ''));
+        if (preferencia === 'bajo' || (preferencia !== 'normal' && lenta)) document.documentElement.classList.add('red-lenta');
+      } catch (e) { /* navegador sin la API: red normal */ }
+    })();
+  </script>
   <title><%= titulo %> | SearchMatch</title>
   <meta name="description" content="SearchMatch conecta jugadores, equipos y canchas de fútbol amateur en Chile." />
   <meta name="theme-color" content="#0b0d0b" />
@@ -21,7 +39,8 @@
       + (locals.matchmaking ? '&family=JetBrains+Mono:wght@700;800' : '');
   %>
   <!-- Las fuentes no bloquean el primer pintado: se ve el texto con la fuente del sistema y cambia al llegar (display=swap) -->
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?<%= fuentes %>&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+  <%# Con red lenta no se aplican: se usa la fuente del sistema y no se descargan los archivos de fuente %>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?<%= fuentes %>&display=swap" onload="this.onload=null;if(!document.documentElement.classList.contains('red-lenta'))this.rel='stylesheet'" />
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?<%= fuentes %>&display=swap" /></noscript>
   <!-- ?v= cambia en cada arranque del servidor: el navegador puede guardar los archivos en caché sin quedar desactualizado -->
   <link rel="stylesheet" href="/css/style.css?v=<%= versionAssets %>" />
@@ -66,9 +85,17 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <% } %>
   <% if (locals.pagina === 'auth') { %>
-    <!-- Mientras el usuario escribe, el navegador baja Three.js en segundo plano:
-         al entrar al dashboard el balón 3D ya está en caché -->
-    <link rel="prefetch" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" crossorigin="anonymous" />
+    <!-- Mientras el usuario escribe, el navegador baja Three.js en segundo plano: al entrar al dashboard el
+         balón 3D ya está en caché. Con red lenta no (son ~250 KB y el balón 3D no se usa). -->
+    <script>
+      if (!document.documentElement.classList.contains('red-lenta')) {
+        var precarga = document.createElement('link');
+        precarga.rel = 'prefetch';
+        precarga.href = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+        precarga.crossOrigin = 'anonymous';
+        document.head.appendChild(precarga);
+      }
+    </script>
   <% } %>
   <!-- Marca que hay JS (las animaciones de aparición solo se activan si existe) y decide el
        "modo liviano": sin efectos pesados cuando el navegador no tiene aceleración gráfica.
@@ -88,7 +115,9 @@
       try {
         var forzado = new URLSearchParams(location.search).get('liviano');
         if (forzado !== null) localStorage.setItem('sm-liviano', forzado === '0' ? 'no' : 'si');
-        var modo = localStorage.getItem('sm-liviano') || (sessionStorage.getItem('sm-gpu') === 'software' ? 'si' : 'no');
+        // Red lenta también activa el modo liviano (salvo que el usuario lo haya apagado con ?liviano=0)
+        var modo = localStorage.getItem('sm-liviano')
+          || (sessionStorage.getItem('sm-gpu') === 'software' || raiz.classList.contains('red-lenta') ? 'si' : 'no');
         if (modo === 'si') raiz.classList.add('modo-liviano');
       } catch (e) { /* sin localStorage: modo normal */ }
       // El fondo sigue donde iba al cambiar de página: la malla parte adelantada lo que lleva la pestaña abierta.

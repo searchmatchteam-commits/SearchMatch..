@@ -668,7 +668,10 @@ function initBall(stage, container) {
 }
 
 const canvasBall = document.getElementById('ball-canvas');
-if (canvasBall) {
+// Red lenta (header.ejs): no se bajan los ~250 KB de Three.js; queda el balón fijo de respaldo
+if (canvasBall && document.documentElement.classList.contains('red-lenta')) {
+  canvasBall.closest('.ball-stage').classList.add('sin-3d');
+} else if (canvasBall) {
   const stage = canvasBall.closest('.ball-stage');
   try {
     THREE = await import(THREE_CDN);

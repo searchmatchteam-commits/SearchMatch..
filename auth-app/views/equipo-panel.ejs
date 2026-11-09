@@ -281,12 +281,12 @@
             <% if (misCamisetas.length) { %>
               <div class="dz-grupo" role="radiogroup" aria-labelledby="dz-camiseta">
                 <span class="dz-grupo__titulo" id="dz-camiseta">Tu camiseta</span>
-                <div class="dz-camisetas">
+                <div class="sm-kit">
                   <% misCamisetas.forEach(function (c, i) { %>
-                    <label class="dz-camiseta">
+                    <label class="sm-kit__opcion">
                       <input type="radio" name="camiseta" value="<%= c[0] %>" data-color="<%= c[2] %>" <%= i === 0 ? 'checked' : '' %> />
-                      <svg viewBox="0 0 24 24" style="--color:<%= c[2] %>" aria-hidden="true"><path d="M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z" /></svg>
-                      <span><%= c[1] %></span>
+                      <svg class="sm-kit__camiseta" viewBox="0 0 24 24" style="--color:<%= c[2] %>" aria-hidden="true"><path d="M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z" /></svg>
+                      <%= c[1] %>
                     </label>
                   <% }) %>
                 </div>

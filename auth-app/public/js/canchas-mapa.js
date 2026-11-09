@@ -23,10 +23,30 @@ function desempacar(datos) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function iniciarMapa() {
   const contenedor = document.getElementById('mapa-canchas');
   const datos = document.getElementById('datos-mapa');
   if (!contenedor || !datos || typeof L === 'undefined') return;
+
+  // Red lenta (header.ejs): el mapa baja muchas imágenes; se carga recién cuando el usuario lo pide.
+  if (document.documentElement.classList.contains('red-lenta') && !contenedor.dataset.cargar) {
+    const boton = document.createElement('button');
+    boton.type = 'button';
+    boton.className = 'btn btn--contorno sm-mapa__cargar';
+    boton.textContent = 'Cargar mapa';
+    const nota = document.createElement('p');
+    nota.className = 'sm-mapa__nota';
+    nota.textContent = 'Para ahorrar datos, el mapa se carga solo si lo pides. También puedes ver las canchas en la vista de lista.';
+    contenedor.classList.add('sm-mapa--pendiente');
+    contenedor.append(nota, boton);
+    boton.addEventListener('click', () => {
+      contenedor.dataset.cargar = 'si';
+      contenedor.classList.remove('sm-mapa--pendiente');
+      contenedor.replaceChildren();
+      iniciarMapa();
+    }, { once: true });
+    return;
+  }
 
   const recintos = desempacar(JSON.parse(datos.textContent));
   const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
@@ -236,4 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
       .then((permiso) => { if (permiso.state === 'granted') ubicar(true); })
       .catch(() => {});
   }
-});
+}
+
+document.addEventListener('DOMContentLoaded', iniciarMapa);

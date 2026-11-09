@@ -2428,30 +2428,8 @@ button.eq-mis__accion {
 .dz-segmento:has(input:checked) { color: var(--sobre-verde, #04140a); background: var(--verde); border-color: var(--verde); }
 .dz-segmento:has(input:focus-visible) { outline: 2px solid var(--verde); outline-offset: 2px; }
 
-/* Tu camiseta: dos tarjetas grandes con la camiseta pintada */
-.dz-camisetas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.dz-camiseta {
-  position: relative;
-  display: grid;
-  justify-items: center;
-  gap: 6px;
-  padding: 12px 8px 10px;
-  border-radius: 14px;
-  border: 1px solid var(--vidrio-borde);
-  background: rgba(255, 255, 255, 0.02);
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--texto-suave);
-  cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
-}
-.dz-camiseta input { position: absolute; opacity: 0; pointer-events: none; }
-.dz-camiseta svg { width: 46px; height: 46px; fill: var(--color); stroke: var(--borde-fuerte); stroke-width: 0.6; }
-.dz-camiseta:has(input:checked) { color: var(--texto); border-color: var(--verde); background: var(--verde-tenue); box-shadow: 0 0 0 1px var(--verde) inset; }
-.dz-camiseta:has(input:focus-visible) { outline: 2px solid var(--verde); outline-offset: 2px; }
-
 .dz .modal__acciones { padding-top: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .eq-desafios__flecha, .dz-versus__camiseta, .dz-camiseta { transition: none; }
+  .eq-desafios__flecha, .dz-versus__camiseta { transition: none; }
 }

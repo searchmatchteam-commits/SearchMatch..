@@ -1050,3 +1050,49 @@ div.eq-sin-resultados p { margin: 0; }
 .sm-estado--por-registrar { color: #f5a524; }
 .sm-estado--cancelado { color: var(--texto-suave); }
 .sm-paginacion { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; color: var(--texto-suave); font-size: .9rem; }
+
+/* Selector de equipación (modal del desafío y programar partido): interruptor "Local | Visita" con la
+   camiseta pintada de su color. La opción elegida se enciende en verde. */
+.sm-kit {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 4px;
+  width: min(100%, 300px);
+  align-self: start; /* dentro de un grid (p. ej. .dz-grupo) no se estira: mide lo que su contenido */
+  align-items: center;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--borde-fuerte);
+  background: rgba(127, 127, 127, 0.08);
+}
+.sm-kit__opcion {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.sm-kit__opcion input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: inherit; }
+.sm-kit__camiseta { flex: none; width: 22px; height: 22px; fill: var(--color); stroke: var(--texto-suave); stroke-width: 0.9; } /* el borde deja ver camisetas negras o blancas */
+.sm-kit__opcion:hover { color: var(--texto); }
+.sm-kit__opcion:has(input:checked) {
+  color: var(--texto);
+  background: var(--verde-tenue);
+  box-shadow: inset 0 0 0 1px var(--verde);
+}
+.sm-kit__opcion:has(input:focus-visible) { outline: 2px solid var(--verde); outline-offset: 2px; }
+.sm-kit__opcion:has(input:disabled) { cursor: default; }
+@media (prefers-reduced-motion: reduce) { .sm-kit__opcion { transition: none; } }
+
+/* Red lenta (header.ejs): el mapa espera a que el usuario lo pida */
+.sm-mapa--pendiente { display: grid; place-content: center; justify-items: center; gap: 12px; padding: 20px; text-align: center; }
+.sm-mapa__nota { margin: 0; max-width: 42ch; font-size: 0.9rem; color: var(--texto-suave); }

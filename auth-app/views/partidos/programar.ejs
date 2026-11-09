@@ -69,14 +69,18 @@
                 <% if (!equipacion[lado[0]].length) { %>
                   <small class="campo__ayuda">Aún no registró los colores de sus camisetas.</small>
                 <% } %>
-                <% equipacion[lado[0]].forEach(function (c) { %>
-                  <label class="sm-equipacion__opcion">
-                    <input type="radio" name="camiseta_<%= lado[0] %>" value="<%= c.clave %>" data-color="<%= c.color %>"
-                           <%= lado[2] === c.clave || fija ? 'checked' : '' %> <%= fija ? 'disabled' : 'required' %> />
-                    <svg class="sm-camiseta" viewBox="0 0 24 24" style="--color:<%= c.color %>" aria-hidden="true"><path d="M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z" /></svg>
-                    <%= c.nombre %>
-                  </label>
-                <% }) %>
+                <% if (equipacion[lado[0]].length) { %>
+                  <div class="sm-kit">
+                    <% equipacion[lado[0]].forEach(function (c) { %>
+                      <label class="sm-kit__opcion">
+                        <input type="radio" name="camiseta_<%= lado[0] %>" value="<%= c.clave %>" data-color="<%= c.color %>"
+                               <%= lado[2] === c.clave || fija ? 'checked' : '' %> <%= fija ? 'disabled' : 'required' %> />
+                        <svg class="sm-kit__camiseta" viewBox="0 0 24 24" style="--color:<%= c.color %>" aria-hidden="true"><path d="M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z" /></svg>
+                        <%= c.nombre %>
+                      </label>
+                    <% }) %>
+                  </div>
+                <% } %>
                 <% if (fija) { %><small class="campo__ayuda">Elegida al enviar el desafío.</small><% } %>
               </fieldset>
             <% }) %>
