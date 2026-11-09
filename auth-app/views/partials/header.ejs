@@ -20,7 +20,9 @@
       // JetBrains Mono: solo el cronómetro de /matchmaking (cifras de ancho fijo)
       + (locals.matchmaking ? '&family=JetBrains+Mono:wght@700;800' : '');
   %>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?<%= fuentes %>&display=swap" />
+  <!-- Las fuentes no bloquean el primer pintado: se ve el texto con la fuente del sistema y cambia al llegar (display=swap) -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?<%= fuentes %>&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?<%= fuentes %>&display=swap" /></noscript>
   <!-- ?v= cambia en cada arranque del servidor: el navegador puede guardar los archivos en caché sin quedar desactualizado -->
   <link rel="stylesheet" href="/css/style.css?v=<%= versionAssets %>" />
   <!-- NUEVO: estilos de las funciones nuevas (clases sm-*, no cambia las existentes) -->

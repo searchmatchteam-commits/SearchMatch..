@@ -9,6 +9,7 @@
 // Todas las consultas son parametrizadas.
 
 const { pool } = require('../config/db');
+const { comprimirOConservar } = require('../config/imagenes');
 const { NIVELES, POSICIONES, ESTADISTICAS } = require('../config/perfilJugador');
 const { MODALIDADES, FORMACIONES, formacionValida, textoModalidades, MAX_EQUIPOS_COMO_CAPITAN } = require('../config/equipo');
 
@@ -447,7 +448,9 @@ async function agregarModalidad(authId, idEquipo, idModalidad) {
  * @param {string} tipo - 'image/jpeg' | 'image/png' | 'image/webp'
  * @returns {Promise<boolean>} false si el equipo no es de esta cuenta.
  */
-async function guardarEscudo(authId, idEquipo, datos, tipo) {
+async function guardarEscudo(authId, idEquipo, original, tipoOriginal) {
+  // JPEG comprimido si el escudo es opaco; con transparencia queda en PNG optimizado.
+  const { datos, tipo } = await comprimirOConservar(original, tipoOriginal, { ladoMaximo: 512, conservarTransparencia: true });
   const { rowCount } = await pool.query(
     `UPDATE equipo e
         SET escudo = $3, escudo_tipo = $4, escudo_actualizado = NOW()

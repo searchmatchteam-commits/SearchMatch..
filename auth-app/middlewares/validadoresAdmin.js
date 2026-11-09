@@ -146,6 +146,7 @@ function validarCatalogo(req, res, next) {
 // en "canchas" (casillas) y los medios de pago en "medios_pago".
 const multer = require('multer');
 const { detectarTipoImagen } = require('../controllers/jugadorController');
+const { comprimirImagen } = require('../config/imagenes');
 const {
   MAX_PATROCINADORES, FORMATOS, MEDIOS_PAGO, LIMITES, erroresCupos, erroresFechas, leerPrecio,
 } = require('../config/torneos');
@@ -166,7 +167,20 @@ function subirImagenesTorneo(req, res, next) {
       req.files = [];
       return next();
     }
-    return next(err);
+    if (err) return next(err);
+    // Antes de validar: la foto del torneo pasa a JPEG (hasta 1600 px) y cada logo se comprime
+    // conservando su transparencia. Lo que no sea una imagen legible queda igual y lo rechaza imagenDe.
+    return Promise.all((req.files || []).map(async (archivo) => {
+      if (!archivo.size) return;
+      const comprimida = await comprimirImagen(archivo.buffer, archivo.fieldname === 'foto'
+        ? { ladoMaximo: 1600 }
+        : { ladoMaximo: 512, conservarTransparencia: true });
+      if (comprimida) {
+        archivo.buffer = comprimida.datos;
+        archivo.size = comprimida.datos.length;
+        archivo.mimetype = comprimida.tipo;
+      }
+    })).then(() => next(), next);
   });
 }
 

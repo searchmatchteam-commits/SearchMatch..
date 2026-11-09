@@ -36,12 +36,33 @@ function tieneCookieDeSesion(req) {
  * Arma el objeto "usuario" que usan las vistas. Si el perfil de la tabla
  * jugador aún no existe, se usan los datos guardados en user_metadata.
  */
-async function construirUsuario(usuarioAuth) {
+function leerPerfil(authId) {
   // Si la base de datos falla, la sesión sigue siendo válida: solo usamos los metadatos.
-  const perfil = await userModel.findByAuthId(usuarioAuth.id).catch((err) => {
+  return userModel.findByAuthId(authId).catch((err) => {
     console.error('⚠️  No se pudo leer el perfil del usuario:', err.message);
     return null;
   });
+}
+
+/**
+ * Id (sub) del access token guardado en la cookie, SIN verificar. Solo sirve para adelantar la
+ * consulta del perfil mientras Supabase valida la sesión; el resultado se usa únicamente si
+ * getUser confirma ese mismo id.
+ */
+async function idSinVerificar(supabase) {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data && data.session && data.session.access_token;
+    if (!token) return null;
+    const carga = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf8'));
+    return typeof carga.sub === 'string' ? carga.sub : null;
+  } catch {
+    return null;
+  }
+}
+
+async function construirUsuario(usuarioAuth, perfilAdelantado) {
+  const perfil = perfilAdelantado !== undefined ? perfilAdelantado : await leerPerfil(usuarioAuth.id);
   const meta = usuarioAuth.user_metadata || {};
   return {
     id: perfil ? perfil.id : null,
@@ -86,10 +107,17 @@ async function cargarSesion(req, res, next) {
     // getUser valida el token con Supabase. Si el access token expiró, el cliente
     // lo renueva con el refresh token y escribe las cookies nuevas en la respuesta;
     // si la sesión ya no es válida, borra las cookies.
+    // Rendimiento: la consulta del perfil (BD) corre a la vez que la verificación con Supabase
+    // en vez de esperarla; así cada página ahorra un viaje de ida y vuelta a la base de datos.
+    const idPresunto = await idSinVerificar(req.supabase);
+    const perfilAdelantado = idPresunto ? leerPerfil(idPresunto) : null;
     const { data, error } = await userModel.obtenerUsuarioActual(req.supabase);
     if (error || !data.user) return next();
 
-    const usuario = await construirUsuario(data.user);
+    const usuario = await construirUsuario(
+      data.user,
+      perfilAdelantado && idPresunto === data.user.id ? await perfilAdelantado : undefined
+    );
 
     // CORRECCIÓN: regla 7 — una cuenta desactivada pierde la sesión en su próxima petición
     // (también si un administrador la desactiva mientras navega, AD-012).

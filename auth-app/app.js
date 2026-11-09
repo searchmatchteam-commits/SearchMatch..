@@ -3,6 +3,7 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
 
 const { probarConexion } = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
@@ -32,6 +33,8 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 app.locals.versionAssets = Date.now().toString(36);
+// gzip de HTML, CSS y JS: las hojas de cada página pesan ~250 KB sin comprimir y ~50 KB comprimidas.
+app.use(compression());
 app.use(express.static(path.join(__dirname, 'public'), {
   index: false,
   maxAge: process.env.NODE_ENV === 'production' ? '7d' : 0,

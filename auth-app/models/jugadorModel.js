@@ -1,4 +1,5 @@
 const { pool } = require('../config/db');
+const { comprimirOConservar } = require('../config/imagenes');
 const { POSICIONES, ESTADISTICAS } = require('../config/perfilJugador');
 
 const COLUMNA_INEXISTENTE = '42703';
@@ -146,7 +147,9 @@ async function obtenerFotoPorId(idJugador) {
   return rows[0] ? { datos: rows[0].foto, tipo: rows[0].foto_tipo } : null;
 }
 
-async function guardarFoto(idJugador, datos, tipo) {
+async function guardarFoto(idJugador, original, tipoOriginal) {
+  // La carta muestra la foto a 600 px (editar-perfil.js ya la reduce); se guarda en JPEG comprimido.
+  const { datos, tipo } = await comprimirOConservar(original, tipoOriginal, { ladoMaximo: 800 });
   await pool.query('UPDATE jugador SET foto = $1, foto_tipo = $2, foto_actualizada = NOW() WHERE id = $3', [
     datos,
     tipo,
