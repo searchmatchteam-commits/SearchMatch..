@@ -7,15 +7,32 @@ const { Pool } = require('pg');
 // terminar a los scripts de una sola pasada aunque queden abiertas.
 const CONEXIONES_ACTIVAS = 5;
 
+/**
+ * Cadena de conexión: DATABASE_URL (.env) o, en Vercel, POSTGRES_URL (la crea la integración de Supabase).
+ * Se le quitan sslmode y supa: con sslmode=require, pg exige verificar el certificado de Supabase (que Node no
+ * reconoce) e ignora el ssl de abajo, y la conexión falla con "self-signed certificate in certificate chain".
+ */
+function cadenaDeConexion() {
+  const cadena = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  if (!cadena) return undefined;
+  try {
+    const url = new URL(cadena);
+    ['sslmode', 'supa'].forEach((parametro) => url.searchParams.delete(parametro));
+    return url.toString();
+  } catch {
+    return cadena;
+  }
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: cadenaDeConexion(),
   ssl: { rejectUnauthorized: false },
   min: CONEXIONES_ACTIVAS,
   keepAlive: true,
   allowExitOnIdle: true,
 });
 
-if (!process.env.DATABASE_URL) {
+if (!cadenaDeConexion()) {
   console.warn(
     '⚠️  Falta la variable DATABASE_URL en el archivo .env. ' +
       'Copia .env.example a .env y pega tu cadena de conexión de Supabase.'
