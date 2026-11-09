@@ -7,7 +7,10 @@ const SQL_DESAFIO = `
          d.id_equipo_desafiante, ea.nombre AS desafiante, na.nombre AS nivel_desafiante, ea.activo AS desafiante_activo,
          d.id_equipo_desafiado, eb.nombre AS desafiado, nb.nombre AS nivel_desafiado, eb.activo AS desafiado_activo,
          coalesce(d.id_modalidad, ea.id_modalidad) AS id_modalidad, m.nombre AS modalidad, m.cantidad_de_jugadores AS jugadores,
-         (SELECT p.id FROM partido p WHERE p.id_desafio = d.id) AS id_partido
+         (SELECT p.id FROM partido p WHERE p.id_desafio = d.id) AS id_partido,
+         -- Equipación que eligió el desafiante al desafiar y su color (null en desafíos antiguos)
+         d.camiseta_desafiante,
+         CASE d.camiseta_desafiante WHEN 'local' THEN ea.camiseta_local WHEN 'visita' THEN ea.camiseta_visita END AS color_desafiante
     FROM desafio d
     JOIN estado_desafio ed ON ed.id = d.id_estado_desafio
     JOIN equipo ea ON ea.id = d.id_equipo_desafiante

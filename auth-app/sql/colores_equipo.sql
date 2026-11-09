@@ -34,3 +34,13 @@ BEGIN
       AND (camiseta_desafiado IS NULL OR camiseta_desafiado IN ('local', 'visita')));
   END IF;
 END $$;
+
+-- Equipación que elige el desafiante al enviar el desafío ('local' | 'visita'): el rival la ve y, al programar
+-- el partido, no puede elegir una camiseta del mismo color.
+ALTER TABLE desafio ADD COLUMN IF NOT EXISTS camiseta_desafiante VARCHAR(6);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ck_desafio_camiseta') THEN
+    ALTER TABLE desafio ADD CONSTRAINT ck_desafio_camiseta CHECK (camiseta_desafiante IS NULL OR camiseta_desafiante IN ('local', 'visita'));
+  END IF;
+END $$;

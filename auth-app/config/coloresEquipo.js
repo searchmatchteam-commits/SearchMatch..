@@ -119,7 +119,7 @@ function sugerirEquipaciones(desafiante, desafiado) {
  * equipo no tiene camisetas registradas).
  * @returns {{ equipacion: {desafiante: string|null, desafiado: string|null}, error: string|null }}
  */
-function validarEquipaciones(body, desafiante, desafiado) {
+function validarEquipaciones(body, desafiante, desafiado, { mensajeChoque = null } = {}) {
   const elegir = (equipo, valor) => {
     const camisetas = camisetasDe(equipo);
     if (!camisetas.length) return { clave: null, color: null, falta: false };
@@ -132,12 +132,26 @@ function validarEquipaciones(body, desafiante, desafiado) {
   if (a.falta || b.falta) error = 'Elige con qué camiseta juega cada equipo.';
   // Si todas las combinaciones se parecen no se bloquea el partido (lo resuelven con petos); si hay otra, se exige.
   else if (coloresParecidos(a.color, b.color) && !sugerirEquipaciones(desafiante, desafiado).choque) {
-    error = 'Los dos equipos quedarían con camisetas del mismo color: elige otra equipación para uno de ellos.';
+    error = mensajeChoque || 'Los dos equipos quedarían con camisetas del mismo color: elige otra equipación para uno de ellos.';
   }
   return { equipacion: { desafiante: a.clave, desafiado: b.clave }, error };
 }
 
+/**
+ * El desafiante ya eligió su camiseta al desafiar: solo cuenta esa (la otra queda fuera de la elección).
+ * @param {object} fila - equipo con camiseta_local y camiseta_visita.
+ * @param {'local'|'visita'|null} clave - la que eligió; null = puede usar cualquiera (desafíos antiguos).
+ */
+function soloCamiseta(fila, clave) {
+  if (!clave || !normalizarColor(fila[`camiseta_${clave}`])) return fila;
+  return { ...fila, camiseta_local: clave === 'local' ? fila.camiseta_local : null, camiseta_visita: clave === 'visita' ? fila.camiseta_visita : null };
+}
+
+const MSG_COLOR_DEL_RIVAL = 'El equipo rival irá de ese color, cámbiala.';
+
 module.exports = {
+  MSG_COLOR_DEL_RIVAL,
+  soloCamiseta,
   CAMPOS,
   PREDETERMINADOS,
   normalizarColor,

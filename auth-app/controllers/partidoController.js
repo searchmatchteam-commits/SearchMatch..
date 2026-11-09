@@ -1,5 +1,16 @@
 const partidoModel = require('../models/partidoModel');
-const { sugerirEquipaciones, validarEquipaciones, camisetasDe } = require('../config/coloresEquipo');
+const {
+  sugerirEquipaciones, validarEquipaciones, camisetasDe, soloCamiseta, MSG_COLOR_DEL_RIVAL,
+} = require('../config/coloresEquipo');
+
+/**
+ * Camisetas que se pueden elegir en el partido: si el desafiante eligió su equipación al desafiar, solo esa
+ * (el rival no puede ponerse el mismo color); en desafíos antiguos, cualquiera de las dos.
+ */
+async function camisetasDelPartido(desafio) {
+  const camisetas = await partidoModel.camisetasDelDesafio(desafio.id_equipo_desafiante, desafio.id_equipo_desafiado);
+  return { ...camisetas, desafiante: soloCamiseta(camisetas.desafiante, desafio.camiseta_desafiante) };
+}
 const desafioModel = require('../models/desafioModel');
 const canchaModel = require('../models/canchaModel');
 const notificacionModel = require('../models/notificacionModel');
@@ -41,7 +52,7 @@ async function renderProgramar(req, res, desafio, { status = 200, datos = {}, er
   const [modalidades, canchas, camisetas] = await Promise.all([
     canchaModel.listarModalidades(),
     canchaModel.buscarCanchas({}),
-    partidoModel.camisetasDelDesafio(desafio.id_equipo_desafiante, desafio.id_equipo_desafiado),
+    camisetasDelPartido(desafio),
   ]);
   // Equipación: las camisetas de cada equipo y la combinación sugerida (la más distinta)
   const sugerida = sugerirEquipaciones(camisetas.desafiante, camisetas.desafiado);
@@ -61,6 +72,9 @@ async function renderProgramar(req, res, desafio, { status = 200, datos = {}, er
       desafiante: camisetasDe(camisetas.desafiante),
       desafiado: camisetasDe(camisetas.desafiado),
       choque: sugerida.choque,
+      // La del desafiante viene del desafío: el rival la ve y no puede repetir su color
+      desafianteFija: Boolean(desafio.camiseta_desafiante),
+      mensajeChoque: MSG_COLOR_DEL_RIVAL,
     },
     duracion: DURACION_PARTIDO_MIN,
     erroresCampo,
@@ -95,8 +109,11 @@ async function programar(req, res, next) {
     const desafio = await desafioDelCapitan(req);
     if (!desafio) return res.redirect(`/desafios/${idValido(req.params.idDesafio) || ''}?aviso=sin-permiso`);
     // Equipación: cada equipo con una de sus camisetas, sin que ambos vistan del mismo color
-    const camisetas = await partidoModel.camisetasDelDesafio(desafio.id_equipo_desafiante, desafio.id_equipo_desafiado);
-    const { equipacion, error: errorEquipacion } = validarEquipaciones(req.body, camisetas.desafiante, camisetas.desafiado);
+    const camisetas = await camisetasDelPartido(desafio);
+    const cuerpo = desafio.camiseta_desafiante ? { ...req.body, camiseta_desafiante: desafio.camiseta_desafiante } : req.body;
+    const { equipacion, error: errorEquipacion } = validarEquipaciones(cuerpo, camisetas.desafiante, camisetas.desafiado, {
+      mensajeChoque: desafio.camiseta_desafiante ? MSG_COLOR_DEL_RIVAL : null,
+    });
     const datos = { ...req.datosFormulario, equipacion, camisetaDesafiante: equipacion.desafiante, camisetaDesafiado: equipacion.desafiado };
     if (errorEquipacion) req.erroresCampo = { ...req.erroresCampo, equipacion: errorEquipacion };
     if (Object.keys(req.erroresCampo).length > 0) {

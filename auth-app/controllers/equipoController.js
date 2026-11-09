@@ -718,7 +718,8 @@ async function desafiar(req, res, next) {
     }
     const resultado = Number.isInteger(idRival) && idRival > 0
       ? await equipoModel.enviarDesafio(req.usuario.idAuth, idRival, req.datosDesafio.mensaje,
-        MODALIDADES[Number(req.body.modalidad)] ? Number(req.body.modalidad) : null, idPropio)
+        MODALIDADES[Number(req.body.modalidad)] ? Number(req.body.modalidad) : null, idPropio,
+        ['local', 'visita'].includes(req.body.camiseta) ? req.body.camiseta : null) // equipación con la que irá
       : 'inexistente';
     if (resultado === 'enviado') await avisosEquipo.desafioEnviado(req.usuario, idRival, idPropio); // NUEVO: NT-001 / DE-008
     if (quiereJson) return res.json({ resultado, mensaje: AVISOS_DESAFIO[resultado] });

@@ -79,3 +79,28 @@ test('vistas: el formulario de colores y la inicial del escudo con los colores d
   assert.equal((await ejs.renderFile(path.join(vistas, 'partials/escudo-equipo.ejs'), { equipo: { nombre: 'sin' } })).trim(), 'S');
   assert.equal(coloresDe({ color_primario: null }), null);
 });
+
+test('equipación elegida al desafiar: el rival no puede ir del mismo color y ve el aviso', async () => {
+  const { soloCamiseta, MSG_COLOR_DEL_RIVAL, camisetasDe } = require('../config/coloresEquipo');
+  const desafiante = soloCamiseta(equipo('#d00000', '#ffffff'), 'local'); // irá de rojo
+  const rival = equipo('#e00000', '#111111'); // rojo o negro
+  assert.deepEqual(camisetasDe(desafiante).map((c) => c.clave), ['local'], 'la otra camiseta del desafiante queda fuera');
+
+  const mismoColor = validarEquipaciones({ camiseta_desafiante: 'local', camiseta_desafiado: 'local' }, desafiante, rival, { mensajeChoque: MSG_COLOR_DEL_RIVAL });
+  assert.equal(mismoColor.error, 'El equipo rival irá de ese color, cámbiala.');
+  assert.equal(validarEquipaciones({ camiseta_desafiante: 'local', camiseta_desafiado: 'visita' }, desafiante, rival).error, null);
+
+  // Vista: la del desafiante sale fija y la alerta lleva el mensaje para el JS
+  const { sugerirEquipaciones } = require('../config/coloresEquipo');
+  const s = sugerirEquipaciones(desafiante, rival);
+  const html = await ejs.renderFile(path.join(vistas, 'partidos/programar.ejs'), {
+    titulo: 't', usuario: { nombre: 'u' }, versionAssets: 't', pagina: 'equipo', duracion: 60, error: null, erroresCampo: {},
+    desafio: { id: 1, desafiante: 'Rojos', desafiado: 'Rivales' }, modalidades: [], canchas: [],
+    datos: { camisetaDesafiante: s.desafiante, camisetaDesafiado: s.desafiado },
+    equipacion: { desafiante: camisetasDe(desafiante), desafiado: camisetasDe(rival), choque: s.choque, desafianteFija: true, mensajeChoque: MSG_COLOR_DEL_RIVAL },
+  });
+  assert.match(html, /name="camiseta_desafiante" value="local" data-color="#d00000"\s+checked disabled/);
+  assert.match(html, /name="camiseta_desafiado" value="visita"[^>]*checked/, 'se sugiere la que no choca');
+  assert.match(html, /data-mensaje-choque="El equipo rival irá de ese color, cámbiala."/);
+  assert.match(html, /data-alerta-choque hidden/);
+});

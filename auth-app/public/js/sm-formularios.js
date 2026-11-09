@@ -133,6 +133,36 @@ document.addEventListener('DOMContentLoaded', () => {
     radios.forEach((r) => r.addEventListener('change', sincronizar));
   });
 
+  // Equipación del partido (partidos/programar): si las dos camisetas elegidas son del mismo color, alerta al
+  // instante y no deja enviar (el servidor lo vuelve a revisar). Misma medida que config/coloresEquipo.js.
+  const parecidos = (a, b) => {
+    const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+    const [r1, g1, b1] = rgb(a);
+    const [r2, g2, b2] = rgb(b);
+    const media = (r1 + r2) / 2;
+    return Math.sqrt((2 + media / 256) * (r1 - r2) ** 2 + 4 * (g1 - g2) ** 2 + (2 + (255 - media) / 256) * (b1 - b2) ** 2) < 120;
+  };
+  document.querySelectorAll('[data-equipacion]').forEach((grupo) => {
+    const formulario = grupo.closest('form');
+    const alerta = grupo.parentElement.querySelector('[data-alerta-choque]');
+    const enviar = formulario && formulario.querySelector('button[type="submit"]');
+    const revisar = () => {
+      const elegida = (lado) => grupo.querySelector(`input[name="camiseta_${lado}"]:checked`);
+      const a = elegida('desafiante');
+      const b = elegida('desafiado');
+      // Si todas las combinaciones chocan (data-permitir-choque) no se bloquea: usarán petos
+      const choque = a && b && a.dataset.color && b.dataset.color && parecidos(a.dataset.color, b.dataset.color)
+        && grupo.dataset.permitirChoque !== 'si';
+      if (alerta) {
+        alerta.textContent = grupo.dataset.mensajeChoque;
+        alerta.hidden = !choque;
+      }
+      if (enviar) enviar.disabled = Boolean(choque);
+    };
+    grupo.addEventListener('change', revisar);
+    revisar();
+  });
+
   // Colores del equipo (partials/sm-colores-equipo): la vista previa de la carta y las camisetas sigue a cada selector.
   document.querySelectorAll('[data-colores-equipo]').forEach((grupo) => {
     grupo.addEventListener('input', (evento) => {

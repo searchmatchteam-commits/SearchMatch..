@@ -60,8 +60,10 @@
       <% if (equipacion.desafiante.length || equipacion.desafiado.length) { %>
         <div class="campo <%= erroresCampo.equipacion ? 'campo--error' : '' %>">
           <span class="campo__etiqueta">Equipación</span>
-          <div class="sm-equipacion">
-            <% [['desafiante', desafio.desafiante, datos.camisetaDesafiante], ['desafiado', desafio.desafiado, datos.camisetaDesafiado]].forEach(function (lado) { %>
+          <%# data-equipacion: sm-formularios.js avisa al instante si las dos camisetas son del mismo color %>
+          <div class="sm-equipacion" data-equipacion data-mensaje-choque="<%= equipacion.mensajeChoque %>" data-permitir-choque="<%= equipacion.choque ? 'si' : 'no' %>">
+            <% [['desafiante', desafio.desafiante, datos.camisetaDesafiante], ['desafiado', desafio.desafiado, datos.camisetaDesafiado]].forEach(function (lado) {
+                 const fija = lado[0] === 'desafiante' && equipacion.desafianteFija; %>
               <fieldset class="sm-equipacion__equipo">
                 <legend><%= lado[1] %></legend>
                 <% if (!equipacion[lado[0]].length) { %>
@@ -69,15 +71,18 @@
                 <% } %>
                 <% equipacion[lado[0]].forEach(function (c) { %>
                   <label class="sm-equipacion__opcion">
-                    <input type="radio" name="camiseta_<%= lado[0] %>" value="<%= c.clave %>" <%= lado[2] === c.clave ? 'checked' : '' %> required />
+                    <input type="radio" name="camiseta_<%= lado[0] %>" value="<%= c.clave %>" data-color="<%= c.color %>"
+                           <%= lado[2] === c.clave || fija ? 'checked' : '' %> <%= fija ? 'disabled' : 'required' %> />
                     <svg class="sm-camiseta" viewBox="0 0 24 24" style="--color:<%= c.color %>" aria-hidden="true"><path d="M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z" /></svg>
                     <%= c.nombre %>
                   </label>
                 <% }) %>
+                <% if (fija) { %><small class="campo__ayuda">Elegida al enviar el desafío.</small><% } %>
               </fieldset>
             <% }) %>
           </div>
-          <small class="campo__error" id="equipacion-error"><%= erroresCampo.equipacion || '' %></small>
+          <div class="alerta alerta--error" role="alert" data-alerta-choque <%= erroresCampo.equipacion ? '' : 'hidden' %>><%= erroresCampo.equipacion || equipacion.mensajeChoque %></div>
+          <small class="campo__error" id="equipacion-error"></small>
           <small class="campo__ayuda"><%= equipacion.choque
             ? 'Ojo: todas las combinaciones se parecen. Conversen con el rival para que uno use petos de otro color.'
             : 'Te sugerimos la combinación con los colores más distintos. Puedes cambiarla.' %></small>

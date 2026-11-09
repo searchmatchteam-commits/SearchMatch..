@@ -261,6 +261,22 @@
                 <input type="time" name="hora">
               </label>
             </div>
+            <%# Equipación con la que irá: el rival la ve y no podrá elegir una camiseta del mismo color %>
+            <% if (equipo.colores && equipo.colores.local) { %>
+              <fieldset class="modal__campo sm-equipacion__equipo">
+                <legend>Tu equipación</legend>
+                <% [['local', 'Local', equipo.colores.local], ['visita', 'Visita', equipo.colores.visita]].filter((c) => c[2]).forEach(function (c, i) { %>
+                  <label class="sm-equipacion__opcion">
+                    <input type="radio" name="camiseta" value="<%= c[0] %>" <%= i === 0 ? 'checked' : '' %> />
+                    <svg class="sm-camiseta" viewBox="0 0 24 24" style="--color:<%= c[2] %>" aria-hidden="true"><path d="M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z" /></svg>
+                    <%= c[1] %>
+                  </label>
+                <% }) %>
+                <small class="campo__ayuda">El rival verá con qué color irás y no podrá elegir el mismo.</small>
+              </fieldset>
+            <% } else if (equipo.soyCapitan) { %>
+              <p class="modal__texto">Registra los colores de tus camisetas en <a href="/equipos/<%= equipo.id %>/editar">Editar equipo</a> para elegir tu equipación.</p>
+            <% } %>
             <label class="modal__campo">
               <span>Mensaje para el capitán rival</span>
               <textarea name="mensaje" rows="3" maxlength="200" placeholder="Ej. ¿Jugamos en La Florida?"></textarea>

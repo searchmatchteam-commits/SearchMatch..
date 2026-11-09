@@ -33,6 +33,12 @@
       </div>
       <dl class="sm-datos">
         <div><dt>Mensaje</dt><dd><%= desafio.mensaje || 'Sin mensaje.' %></dd></div>
+        <% if (desafio.color_desafiante) { %>
+          <div><dt>Equipación de <%= desafio.desafiante %></dt><dd>
+            <svg class="sm-camiseta" viewBox="0 0 24 24" style="--color:<%= desafio.color_desafiante %>" aria-hidden="true"><path d="M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z" /></svg>
+            Camiseta de <%= desafio.camiseta_desafiante %> · tu equipo no podrá usar una del mismo color
+          </dd></div>
+        <% } %>
         <div><dt>Enviado</dt><dd><%= formatoFecha.format(desafio.fecha_solicitud) %></dd></div>
         <div><dt>Respondido</dt><dd><%= desafio.fecha_respuesta ? formatoFecha.format(desafio.fecha_respuesta) : '—' %></dd></div>
         <div><dt>Estado</dt><dd><%= nombresEstado[desafio.estado] %></dd></div>

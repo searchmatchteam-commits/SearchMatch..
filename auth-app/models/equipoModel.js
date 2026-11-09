@@ -712,7 +712,7 @@ async function guardarUbicacion(authId, idEquipo, lat, lng) {
  * @param {number|null} [idEquipoPropio] - Equipo desafiante (el capitán puede tener varios); debe ser suyo.
  * @returns {Promise<'enviado'|'pendiente'|'sin-equipo'|'inexistente'|'modalidad'>}
  */
-async function enviarDesafio(authId, idRival, mensaje, jugadores = null, idEquipoPropio = null) {
+async function enviarDesafio(authId, idRival, mensaje, jugadores = null, idEquipoPropio = null, camiseta = null) {
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
@@ -772,9 +772,13 @@ async function enviarDesafio(authId, idRival, mensaje, jugadores = null, idEquip
       } else {
         // 3) El desafío
         await cliente.query(
-          `INSERT INTO desafio (id_equipo_desafiante, id_equipo_desafiado, id_estado_desafio, mensaje, id_modalidad)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [idEquipo, idRival, estado.rows[0].id, mensaje, modalidad.id]
+          // camiseta: con la que irá el desafiante ('local' | 'visita'), solo si su equipo registró ese color
+          `INSERT INTO desafio (id_equipo_desafiante, id_equipo_desafiado, id_estado_desafio, mensaje, id_modalidad, camiseta_desafiante)
+           SELECT $1, $2, $3, $4, $5,
+                  CASE WHEN $6 = 'local' AND e.camiseta_local IS NOT NULL THEN 'local'
+                       WHEN $6 = 'visita' AND e.camiseta_visita IS NOT NULL THEN 'visita' END
+             FROM equipo e WHERE e.id = $1`,
+          [idEquipo, idRival, estado.rows[0].id, mensaje, modalidad.id, camiseta]
         );
         resultado = 'enviado';
       }
