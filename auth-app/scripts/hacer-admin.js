@@ -19,7 +19,7 @@ async function crearRol(cliente, rol) {
 /** Crea el usuario en Supabase Auth con una invitación para definir la contraseña. */
 async function crearEnAuth(correo, nombre) {
   if (!supabaseAdmin) throw new Error('Falta SUPABASE_SERVICE_ROLE_KEY en .env para crear cuentas.');
-  const appUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`;
+  const appUrl = require('../config/urlApp').urlApp();
   const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(correo, {
     redirectTo: `${appUrl}/recuperar/nueva`, data: { nombre, cuenta_panel: true },
   });

@@ -3,6 +3,7 @@ const { rutaDeInicio } = require('../middlewares/authMiddleware');
 const cuentaModel = require('../models/cuentaModel');
 const { TERMINOS, PRIVACIDAD } = require('../config/legal');
 const { proveedorHabilitado } = require('../config/supabase');
+const { urlApp, origenPropio } = require('../config/urlApp');
 const { validarFechaNacimiento, ALTURA_CM, PESO_KG } = require('../middlewares/validators');
 const { POSICIONES } = require('../config/perfilJugador');
 
@@ -86,7 +87,7 @@ async function registrar(req, res, next) {
       return renderRegistroConError(req, res, 400, MSG_CORREO_REGISTRADO);
     }
 
-    const appUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`;
+    const appUrl = urlApp();
     const { data, error } = await userModel.registrarEnAuth(req.supabase, {
       correo,
       password,
@@ -184,7 +185,7 @@ async function reenviarVerificacion(req, res, next) {
   }
   try {
     if (await userModel.findByEmail(correo)) {
-      const appUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`;
+      const appUrl = urlApp();
       const { error } = await userModel.reenviarVerificacionEnAuth(req.supabase, correo, `${appUrl}/auth/confirmar`);
       if (error) console.error('⚠️  No se pudo reenviar la verificación:', error.code, error.message);
     }
@@ -273,11 +274,12 @@ async function iniciarConGoogle(req, res, next) {
       console.error('⚠️  Google no está habilitado en Supabase (Authentication → Sign In / Providers → Google).');
       return res.redirect('/login?msg=Google_no_configurado');
     }
-    const appUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`;
-    // El verificador PKCE es una cookie de este host: si se entró por otro (p. ej. 127.0.0.1 en vez
-    // de localhost), se reinicia desde APP_URL para que la cookie llegue a /auth/callback.
-    if (req.get('host') !== new URL(appUrl).host) return res.redirect(`${appUrl}/auth/google`);
-    const { data, error } = await userModel.urlInicioConGoogle(req.supabase, `${appUrl}/auth/callback`);
+    // El verificador PKCE es una cookie de este host: Google vuelve al mismo host (producción o un
+    // despliegue de Vercel). Si se entró por uno ajeno (p. ej. 127.0.0.1 en vez de localhost), se reinicia
+    // desde la URL de la app para que la cookie llegue a /auth/callback.
+    const origen = origenPropio(req);
+    if (!origen) return res.redirect(`${urlApp()}/auth/google`);
+    const { data, error } = await userModel.urlInicioConGoogle(req.supabase, `${origen}/auth/callback`);
     if (error || !data.url) {
       if (error) console.error('⚠️  No se pudo iniciar el acceso con Google:', error.code, error.message);
       return res.redirect('/login?msg=Google_error');

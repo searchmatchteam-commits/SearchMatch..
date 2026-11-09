@@ -31,9 +31,7 @@ async function correoVerificado(req) {
   }
 }
 
-function urlApp() {
-  return process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`;
-}
+const { urlApp } = require('../config/urlApp');
 
 function listaErrores(erroresCampo) {
   return Object.values(erroresCampo);

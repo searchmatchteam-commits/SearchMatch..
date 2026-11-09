@@ -28,9 +28,7 @@ const AVISOS = {
 
 const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function urlApp() {
-  return process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`;
-}
+const { urlApp } = require('../config/urlApp');
 
 function principal(req) {
   return { id: req.usuario.id, nombre: req.usuario.nombre || req.usuario.correo };
