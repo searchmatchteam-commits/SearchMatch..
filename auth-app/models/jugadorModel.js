@@ -1,6 +1,6 @@
 const { pool } = require('../config/db');
 const { comprimirOConservar } = require('../config/imagenes');
-const { POSICIONES, ESTADISTICAS } = require('../config/perfilJugador');
+const { POSICIONES, TODAS_LAS_ESTADISTICAS, statsDeFila } = require('../config/perfilJugador');
 
 const COLUMNA_INEXISTENTE = '42703';
 
@@ -12,7 +12,7 @@ function clavePosicion(nombreDb) {
 }
 
 async function leerPerfil(filtro, valor) {
-  const columnasStats = ESTADISTICAS.map(({ columna }) => `j.${columna}`).join(', ');
+  const columnasStats = TODAS_LAS_ESTADISTICAS.map(({ columna }) => `j.${columna}`).join(', ');
   const consulta = `
     SELECT j.id, j.nombre_apodo, j.apellido, j.apodo,
            to_char(j.fecha_nacimiento, 'YYYY-MM-DD') AS fecha_nacimiento,
@@ -30,7 +30,6 @@ async function leerPerfil(filtro, valor) {
   const fila = rows[0];
   if (!fila) return null;
 
-  const tieneStats = ESTADISTICAS.every(({ columna }) => fila[columna] !== null);
   const posiciones = fila.posiciones.map(clavePosicion).filter(Boolean);
   return {
     id: fila.id,
@@ -42,7 +41,7 @@ async function leerPerfil(filtro, valor) {
     peso: fila.peso === null ? null : Number(fila.peso),
     posiciones,
     posicion: posiciones[0] || null,
-    stats: tieneStats ? Object.fromEntries(ESTADISTICAS.map(({ clave, columna }) => [clave, fila[columna]])) : null,
+    stats: statsDeFila(fila), // null si faltan las de campo; las de portero sin editar valen STAT_INICIAL
     perfilCompleto: fila.perfil_completo,
     fotoVersion: fila.foto_actualizada ? fila.foto_actualizada.getTime() : null,
   };
@@ -83,8 +82,9 @@ async function escribirPerfil(idJugador, datos, stats, conservarStats) {
       idsPosiciones.push(posicion.rows[0].id);
     }
 
-    const asignacionStats = ESTADISTICAS.map(({ columna }, i) => (
-      conservarStats ? `${columna} = COALESCE(${columna}, $${i + 6})` : `${columna} = $${i + 6}`
+    // Wizard (conservarStats): solo llena las que faltan. Editor: escribe las que vienen (null = se conserva).
+    const asignacionStats = TODAS_LAS_ESTADISTICAS.map(({ columna }, i) => (
+      conservarStats ? `${columna} = COALESCE(${columna}, $${i + 6})` : `${columna} = COALESCE($${i + 6}, ${columna})`
     )).join(',\n           ');
     await cliente.query(
       `UPDATE jugador
@@ -98,7 +98,7 @@ async function escribirPerfil(idJugador, datos, stats, conservarStats) {
         datos.altura,
         datos.peso,
         idJugador,
-        ...ESTADISTICAS.map(({ clave }) => stats[clave]),
+        ...TODAS_LAS_ESTADISTICAS.map(({ clave }) => stats[clave] ?? null),
       ]
     );
 

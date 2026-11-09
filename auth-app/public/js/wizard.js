@@ -51,7 +51,7 @@ const REGLAS = {
     peso: (v, input) => enRango(v, input, 'El peso', 'kg'),
   },
   3: {
-    posicion: (v) => (v ? null : 'Elige al menos una posición en la cancha.'),
+    posicion_principal: (v) => (v ? null : 'Elige tu posición principal en la cancha.'),
   },
   4: {
     rol: (v) => (v ? null : 'Elige si te registras como jugador o como capitán.'),
@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fecha_nacimiento: REGEX_FECHA.test(fecha) ? fecha.split('-').reverse().join('/') : '—',
       altura: valorDe('altura') ? `${valorDe('altura')} cm` : '—',
       peso: valorDe('peso') ? `${valorDe('peso')} kg` : '—',
-      posicion: textoDeOpcion('posicion'),
+      posicion: [textoDeOpcion('posicion_principal'), textoDeOpcion('posicion_alternativa')].filter((t) => t !== '—').map((t, i) => (i === 0 ? `${t} (principal)` : t)).join(', ') || '—',
       rol: ROLES[valorDe('rol')] || '—',
       nombre_equipo: valorDe('nombre_equipo') || '—',
       id_comuna: comuna && comuna.value ? comuna.textContent.trim() : '—',

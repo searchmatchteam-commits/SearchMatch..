@@ -10,7 +10,7 @@
 
 const { pool } = require('../config/db');
 const { comprimirOConservar } = require('../config/imagenes');
-const { NIVELES, POSICIONES, ESTADISTICAS } = require('../config/perfilJugador');
+const { NIVELES, POSICIONES, TODAS_LAS_ESTADISTICAS, statsDeFila } = require('../config/perfilJugador');
 const { MODALIDADES, FORMACIONES, formacionValida, textoModalidades, MAX_EQUIPOS_COMO_CAPITAN } = require('../config/equipo');
 const { coloresDe } = require('../config/coloresEquipo');
 
@@ -237,7 +237,7 @@ async function agregarPlanteles(equipos) {
  *          clavePosicion: 'arquero' | 'defensa' | 'mediocampista' | 'delantero' | null (la línea en la cancha).
  */
 async function listarPlantel(idEquipo) {
-  const columnasStats = ESTADISTICAS.map(({ columna }) => `j.${columna}`).join(', ');
+  const columnasStats = TODAS_LAS_ESTADISTICAS.map(({ columna }) => `j.${columna}`).join(', ');
   const { rows } = await pool.query(
     `SELECT j.id, trim(concat_ws(' ', j.nombre_apodo, j.apellido)) AS nombre,
             coalesce(nullif(j.apodo, ''), j.nombre_apodo) AS nombre_carta,
@@ -267,9 +267,7 @@ async function listarPlantel(idEquipo) {
     posicion: etiquetaPosicion(fila.posicion) || 'Sin posición',
     clavePosicion: clavePosicion(fila.posicion),
     capitan: Boolean(fila.capitan),
-    stats: ESTADISTICAS.every(({ columna }) => fila[columna] !== null)
-      ? Object.fromEntries(ESTADISTICAS.map(({ clave, columna }) => [clave, fila[columna]]))
-      : null,
+    stats: statsDeFila(fila),
     fotoVersion: fila.foto_actualizada ? fila.foto_actualizada.getTime() : null,
     puestos: fila.puestos || {},
   }));
@@ -996,7 +994,7 @@ async function solicitarUnion(authId, idEquipo, mensaje) {
  *          equipos: string[], invitado: boolean}>>}
  */
 async function listarJugadoresParaInvitar(idEquipo) {
-  const columnasStats = ESTADISTICAS.map(({ columna }) => `j.${columna}`).join(', ');
+  const columnasStats = TODAS_LAS_ESTADISTICAS.map(({ columna }) => `j.${columna}`).join(', ');
   const { rows } = await pool.query(
     `SELECT j.id, coalesce(nullif(j.apodo, ''), trim(concat_ws(' ', j.nombre_apodo, j.apellido))) AS nombre,
             j.foto_actualizada, ${columnasStats},
@@ -1023,9 +1021,8 @@ async function listarJugadoresParaInvitar(idEquipo) {
     id: fila.id,
     nombre: fila.nombre || 'Jugador',
     posicion: etiquetaPosicion(fila.posicion) || 'Sin posición',
-    stats: ESTADISTICAS.every(({ columna }) => fila[columna] !== null)
-      ? Object.fromEntries(ESTADISTICAS.map(({ clave, columna }) => [clave, fila[columna]]))
-      : null,
+    clavePosicion: clavePosicion(fila.posicion), // la media se pondera según su posición principal
+    stats: statsDeFila(fila),
     fotoVersion: fila.foto_actualizada ? fila.foto_actualizada.getTime() : null,
     equipos: fila.equipos,
     invitado: fila.invitado,

@@ -96,50 +96,42 @@
       <fieldset class="perfil__tarjeta editor__seccion">
         <legend class="perfil__tarjeta-titulo">Perfil deportivo</legend>
 
-        <div class="grupo-opciones" role="group" aria-labelledby="posicion-label" aria-describedby="posicion-ayuda" data-grupo="posicion">
-          <span class="grupo-opciones__label" id="posicion-label">Posiciones en la cancha</span>
-          <small class="campo__ayuda" id="posicion-ayuda">Marca todas las que juegas (toca otra vez para quitarla). La primera es la que muestra tu carta.</small>
-          <div class="opciones opciones--4">
-            <% Object.entries(catalogos.POSICIONES).forEach(function ([clave, pos]) { %>
-              <label class="opcion opcion--posicion">
-                <input class="opcion__radio" type="checkbox" name="posicion" value="<%= clave %>" data-sigla="<%= pos.sigla %>"
-                       <%= datos.posiciones.includes(clave) ? 'checked' : '' %> />
-                <svg class="opcion__cancha" viewBox="0 0 24 34" aria-hidden="true">
-                  <rect x="1" y="1" width="22" height="32" rx="2" />
-                  <path d="M1 17h22M8 1v4h8V1M8 33v-4h8v4" />
-                  <circle cx="12" cy="17" r="3.2" />
-                  <circle class="opcion__punto" cx="12" cy="<%= alturaPosicion[clave] %>" r="3" />
-                </svg>
-                <span class="opcion__sigla"><%= pos.sigla %></span>
-                <span class="opcion__nombre"><%= pos.etiqueta %></span>
-              </label>
-            <% }) %>
-          </div>
-        </div>
+        <%- include('partials/sm-posiciones', { posiciones: datos.posiciones, catalogo: catalogos.POSICIONES }) %>
       </fieldset>
 
       <!-- ============ ESTADÍSTICAS ============ -->
       <fieldset class="perfil__tarjeta editor__seccion">
         <legend class="perfil__tarjeta-titulo">Estadísticas</legend>
         <p class="perfil__nota editor__nota">
-          Media actual: <strong class="texto-verde" data-editor-media><%= jugador.media %></strong> · promedio de las 6 estadísticas.
+          Media de tu carta principal: <strong class="texto-verde" data-editor-media><%= jugador.media %></strong> ·
+          ponderada según tu posición: sus estadísticas clave (en verde) valen más.
         </p>
 
         <!-- Deslizadores editables (1–99): editar-perfil.js actualiza el número, la carta y la media en vivo.
-             Se guardan con "Guardar cambios" (POST /perfil/editar). -->
-        <ul class="editor__stats">
-          <% jugador.estadisticas.forEach(function (s) { %>
-            <li class="editor__stat">
-              <label class="editor__stat-nombre" for="stat_<%= s.clave %>">
-                <span class="barras__sigla"><%= s.sigla %></span> <%= s.nombre %>
-              </label>
-              <input class="editor__rango" type="range" id="stat_<%= s.clave %>" name="stat_<%= s.clave %>"
-                     min="<%= rangos.STAT.min %>" max="<%= rangos.STAT.max %>" step="1" value="<%= s.valor %>"
-                     style="--valor: <%= s.valor %>" data-editor-stat="<%= s.clave %>" />
-              <output class="barras__valor" for="stat_<%= s.clave %>" data-editor-valor="<%= s.clave %>"><%= s.valor %></output>
-            </li>
-          <% }) %>
-        </ul>
+             Se guardan con "Guardar cambios" (POST /perfil/editar). Siempre se envían los dos grupos;
+             se muestra el de portero solo si alguna de tus posiciones es Portero (y el de campo si juegas de campo). -->
+        <% const posicionesActuales = datos.posiciones || [];
+           const pesosPrincipal = pesos[posicionesActuales[0]] || {}; %>
+        <% gruposStats.forEach(function (grupo) {
+             const visible = grupo.clave === 'arquero' ? posicionesActuales.includes('arquero') : posicionesActuales.some((p) => p !== 'arquero') || !posicionesActuales.length; %>
+          <div class="editor__grupo-stats" data-grupo-stats="<%= grupo.clave %>" <%= visible ? '' : 'hidden' %>>
+            <h3 class="sm-posiciones__subtitulo"><%= grupo.titulo %></h3>
+            <ul class="editor__stats">
+              <% grupo.lista.forEach(function (s) { %>
+                <li class="editor__stat<%= (pesosPrincipal[s.clave] || 0) >= 0.2 ? ' carta-jugador__stat--clave' : '' %>" data-stat-item="<%= s.clave %>">
+                  <label class="editor__stat-nombre" for="stat_<%= s.clave %>">
+                    <span class="barras__sigla"><%= s.sigla %></span> <%= s.nombre %>
+                  </label>
+                  <input class="editor__rango" type="range" id="stat_<%= s.clave %>" name="stat_<%= s.clave %>"
+                         min="<%= rangos.STAT.min %>" max="<%= rangos.STAT.max %>" step="1" value="<%= s.valor %>"
+                         style="--valor: <%= s.valor %>" data-editor-stat="<%= s.clave %>" data-sigla="<%= s.sigla %>" data-grupo="<%= grupo.clave %>" />
+                  <output class="barras__valor" for="stat_<%= s.clave %>" data-editor-valor="<%= s.clave %>"><%= s.valor %></output>
+                </li>
+              <% }) %>
+            </ul>
+          </div>
+        <% }) %>
+        <script type="application/json" data-pesos><%- JSON.stringify(pesos) %></script>
       </fieldset>
 
       <div class="perfil__acciones">

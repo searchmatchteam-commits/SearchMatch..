@@ -1024,3 +1024,13 @@ div.eq-sin-resultados p { margin: 0; }
 .sm-carta-equipo { border-top: 4px solid var(--c1) !important; }
 .sm-carta-equipo__camisetas { display: inline-flex; gap: 6px; vertical-align: middle; }
 .escudo-equipo__inicial { display: grid; place-items: center; width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(180deg, var(--c1) 70%, var(--c2) 70%); color: var(--ct); }
+
+/* Cartas por posición (config/perfilJugador.js): estadísticas clave de la posición y la carta alternativa */
+.carta-jugador__stat--clave dt, .carta-jugador__stat--clave dd { color: var(--sc-neon, #39ff14); text-shadow: 0 0 6px rgba(57, 255, 20, .55); }
+.sm-carta-alt { display: grid; justify-items: center; gap: 8px; margin: 18px auto 0; width: min(200px, 60vw); }
+.sm-carta-alt__titulo { margin: 0; font-size: .82rem; letter-spacing: .04em; text-transform: uppercase; color: var(--texto-suave); text-align: center; }
+.sm-carta-alt__carta { width: 100%; }
+.sm-carta-alt__carta .carta-jugador--perfil { width: 100%; }
+.sm-posiciones { display: grid; gap: 14px; }
+.sm-posiciones__subtitulo { margin: 0 0 6px; font-weight: 700; font-size: .95rem; }
+.opcion--posicion input:disabled + .opcion__cancha, .opcion--posicion:has(input:disabled) { opacity: .35; cursor: not-allowed; }

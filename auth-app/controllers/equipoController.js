@@ -27,7 +27,7 @@ const equipoModel = require('../models/equipoModel');
 const jugadorModel = require('../models/jugadorModel');
 const { jugadorParaVista, detectarTipoImagen, leerEscudo } = require('./jugadorController');
 const { LONGITUD_MAXIMA_MENSAJE_SOLICITUD, leerModalidades, leerUbicacion } = require('../middlewares/validators');
-const { NIVELES, POSICIONES, ESTADISTICAS, calcularMedia } = require('../config/perfilJugador');
+const { NIVELES, POSICIONES, cartaDePosicion } = require('../config/perfilJugador');
 const {
   MODALIDADES, FORMACIONES, puestosDeFormacion, DETALLE_NIVEL, BARRAS_NIVEL, MAX_EQUIPOS_COMO_CAPITAN, // CORRECCIÓN: regla 5
 } = require('../config/equipo');
@@ -140,12 +140,13 @@ const VOLVER_TRAS_SALIR = ['/dashboard', '/mis-equipos'];
 
 /** Lo que dibuja la carta mini de un jugador (partials/carta-jugador con mini). */
 function cartaDeJugador(jugador) {
-  const posicion = POSICIONES[jugador.clavePosicion];
+  // Su carta principal: media ponderada y estadísticas de su posición (las de portero si es arquero)
+  const carta = cartaDePosicion(jugador.stats, jugador.clavePosicion);
   return {
     nombre: jugador.nombreCarta,
-    media: jugador.stats ? calcularMedia(jugador.stats) : '—',
-    posicion: { sigla: posicion ? posicion.sigla : '—' },
-    estadisticas: ESTADISTICAS.map(({ clave, sigla }) => ({ sigla, valor: jugador.stats ? jugador.stats[clave] : '—' })),
+    media: carta.media,
+    posicion: { sigla: carta.posicion.sigla },
+    estadisticas: carta.estadisticas,
     foto: jugador.fotoVersion ? `/jugadores/${jugador.id}/foto?v=${jugador.fotoVersion}` : null,
   };
 }
@@ -204,7 +205,8 @@ const MEDIA_ALTA = 75;
  */
 function jugadorInvitable(jugador) {
   const { equipos } = jugador;
-  const media = jugador.stats ? calcularMedia(jugador.stats) : null;
+  const carta = cartaDePosicion(jugador.stats, jugador.clavePosicion);
+  const media = jugador.stats ? carta.media : null;
   return {
     id: jugador.id,
     nombre: jugador.nombre,
@@ -215,7 +217,7 @@ function jugadorInvitable(jugador) {
     destacado: media !== null && media > MEDIA_DESTACADA,
     mediaAlta: media !== null && media > MEDIA_ALTA,
     tieneStats: Boolean(jugador.stats),
-    estadisticas: ESTADISTICAS.map(({ clave, sigla }) => ({ sigla, valor: (jugador.stats && Number(jugador.stats[clave])) || 0 })),
+    estadisticas: carta.estadisticas.map(({ sigla, valor, destacada }) => ({ sigla, valor: Number(valor) || 0, destacada })),
     foto: jugador.fotoVersion ? `/jugadores/${jugador.id}/foto?v=${jugador.fotoVersion}` : null,
     etiqueta: equipos.length === 0 ? 'Agente Libre' : equipos.length === 1 ? `Juega en ${equipos[0]}` : 'Multi-equipo',
     libre: equipos.length === 0,

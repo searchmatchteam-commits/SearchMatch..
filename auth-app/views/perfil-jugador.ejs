@@ -126,26 +126,7 @@
         <legend class="wizard__titulo">Perfil deportivo</legend>
         <p class="wizard__subtitulo">Con esto armamos tu carta y te sugerimos partidos.</p>
 
-        <div class="grupo-opciones" role="group" aria-labelledby="posicion-label" aria-describedby="posicion-ayuda posicion-error" data-grupo="posicion">
-          <span class="grupo-opciones__label" id="posicion-label">Posiciones en la cancha</span>
-          <small class="campo__ayuda" id="posicion-ayuda">Puedes marcar más de una (toca otra vez para quitarla).</small>
-          <div class="opciones opciones--4">
-            <% Object.entries(catalogos.POSICIONES).forEach(function ([clave, pos]) { %>
-              <label class="opcion opcion--posicion">
-                <input class="opcion__radio" type="checkbox" name="posicion" value="<%= clave %>" <%= (datos.posiciones || []).includes(clave) ? 'checked' : '' %> />
-                <svg class="opcion__cancha" viewBox="0 0 24 34" aria-hidden="true">
-                  <rect x="1" y="1" width="22" height="32" rx="2" />
-                  <path d="M1 17h22M8 1v4h8V1M8 33v-4h8v4" />
-                  <circle cx="12" cy="17" r="3.2" />
-                  <circle class="opcion__punto" cx="12" cy="<%= alturaPosicion[clave] %>" r="3" />
-                </svg>
-                <span class="opcion__sigla"><%= pos.sigla %></span>
-                <span class="opcion__nombre"><%= pos.etiqueta %></span>
-              </label>
-            <% }) %>
-          </div>
-          <small class="campo__error" id="posicion-error"></small>
-        </div>
+        <%- include('partials/sm-posiciones', { posiciones: datos.posiciones, catalogo: catalogos.POSICIONES }) %>
       </fieldset>
 
       <!-- ============ PASO 4: ROL (jugador o capitán) ============ -->

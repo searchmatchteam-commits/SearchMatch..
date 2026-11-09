@@ -12,7 +12,7 @@ const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 // Celular chileno: 9 + 8 dígitos, con o sin +56 delante.
 const REGEX_CELULAR_CL = /^(?:\+?56)?(9\d{8})$/;
 
-const { POSICIONES, NIVELES, ESTADISTICAS, STAT_RANGO } = require('../config/perfilJugador');
+const { POSICIONES, NIVELES, TODAS_LAS_ESTADISTICAS, STAT_RANGO } = require('../config/perfilJugador');
 const { MODALIDADES } = require('../config/equipo');
 const cuentaModel = require('../models/cuentaModel');
 
@@ -245,10 +245,13 @@ function revisarDatosPerfil(body) {
   const fechaNacimiento = (body.fecha_nacimiento || '').trim();
   const altura = enteroEnRango(body.altura, ALTURA_CM);
   const peso = enteroEnRango(body.peso, PESO_KG);
-  // Casillas "posicion": urlencoded entrega un texto (una marcada) o un arreglo (varias).
-  const posicionesEnviadas = [].concat(body.posicion || []);
-  // Orden del catálogo, sin repetidas: la primera es la principal (la que muestra la carta).
-  const posiciones = Object.keys(POSICIONES).filter((clave) => posicionesEnviadas.includes(clave));
+  // Posición principal (radio "posicion_principal": la de su carta) y alternativas (casillas
+  // "posicion_alternativa": urlencoded entrega un texto o un arreglo). Se guardan en ese orden: la primera es la
+  // principal. Las alternativas van en el orden del catálogo, sin repetir la principal.
+  const principal = Object.hasOwn(POSICIONES, body.posicion_principal) ? body.posicion_principal : null;
+  const alternativasEnviadas = [].concat(body.posicion_alternativa || []);
+  const alternativas = Object.keys(POSICIONES).filter((clave) => clave !== principal && alternativasEnviadas.includes(clave));
+  const posiciones = principal ? [principal, ...alternativas] : [];
 
   const paso2 = [];
   const paso3 = [];
@@ -262,8 +265,9 @@ function revisarDatosPerfil(body) {
   if (altura === null) paso2.push(`La altura debe estar entre ${ALTURA_CM.min} y ${ALTURA_CM.max} cm.`);
   if (peso === null) paso2.push(`El peso debe estar entre ${PESO_KG.min} y ${PESO_KG.max} kg.`);
 
-  if (posiciones.length === 0 || posiciones.length !== new Set(posicionesEnviadas).size) {
-    paso3.push('Elige al menos una posición en la cancha.');
+  if (!principal) paso3.push('Elige tu posición principal en la cancha.');
+  else if (alternativas.length !== alternativasEnviadas.filter((clave) => clave !== principal).length) {
+    paso3.push('Alguna posición alternativa no es válida.');
   }
 
   return { datos: { apodo, fechaNacimiento, altura, peso, posiciones }, paso2, paso3 };
@@ -317,7 +321,8 @@ function validarEdicionPerfil(req, res, next) {
   if (!apellido) erroresNombre.push('El apellido es obligatorio.');
   else if (apellido.length > LONGITUD_MAXIMA_NOMBRE) erroresNombre.push(`El apellido no puede superar los ${LONGITUD_MAXIMA_NOMBRE} caracteres.`);
 
-  ESTADISTICAS.forEach(({ clave, nombre }) => {
+  // Las 6 de campo y las 6 de portero (el editor siempre envía ambas; muestra las que usan sus cartas)
+  TODAS_LAS_ESTADISTICAS.forEach(({ clave, nombre }) => {
     stats[clave] = enteroEnRango(req.body[`stat_${clave}`], STAT_RANGO);
     if (stats[clave] === null) erroresStats.push(`${nombre} debe estar entre ${STAT_RANGO.min} y ${STAT_RANGO.max}.`);
   });

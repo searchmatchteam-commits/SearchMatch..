@@ -1,0 +1,46 @@
+<%#
+  Posiciones del jugador: la PRINCIPAL (una; la de su carta) y las ALTERNATIVAS (opcionales). Se guardan en
+  ese orden (middlewares/validators.js revisarDatosPerfil). Si combina portero con campo tendrá dos cartas.
+  Lo usan el wizard (perfil-jugador) y el editor (editar-perfil). Parámetros: posiciones (en orden, la primera
+  es la principal) y catalogo (POSICIONES). sm-formularios.js deshabilita como alternativa la principal elegida.
+%>
+<%
+  const alturaPunto = { arquero: 27, defensa: 21, mediocampista: 15, delantero: 7 };
+  const elegidas = locals.posiciones || [];
+  const principal = elegidas[0] || null;
+  const cancha = (clave) => `<svg class="opcion__cancha" viewBox="0 0 24 34" aria-hidden="true"><rect x="1" y="1" width="22" height="32" rx="2" /><path d="M1 17h22M8 1v4h8V1M8 33v-4h8v4" /><circle cx="12" cy="17" r="3.2" /><circle class="opcion__punto" cx="12" cy="${alturaPunto[clave]}" r="3" /></svg>`;
+%>
+<div class="sm-posiciones" data-posiciones>
+  <div class="grupo-opciones" role="radiogroup" aria-labelledby="posicion_principal-label" aria-describedby="posicion_principal-ayuda posicion_principal-error" data-grupo="posicion_principal">
+    <span class="grupo-opciones__label" id="posicion_principal-label">Posición principal</span>
+    <small class="campo__ayuda" id="posicion_principal-ayuda">La que más juegas: es la de tu carta principal.</small>
+    <div class="opciones opciones--4">
+      <% Object.entries(catalogo).forEach(function ([clave, pos]) { %>
+        <label class="opcion opcion--posicion">
+          <input class="opcion__radio" type="radio" name="posicion_principal" value="<%= clave %>" data-sigla="<%= pos.sigla %>"
+                 <%= principal === clave ? 'checked' : '' %> required />
+          <%- cancha(clave) %>
+          <span class="opcion__sigla"><%= pos.sigla %></span>
+          <span class="opcion__nombre"><%= pos.etiqueta %></span>
+        </label>
+      <% }) %>
+    </div>
+    <small class="campo__error" id="posicion_principal-error"></small>
+  </div>
+
+  <div class="grupo-opciones" role="group" aria-labelledby="posicion_alternativa-label" aria-describedby="posicion_alternativa-ayuda" data-grupo="posicion_alternativa">
+    <span class="grupo-opciones__label" id="posicion_alternativa-label">Posiciones alternativas <small>(opcional)</small></span>
+    <small class="campo__ayuda" id="posicion_alternativa-ayuda">Otras en las que también juegas. Si una es Portero (o tu principal es Portero y juegas de campo), tendrás una segunda carta con esas estadísticas.</small>
+    <div class="opciones opciones--4">
+      <% Object.entries(catalogo).forEach(function ([clave, pos]) { %>
+        <label class="opcion opcion--posicion">
+          <input class="opcion__radio" type="checkbox" name="posicion_alternativa" value="<%= clave %>" data-sigla="<%= pos.sigla %>"
+                 <%= principal !== clave && elegidas.includes(clave) ? 'checked' : '' %> <%= principal === clave ? 'disabled' : '' %> />
+          <%- cancha(clave) %>
+          <span class="opcion__sigla"><%= pos.sigla %></span>
+          <span class="opcion__nombre"><%= pos.etiqueta %></span>
+        </label>
+      <% }) %>
+    </div>
+  </div>
+</div>

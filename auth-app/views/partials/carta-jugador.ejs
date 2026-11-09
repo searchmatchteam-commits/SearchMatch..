@@ -119,7 +119,8 @@
 
         <dl class="carta-jugador__stats">
           <% jugador.estadisticas.forEach(function (s) { %>
-            <div><dt><%= s.sigla %></dt><dd <%- s.clave ? 'data-carta-stat="' + s.clave + '"' : '' %>><%= s.valor %></dd></div>
+            <%# destacada: estadística clave de su posición (pesa más en la media, config/perfilJugador.js PESOS) %>
+            <div<%- s.destacada ? ' class="carta-jugador__stat--clave"' : '' %>><dt><%= s.sigla %></dt><dd <%- s.clave ? 'data-carta-stat="' + s.clave + '"' : '' %>><%= s.valor %></dd></div>
           <% }) %>
         </dl>
 

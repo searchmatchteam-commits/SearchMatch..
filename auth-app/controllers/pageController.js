@@ -1,6 +1,6 @@
 const jugadorModel = require('../models/jugadorModel');
 const equipoModel = require('../models/equipoModel');
-const { POSICIONES, ESTADISTICAS, calcularMedia, nombreEnCarta } = require('../config/perfilJugador');
+const { cartasDe, nombreEnCarta } = require('../config/perfilJugador');
 const { AVISOS_RESPUESTA_INVITACION, AVISOS_SALIDA } = require('./equipoController');
 const agendaController = require('./agendaController');
 
@@ -50,11 +50,13 @@ async function leerInvitaciones(usuario) {
 
 function resumenCarta(perfil) {
   if (!perfil || !perfil.perfilCompleto || !perfil.stats) return null;
+  // La carta principal (media ponderada por su posición principal)
+  const [principal] = cartasDe(perfil.posiciones, perfil.stats);
   return {
     nombre: nombreEnCarta(perfil),
-    media: calcularMedia(perfil.stats),
-    posicion: POSICIONES[perfil.posicion] ? POSICIONES[perfil.posicion].sigla : '—',
-    stats: ESTADISTICAS.map(({ clave, sigla, nombre }) => ({ sigla, nombre, valor: Number(perfil.stats[clave]) || 0 })),
+    media: principal.media,
+    posicion: principal.posicion.sigla,
+    stats: principal.estadisticas.map(({ sigla, nombre, valor, destacada }) => ({ sigla, nombre, valor: Number(valor) || 0, destacada })),
     altura: perfil.altura,
     peso: perfil.peso,
   };

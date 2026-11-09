@@ -20,9 +20,12 @@ const {
   POSICIONES,
   NIVELES,
   ESTADISTICAS,
+  ESTADISTICAS_PORTERO,
+  TODAS_LAS_ESTADISTICAS,
+  PESOS,
   STAT_RANGO,
   sortearEstadisticas,
-  calcularMedia,
+  cartasDe,
   nombreEnCarta,
   urlFoto,
 } = require('../config/perfilJugador');
@@ -194,8 +197,11 @@ async function guardarWizard(req, res, next) {
  * @param {string|null} foto - URL de la foto o null.
  */
 function jugadorParaVista(perfil, foto) {
-  const posicion = POSICIONES[perfil.posicion] || { etiqueta: '—', sigla: '—' };
-  const posiciones = perfil.posiciones.map((clave) => POSICIONES[clave].etiqueta);
+  // Carta principal (su posición principal) y, si combina portero con campo, la alternativa
+  const [principal, alternativa] = cartasDe(perfil.posiciones, perfil.stats);
+  const posicion = principal.clavePosicion ? principal.posicion : { etiqueta: '—', sigla: '—' };
+  const posiciones = perfil.posiciones.map((clave, i) => POSICIONES[clave].etiqueta + (i === 0 && perfil.posiciones.length > 1 ? ' (principal)' : ''));
+  const nombre = nombreEnCarta(perfil);
   return {
     // La carta muestra el apodo (los perfiles antiguos sin apodo, el nombre)
     nombre: nombreEnCarta(perfil),
@@ -206,9 +212,11 @@ function jugadorParaVista(perfil, foto) {
     peso: perfil.peso ? Math.round(perfil.peso) : null,
     posicion,
     posiciones: posiciones.length > 0 ? posiciones.join(', ') : '—',
-    media: perfil.stats ? calcularMedia(perfil.stats) : '—',
-    estadisticas: ESTADISTICAS.map(({ clave, sigla, nombre }) => ({ sigla, nombre, valor: perfil.stats ? perfil.stats[clave] : '—' })),
+    media: principal.media,
+    estadisticas: principal.estadisticas,
     foto,
+    // Segunda carta (misma foto y nombre) o null
+    cartaAlternativa: alternativa ? { ...alternativa, nombre, foto } : null,
   };
 }
 
@@ -278,8 +286,8 @@ async function perfilPublico(req, res, next) {
 }
 
 function renderEditor(res, { status = 200, perfil, datos, errores = [], errorEliminar = null }) {
-  // La carta muestra la posición principal: la primera marcada
-  const posicion = POSICIONES[datos.posiciones[0]] || { sigla: '—' };
+  // La carta de vista previa es la de la posición principal (editar-perfil.js la cambia en vivo)
+  const [principal] = cartasDe(datos.posiciones, datos.stats);
   return res.status(status).render('editar-perfil', {
     titulo: 'Editar perfil',
     pagina: 'perfil',
@@ -290,12 +298,18 @@ function renderEditor(res, { status = 200, perfil, datos, errores = [], errorEli
     fraseEliminar: FRASE_ELIMINAR_CUENTA,
     catalogos: { POSICIONES },
     rangos: { ALTURA_CM, PESO_KG, STAT: STAT_RANGO },
+    // Deslizadores: los de campo y los de portero; pesos por posición para la media en vivo
+    gruposStats: [
+      { clave: 'campo', titulo: 'Estadísticas de campo', lista: ESTADISTICAS },
+      { clave: 'arquero', titulo: 'Estadísticas de portero', lista: ESTADISTICAS_PORTERO },
+    ].map((g) => ({ ...g, lista: g.lista.map(({ clave, sigla, nombre }) => ({ clave, sigla, nombre, valor: datos.stats[clave] })) })),
+    pesos: PESOS,
     // Carta de vista previa: editar-perfil.js la actualiza mientras el jugador cambia el formulario
     jugador: {
       nombre: datos.apodo || '—', // solo el apodo (obligatorio al guardar)
-      media: calcularMedia(datos.stats),
-      posicion,
-      estadisticas: ESTADISTICAS.map(({ clave, sigla, nombre }) => ({ clave, sigla, nombre, valor: datos.stats[clave] })),
+      media: principal.media,
+      posicion: principal.clavePosicion ? principal.posicion : { sigla: '—' },
+      estadisticas: principal.estadisticas,
       foto: urlFoto(perfil),
     },
   });
@@ -345,7 +359,7 @@ async function guardarEditor(req, res, next) {
       // Lo inválido llega como null: altura y peso se re-pintan como los escribió
       // y cada estadística inválida vuelve al valor guardado.
       const stats = Object.fromEntries(
-        ESTADISTICAS.map(({ clave }) => [clave, datos.stats[clave] ?? perfil.stats[clave]])
+        TODAS_LAS_ESTADISTICAS.map(({ clave }) => [clave, datos.stats[clave] ?? perfil.stats[clave]])
       );
       return renderEditor(res, {
         status: 400,

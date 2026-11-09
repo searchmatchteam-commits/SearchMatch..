@@ -1,0 +1,13 @@
+<%#
+  Segunda carta del jugador (config/perfilJugador.js cartasDe): si combina portero con posiciones de campo,
+  la de su posición alternativa (su carta de portero, o la de campo si es portero de principal).
+  Uso: include('partials/carta-alternativa', { jugador }) — jugador de jugadorController.jugadorParaVista.
+%>
+<% if (jugador.cartaAlternativa) { %>
+  <aside class="sm-carta-alt" aria-label="Carta alternativa: <%= jugador.cartaAlternativa.posicion.etiqueta %>">
+    <p class="sm-carta-alt__titulo">Carta alternativa · <strong><%= jugador.cartaAlternativa.posicion.etiqueta %></strong></p>
+    <div class="sm-carta-alt__carta">
+      <%- include('carta-jugador', { jugador: jugador.cartaAlternativa, editor: false, mini: true }) %>
+    </div>
+  </aside>
+<% } %>

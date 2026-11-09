@@ -119,6 +119,20 @@ document.addEventListener('DOMContentLoaded', () => {
     filtrar();
   });
 
+  // Posiciones (partials/sm-posiciones): la principal elegida no se puede marcar también como alternativa.
+  document.querySelectorAll('[data-posiciones]').forEach((grupo) => {
+    const radios = grupo.querySelectorAll('input[name="posicion_principal"]');
+    const casillas = grupo.querySelectorAll('input[name="posicion_alternativa"]');
+    const sincronizar = () => {
+      const elegida = Array.from(radios).find((r) => r.checked);
+      casillas.forEach((c) => {
+        c.disabled = Boolean(elegida) && c.value === elegida.value;
+        if (c.disabled) c.checked = false;
+      });
+    };
+    radios.forEach((r) => r.addEventListener('change', sincronizar));
+  });
+
   // Colores del equipo (partials/sm-colores-equipo): la vista previa de la carta y las camisetas sigue a cada selector.
   document.querySelectorAll('[data-colores-equipo]').forEach((grupo) => {
     grupo.addEventListener('input', (evento) => {

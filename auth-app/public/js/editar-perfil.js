@@ -60,36 +60,84 @@ document.addEventListener('DOMContentLoaded', () => {
     nombreCarta.textContent = (apodoInput.value.trim() || '—').toUpperCase();
   });
 
+  // ---------- Posiciones y estadísticas (config/perfilJugador.js: PESOS, cartasDe) ----------
+  // La carta de vista previa es la de la posición principal: con Portero muestra las estadísticas de portero.
   const posicionCarta = carta.querySelector('[data-carta-posicion]');
-  const casillasPosicion = Array.from(formulario.querySelectorAll('input[name="posicion"]'));
-  const grupoPosicion = formulario.querySelector('[data-grupo="posicion"]');
-  casillasPosicion.forEach((casilla) => {
-    casilla.addEventListener('change', () => {
-      const principal = casillasPosicion.find((c) => c.checked);
-      posicionCarta.textContent = principal ? principal.dataset.sigla : '—';
-      if (principal) grupoPosicion.classList.remove('grupo-opciones--error');
-    });
-  });
-
+  const statsCarta = carta.querySelector('.carta-jugador__stats');
+  const radiosPrincipal = Array.from(formulario.querySelectorAll('input[name="posicion_principal"]'));
+  const casillasAlternativa = Array.from(formulario.querySelectorAll('input[name="posicion_alternativa"]'));
   const rangos = Array.from(formulario.querySelectorAll('[data-editor-stat]'));
   const mediaCarta = carta.querySelector('[data-carta-media]');
   const mediaEditor = formulario.querySelector('[data-editor-media]');
+  let pesos = {};
+  try { pesos = JSON.parse(formulario.querySelector('[data-pesos]').textContent); } catch (e) { /* sin pesos: promedio simple */ }
 
-  // Media = suma de las 6 estadísticas / 6, redondeada (igual que calcularMedia en config/perfilJugador.js)
+  const principal = () => (radiosPrincipal.find((r) => r.checked) || {}).value || null;
+  const posiciones = () => [principal(), ...casillasAlternativa.filter((c) => c.checked).map((c) => c.value)].filter(Boolean);
+  const grupoDe = (posicion) => (posicion === 'arquero' ? 'arquero' : 'campo');
+
+  // Media ponderada de la posición principal (igual que calcularMedia en el servidor)
   function actualizarMedia() {
-    const suma = rangos.reduce((total, rango) => total + Number(rango.value), 0);
-    const media = String(Math.round(suma / rangos.length));
-    mediaCarta.textContent = media;
-    mediaEditor.textContent = media;
+    const deLaPosicion = pesos[principal()];
+    let media;
+    if (deLaPosicion) {
+      media = rangos.reduce((suma, r) => suma + Number(r.value) * (deLaPosicion[r.dataset.editorStat] || 0), 0);
+    } else {
+      const campo = rangos.filter((r) => r.dataset.grupo === 'campo');
+      media = campo.reduce((suma, r) => suma + Number(r.value), 0) / campo.length;
+    }
+    mediaCarta.textContent = String(Math.round(media));
+    mediaEditor.textContent = String(Math.round(media));
   }
+
+  // Estadísticas de la carta: las del grupo de la posición principal, con las clave destacadas
+  function dibujarStatsCarta() {
+    const deLaPosicion = pesos[principal()] || {};
+    const grupo = grupoDe(principal());
+    statsCarta.replaceChildren(...rangos.filter((r) => r.dataset.grupo === grupo).map((r) => {
+      const fila = document.createElement('div');
+      if ((deLaPosicion[r.dataset.editorStat] || 0) >= 0.2) fila.className = 'carta-jugador__stat--clave';
+      const sigla = document.createElement('dt');
+      sigla.textContent = r.dataset.sigla;
+      const valor = document.createElement('dd');
+      valor.dataset.cartaStat = r.dataset.editorStat;
+      valor.textContent = r.value;
+      fila.append(sigla, valor);
+      return fila;
+    }));
+    rangos.forEach((r) => {
+      r.closest('[data-stat-item]').classList.toggle('carta-jugador__stat--clave', (deLaPosicion[r.dataset.editorStat] || 0) >= 0.2);
+    });
+  }
+
+  function alCambiarPosiciones() {
+    const elegida = principal();
+    // La principal no puede ser también alternativa
+    casillasAlternativa.forEach((c) => {
+      c.disabled = c.value === elegida;
+      if (c.disabled) c.checked = false;
+    });
+    const lista = posiciones();
+    posicionCarta.textContent = elegida ? radiosPrincipal.find((r) => r.checked).dataset.sigla : '—';
+    formulario.querySelectorAll('[data-grupo-stats]').forEach((grupo) => {
+      grupo.hidden = grupo.dataset.grupoStats === 'arquero'
+        ? !lista.includes('arquero')
+        : !(lista.some((p) => p !== 'arquero') || !lista.length);
+    });
+    if (elegida) formulario.querySelector('[data-grupo="posicion_principal"]').classList.remove('grupo-opciones--error');
+    dibujarStatsCarta();
+    actualizarMedia();
+  }
+
+  [...radiosPrincipal, ...casillasAlternativa].forEach((input) => input.addEventListener('change', alCambiarPosiciones));
 
   rangos.forEach((rango) => {
     const clave = rango.dataset.editorStat;
     const valor = formulario.querySelector(`[data-editor-valor="${clave}"]`);
-    const statCarta = carta.querySelector(`[data-carta-stat="${clave}"]`);
     rango.addEventListener('input', () => {
       valor.textContent = rango.value;
-      statCarta.textContent = rango.value;
+      const statCarta = carta.querySelector(`[data-carta-stat="${clave}"]`);
+      if (statCarta) statCarta.textContent = rango.value;
       rango.style.setProperty('--valor', rango.value);
       actualizarMedia();
     });
@@ -153,14 +201,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const alerta = formulario.querySelector('[data-alerta-errores]');
 
   formulario.addEventListener('submit', async (evento) => {
-    if (!casillasPosicion.some((c) => c.checked)) {
+    if (!principal()) {
       evento.preventDefault();
       const item = document.createElement('li');
-      item.textContent = 'Elige al menos una posición en la cancha.';
+      item.textContent = 'Elige tu posición principal en la cancha.';
       alerta.querySelector('ul').replaceChildren(item);
       alerta.hidden = false;
-      grupoPosicion.classList.add('grupo-opciones--error');
-      casillasPosicion[0].focus();
+      formulario.querySelector('[data-grupo="posicion_principal"]').classList.add('grupo-opciones--error');
+      radiosPrincipal[0].focus();
       return;
     }
 
