@@ -1096,3 +1096,55 @@ div.eq-sin-resultados p { margin: 0; }
 /* Red lenta (header.ejs): el mapa espera a que el usuario lo pida */
 .sm-mapa--pendiente { display: grid; place-content: center; justify-items: center; gap: 12px; padding: 20px; text-align: center; }
 .sm-mapa__nota { margin: 0; max-width: 42ch; font-size: 0.9rem; color: var(--texto-suave); }
+
+/* =====================================================================
+   Celular primero: la mayoría usa SearchMatch desde el teléfono
+   ===================================================================== */
+
+/* Cerrar sesión: en pantallas angostas queda como botón de ícono (el texto sigue para lectores de pantalla) */
+.navbar__salir-icono { display: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 480px) {
+  .navbar__salir { display: inline-grid; place-items: center; width: 40px; height: 40px; min-height: 40px; padding: 0; border-radius: 50%; }
+  .navbar__salir-icono { display: block; }
+  .navbar__salir-texto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+
+/* Toda página con dock deja espacio al final para que el dock no tape el pie */
+body:has(.dock) { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+
+/* Pestañas que se desplazan de lado: con el dedo, sin la barra de desplazamiento de escritorio */
+.sm-pestanas { scrollbar-width: none; overscroll-behavior-x: contain; scroll-snap-type: x proximity; }
+.sm-pestanas::-webkit-scrollbar { display: none; }
+.sm-pestanas__item { scroll-snap-align: start; }
+
+/* <details> cerrado: sin el espacio del contenido oculto (el gap del panel lo contaba) */
+body .eq-desafios:not([open]) { gap: 0; }
+
+@media (max-width: 640px) {
+  /* Encabezado del equipo: el nombre se lee completo y cada dato va en su línea (sin "·" sueltos) */
+  body .eq-hero__titulo { white-space: normal; overflow-wrap: anywhere; }
+  body .eq-hero__datos { flex-direction: column; gap: 2px; }
+  body .eq-hero__datos li + li::before { content: none; }
+
+  /* Etiquetas y estados: nunca bajo 12 px */
+  body :is(.dash-chip, .eq-modalidad, .sm-rol, .sm-estado, .eq-mis__rol, .dash-etiqueta, .dash-miequipo__rol,
+    .eq-tipos__titulo, .sm-opcional, .dz-opcional) { font-size: 0.75rem; }
+}
+
+/* iPhone: un campo con letra bajo 16 px hace zoom al tocarlo y desarma la página */
+@media (max-width: 768px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea { font-size: max(16px, 1em); }
+}
+
+/* Dedos: áreas táctiles de al menos 40 px */
+@media (pointer: coarse) {
+  body :is(.btn--chico, a.btn, .boton-volver, .sm-fila__accion, .eq-filtro-modalidad__opcion, .sm-pestanas__item, .dz-segmento,
+    .dash-tequipo__ver, .eq-desafios__cabecera) { min-height: 40px; }
+  .sm-pestanas__item, .eq-filtro-modalidad__opcion, .dz-segmento { display: inline-flex; align-items: center; }
+  .logo { min-height: 40px; display: inline-flex; align-items: center; }
+  .eq-rival__nombre, .eq-mis__enlace, .dash-panel__enlace { display: inline-block; padding-block: 8px; }
+  /* Deslizadores de estadísticas: la perilla se toma con el dedo */
+  .editor__rango { height: 32px; }
+  .editor__rango::-webkit-slider-thumb { width: 26px; height: 26px; }
+  .editor__rango::-moz-range-thumb { width: 26px; height: 26px; }
+}
