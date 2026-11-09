@@ -177,13 +177,16 @@
         const hayFiltros = Boolean(filtrosRivales.idRegion || filtrosRivales.idComuna);
       %>
       <details class="dash-panel eq-panel eq-desafios revelar" id="desafiar" data-desafios <%= hayFiltros ? 'open' : '' %>>
-        <summary class="dash-panel__cabecera eq-desafios__cabecera">
-          <h2 class="dash-panel__titulo">Desafiar a otro equipo</h2>
-          <span class="eq-total" data-total-rivales><%= rivales.length %> <%= rivales.length === 1 ? 'equipo disponible' : 'equipos disponibles' %></span>
+        <summary class="eq-desafios__cabecera">
+          <span class="eq-desafios__titulos">
+            <h2 class="dash-panel__titulo">Desafiar a otro equipo</h2>
+            <span class="eq-desafios__conteo" data-total-rivales><%= rivales.length %> <%= rivales.length === 1 ? 'equipo disponible' : 'equipos disponibles' %></span>
+          </span>
+          <svg class="eq-desafios__flecha" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
         </summary>
         <!-- DE-007: rivales del mismo nivel, del puntaje más cercano al más lejano; filtros por región y comuna -->
         <p class="dash-panel__nota">Equipos de tu mismo nivel, ordenados por el puntaje más cercano al tuyo.</p>
-        <form class="sm-form eq-filtro-rivales" action="/mi-equipo#desafiar" method="GET">
+        <form class="sm-form eq-filtro-rivales eq-filtro-rivales--linea" action="/mi-equipo#desafiar" method="GET">
           <input type="hidden" name="equipo" value="<%= equipo.id %>" />
           <%- include('partials/sm-ubicacion', { regiones, idRegion: filtrosRivales.idRegion, idComuna: filtrosRivales.idComuna, obligatorio: false }) %>
           <div class="sm-form__acciones">
@@ -209,14 +212,16 @@
               <% }) %>
             </div>
           <% } %>
-          <ul class="eq-clubes eq-rivales">
+          <ul class="eq-rivales">
             <% rivales.forEach(function (rival) { %>
-              <li class="eq-club" data-modalidades="<%= rival.comunes.join(' ') %>">
-                <span class="eq-club__escudo" aria-hidden="true"><%- include('partials/escudo-equipo', { equipo: rival }) %></span>
-                <span class="eq-club__texto">
-                  <span class="eq-nombre"><%= rival.nombre %></span>
-                  <span class="eq-posicion">Comuna: <%= rival.zona || 'Sin definir' %><% if (rival.distanciaKm !== null) { %> · <span class="texto-verde">a <%= rival.distanciaKm < 1 ? `${Math.max(100, Math.round(rival.distanciaKm * 10) * 100)} m` : `${rival.distanciaKm.toLocaleString('es-CL')} km` %></span><% } %></span>
-                  <span class="eq-posicion">Nivel: <%= rival.nivel || 'Sin definir' %> · <%= rival.puntaje ?? 0 %> pts</span>
+              <li class="eq-rival" data-modalidades="<%= rival.comunes.join(' ') %>">
+                <span class="eq-rival__escudo" aria-hidden="true"><%- include('partials/escudo-equipo', { equipo: rival }) %></span>
+                <span class="eq-rival__info">
+                  <a class="eq-rival__nombre" href="/equipos/<%= rival.id %>"><%= rival.nombre %></a>
+                  <span class="eq-rival__datos">
+                    <span><%= rival.zona || 'Comuna sin definir' %><% if (rival.distanciaKm !== null) { %>, <span class="texto-verde">a <%= rival.distanciaKm < 1 ? `${Math.max(100, Math.round(rival.distanciaKm * 10) * 100)} m` : `${rival.distanciaKm.toLocaleString('es-CL')} km` %></span><% } %></span>
+                    <span><%= rival.nivel || 'Nivel sin definir' %>, <%= rival.puntaje ?? 0 %> pts</span>
+                  </span>
                   <!-- Sus modalidades: en verde las que también jugamos (se puede desafiar en ellas) -->
                   <span class="eq-modalidades" aria-label="Juega <%= rival.modalidad %>">
                     <% rival.modalidades.forEach(function (n) { const comun = rival.comunes.includes(n); %>
@@ -226,11 +231,12 @@
                   </span>
                 </span>
                 <% if (rival.desafio) { %>
-                  <button type="button" class="btn eq-club__boton" disabled><%= estadosDesafio[rival.desafio] %></button>
+                  <button type="button" class="btn eq-rival__boton" disabled><%= estadosDesafio[rival.desafio] %></button>
                 <% } else { %>
-                  <form action="/mi-equipo/desafios/<%= rival.id %>?equipo=<%= equipo.id %>" method="POST" data-desafiar data-rival="<%= rival.nombre %>"
-                        data-comunes="<%= rival.comunes.join(',') %>">
-                    <button type="submit" class="btn btn--verde eq-club__boton">Enviar Desafío</button>
+                  <form class="eq-rival__accion" action="/mi-equipo/desafios/<%= rival.id %>?equipo=<%= equipo.id %>" method="POST" data-desafiar
+                        data-rival="<%= rival.nombre %>" data-comunes="<%= rival.comunes.join(',') %>"
+                        data-escudo="<%= rival.escudo || '' %>" data-estilo="<%= rival.colores ? rival.colores.estilo : '' %>">
+                    <button type="submit" class="btn btn--verde eq-rival__boton">Desafiar</button>
                   </form>
                 <% } %>
               </li>
@@ -240,47 +246,73 @@
         <% } %>
       </details>
 
-      <!-- Modal del desafío: modalidad (las que juegan los dos), fecha, hora y mensaje opcionales
-           (equipo.js lo abre al pulsar "Enviar Desafío") -->
+      <!-- Modal del desafío (equipo.js lo abre con "Desafiar"). Arriba, la banda "vs": tu camiseta frente al rival.
+           Modalidad (las que juegan los dos), tu equipación, fecha y hora tentativas y mensaje; solo la equipación
+           y la modalidad importan para el partido, lo demás es opcional. -->
+      <%
+        const misCamisetas = equipo.colores ? [['local', 'Local', equipo.colores.local], ['visita', 'Visita', equipo.colores.visita]].filter((c) => c[2]) : [];
+      %>
       <div class="modal" hidden data-modal-desafio>
-        <div class="modal__caja scroll-oscuro" role="dialog" aria-modal="true" aria-labelledby="modal-desafio-titulo">
-          <h2 class="modal__titulo" id="modal-desafio-titulo">Desafiar a <span class="texto-verde" data-modal-rival></span></h2>
-          <p class="modal__texto">Propón una fecha tentativa para el partido. Todo es opcional.</p>
-          <form class="modal__form" data-form-desafio novalidate>
-            <label class="modal__campo" data-campo-modalidad>
-              <span>Modalidad del partido</span>
-              <select name="modalidad" data-modal-modalidad></select>
-            </label>
-            <div class="modal__fila">
-              <label class="modal__campo">
-                <span>Fecha tentativa</span>
-                <input type="date" name="fecha" min="<%= new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date()) %>">
-              </label>
-              <label class="modal__campo">
-                <span>Hora</span>
-                <input type="time" name="hora">
-              </label>
+        <div class="modal__caja dz" role="dialog" aria-modal="true" aria-labelledby="modal-desafio-titulo">
+          <h2 class="solo-lectores" id="modal-desafio-titulo">Desafiar a <span data-modal-rival></span></h2>
+
+          <div class="dz-versus" aria-hidden="true">
+            <div class="dz-lado">
+              <% if (misCamisetas.length) { %>
+                <svg class="dz-versus__camiseta" viewBox="0 0 24 24" style="--color:<%= misCamisetas[0][2] %>" data-dz-mi-camiseta><path d="M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z" /></svg>
+              <% } else { %>
+                <span class="dz-versus__escudo"><%- include('partials/escudo-equipo', { equipo }) %></span>
+              <% } %>
+              <span class="dz-versus__equipo"><%= equipo.nombre %></span>
             </div>
-            <%# Equipación con la que irá: el rival la ve y no podrá elegir una camiseta del mismo color %>
-            <% if (equipo.colores && equipo.colores.local) { %>
-              <fieldset class="modal__campo sm-equipacion__equipo">
-                <legend>Tu equipación</legend>
-                <% [['local', 'Local', equipo.colores.local], ['visita', 'Visita', equipo.colores.visita]].filter((c) => c[2]).forEach(function (c, i) { %>
-                  <label class="sm-equipacion__opcion">
-                    <input type="radio" name="camiseta" value="<%= c[0] %>" <%= i === 0 ? 'checked' : '' %> />
-                    <svg class="sm-camiseta" viewBox="0 0 24 24" style="--color:<%= c[2] %>" aria-hidden="true"><path d="M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z" /></svg>
-                    <%= c[1] %>
-                  </label>
-                <% }) %>
-                <small class="campo__ayuda">El rival verá con qué color irás y no podrá elegir el mismo.</small>
-              </fieldset>
+            <span class="dz-versus__vs">vs</span>
+            <div class="dz-lado">
+              <span class="dz-versus__escudo" data-dz-escudo-rival></span>
+              <span class="dz-versus__equipo" data-dz-nombre-rival></span>
+            </div>
+          </div>
+
+          <form class="modal__form dz-form" data-form-desafio novalidate>
+            <div class="dz-grupo" role="radiogroup" aria-labelledby="dz-modalidad" data-campo-modalidad>
+              <span class="dz-grupo__titulo" id="dz-modalidad">Modalidad</span>
+              <div class="dz-segmentos" data-modal-modalidad></div>
+            </div>
+
+            <% if (misCamisetas.length) { %>
+              <div class="dz-grupo" role="radiogroup" aria-labelledby="dz-camiseta">
+                <span class="dz-grupo__titulo" id="dz-camiseta">Tu camiseta</span>
+                <div class="dz-camisetas">
+                  <% misCamisetas.forEach(function (c, i) { %>
+                    <label class="dz-camiseta">
+                      <input type="radio" name="camiseta" value="<%= c[0] %>" data-color="<%= c[2] %>" <%= i === 0 ? 'checked' : '' %> />
+                      <svg viewBox="0 0 24 24" style="--color:<%= c[2] %>" aria-hidden="true"><path d="M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z" /></svg>
+                      <span><%= c[1] %></span>
+                    </label>
+                  <% }) %>
+                </div>
+                <p class="dz-ayuda">El rival la verá y no podrá elegir una del mismo color.</p>
+              </div>
             <% } else if (equipo.soyCapitan) { %>
-              <p class="modal__texto">Registra los colores de tus camisetas en <a href="/equipos/<%= equipo.id %>/editar">Editar equipo</a> para elegir tu equipación.</p>
+              <p class="dz-ayuda dz-ayuda--aviso">Para elegir con qué camiseta irás, registra los colores de tu equipo en <a href="/equipos/<%= equipo.id %>/editar">Editar equipo</a>.</p>
             <% } %>
-            <label class="modal__campo">
-              <span>Mensaje para el capitán rival</span>
-              <textarea name="mensaje" rows="3" maxlength="200" placeholder="Ej. ¿Jugamos en La Florida?"></textarea>
+
+            <div class="dz-grupo" role="group" aria-labelledby="dz-cuando">
+              <span class="dz-grupo__titulo" id="dz-cuando">Fecha y hora <span class="dz-opcional">opcional</span></span>
+              <div class="modal__fila">
+                <label class="modal__campo"><span class="solo-lectores">Fecha tentativa</span>
+                  <input type="date" name="fecha" min="<%= new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date()) %>">
+                </label>
+                <label class="modal__campo"><span class="solo-lectores">Hora</span>
+                  <input type="time" name="hora">
+                </label>
+              </div>
+            </div>
+
+            <label class="modal__campo dz-grupo">
+              <span class="dz-grupo__titulo">Mensaje para el capitán rival <span class="dz-opcional">opcional</span></span>
+              <textarea name="mensaje" rows="2" maxlength="200" placeholder="Ej. ¿Jugamos en La Florida el sábado?"></textarea>
             </label>
+
             <p class="modal__error" role="alert" hidden data-modal-error></p>
             <div class="modal__acciones">
               <button type="button" class="btn btn--contorno" data-cerrar-modal>Cancelar</button>

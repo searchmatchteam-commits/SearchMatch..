@@ -145,7 +145,34 @@ document.addEventListener('DOMContentLoaded', () => {
   if (modal) {
     const formModal = modal.querySelector('[data-form-desafio]');
     const campoModalidad = modal.querySelector('[data-campo-modalidad]');
-    const selectModalidad = modal.querySelector('[data-modal-modalidad]');
+    const segmentosModalidad = modal.querySelector('[data-modal-modalidad]');
+    const escudoRival = modal.querySelector('[data-dz-escudo-rival]');
+    const nombreRival = modal.querySelector('[data-dz-nombre-rival]');
+    const miCamiseta = modal.querySelector('[data-dz-mi-camiseta]');
+
+    // Banda "vs": la camiseta elegida cambia de color al instante
+    modal.querySelectorAll('input[name="camiseta"]').forEach((opcion) => {
+      opcion.addEventListener('change', () => {
+        if (miCamiseta && opcion.checked) miCamiseta.style.setProperty('--color', opcion.dataset.color);
+      });
+    });
+
+    /** Escudo del rival en la banda: su imagen o su inicial (con sus colores si los tiene). */
+    function pintarEscudoRival(formulario) {
+      const { escudo, estilo, rival } = formulario.dataset;
+      if (escudo) {
+        const imagen = new Image();
+        imagen.src = escudo;
+        imagen.alt = '';
+        escudoRival.replaceChildren(imagen);
+      } else {
+        const inicial = document.createElement('span');
+        inicial.className = estilo ? 'escudo-equipo__inicial' : '';
+        if (estilo) inicial.setAttribute('style', estilo);
+        inicial.textContent = (rival || '?').charAt(0).toUpperCase();
+        escudoRival.replaceChildren(inicial);
+      }
+    }
     const errorModal = modal.querySelector('[data-modal-error]');
     const botonEnviar = formModal.querySelector('button[type="submit"]');
     let formularioRival = null; // el formulario del rival elegido (su action dice a quién desafiar)
@@ -153,16 +180,33 @@ document.addEventListener('DOMContentLoaded', () => {
     function abrirModal(formulario) {
       formularioRival = formulario;
       modal.querySelector('[data-modal-rival]').textContent = formulario.dataset.rival;
+      nombreRival.textContent = formulario.dataset.rival;
+      pintarEscudoRival(formulario);
       formModal.reset();
-      // Modalidades que juegan los dos: la del filtro si es una de ellas; con una sola, no hay nada que elegir
+      const elegida = modal.querySelector('input[name="camiseta"]:checked');
+      if (miCamiseta && elegida) miCamiseta.style.setProperty('--color', elegida.dataset.color);
+      // Modalidades que juegan los dos, como botones segmentados: la del filtro si es una de ellas. Con una sola
+      // no hay nada que elegir (el grupo se oculta, pero su opción marcada se envía igual).
       const comunes = (formulario.dataset.comunes || '').split(',').filter(Boolean);
-      selectModalidad.replaceChildren(...comunes.map((n) => new Option(`Fútbol ${n}`, n)));
-      selectModalidad.value = comunes.includes(filtroModalidad) ? filtroModalidad : comunes[0] || '';
+      const marcada = comunes.includes(filtroModalidad) ? filtroModalidad : comunes[0] || '';
+      segmentosModalidad.replaceChildren(...comunes.map((n) => {
+        const opcion = document.createElement('label');
+        opcion.className = 'dz-segmento';
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'modalidad';
+        radio.value = n;
+        radio.checked = n === marcada;
+        opcion.append(radio, document.createTextNode(`Fútbol ${n}`));
+        return opcion;
+      }));
       campoModalidad.hidden = comunes.length <= 1;
       errorModal.hidden = true;
       modal.hidden = false;
       document.body.style.overflow = 'hidden'; // la página no se desplaza detrás del modal
-      formModal.querySelector('input').focus();
+      // Foco en el primer campo visible (con una sola modalidad, su grupo está oculto)
+      const primero = [...formModal.querySelectorAll('input:checked, input, textarea')].find((c) => c.offsetParent !== null);
+      if (primero) primero.focus();
     }
 
     function cerrarModal() {

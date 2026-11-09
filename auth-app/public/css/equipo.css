@@ -2242,3 +2242,216 @@ button.eq-mis__accion {
 .eq-ubicacion__estado--error {
   color: #ff7b7b;
 }
+
+/* =====================================================================
+   Desafiar a otro equipo: cabecera plegable, filtros, filas de rivales y modal (rediseño)
+   ===================================================================== */
+
+/* Cabecera: título y conteo juntos; la flecha es propia (no el ::after anterior) */
+.eq-desafios__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.eq-desafios__cabecera::after { content: none; }
+.eq-desafios[open] .eq-desafios__cabecera { margin-bottom: 14px; }
+.eq-desafios__titulos { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; min-width: 0; }
+.eq-desafios__titulos .dash-panel__titulo { margin: 0; }
+.eq-desafios__conteo { font-size: 0.85rem; color: var(--texto-suave); }
+.eq-desafios__flecha {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: var(--verde);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.2s ease;
+}
+.eq-desafios[open] .eq-desafios__flecha { transform: rotate(180deg); }
+.eq-desafios__cabecera:focus-visible { outline: 2px solid var(--verde); outline-offset: 6px; border-radius: 8px; }
+
+/* Filtros de ubicación en una línea: región, comuna y botón */
+.eq-filtro-rivales--linea {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  margin: 4px 0 14px;
+}
+.eq-filtro-rivales--linea .formulario__fila { margin: 0; }
+.eq-filtro-rivales--linea .campo { margin: 0; }
+.eq-filtro-rivales--linea .campo__error:empty { display: none; }
+.eq-filtro-rivales--linea .sm-form__acciones { margin: 0; padding-bottom: 2px; }
+
+/* Rivales: una fila por equipo (escudo · datos · botón) */
+.eq-rivales { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
+.eq-rival {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radio-chico);
+  background: var(--vidrio);
+  border: 1px solid var(--vidrio-borde);
+}
+.eq-rival[hidden] { display: none; }
+.eq-rival:hover { border-color: var(--verde-borde); }
+.eq-rival__escudo {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
+  border-radius: 14px;
+  font-family: var(--fuente-titulo);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--verde);
+  background: var(--verde-tenue);
+  border: 1px solid var(--verde-borde);
+}
+.eq-rival__escudo img { width: 100%; height: 100%; object-fit: cover; }
+.eq-rival__info { display: grid; gap: 4px; min-width: 0; }
+.eq-rival__nombre {
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: var(--texto);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.eq-rival__nombre:hover { color: var(--verde); }
+.eq-rival__datos { display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 0.85rem; color: var(--texto-suave); }
+.eq-rival .eq-modalidades { justify-content: flex-start; }
+.eq-rival__accion { margin: 0; }
+.eq-rival__boton { white-space: nowrap; }
+.eq-rival__boton:disabled {
+  color: var(--texto-suave);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--vidrio-borde);
+  box-shadow: none;
+  cursor: default;
+}
+
+@media (max-width: 560px) {
+  .eq-filtro-rivales--linea { grid-template-columns: minmax(0, 1fr); }
+  .eq-rival { grid-template-columns: 44px minmax(0, 1fr); }
+  .eq-rival__escudo { width: 44px; height: 44px; }
+  .eq-rival__accion, .eq-rival > .eq-rival__boton { grid-column: 1 / -1; }
+  .eq-rival__boton { width: 100%; }
+}
+
+/* ---------- Modal del desafío ---------- */
+.dz { max-width: 480px; padding: 0; overflow-x: hidden; }
+
+/* Banda "vs": tu camiseta frente al rival. Es lo único llamativo del modal. */
+.dz-versus {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 22px 20px 18px;
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(var(--verde-rgb), 0.16), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
+  border-bottom: 1px solid var(--vidrio-borde);
+}
+.dz-lado { display: grid; justify-items: center; gap: 8px; min-width: 0; text-align: center; }
+.dz-versus__camiseta {
+  width: 64px;
+  height: 64px;
+  fill: var(--color);
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 0.6;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
+  transition: fill 0.25s ease;
+}
+.dz-versus__escudo {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+  border-radius: 16px;
+  font-family: var(--fuente-titulo);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--verde);
+  background: var(--verde-tenue);
+  border: 1px solid var(--verde-borde);
+}
+.dz-versus__escudo img { width: 100%; height: 100%; object-fit: cover; }
+.dz-versus__equipo {
+  max-width: 100%;
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: 0.98rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dz-versus__vs {
+  font-family: var(--fuente-titulo);
+  font-size: 1.6rem;
+  font-weight: 800;
+  font-style: italic;
+  color: var(--verde);
+  text-shadow: 0 0 14px rgba(var(--verde-rgb), 0.5);
+}
+
+.dz-form { padding: 18px 20px 20px; gap: 16px; }
+.dz-grupo { display: grid; gap: 8px; margin: 0; }
+.dz-grupo[hidden] { display: none; }
+.dz-grupo__titulo { font-size: 0.85rem; font-weight: 700; color: var(--texto); }
+.dz-opcional { margin-left: 6px; font-weight: 500; color: var(--texto-suave); }
+.dz-ayuda { margin: 0; font-size: 0.82rem; color: var(--texto-suave); }
+.dz-ayuda--aviso { padding: 10px 12px; border-radius: 10px; border: 1px dashed var(--vidrio-borde); }
+
+/* Modalidad: botones segmentados */
+.dz-segmentos { display: flex; flex-wrap: wrap; gap: 6px; }
+.dz-segmento {
+  position: relative;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--vidrio-borde);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+.dz-segmento input { position: absolute; opacity: 0; pointer-events: none; }
+.dz-segmento:has(input:checked) { color: var(--sobre-verde, #04140a); background: var(--verde); border-color: var(--verde); }
+.dz-segmento:has(input:focus-visible) { outline: 2px solid var(--verde); outline-offset: 2px; }
+
+/* Tu camiseta: dos tarjetas grandes con la camiseta pintada */
+.dz-camisetas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.dz-camiseta {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 12px 8px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--vidrio-borde);
+  background: rgba(255, 255, 255, 0.02);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.dz-camiseta input { position: absolute; opacity: 0; pointer-events: none; }
+.dz-camiseta svg { width: 46px; height: 46px; fill: var(--color); stroke: var(--borde-fuerte); stroke-width: 0.6; }
+.dz-camiseta:has(input:checked) { color: var(--texto); border-color: var(--verde); background: var(--verde-tenue); box-shadow: 0 0 0 1px var(--verde) inset; }
+.dz-camiseta:has(input:focus-visible) { outline: 2px solid var(--verde); outline-offset: 2px; }
+
+.dz .modal__acciones { padding-top: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .eq-desafios__flecha, .dz-versus__camiseta, .dz-camiseta { transition: none; }
+}
