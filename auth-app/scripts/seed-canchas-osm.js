@@ -1,5 +1,6 @@
 // scripts/seed-canchas-osm.js
-// Carga única de recintos de fútbol ARRENDABLES de la Región Metropolitana desde OpenStreetMap (Overpass API):
+// Carga de recintos de fútbol ARRENDABLES desde OpenStreetMap (Overpass API), de la Región Metropolitana o de
+// todo Chile (--todo-chile, una consulta por región):
 // complejos deportivos (leisure=sports_centre) y canchas que cobran (leisure=pitch + fee=yes) o cuyo nombre
 // indica arriendo ("Complejo", "Sintética", "Baby", "F7", "Arriendo"). Las canchas de barrio quedan fuera.
 // Búsqueda de rescate: además, cualquier lugar cuyo NOMBRE sugiera fútbol/arriendo aunque no tenga esas etiquetas
@@ -10,6 +11,9 @@
 // Uso:
 //   node scripts/seed-canchas-osm.js              → simulación: consulta OSM y muestra qué insertaría (no escribe)
 //   node scripts/seed-canchas-osm.js --confirmar  → inserta en la base (DATABASE_URL del .env), en UNA transacción
+//   node scripts/seed-canchas-osm.js --todo-chile [--confirmar] → las 16 regiones (una transacción por región;
+//        antes hay que cargar las regiones y comunas: node scripts/ejecutar-sql.js sql/regiones_comunas_chile.sql)
+//   --region=CL-VS                                → una sola región (código ISO 3166-2, ver REGIONES)
 //
 // Duplicados: se omite un recinto si ya existe uno con la misma referencia OSM (se guarda en direccion.referencias),
 // a menos de 60 m, o con el mismo nombre en la misma comuna. Por eso se puede volver a ejecutar sin repetir datos.
@@ -17,6 +21,48 @@
 const { pool } = require('../config/db');
 
 const CONFIRMAR = process.argv.includes('--confirmar');
+const TODO_CHILE = process.argv.includes('--todo-chile');
+const REGION_ELEGIDA = (process.argv.find((a) => a.startsWith('--region=')) || '').split('=')[1];
+
+// Código ISO 3166-2 de cada región en OSM → nombre de la región en la tabla region (sql/regiones_comunas_chile.sql).
+// De norte a sur.
+const REGIONES = {
+  'CL-AP': 'Arica y Parinacota',
+  'CL-TA': 'Tarapacá',
+  'CL-AN': 'Antofagasta',
+  'CL-AT': 'Atacama',
+  'CL-CO': 'Coquimbo',
+  'CL-VS': 'Valparaíso',
+  'CL-RM': 'Región Metropolitana de Santiago',
+  'CL-LI': "O'Higgins",
+  'CL-ML': 'Maule',
+  'CL-NB': 'Ñuble',
+  'CL-BI': 'Biobío',
+  'CL-AR': 'La Araucanía',
+  'CL-LR': 'Los Ríos',
+  'CL-LL': 'Los Lagos',
+  'CL-AI': 'Aysén',
+  'CL-MA': 'Magallanes y la Antártica Chilena',
+};
+const PAUSA_ENTRE_REGIONES_MS = 20000; // los servidores públicos de Overpass limitan las consultas seguidas
+
+// Nombres de comuna que en OSM se escriben distinto que en la lista oficial (ya normalizados).
+const ALIAS_COMUNAS = {
+  'san jose de la mariquina': 'mariquina',
+  'chol chol': 'cholchol',
+  'puerto natales': 'natales',
+  'aisen': 'aysen',
+  'puerto aysen': 'aysen',
+  'paihuano': 'paiguano',
+  'marchihue': 'marchigue',
+  'trehuaco': 'treguaco',
+  'coihaique': 'coyhaique',
+  'llay-llay': 'llaillay',
+  'llay llay': 'llaillay',
+  'calera': 'la calera',
+  'caleta tortel': 'tortel',
+  'antartica chilena': 'antartica',
+};
 
 // Servidores públicos de Overpass (si uno falla o limita, se prueba el siguiente)
 const SERVIDORES_OVERPASS = [
@@ -42,9 +88,9 @@ const NOMBRE_RESCATE = 'futbolito|complejo|sint[eé]tic|cancha|arriendo|f[uú]tb
 // Se busca UNA vez en toda la RM (->.todo) y luego se reparte por comuna: "nwr.todo(area.comuna)" solo filtra
 // lo ya encontrado, así que es barato (repetir la búsqueda por nombre en cada comuna excede el tiempo de Overpass).
 // Cada comuna sale seguida de sus recintos. "out bb": los polígonos traen su caja (centro = medio de la caja).
-const CONSULTA = `
+const consulta = (iso) => `
 [out:json][timeout:600];
-area["boundary"="administrative"]["admin_level"="4"]["name"~"Metropolitana"]->.rm;
+area["boundary"="administrative"]["admin_level"="4"]["ISO3166-2"="${iso}"]->.rm;
 (
   nwr["leisure"="sports_centre"]["sport"~"soccer"]["amenity"!="school"](area.rm);
   nwr["leisure"="sports_centre"]["name"~"${NOMBRE_COMPLEJO}",i]["amenity"!="school"](area.rm);
@@ -63,7 +109,7 @@ foreach.comunas->.comuna(
 const espera = (ms) => new Promise((resolver) => setTimeout(resolver, ms));
 
 /** POST a Overpass con reintentos (429 = límite de uso, 504 = servidor ocupado) y cambio de servidor. */
-async function consultarOverpass() {
+async function consultarOverpass(iso) {
   for (const servidor of SERVIDORES_OVERPASS) {
     for (let intento = 1; intento <= REINTENTOS_POR_SERVIDOR; intento += 1) {
       try {
@@ -71,7 +117,7 @@ async function consultarOverpass() {
         const respuesta = await fetch(servidor, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'SearchMatch-seed/1.0' },
-          body: new URLSearchParams({ data: CONSULTA }),
+          body: new URLSearchParams({ data: consulta(iso) }),
           signal: AbortSignal.timeout(660000),
         });
         if (respuesta.ok) {
@@ -236,8 +282,15 @@ function agruparEnRecintos(elementos) {
   return recintos;
 }
 
-async function sembrar() {
-  const { elements: elementos } = await consultarOverpass();
+/** Comuna de OSM o de la base, comparable entre ambas ("Comuna de Aisén" → "aysen"). */
+function normalizarComuna(texto) {
+  const n = normalizar(texto).replace(/[’']/g, '').replace(/^comuna de /, '');
+  return ALIAS_COMUNAS[n] || n;
+}
+
+async function sembrar(iso) {
+  console.log(`\n🗺️  ${REGIONES[iso]} (${iso})`);
+  const { elements: elementos } = await consultarOverpass(iso);
   const canchas = leerCanchas(elementos);
   const recintos = agruparEnRecintos(canchas);
   const complejos = canchas.filter((c) => c.complejo).length;
@@ -248,9 +301,13 @@ async function sembrar() {
   try {
     // Comunas y modalidades de la base
     const comunas = new Map((await cliente.query(
-      `SELECT c.id, c.nombre FROM comunas c JOIN region r ON r.id = c.id_region
-        WHERE r.nombre ILIKE '%Metropolitana%'`
-    )).rows.map((c) => [normalizar(c.nombre), c.id]));
+      'SELECT c.id, c.nombre FROM comunas c JOIN region r ON r.id = c.id_region WHERE lower(r.nombre) = lower($1)',
+      [REGIONES[iso]]
+    )).rows.map((c) => [normalizarComuna(c.nombre), c.id]));
+    if (comunas.size === 0) {
+      console.warn(`   ⚠️  "${REGIONES[iso]}" no tiene comunas en la base (falta sql/regiones_comunas_chile.sql). Se omite.`);
+      return { recintos: 0, canchas: 0 };
+    }
     const modalidades = new Map((await cliente.query('SELECT id, cantidad_de_jugadores FROM modalidad')).rows
       .map((m) => [m.cantidad_de_jugadores, m.id]));
 
@@ -261,10 +318,11 @@ async function sembrar() {
     )).rows.map((r) => ({ ...r, latitud: Number(r.latitud), longitud: Number(r.longitud) }));
 
     const omitidos = { comuna: 0, duplicado: 0 };
+    const comunasSinCalce = new Set();
     const nuevos = [];
     for (const recinto of recintos) {
-      const idComuna = comunas.get(normalizar(recinto.comuna || ''));
-      if (!idComuna) { omitidos.comuna += 1; continue; }
+      const idComuna = comunas.get(normalizarComuna(recinto.comuna || ''));
+      if (!idComuna) { omitidos.comuna += 1; comunasSinCalce.add(recinto.comuna); continue; }
       const referencia = `OpenStreetMap ${recinto.osm}`;
       const repetido = [...existentes, ...nuevos].some((e) =>
         e.referencias === referencia
@@ -277,6 +335,8 @@ async function sembrar() {
     const totalCanchas = nuevos.reduce((suma, r) => suma + r.canchas.length, 0);
     console.log(`➕ Nuevos: ${nuevos.length} recintos con ${totalCanchas} canchas.`);
     console.log(`⏭️  Omitidos: ${omitidos.duplicado} ya existían · ${omitidos.comuna} sin comuna reconocida.`);
+    // La consulta también trae comunas vecinas de otra región: es normal ver alguna aquí.
+    if (comunasSinCalce.size) console.log(`   Comunas de OSM sin calce: ${[...comunasSinCalce].join(', ')}`);
 
     if (!CONFIRMAR) {
       console.table(nuevos.slice(0, 15).map((r) => ({
@@ -285,7 +345,7 @@ async function sembrar() {
         precios: r.canchas.map((c) => (c.precio ? `$${c.precio}` : 'ref.')).join(' '),
       })));
       console.log('ℹ️  Simulación: no se escribió nada. Ejecuta con --confirmar para insertar.');
-      return;
+      return { recintos: nuevos.length, canchas: totalCanchas };
     }
 
     await cliente.query('BEGIN');
@@ -312,6 +372,7 @@ async function sembrar() {
     }
     await cliente.query('COMMIT');
     console.log(`✅ Insertados ${nuevos.length} recintos y ${totalCanchas} canchas.`);
+    return { recintos: nuevos.length, canchas: totalCanchas };
   } catch (err) {
     await cliente.query('ROLLBACK').catch(() => {});
     throw err;
@@ -320,9 +381,33 @@ async function sembrar() {
   }
 }
 
-sembrar()
+async function principal() {
+  if (REGION_ELEGIDA && !REGIONES[REGION_ELEGIDA]) throw new Error(`Región desconocida: ${REGION_ELEGIDA}`);
+  const lista = TODO_CHILE ? Object.keys(REGIONES) : [REGION_ELEGIDA || 'CL-RM'];
+  const total = { recintos: 0, canchas: 0 };
+  const fallidas = [];
+  for (const [i, iso] of lista.entries()) {
+    if (i > 0) await espera(PAUSA_ENTRE_REGIONES_MS);
+    try {
+      const r = await sembrar(iso);
+      total.recintos += r.recintos;
+      total.canchas += r.canchas;
+    } catch (err) {
+      // Cada región es su propia transacción: si una falla, las demás siguen y se repite solo esa.
+      console.error(`❌ ${REGIONES[iso]} no se completó (esa región quedó como estaba): ${err.message}`);
+      fallidas.push(iso);
+    }
+  }
+  if (lista.length > 1) {
+    console.log(`\n📊 Total ${CONFIRMAR ? 'insertado' : 'a insertar'}: ${total.recintos} recintos y ${total.canchas} canchas.`);
+    if (fallidas.length) console.log(`   Repetir con: ${fallidas.map((iso) => `--region=${iso}`).join(' · ')}`);
+  }
+  if (fallidas.length) process.exitCode = 1;
+}
+
+principal()
   .catch((err) => {
-    console.error('❌ No se completó la carga (la base quedó como estaba):', err.message);
+    console.error('❌ No se completó la carga:', err.message);
     process.exitCode = 1;
   })
   .finally(() => pool.end());
