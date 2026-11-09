@@ -1034,3 +1034,8 @@ div.eq-sin-resultados p { margin: 0; }
 .sm-posiciones { display: grid; gap: 14px; }
 .sm-posiciones__subtitulo { margin: 0 0 6px; font-weight: 700; font-size: .95rem; }
 .opcion--posicion input:disabled + .opcion__cancha, .opcion--posicion:has(input:disabled) { opacity: .35; cursor: not-allowed; }
+
+/* Jugador que además es administrador: salida del panel en el menú lateral */
+.sm-admin-menu__cuenta { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--borde); display: grid; gap: 4px; }
+.sm-admin-menu__cuenta form { margin: 0; }
+.sm-admin-menu__salir { width: 100%; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }

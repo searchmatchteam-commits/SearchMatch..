@@ -23,14 +23,20 @@ const AVISOS = {
 
 const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function render(res, { status = 200, correo = '', error = null, aviso = null } = {}) {
+function render(res, { status = 200, correo = '', error = null, aviso = null, conSesion = null } = {}) {
   return res.status(status).render('admin/login', {
     titulo: 'Panel de administración',
     pagina: 'auth',
     correo,
     errores: error ? [error] : [],
     aviso,
+    conSesion, // jugador que es administrador y ya inició sesión: entra con un botón (POST /admin/entrar)
   });
+}
+
+/** ¿Es un jugador administrador con su sesión de la app abierta? (puede abrir el panel sin contraseña) */
+function jugadorAdministrador(req) {
+  return Boolean(req.usuario && req.usuario.esAdmin && !req.usuario.esCuentaPanel);
 }
 
 async function mostrarLogin(req, res, next) {
@@ -40,7 +46,26 @@ async function mostrarLogin(req, res, next) {
     if (req.usuario && req.usuario.esAdmin && token && (await panelModel.tocarSesion(token, req.usuario.id)) === 'vigente') {
       return res.redirect('/admin');
     }
-    return render(res, { aviso: AVISOS[req.query.msg] || null });
+    const conSesion = jugadorAdministrador(req) ? { nombre: req.usuario.nombre, correo: req.usuario.correo } : null;
+    return render(res, { aviso: AVISOS[req.query.msg] || null, conSesion });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * POST /admin/entrar · Un jugador que además es administrador abre el panel con la sesión que ya tiene en la app
+ * (verificada con Supabase en cargarSesion; puede haber entrado con Google y no tener contraseña). Rigen las
+ * mismas reglas del panel: selección vigente, cuenta activa y cierre por inactividad.
+ */
+async function entrarConSesion(req, res, next) {
+  try {
+    if (!jugadorAdministrador(req)) return res.redirect('/admin/login');
+    const cuenta = await panelModel.cuentaPorAuth(req.usuario.idAuth);
+    if (!cuenta || cuenta.estado !== 'activo') return res.redirect('/admin/login?msg=sin-acceso');
+    const token = await panelModel.abrirSesion(cuenta.id);
+    res.cookie(COOKIE_PANEL, token, OPCIONES_COOKIE);
+    return res.redirect('/admin');
   } catch (err) {
     return next(err);
   }
@@ -94,10 +119,12 @@ async function ingresar(req, res, next) {
 async function salir(req, res) {
   await panelModel.cerrarSesion(req.cookies[COOKIE_PANEL], 'salida').catch(() => {});
   res.clearCookie(COOKIE_PANEL, OPCIONES_COOKIE);
+  // Jugador administrador: cierra solo el panel y vuelve a su cuenta de jugador.
+  if (jugadorAdministrador(req)) return res.redirect('/dashboard');
   const { error } = await userModel.cerrarSesionEnAuth(req.supabase).catch((err) => ({ error: err }));
   if (error) console.error('⚠️  No se pudo revocar la sesión en Supabase:', error.message);
   res.set('Clear-Site-Data', '"cache"');
   return res.redirect('/admin/login?msg=salida');
 }
 
-module.exports = { mostrarLogin, ingresar, salir };
+module.exports = { mostrarLogin, ingresar, entrarConSesion, salir };

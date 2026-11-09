@@ -19,6 +19,8 @@ const {
 router.get('/login', acceso.mostrarLogin);
 router.post('/login', acceso.ingresar);
 router.post('/logout', acceso.salir);
+// Jugador que además es administrador: abre el panel con su sesión de la app (sin volver a escribir contraseña)
+router.post('/entrar', acceso.entrarConSesion);
 
 // Todo lo demás exige una sesión del panel vigente (así ninguna ruta nueva queda sin proteger).
 router.use(requireAdmin);

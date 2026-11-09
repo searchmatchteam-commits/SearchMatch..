@@ -26,7 +26,8 @@ async function expulsar(req, res, msg) {
   const token = req.cookies[COOKIE_PANEL];
   if (token) await panelModel.cerrarSesion(token, msg).catch(() => {});
   res.clearCookie(COOKIE_PANEL, OPCIONES_COOKIE);
-  if (req.usuario) await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
+  // Una cuenta solo del panel pierde también su sesión; un jugador que es administrador conserva la de jugador.
+  if (req.usuario && req.usuario.esCuentaPanel) await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
   if (quiereJSON(req)) return res.status(401).json({ ok: false, error: 'Tu sesión del panel terminó. Ingresa de nuevo.' });
   return res.redirect(`/admin/login${msg ? `?msg=${msg}` : ''}`);
 }

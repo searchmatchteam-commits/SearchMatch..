@@ -24,4 +24,13 @@
       </li>
     <% }) %>
   </ul>
+  <% if (locals.usuario && !usuario.esCuentaPanel) { %>
+    <%# Jugador que además es administrador: vuelve a su cuenta (el panel sigue abierto) o cierra solo el panel %>
+    <div class="sm-admin-menu__cuenta">
+      <a class="sm-admin-menu__item" href="/dashboard"><span>Volver a mi cuenta</span></a>
+      <form action="/admin/logout" method="POST">
+        <button type="submit" class="sm-admin-menu__item sm-admin-menu__salir"><span>Salir del panel</span></button>
+      </form>
+    </div>
+  <% } %>
 </nav>

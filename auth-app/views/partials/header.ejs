@@ -138,6 +138,12 @@
           <% if (!['dashboard', 'equipo', 'perfil'].includes(locals.pagina)) { %>
             <a class="btn btn--contorno btn--chico" href="/dashboard">Mi panel</a>
           <% } %>
+          <% if (usuario.esAdmin) { %>
+            <!-- Jugador que además es administrador: abre el panel (con su sesión, en /admin/login) -->
+            <a class="sm-icono-nav" href="/admin/login" title="Panel de administrador" aria-label="Panel de administrador">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 4.4 3.4 8.3 8 9 4.6-.7 8-4.6 8-9V6z" /><path d="m9 12 2 2 4-4" /></svg>
+            </a>
+          <% } %>
           <!-- NUEVO: AG-001 agenda y NT-002/NT-003 campana con el contador de no leídas -->
           <a class="sm-icono-nav" href="/agenda" title="Agenda de partidos" aria-label="Agenda de partidos">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>

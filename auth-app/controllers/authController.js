@@ -350,8 +350,9 @@ async function callbackGoogle(req, res, next) {
       return res.redirect('/login?msg=Cuenta_desactivada');
     }
 
-    // AP-001: las cuentas del panel solo entran por /admin/login.
-    if (perfil && /^(super)?administrador$/i.test(perfil.rol || '')) {
+    // AP-001: las cuentas solo del panel (sin perfil de jugador) entran por /admin/login. Un jugador que además
+    // es administrador entra con Google como siempre y abre el panel desde su cuenta.
+    if (perfil && /^(super)?administrador$/i.test(perfil.rol || '') && !perfil.id_jugador) {
       await userModel.cerrarSesionEnAuth(req.supabase).catch(() => {});
       return res.redirect('/login?msg=Google_error');
     }

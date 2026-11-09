@@ -64,6 +64,11 @@ async function idSinVerificar(supabase) {
 async function construirUsuario(usuarioAuth, perfilAdelantado) {
   const perfil = perfilAdelantado !== undefined ? perfilAdelantado : await leerPerfil(usuarioAuth.id);
   const meta = usuarioAuth.user_metadata || {};
+  // Rol del panel (Administrador o Superadministrador = Administrador principal). Un administrador puede ser
+  // además jugador y capitán: si tiene perfil de jugador sigue usando la app como cualquiera y entra al panel
+  // aparte. "Cuenta del panel" (esCuentaPanel) es solo la que NO tiene perfil de jugador (creada en el panel).
+  const rolPanel = Boolean(perfil && /^(super)?administrador$/i.test(perfil.rol || ''));
+  const esCuentaPanel = rolPanel && !perfil.id_jugador;
   return {
     id: perfil ? perfil.id : null,
     idAuth: usuarioAuth.id,
@@ -72,17 +77,16 @@ async function construirUsuario(usuarioAuth, perfilAdelantado) {
     correo: usuarioAuth.email,
     rolInicio: ROLES_INICIO[meta.rol_inicio] ? meta.rol_inicio : null,
     activo: !perfil || perfil.activo !== false, // CORRECCIÓN: regla 7 (sin fila en la BD se asume activa)
-    // AP-001: las cuentas del panel (rol Administrador o Superadministrador = Administrador principal) son
-    // distintas de las de jugador. esAdmin exige además que su selección no esté revocada (AP-011).
-    esCuentaPanel: Boolean(perfil && /^(super)?administrador$/i.test(perfil.rol || '')),
-    esAdmin: Boolean(perfil && /^(super)?administrador$/i.test(perfil.rol || '') && !perfil.admin_revocado_en),
-    esSuperAdmin: Boolean(perfil && /^superadministrador$/i.test(perfil.rol || '') && !perfil.admin_revocado_en),
+    // AP-001: esCuentaPanel = cuenta solo del panel (sin perfil de jugador). esAdmin exige además que su
+    // selección no esté revocada (AP-011); vale también para un jugador que es administrador.
+    esCuentaPanel,
+    esAdmin: rolPanel && !perfil.admin_revocado_en,
+    esSuperAdmin: Boolean(rolPanel && /^superadministrador$/i.test(perfil.rol || '') && !perfil.admin_revocado_en),
     terminosVersion: perfil ? perfil.terminos_version : null, // NUEVO: AR-011
     privacidadVersion: perfil ? perfil.privacidad_version : null, // NUEVO: AR-011
     correoGuardado: perfil ? perfil.correo : null, // NUEVO: AR-012 (para sincronizar un cambio de correo)
     // Registro con Google: el perfil de jugador nace sin fecha de nacimiento; se pide (18+) en /aceptar-terminos
-    faltaEdad: Boolean(perfil && perfil.id_jugador && !perfil.fecha_nacimiento)
-      && !/^(super)?administrador$/i.test((perfil && perfil.rol) || ''),
+    faltaEdad: Boolean(perfil && perfil.id_jugador && !perfil.fecha_nacimiento),
     notificacionesSinLeer: perfil ? perfil.sin_leer : 0, // NT-002: viene con el perfil, sin otra consulta
   };
 }

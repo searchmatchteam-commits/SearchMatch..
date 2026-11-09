@@ -9,12 +9,20 @@
 
     <span class="etiqueta-verde">Acceso restringido</span>
     <h1 class="auth__titulo">Panel de administración</h1>
-    <p class="auth__subtitulo">Ingresa con la cuenta de administrador que te asignaron.</p>
+    <% if (!locals.conSesion) { %><p class="auth__subtitulo">Ingresa con la cuenta de administrador que te asignaron.</p><% } %>
 
     <% if (aviso) { %>
       <div class="alerta alerta--exito" role="status"><%= aviso %></div>
     <% } %>
 
+    <% if (locals.conSesion) { %>
+      <%# Jugador que además es administrador: entra con la sesión que ya tiene (POST /admin/entrar) %>
+      <form action="/admin/entrar" method="POST" class="formulario">
+        <p class="auth__subtitulo">Tienes la sesión iniciada como <strong><%= conSesion.nombre %></strong> (<%= conSesion.correo %>).</p>
+        <button type="submit" class="btn btn--verde btn--bloque btn--grande">Entrar al panel</button>
+      </form>
+      <p class="auth__pie"><a href="/dashboard">Volver a mi cuenta</a></p>
+    <% } else { %>
     <form action="/admin/login" method="POST" class="formulario sm-form" novalidate data-sm-validar>
       <div class="campo">
         <label for="correo">Correo</label>
@@ -40,6 +48,7 @@
     <% } %>
 
     <p class="auth__pie"><a href="/recuperar">¿Olvidaste tu contraseña?</a></p>
+    <% } %>
   </div>
 </section>
 
