@@ -32,7 +32,9 @@ if (process.env.NODE_ENV === 'production') {
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-app.locals.versionAssets = Date.now().toString(36);
+// Versión de CSS/JS (?v=): en Vercel, el commit desplegado (igual en todas sus instancias, así el navegador
+// los guarda un año y solo los vuelve a pedir tras un despliegue nuevo); en local, la hora de arranque.
+app.locals.versionAssets = (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 10) || Date.now().toString(36);
 // gzip de HTML, CSS y JS: las hojas de cada página pesan ~250 KB sin comprimir y ~50 KB comprimidas.
 app.use(compression());
 app.use(express.static(path.join(__dirname, 'public'), {
