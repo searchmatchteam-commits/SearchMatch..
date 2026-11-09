@@ -54,3 +54,16 @@ test('la barra muestra el acceso al panel solo a los jugadores administradores',
   assert.match(await cabecera({ nombre: 'B', esAdmin: true, esCuentaPanel: false }), /Panel de administrador/);
   assert.doesNotMatch(await cabecera({ nombre: 'B', esAdmin: false, esCuentaPanel: false }), /Panel de administrador/);
 });
+
+test('el menú del panel solo tiene secciones con página propia (sin "próximamente")', () => {
+  const { SECCIONES } = require('../config/panel');
+  const router = require('../routes/adminRoutes');
+  const rutasGet = router.stack.filter((c) => c.route && c.route.methods.get).map((c) => c.route.path);
+  SECCIONES.forEach((s) => {
+    const ruta = s.href.replace(/^\/admin/, '') || '/';
+    assert.ok(rutasGet.includes(ruta), `${s.texto} (${s.href}) no tiene ruta`);
+    assert.equal(s.fase, undefined, `${s.texto} sigue marcada como pendiente`);
+  });
+  assert.deepEqual(SECCIONES.map((s) => s.clave),
+    ['resumen', 'usuarios', 'equipos', 'partidos', 'torneos', 'recintos', 'administradores', 'configuracion', 'actividad']);
+});

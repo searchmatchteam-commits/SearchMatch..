@@ -1,0 +1,69 @@
+<%- include('../partials/admin-inicio', { seccion }) %>
+
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Panel</span>
+        <h1 class="eq-cabecera__titulo">Partidos</h1>
+        <p class="eq-cabecera__stats">Todos los partidos de desafíos. Primero los que esperan resultado y los más cercanos a hoy.</p>
+      </div>
+    </header>
+
+    <form class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/partidos" role="search">
+      <div class="campo">
+        <label for="texto">Buscar por equipo o recinto</label>
+        <input type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. Los Cracks o Complejo Sur" maxlength="100" />
+      </div>
+      <% if (estado !== 'todos') { %><input type="hidden" name="estado" value="<%= estado %>" /><% } %>
+      <div class="sm-form__acciones">
+        <button type="submit" class="btn btn--verde">Buscar</button>
+        <% if (texto || estado !== 'todos') { %><a class="btn btn--contorno" href="/admin/partidos">Ver todos</a><% } %>
+      </div>
+    </form>
+
+    <nav class="sm-chips-estado" aria-label="Filtrar por estado">
+      <% estados.forEach(function (e) { %>
+        <a class="sm-chip-estado <%= e.clave === estado ? 'sm-chip-estado--activo' : '' %>" href="<%= e.href %>" <%- e.clave === estado ? 'aria-current="true"' : '' %>>
+          <%= e.nombre %> <span><%= e.cantidad %></span>
+        </a>
+      <% }) %>
+    </nav>
+
+    <% if (partidos.length === 0) { %>
+      <div class="dash-panel eq-panel sm-vacio">
+        <p class="sm-vacio__titulo"><%= texto || estado !== 'todos' ? 'No hay partidos con esos filtros' : 'Aún no hay partidos programados' %></p>
+        <% if (texto || estado !== 'todos') { %><a class="btn btn--contorno" href="/admin/partidos">Ver todos</a><% } %>
+      </div>
+    <% } else { %>
+      <div class="dash-panel eq-panel">
+        <ul class="sm-filas sm-filas--cuentas">
+          <% partidos.forEach(function (p) { %>
+            <li class="sm-fila <%= p.estado === 'cancelado' ? 'sm-fila--inactiva' : '' %>">
+              <span class="sm-fila__principal">
+                <strong>
+                  <a href="/equipos/<%= p.id_desafiante %>"><%= p.desafiante %></a>
+                  <% if (p.estado === 'jugado') { %><span class="sm-marcador"><%= p.marcador_desafiante %> – <%= p.marcador_desafiado %></span><% } else { %> vs <% } %>
+                  <a href="/equipos/<%= p.id_desafiado %>"><%= p.desafiado %></a>
+                </strong>
+                <small><%= p.fechaTexto %> · <%= p.hora %> · <%= p.recinto %> (<%= p.cancha %>) · <%= p.modalidad %></small>
+                <% if (p.estado === 'cancelado' && p.motivo_cancelacion) { %><small>Motivo: <%= p.motivo_cancelacion %></small><% } %>
+              </span>
+              <span class="sm-estado sm-estado--<%= p.estado %>"><%= p.estadoTexto %></span>
+              <span class="sm-fila__accion"><a class="btn btn--contorno btn--chico" href="/partidos/<%= p.id %>">Ver partido</a></span>
+            </li>
+          <% }) %>
+        </ul>
+        <% if (paginas > 1) { %>
+          <nav class="sm-paginacion" aria-label="Páginas">
+            <% if (anterior) { %><a class="btn btn--contorno btn--chico" href="<%= anterior %>">← Anteriores</a><% } %>
+            <span>Página <%= paginaActual %> de <%= paginas %> · <%= total %> partidos</span>
+            <% if (siguiente) { %><a class="btn btn--contorno btn--chico" href="<%= siguiente %>">Siguientes →</a><% } %>
+          </nav>
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('../partials/admin-fin') %>

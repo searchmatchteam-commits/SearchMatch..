@@ -4,27 +4,27 @@
   <div class="contenedor">
     <header class="eq-cabecera revelar">
       <div class="eq-cabecera__texto">
-        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Superadministración</span>
+        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Panel</span>
         <h1 class="eq-cabecera__titulo">Equipos</h1>
-        <p class="eq-cabecera__stats">Elimina equipos de forma definitiva, junto con sus desafíos y partidos.</p>
+        <p class="eq-cabecera__stats">Todos los equipos de SearchMatch.<% if (usuario.esSuperAdmin) { %> Como Administrador principal también puedes eliminarlos de forma definitiva, junto con sus desafíos y partidos.<% } %></p>
       </div>
     </header>
 
-    <form class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/super/equipos" role="search">
+    <form class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/equipos" role="search">
       <div class="campo">
         <label for="texto">Buscar por nombre del equipo o correo del capitán</label>
         <input type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. Los Cracks o juan@correo.cl" />
       </div>
       <div class="sm-form__acciones">
         <button type="submit" class="btn btn--verde">Buscar</button>
-        <% if (texto) { %><a class="btn btn--contorno" href="/admin/super/equipos">Ver todos</a><% } %>
+        <% if (texto) { %><a class="btn btn--contorno" href="/admin/equipos">Ver todos</a><% } %>
       </div>
     </form>
 
     <% if (equipos.length === 0) { %>
       <div class="dash-panel eq-panel sm-vacio">
         <p class="sm-vacio__titulo"><%= texto ? `No hay equipos que coincidan con "${texto}"` : 'Aún no hay equipos' %></p>
-        <% if (texto) { %><a class="btn btn--contorno" href="/admin/super/equipos">Ver todos</a><% } %>
+        <% if (texto) { %><a class="btn btn--contorno" href="/admin/equipos">Ver todos</a><% } %>
       </div>
     <% } else { %>
       <div class="dash-panel eq-panel">
@@ -33,11 +33,12 @@
                const avisoDesafios = e.desafios > 0 ? ` También se borran sus ${e.desafios} desafíos y los partidos asociados, incluso del historial del equipo rival.` : ''; %>
             <li class="sm-fila <%= e.activo ? '' : 'sm-fila--inactiva' %>">
               <span class="sm-fila__principal">
-                <strong><%= e.nombre %></strong>
-                <small>Capitán: <%= e.capitan %> · <%= e.comuna %></small>
+                <strong><a href="/equipos/<%= e.id %>"><%= e.nombre %></a></strong>
+                <small>Capitán: <%= e.capitan %> · <%= e.comuna %> · <%= e.nivel %> · <%= e.puntaje %> pts</small>
               </span>
               <span class="sm-rol"><%= e.integrantes %> <%= e.integrantes === 1 ? 'integrante' : 'integrantes' %></span>
               <span class="sm-estado <%= e.activo ? 'sm-estado--activo' : 'sm-estado--inactivo' %>"><%= e.activo ? 'Activo' : 'Inactivo' %></span>
+              <% if (usuario.esSuperAdmin) { %>
               <span class="sm-fila__accion">
                 <%- include('../partials/admin-accion-motivo', {
                   accion: `/admin/super/equipos/${e.id}/eliminar`, boton: 'Eliminar', peligro: true, ocultos: [['texto', texto]],
@@ -45,6 +46,7 @@
                   texto: `Esta acción no se puede deshacer. Se avisará a sus ${e.integrantes} integrantes.${avisoDesafios}`,
                 }) %>
               </span>
+              <% } %>
             </li>
           <% }) %>
         </ul>

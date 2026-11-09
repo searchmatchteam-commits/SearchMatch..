@@ -1,14 +1,14 @@
 <%- include('../partials/admin-inicio', { seccion }) %>
 
 <%
-  // Las cifras ampliadas y el rango de fechas llegan con AP-004 (fase 5).
+  // Cifras generales; cada tarjeta lleva a su sección.
   const tarjetas = [
     { valor: cifras.conectados_24h, texto: 'Conectados hoy (24 h)', href: '/admin/cuentas' },
     { valor: cifras.conectados_7d, texto: 'Conectados últimos 7 días', href: '/admin/cuentas' },
     { valor: cifras.cuentas_activas, texto: `Cuentas activas de ${cifras.cuentas}`, href: '/admin/cuentas' },
     { valor: cifras.jugadores, texto: 'Perfiles de jugador', href: '/admin/cuentas' },
     { valor: cifras.equipos_activos, texto: `Equipos activos (${cifras.equipos_inactivos} inactivos)`, href: '/admin/equipos' },
-    { valor: cifras.partidos_proximos, texto: 'Partidos próximos', href: null },
+    { valor: cifras.partidos_proximos, texto: 'Partidos próximos', href: '/admin/partidos?estado=programado' },
   ];
   const fechaHora = new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Santiago' });
 %>

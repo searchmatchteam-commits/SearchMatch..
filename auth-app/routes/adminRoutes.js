@@ -10,6 +10,7 @@ const catalogos = require('../controllers/adminCatalogosController');
 const superAdmin = require('../controllers/superAdminController');
 const torneos = require('../controllers/adminTorneosController');
 const config = require('../controllers/adminConfigController');
+const partidos = require('../controllers/adminPartidosController');
 const { requireAdmin, requirePrincipal } = require('../middlewares/rolMiddleware');
 const {
   validarRecinto, validarCancha, validarBloque, validarCatalogo, validarTorneo, subirImagenesTorneo,
@@ -67,10 +68,11 @@ router.post('/catalogos/:tipo', validarCatalogo, catalogos.crear);
 router.post('/catalogos/:tipo/:id', validarCatalogo, catalogos.editar);
 router.post('/catalogos/:tipo/:id/eliminar', catalogos.eliminar);
 
-// Equipos y Torneos: hoy solo existen en /admin/super (AP-012 y la fase 1 los abren a todos los administradores).
-router.get('/equipos', (req, res, next) => (req.usuario.esSuperAdmin
-  ? res.redirect(`/admin/super/equipos${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`) : next()),
-  (req, res) => res.render('admin/proximamente', { titulo: 'Equipos', pagina: 'equipo', seccion: 'equipos', fase: 5 }));
+// Equipos: todos los administradores los ven y buscan; eliminar es solo del Administrador principal.
+router.get('/equipos', superAdmin.equipos);
+
+// Partidos: todos los partidos de desafíos (solo lectura)
+router.get('/partidos', partidos.listar);
 
 // Torneos (AP-027, TO-001 a TO-005): Administrador y Administrador principal.
 router.get('/torneos', torneos.listar);
@@ -95,12 +97,12 @@ router.post('/configuracion/pasarelas/:clave/probar', config.probar);
 router.post('/configuracion/pasarelas/:clave/activar', config.activar);
 router.post('/configuracion/pasarelas/:clave/desactivar', config.desactivar);
 
-// Secciones de fases siguientes (AP-002: el menú ya las muestra)
-['desafios', 'partidos', 'reservas', 'valoraciones', 'comentarios', 'anuncios', 'apelaciones', 'pagos', 'estadisticas']
-  .forEach((clave) => router.get(`/${clave}`, panel.proximamente(clave)));
+// Secciones que aún no existen: se quitaron del menú; sus direcciones vuelven al resumen.
+['desafios', 'reservas', 'valoraciones', 'comentarios', 'anuncios', 'apelaciones', 'pagos', 'estadisticas']
+  .forEach((clave) => router.get(`/${clave}`, (req, res) => res.redirect('/admin')));
 
 router.get('/super', (req, res) => res.redirect('/admin'));
-router.get('/super/equipos', requirePrincipal, superAdmin.equipos);
+router.get('/super/equipos', (req, res) => res.redirect(301, `/admin/equipos${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`));
 router.post('/super/equipos/:id/eliminar', requirePrincipal, superAdmin.eliminarEquipo);
 router.get('/super/jugadores', requirePrincipal, superAdmin.jugadores);
 router.post('/super/jugadores/:id/eliminar', requirePrincipal, superAdmin.eliminarJugador);

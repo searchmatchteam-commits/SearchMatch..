@@ -47,7 +47,7 @@ async function eliminarEquipo(req, res, next) {
     const idEquipo = idValido(req.params.id);
     const motivo = leerMotivo(req.body.motivo);
     const resultado = !motivo ? 'motivo' : idEquipo ? await superAdminModel.eliminarEquipo(idEquipo, adminDe(req), motivo) : 'sin-cambio';
-    return res.redirect(`/admin/super/equipos?aviso=${resultado}&texto=${encodeURIComponent(String(req.body.texto || ''))}`);
+    return res.redirect(`/admin/equipos?aviso=${resultado}&texto=${encodeURIComponent(String(req.body.texto || ''))}`);
   } catch (err) {
     return next(err);
   }

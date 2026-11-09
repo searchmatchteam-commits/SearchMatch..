@@ -39,7 +39,8 @@ async function resumen() {
 
 async function buscarEquipos(texto) {
   const { rows } = await pool.query(
-    `SELECT e.id, e.nombre, e.activo, c.nombre AS comuna, u.correo AS correo_capitan,
+    `SELECT e.id, e.nombre, e.activo, c.nombre AS comuna, u.correo AS correo_capitan, e.puntaje_nivel,
+            (SELECT n.nombre FROM nivel n WHERE n.id = e.id_nivel) AS nivel,
             trim(concat_ws(' ', j.nombre_apodo, j.apellido)) AS capitan,
             (SELECT count(*)::int FROM equipo_jugador ej WHERE ej.id_equipo = e.id) AS integrantes,
             (SELECT count(*)::int FROM desafio d WHERE e.id IN (d.id_equipo_desafiado, d.id_equipo_desafiante)) AS desafios
@@ -63,6 +64,8 @@ async function buscarEquipos(texto) {
     correoCapitan: f.correo_capitan,
     integrantes: f.integrantes,
     desafios: f.desafios,
+    nivel: f.nivel || 'Sin nivel',
+    puntaje: f.puntaje_nivel,
   }));
 }
 

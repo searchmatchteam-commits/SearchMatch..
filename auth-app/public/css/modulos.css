@@ -1039,3 +1039,14 @@ div.eq-sin-resultados p { margin: 0; }
 .sm-admin-menu__cuenta { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--borde); display: grid; gap: 4px; }
 .sm-admin-menu__cuenta form { margin: 0; }
 .sm-admin-menu__salir { width: 100%; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+
+/* Panel · Partidos: filtros por estado, marcador y paginación */
+.sm-chips-estado { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+.sm-chip-estado { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--borde); border-radius: 999px; color: var(--texto-suave); text-decoration: none; font-size: .9rem; }
+.sm-chip-estado span { font-weight: 700; color: var(--texto); }
+.sm-chip-estado--activo { border-color: var(--verde-borde); background: var(--verde-tenue); color: var(--texto); }
+.sm-marcador { display: inline-block; margin: 0 8px; padding: 0 8px; border-radius: 6px; background: var(--verde-tenue); color: var(--verde); font-variant-numeric: tabular-nums; }
+.sm-estado--programado { color: var(--verde); }
+.sm-estado--por-registrar { color: #f5a524; }
+.sm-estado--cancelado { color: var(--texto-suave); }
+.sm-paginacion { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; color: var(--texto-suave); font-size: .9rem; }
