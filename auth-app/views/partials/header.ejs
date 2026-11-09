@@ -144,10 +144,7 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 4.4 3.4 8.3 8 9 4.6-.7 8-4.6 8-9V6z" /><path d="m9 12 2 2 4-4" /></svg>
             </a>
           <% } %>
-          <!-- NUEVO: AG-001 agenda y NT-002/NT-003 campana con el contador de no leídas -->
-          <a class="sm-icono-nav" href="/agenda" title="Agenda de partidos" aria-label="Agenda de partidos">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
-          </a>
+          <!-- NT-002/NT-003 campana con el contador de no leídas. La agenda (AG-001) está en el dock de abajo ("Calendario") -->
           <a class="sm-icono-nav" href="/notificaciones" title="Notificaciones"
              aria-label="Notificaciones<%= locals.notificacionesSinLeer ? `, ${notificacionesSinLeer} sin leer` : '' %>">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 20a2 2 0 0 0 4 0" /></svg>
