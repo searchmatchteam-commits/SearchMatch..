@@ -15,7 +15,7 @@
     <!-- ============ ENCABEZADO DEL EQUIPO ============ -->
     <!-- Una sola tarjeta: escudo + chip, nombre y datos a la izquierda,
          las dos acciones principales del capitán y, debajo, enlaces secundarios de texto. -->
-    <header class="eq-hero revelar">
+    <header class="eq-hero revelar<%= equipo.colores ? ' sm-carta-equipo' : '' %>"<% if (equipo.colores) { %> style="<%= equipo.colores.estilo %>"<% } %>>
       <div class="eq-hero__identidad">
         <!-- Escudo: el capitán lo cambia aquí (equipo.js lo reduce y lo sube a POST /equipos/:id/escudo) -->
         <div class="eq-escudo eq-hero__escudo">

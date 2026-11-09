@@ -20,7 +20,20 @@ async function equipoOcupado(cliente, idsEquipos, fecha, hora) {
   return rowCount > 0;
 }
 
-async function programar(authId, idDesafio, { fecha, hora, idModalidad, idCancha }) {
+/**
+ * Camisetas de los dos equipos de un desafío (para elegir la equipación al programar el partido).
+ * @returns {Promise<{desafiante: object, desafiado: object}>} filas con camiseta_local y camiseta_visita.
+ */
+async function camisetasDelDesafio(idEquipoDesafiante, idEquipoDesafiado) {
+  const { rows } = await pool.query(
+    'SELECT id, camiseta_local, camiseta_visita FROM equipo WHERE id = ANY($1::int[])',
+    [[idEquipoDesafiante, idEquipoDesafiado]]
+  );
+  const de = (id) => rows.find((r) => r.id === id) || { id, camiseta_local: null, camiseta_visita: null };
+  return { desafiante: de(idEquipoDesafiante), desafiado: de(idEquipoDesafiado) };
+}
+
+async function programar(authId, idDesafio, { fecha, hora, idModalidad, idCancha, equipacion = {} }) {
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
@@ -56,8 +69,9 @@ async function programar(authId, idDesafio, { fecha, hora, idModalidad, idCancha
     }
     if (!resultado) {
       const partido = await cliente.query(
-        `INSERT INTO partido (hora, fecha, id_modalidad, id_desafio, id_cancha) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-        [hora, fecha, idModalidad, idDesafio, idCancha]
+        `INSERT INTO partido (hora, fecha, id_modalidad, id_desafio, id_cancha, camiseta_desafiante, camiseta_desafiado)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+        [hora, fecha, idModalidad, idDesafio, idCancha, equipacion.desafiante || null, equipacion.desafiado || null]
       );
       idPartido = partido.rows[0].id;
       await cliente.query(
@@ -90,6 +104,10 @@ const SQL_PARTIDO = `
          (p.fecha + p.hora) <= ${SQL_AHORA} AS ya_empezo,
          d.id AS id_desafio, d.mensaje AS mensaje_desafio,
          d.id_equipo_desafiante, ea.nombre AS desafiante, d.id_equipo_desafiado, eb.nombre AS desafiado,
+         -- Equipación elegida al programar ('local' | 'visita') → el color de esa camiseta de cada equipo
+         CASE p.camiseta_desafiante WHEN 'local' THEN ea.camiseta_local WHEN 'visita' THEN ea.camiseta_visita END AS color_desafiante,
+         CASE p.camiseta_desafiado WHEN 'local' THEN eb.camiseta_local WHEN 'visita' THEN eb.camiseta_visita END AS color_desafiado,
+         p.camiseta_desafiante, p.camiseta_desafiado,
          m.nombre AS modalidad, m.cantidad_de_jugadores AS jugadores,
          ca.id AS id_cancha, ca.nombre AS cancha, rd.nombre AS recinto, rd.telefono,
          dir.calle, dir.numero, co.nombre AS comuna
@@ -216,6 +234,7 @@ async function proximoDeEquipo(idEquipo) {
 }
 
 module.exports = {
+  camisetasDelDesafio,
   programar,
   obtener,
   registrarResultado,

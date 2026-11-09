@@ -32,6 +32,14 @@
       </div>
       <dl class="sm-datos">
         <div><dt>Modalidad</dt><dd><%= partido.modalidad %> · <%= partido.jugadores %> jugadores por equipo</dd></div>
+        <% if (partido.color_desafiante || partido.color_desafiado) { %>
+          <div><dt>Equipación</dt><dd>
+            <% [[partido.desafiante, partido.color_desafiante, partido.camiseta_desafiante], [partido.desafiado, partido.color_desafiado, partido.camiseta_desafiado]].filter((e) => e[1]).forEach(function (e, i) { %>
+              <%= i ? ' · ' : '' %><svg class="sm-camiseta" viewBox="0 0 24 24" style="--color:<%= e[1] %>" aria-hidden="true"><path d="M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z" /></svg>
+              <%= e[0] %> (<%= e[2] === 'local' ? 'local' : 'visita' %>)
+            <% }) %>
+          </dd></div>
+        <% } %>
         <div><dt>Cancha</dt><dd><a href="/canchas/<%= partido.id_cancha %>"><%= partido.cancha %></a> · <%= partido.recinto %></dd></div>
         <div><dt>Dirección</dt><dd><%= partido.calle %> <%= partido.numero || '' %>, <%= partido.comuna %></dd></div>
         <div><dt>Teléfono del recinto</dt><dd><% if (partido.telefono) { %><a href="tel:<%= partido.telefono %>"><%= partido.telefono %></a><% } else { %>—<% } %></dd></div>

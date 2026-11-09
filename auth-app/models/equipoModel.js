@@ -12,6 +12,7 @@ const { pool } = require('../config/db');
 const { comprimirOConservar } = require('../config/imagenes');
 const { NIVELES, POSICIONES, ESTADISTICAS } = require('../config/perfilJugador');
 const { MODALIDADES, FORMACIONES, formacionValida, textoModalidades, MAX_EQUIPOS_COMO_CAPITAN } = require('../config/equipo');
+const { coloresDe } = require('../config/coloresEquipo');
 
 // Nombres aceptados en los catálogos (se buscan en minúsculas).
 const NOMBRES_ROL_CAPITAN = ['capitán', 'capitan'];
@@ -63,7 +64,7 @@ function urlEscudo(fila) {
  */
 async function obtenerEquipoDeCapitan(authId) {
   const { rows } = await pool.query(
-    `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel
+    `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, e.color_primario, e.color_secundario, e.camiseta_local, e.camiseta_visita, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel
        FROM usuario u
        JOIN equipo e ON e.id_usuario_creador = u.id AND e.activo
        LEFT JOIN modalidad m ON m.id = e.id_modalidad
@@ -84,6 +85,7 @@ async function obtenerEquipoDeCapitan(authId) {
     nivel: fila.nivel,
     detalle: detalleEquipo(fila),
     escudo: urlEscudo(fila),
+    colores: coloresDe(fila),
   };
 }
 
@@ -123,7 +125,7 @@ function etiquetaPosicion(nombreDb) {
 // El creador los encuentra aunque falte su fila en equipo_jugador o en jugador.
 // $2: un equipo en particular (o null para todos). Primero los que capitanea.
 const SQL_MIS_EQUIPOS = `
-  SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel,
+  SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, e.color_primario, e.color_secundario, e.camiseta_local, e.camiseta_visita, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel,
          e.puntaje_nivel, -- IN-001: puntaje y nivel en el inicio
          e.id_usuario_creador = u.id AS soy_capitan, e.latitud::float8 AS latitud, e.longitud::float8 AS longitud,
          (SELECT json_agg(json_build_object('jugadores', mm.cantidad_de_jugadores, 'formacion', em.formacion)
@@ -150,6 +152,7 @@ function filaMiEquipo(fila) {
     nivel: fila.nivel || null,
     puntaje: fila.puntaje_nivel, // IN-001
     escudo: urlEscudo(fila),
+    colores: coloresDe(fila),
     soyCapitan: Boolean(fila.soy_capitan),
     // Dónde juega (EQ-UB); null si el capitán aún no la marca. Solo la ven sus integrantes.
     ubicacion: fila.latitud === null || fila.latitud === undefined ? null : { lat: fila.latitud, lng: fila.longitud },
@@ -192,7 +195,7 @@ async function listarMisEquipos(authId) {
  */
 async function listarEquiposActivosDeJugador(idJugador) {
   const { rows } = await pool.query(
-    `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, n.nombre AS nivel,
+    `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, e.color_primario, e.color_secundario, e.camiseta_local, e.camiseta_visita, n.nombre AS nivel,
             e.id_usuario_creador = j.id_usuario AS capitan
        FROM jugador j
        JOIN equipo e ON e.activo
@@ -205,7 +208,7 @@ async function listarEquiposActivosDeJugador(idJugador) {
     [idJugador]
   );
   return rows.map((fila) => ({
-    id: fila.id, nombre: fila.nombre, zona: fila.zona, nivel: fila.nivel, escudo: urlEscudo(fila), capitan: fila.capitan,
+    id: fila.id, nombre: fila.nombre, zona: fila.zona, nivel: fila.nivel, escudo: urlEscudo(fila), colores: coloresDe(fila), capitan: fila.capitan,
   }));
 }
 
@@ -622,7 +625,7 @@ async function responderSolicitud(authId, idSolicitud, aceptar) {
  */
 async function listarRivales(idEquipo, { idRegion = null, idComuna = null } = {}) {
   const { rows } = await pool.query(
-    `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel, e.puntaje_nivel,
+    `SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, e.color_primario, e.color_secundario, e.camiseta_local, e.camiseta_visita, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel, e.puntaje_nivel,
             EXISTS (SELECT 1 FROM desafio d JOIN estado_desafio ed ON ed.id = d.id_estado_desafio
                      WHERE d.id_equipo_desafiante = $1 AND d.id_equipo_desafiado = e.id
                        AND lower(ed.nombre) = $2) AS enviado,
@@ -671,6 +674,7 @@ async function listarRivales(idEquipo, { idRegion = null, idComuna = null } = {}
     modalidades: fila.modalidades || [],
     comunes: fila.comunes || [],
     escudo: urlEscudo(fila),
+    colores: coloresDe(fila),
     desafio: fila.enviado ? 'enviado' : fila.recibido ? 'recibido' : null,
     // EQ-UB: con un decimal (null si alguno de los dos no marcó su ubicación)
     distanciaKm: fila.distancia_km === null ? null : Math.round(fila.distancia_km * 10) / 10,
@@ -802,7 +806,7 @@ async function enviarDesafio(authId, idRival, mensaje, jugadores = null, idEquip
  *        ubicacion ({lat, lng} o null, EQ-UB) es opcional: paso 3 del wizard.
  * @returns {Promise<{id: number}>} El id del equipo creado.
  */
-async function crearEquipo(authId, { nombre, correo, zona, nivel, modalidades, idComuna = null, ubicacion = null }) { // CORRECCIÓN: regla 11 (idComuna)
+async function crearEquipo(authId, { nombre, correo, zona, nivel, modalidades, idComuna = null, ubicacion = null, colores = {} }) { // CORRECCIÓN: regla 11 (idComuna)
   const cliente = await pool.connect();
   try {
     await cliente.query('BEGIN');
@@ -841,11 +845,12 @@ async function crearEquipo(authId, { nombre, correo, zona, nivel, modalidades, i
     // CORRECCIÓN: regla 11 — se guarda la comuna elegida de la lista (id_comuna).
     const equipo = await cliente.query(
       `INSERT INTO equipo (nombre, zona, correo_contacto, id_modalidad, id_nivel, id_usuario_creador, puntaje_nivel, id_comuna,
-                           latitud, longitud)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                           latitud, longitud, color_primario, color_secundario, camiseta_local, camiseta_visita)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
        RETURNING id`,
       [nombre, zona, correo, modalidad.rows[0].id, filaNivel.rows[0].id, idUsuario, filaNivel.rows[0].puntaje_min, idComuna,
-        redondearCoordenada(ubicacion && ubicacion.lat), redondearCoordenada(ubicacion && ubicacion.lng)] // EQ-UB (opcional)
+        redondearCoordenada(ubicacion && ubicacion.lat), redondearCoordenada(ubicacion && ubicacion.lng), // EQ-UB (opcional)
+        colores.color_primario || null, colores.color_secundario || null, colores.camiseta_local || null, colores.camiseta_visita || null]
     );
     const idEquipo = equipo.rows[0].id;
     await escribirModalidades(cliente, idEquipo, modalidades);
@@ -881,7 +886,7 @@ async function listarEquipos(authId) {
          LEFT JOIN jugador j ON j.id_usuario = u.id
         WHERE u.auth_id = $1
      )
-     SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel,
+     SELECT e.id, e.nombre, coalesce(cz.nombre, e.zona) AS zona, e.escudo_actualizado, e.color_primario, e.color_secundario, e.camiseta_local, e.camiseta_visita, m.cantidad_de_jugadores AS jugadores, ${SQL_MODALIDADES_EQUIPO}, n.nombre AS nivel,
             e.id_usuario_creador = yo.id_usuario AS es_capitan,
             EXISTS (SELECT 1 FROM equipo_jugador ej
                      WHERE ej.id_equipo = e.id AND ej.id_jugador = yo.id_jugador) AS es_miembro,
@@ -906,6 +911,7 @@ async function listarEquipos(authId) {
     modalidad: modalidadesDe(fila),
     detalle: detalleEquipo(fila),
     escudo: urlEscudo(fila),
+    colores: coloresDe(fila),
     relacion: fila.es_capitan ? 'capitan' : fila.es_miembro ? 'miembro' : fila.pendiente ? 'pendiente' : null,
   }));
 }

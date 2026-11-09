@@ -1,4 +1,5 @@
 const partidoModel = require('../models/partidoModel');
+const { sugerirEquipaciones, validarEquipaciones, camisetasDe } = require('../config/coloresEquipo');
 const desafioModel = require('../models/desafioModel');
 const canchaModel = require('../models/canchaModel');
 const notificacionModel = require('../models/notificacionModel');
@@ -37,14 +38,30 @@ function noDisponible(res) {
 }
 
 async function renderProgramar(req, res, desafio, { status = 200, datos = {}, erroresCampo = {}, error = null } = {}) {
-  const [modalidades, canchas] = await Promise.all([canchaModel.listarModalidades(), canchaModel.buscarCanchas({})]);
+  const [modalidades, canchas, camisetas] = await Promise.all([
+    canchaModel.listarModalidades(),
+    canchaModel.buscarCanchas({}),
+    partidoModel.camisetasDelDesafio(desafio.id_equipo_desafiante, desafio.id_equipo_desafiado),
+  ]);
+  // Equipación: las camisetas de cada equipo y la combinación sugerida (la más distinta)
+  const sugerida = sugerirEquipaciones(camisetas.desafiante, camisetas.desafiado);
   return res.status(status).render('partidos/programar', {
     titulo: 'Programar partido',
     pagina: 'equipo',
     desafio,
     modalidades,
     canchas,
-    datos: { idModalidad: desafio.id_modalidad, ...datos },
+    datos: {
+      idModalidad: desafio.id_modalidad,
+      camisetaDesafiante: sugerida.desafiante,
+      camisetaDesafiado: sugerida.desafiado,
+      ...datos,
+    },
+    equipacion: {
+      desafiante: camisetasDe(camisetas.desafiante),
+      desafiado: camisetasDe(camisetas.desafiado),
+      choque: sugerida.choque,
+    },
     duracion: DURACION_PARTIDO_MIN,
     erroresCampo,
     error,
@@ -77,7 +94,11 @@ async function programar(req, res, next) {
   try {
     const desafio = await desafioDelCapitan(req);
     if (!desafio) return res.redirect(`/desafios/${idValido(req.params.idDesafio) || ''}?aviso=sin-permiso`);
-    const datos = req.datosFormulario;
+    // Equipación: cada equipo con una de sus camisetas, sin que ambos vistan del mismo color
+    const camisetas = await partidoModel.camisetasDelDesafio(desafio.id_equipo_desafiante, desafio.id_equipo_desafiado);
+    const { equipacion, error: errorEquipacion } = validarEquipaciones(req.body, camisetas.desafiante, camisetas.desafiado);
+    const datos = { ...req.datosFormulario, equipacion, camisetaDesafiante: equipacion.desafiante, camisetaDesafiado: equipacion.desafiado };
+    if (errorEquipacion) req.erroresCampo = { ...req.erroresCampo, equipacion: errorEquipacion };
     if (Object.keys(req.erroresCampo).length > 0) {
       return await renderProgramar(req, res, desafio, { status: 400, datos, erroresCampo: req.erroresCampo });
     }

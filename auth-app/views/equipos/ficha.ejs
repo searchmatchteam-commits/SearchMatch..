@@ -9,7 +9,7 @@
 %>
 <section class="eq">
   <div class="contenedor">
-    <header class="eq-cabecera revelar">
+    <header class="eq-cabecera revelar<%= equipo.colores ? ' sm-carta-equipo' : '' %>"<% if (equipo.colores) { %> style="<%= equipo.colores.estilo %>"<% } %>>
       <div class="eq-cabecera__identidad">
         <div class="eq-escudo"><span class="eq-escudo__imagen"><%- include('../partials/escudo-equipo', { equipo }) %></span></div>
         <div class="eq-cabecera__texto">
@@ -19,6 +19,9 @@
           <ul class="eq-cabecera__datos">
             <li>Comuna: <strong><%= equipo.comuna || 'Sin definir' %></strong></li>
             <li>Nivel: <strong><%= equipo.nivel || 'Sin nivel' %></strong> · <%= equipo.puntaje_nivel %> pts</li>
+            <% if (equipo.colores && equipo.colores.local) { %>
+            <li>Camisetas: <span class="sm-carta-equipo__camisetas"><% [['Local', equipo.colores.local], ['Visita', equipo.colores.visita]].filter((c) => c[1]).forEach(function (c) { %><svg class="sm-camiseta" viewBox="0 0 24 24" style="--color:<%= c[1] %>" role="img" aria-label="Camiseta de <%= c[0].toLowerCase() %>"><title><%= c[0] %></title><path d="M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z" /></svg><% }) %></span></li>
+          <% } %>
           </ul>
           <p class="eq-cabecera__stats"><%= equipo.modalidad || '' %><% if (equipo.jugadores) { %> · <%= equipo.jugadores %> jugadores<% } %><% if (equipo.region) { %> · <%= equipo.region %><% } %></p>
           <% if (buscadas.length > 0 && equipo.activo) { %><p class="eq-cabecera__stats">Busca: <strong class="texto-verde"><%= buscadas.join(', ') %></strong></p><% } %>

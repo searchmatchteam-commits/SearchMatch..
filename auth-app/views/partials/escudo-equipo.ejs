@@ -1,1 +1,1 @@
-<% if (equipo.escudo) { %><img class="escudo-equipo__img" src="<%= equipo.escudo %>" alt="" loading="lazy" decoding="async" /><% } else { %><%= equipo.nombre.charAt(0).toUpperCase() %><% } %>
+<% if (equipo.escudo) { %><img class="escudo-equipo__img" src="<%= equipo.escudo %>" alt="" loading="lazy" decoding="async" /><% } else if (equipo.colores) { %><span class="escudo-equipo__inicial" style="<%= equipo.colores.estilo %>"><%= equipo.nombre.charAt(0).toUpperCase() %></span><% } else { %><%= equipo.nombre.charAt(0).toUpperCase() %><% } %>

@@ -229,6 +229,8 @@
           <input type="hidden" name="escudo" value="<%= datos.escudo || '' %>" data-escudo-datos />
         </div>
 
+        <%- include('partials/sm-colores-equipo', { colores: equipo.colores }) %>
+
         <div class="campo">
           <label for="nombre_equipo">Nombre del equipo</label>
           <input type="text" id="nombre_equipo" name="nombre_equipo" placeholder="Ej. Los Titanes F.C." value="<%= equipo.nombre || '' %>"

@@ -1,0 +1,30 @@
+<%#
+  Colores del equipo (config/coloresEquipo.js): los dos de su carta y sus dos camisetas.
+  Lo usan crear-equipo, equipos/editar y el paso "Crear equipo" del wizard de jugador.
+  Parámetro: colores ({ color_primario, color_secundario, camiseta_local, camiseta_visita }); si falta, los predeterminados.
+  La vista previa se actualiza mientras se eligen (sm-formularios.js, [data-colores-equipo]).
+%>
+<%
+  const predeterminados = { color_primario: '#16a34a', color_secundario: '#ffffff', camiseta_local: '#16a34a', camiseta_visita: '#ffffff' };
+  const valores = Object.assign({}, predeterminados, locals.colores || {});
+  Object.keys(predeterminados).forEach((campo) => { if (!/^#[0-9a-f]{6}$/.test(valores[campo] || '')) valores[campo] = predeterminados[campo]; });
+  const camiseta = 'M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z';
+%>
+<fieldset class="sm-colores" data-colores-equipo
+          style="--c1:<%= valores.color_primario %>;--c2:<%= valores.color_secundario %>;--cl:<%= valores.camiseta_local %>;--cv:<%= valores.camiseta_visita %>">
+  <legend class="sm-colores__titulo">Colores del equipo</legend>
+  <p class="campo__ayuda">Los colores personalizan la carta de tu equipo. Las dos camisetas sirven para elegir la equipación de cada partido y que nunca juegues con el mismo color que el rival.</p>
+
+  <div class="sm-colores__vista" aria-hidden="true">
+    <span class="sm-colores__carta"><span class="sm-colores__franja"></span></span>
+    <svg class="sm-colores__camiseta sm-colores__camiseta--local" viewBox="0 0 24 24"><path d="<%= camiseta %>" /></svg>
+    <svg class="sm-colores__camiseta sm-colores__camiseta--visita" viewBox="0 0 24 24"><path d="<%= camiseta %>" /></svg>
+  </div>
+
+  <div class="sm-colores__grilla">
+    <label class="sm-colores__campo"><input type="color" name="color_primario" value="<%= valores.color_primario %>" data-var="--c1" /> Color principal</label>
+    <label class="sm-colores__campo"><input type="color" name="color_secundario" value="<%= valores.color_secundario %>" data-var="--c2" /> Color secundario</label>
+    <label class="sm-colores__campo"><input type="color" name="camiseta_local" value="<%= valores.camiseta_local %>" data-var="--cl" /> Camiseta de local</label>
+    <label class="sm-colores__campo"><input type="color" name="camiseta_visita" value="<%= valores.camiseta_visita %>" data-var="--cv" /> Camiseta de visita</label>
+  </div>
+</fieldset>

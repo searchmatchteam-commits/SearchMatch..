@@ -6,6 +6,7 @@
 
 const { pool } = require('../config/db');
 const { MAX_EQUIPOS_COMO_CAPITAN, textoModalidades } = require('../config/equipo');
+const { coloresDe } = require('../config/coloresEquipo');
 const { ZONA_HORARIA } = require('../config/canchas');
 const desafioModel = require('./desafioModel');
 
@@ -18,7 +19,7 @@ const LARGO_MAXIMO_COMENTARIO = 500; // comentario.mensaje VARCHAR(500)
 /** Datos públicos del equipo (también si está inactivo, para mostrarlo como tal). Nunca el correo de contacto. */
 async function obtenerFicha(idEquipo) {
   const { rows } = await pool.query(
-    `SELECT e.id, e.nombre, e.activo, e.puntaje_nivel, e.escudo_actualizado, e.id_usuario_creador, e.id_modalidad,
+    `SELECT e.id, e.nombre, e.activo, e.puntaje_nivel, e.escudo_actualizado, e.color_primario, e.color_secundario, e.camiseta_local, e.camiseta_visita, e.id_usuario_creador, e.id_modalidad,
             coalesce(c.nombre, e.zona) AS comuna, rg.nombre AS region,
             m.nombre AS modalidad, m.cantidad_de_jugadores AS jugadores, n.nombre AS nivel,
             (SELECT array_agg(mm.cantidad_de_jugadores ORDER BY mm.cantidad_de_jugadores)
@@ -36,7 +37,7 @@ async function obtenerFicha(idEquipo) {
   // GET /equipos/:id/escudo solo sirve escudos de equipos activos: el inactivo muestra su inicial.
   // modalidad: todas las que juega ("Fútbol 7 y 11"); jugadores solo si juega una
   const modalidades = fila.modalidades || [fila.jugadores];
-  return { ...fila, modalidad: textoModalidades(modalidades) || fila.modalidad, jugadores: modalidades.length === 1 ? fila.jugadores : null,
+  return { ...fila, colores: coloresDe(fila), modalidad: textoModalidades(modalidades) || fila.modalidad, jugadores: modalidades.length === 1 ? fila.jugadores : null,
     escudo: fila.activo && fila.escudo_actualizado ?`/equipos/${fila.id}/escudo?v=${fila.escudo_actualizado.getTime()}` : null };
 }
 
@@ -362,7 +363,8 @@ async function cancelarSolicitud(authId, idSolicitud) {
 /** Valores actuales del formulario de edición (incluye el correo de contacto: solo lo ve el capitán). */
 async function datosParaEditar(idEquipo) {
   const { rows } = await pool.query(
-    `SELECT e.nombre, e.correo_contacto, n.nombre AS nivel, e.id_comuna, c.id_region
+    `SELECT e.nombre, e.correo_contacto, n.nombre AS nivel, e.id_comuna, c.id_region,
+            e.color_primario, e.color_secundario, e.camiseta_local, e.camiseta_visita
        FROM equipo e
        LEFT JOIN nivel n ON n.id = e.id_nivel
        LEFT JOIN comunas c ON c.id = e.id_comuna
@@ -378,14 +380,18 @@ async function datosParaEditar(idEquipo) {
  * @param {{ nombre: string, correo: string, nivel: string, idComuna: number, zona: string }} datos - nivel = nombre del catálogo.
  * @returns {Promise<boolean>} false si el equipo no es de esta cuenta o está inactivo.
  */
-async function actualizarDatos(authId, idEquipo, { nombre, correo, nivel, idComuna, zona }) {
+async function actualizarDatos(authId, idEquipo, { nombre, correo, nivel, idComuna, zona, colores = {} }) {
+  // Colores (config/coloresEquipo.js): sin valor se conservan los que tenía
   const { rowCount } = await pool.query(
     `UPDATE equipo e
-        SET nombre = $3, correo_contacto = $4, id_nivel = n.id, id_comuna = $6, zona = $7
+        SET nombre = $3, correo_contacto = $4, id_nivel = n.id, id_comuna = $6, zona = $7,
+            color_primario = coalesce($8, e.color_primario), color_secundario = coalesce($9, e.color_secundario),
+            camiseta_local = coalesce($10, e.camiseta_local), camiseta_visita = coalesce($11, e.camiseta_visita)
        FROM usuario u, nivel n
       WHERE e.id = $2 AND e.activo AND u.id = e.id_usuario_creador AND u.auth_id = $1
         AND lower(n.nombre) = lower($5)`,
-    [authId, idEquipo, nombre, correo, nivel, idComuna, zona]
+    [authId, idEquipo, nombre, correo, nivel, idComuna, zona,
+      colores.color_primario || null, colores.color_secundario || null, colores.camiseta_local || null, colores.camiseta_visita || null]
   );
   return rowCount > 0;
 }

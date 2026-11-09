@@ -36,6 +36,8 @@
           </span>
         </div>
 
+        <%- include('../partials/sm-colores-equipo', { colores: datos.colores }) %>
+
         <div class="campo">
           <label for="nombre_equipo">Nombre del equipo</label>
           <input type="text" id="nombre_equipo" name="nombre_equipo" value="<%= datos.nombre || '' %>" maxlength="100"

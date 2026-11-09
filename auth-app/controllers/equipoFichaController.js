@@ -7,6 +7,7 @@ const { idValido } = require('../middlewares/validadoresAdmin');
 const ubicacionModel = require('../models/ubicacionModel');
 const { leerEscudo } = require('./jugadorController');
 const { NIVELES } = require('../config/perfilJugador');
+const { PREDETERMINADOS } = require('../config/coloresEquipo');
 
 const AVISOS = {
   editado: 'Datos del equipo actualizados.',
@@ -164,6 +165,8 @@ async function formularioEditar(req, res, next) {
         nivel: claveNivel(actuales.nivel),
         idRegion: actuales.id_region,
         idComuna: actuales.id_comuna,
+        // Equipos anteriores a los colores: el formulario parte con los predeterminados
+        colores: Object.fromEntries(Object.keys(PREDETERMINADOS).map((campo) => [campo, actuales[campo] || PREDETERMINADOS[campo]])),
         escudo: '',
       },
     });

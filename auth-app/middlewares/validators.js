@@ -4,6 +4,8 @@
 // (nunca las contraseñas). Si todo está bien, deja los datos limpios en
 // req.datosFormulario para el controlador.
 
+const { leerColores } = require('../config/coloresEquipo');
+
 // Expresión regular sencilla para validar un correo.
 const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -374,6 +376,10 @@ function revisarDatosEquipo(body, { conContacto = true, conZona = conContacto, c
     else if (zona.length > LONGITUD_MAXIMA_ZONA) paso2.push(`La zona no puede superar los ${LONGITUD_MAXIMA_ZONA} caracteres.`);
   }
 
+  // Colores del equipo (su carta) y de sus dos camisetas (equipación de cada partido)
+  const { colores, errores: erroresColores } = leerColores(body);
+  paso1.push(...erroresColores);
+
   if (conModalidades && modalidades.length === 0) paso2.push('Elige al menos un tipo de fútbol.');
 
   // CORRECCIÓN: regla 11 — comuna de la lista (para filtrar y recomendar rivales por ubicación).
@@ -384,7 +390,7 @@ function revisarDatosEquipo(body, { conContacto = true, conZona = conContacto, c
 
   return {
     datos: {
-      nombre, correo, nivel, zona, modalidades,
+      nombre, correo, nivel, zona, modalidades, colores,
       idComuna: comunaValida ? idComuna : null, // CORRECCIÓN: regla 11
       idRegion: Number(body.id_region) || null, // CORRECCIÓN: regla 11 (solo para re-pintar el formulario)
     },

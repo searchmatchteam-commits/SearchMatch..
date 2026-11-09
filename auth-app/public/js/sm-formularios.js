@@ -118,4 +118,12 @@ document.addEventListener('DOMContentLoaded', () => {
     selectRegion.addEventListener('change', filtrar);
     filtrar();
   });
+
+  // Colores del equipo (partials/sm-colores-equipo): la vista previa de la carta y las camisetas sigue a cada selector.
+  document.querySelectorAll('[data-colores-equipo]').forEach((grupo) => {
+    grupo.addEventListener('input', (evento) => {
+      const variable = evento.target.dataset.var;
+      if (variable) grupo.style.setProperty(variable, evento.target.value);
+    });
+  });
 });

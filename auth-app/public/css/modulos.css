@@ -1003,3 +1003,24 @@ div.eq-sin-resultados p { margin: 0; }
 /* DE-007: filtros de región y comuna de los rivales (panel del capitán) */
 .eq-filtro-rivales { margin: 4px 0 16px; }
 .eq-filtro-rivales .sm-form__acciones { margin-top: 4px; }
+
+/* Colores del equipo (partials/sm-colores-equipo) y equipación de cada partido (partidos/programar y detalle) */
+.sm-colores { border: 1px solid var(--borde); border-radius: var(--radio-chico); padding: 14px 16px; margin: 16px 0; min-width: 0; }
+.sm-colores__titulo { font-weight: 700; padding: 0 6px; }
+.sm-colores__vista { display: flex; align-items: center; gap: 14px; margin: 10px 0 14px; }
+.sm-colores__carta { width: 52px; height: 70px; border-radius: 8px; background: var(--c1); border: 1px solid var(--borde-fuerte); overflow: hidden; display: grid; align-items: end; }
+.sm-colores__franja { height: 30%; background: var(--c2); }
+.sm-colores__camiseta { width: 44px; height: 44px; stroke: var(--borde-fuerte); stroke-width: .6; }
+.sm-colores__camiseta--local { fill: var(--cl); }
+.sm-colores__camiseta--visita { fill: var(--cv); }
+.sm-colores__grilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.sm-colores__campo { display: flex; align-items: center; gap: 10px; font-size: .92rem; color: var(--texto-suave); cursor: pointer; }
+.sm-colores__campo input[type="color"] { inline-size: 40px; block-size: 32px; padding: 0; border: 1px solid var(--borde-fuerte); border-radius: 6px; background: none; cursor: pointer; flex: none; }
+.sm-equipacion { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 8px 0; }
+.sm-equipacion__equipo { border: 1px solid var(--borde); border-radius: var(--radio-chico); padding: 10px 12px; min-width: 0; }
+.sm-equipacion__equipo legend { font-weight: 700; padding: 0 4px; }
+.sm-equipacion__opcion { display: inline-flex; align-items: center; gap: 6px; margin: 6px 14px 0 0; cursor: pointer; }
+.sm-camiseta { width: 26px; height: 26px; fill: var(--color); stroke: var(--borde-fuerte); stroke-width: .7; flex: none; vertical-align: middle; }
+.sm-carta-equipo { border-top: 4px solid var(--c1) !important; }
+.sm-carta-equipo__camisetas { display: inline-flex; gap: 6px; vertical-align: middle; }
+.escudo-equipo__inicial { display: grid; place-items: center; width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(180deg, var(--c1) 70%, var(--c2) 70%); color: var(--ct); }

@@ -21,7 +21,7 @@
     <ul class="dash-tequipos">
       <% misEquipos.forEach(function (equipo) {
            const cantidad = equipo.plantel.length; %>
-        <li class="dash-tequipo">
+        <li class="dash-tequipo<%= equipo.colores ? ' sm-carta-equipo' : '' %>"<% if (equipo.colores) { %> style="<%= equipo.colores.estilo %>"<% } %>>
           <span class="dash-tequipo__escudo" aria-hidden="true">
             <span class="dash-tequipo__escudo-forma"><span class="dash-tequipo__escudo-interior"><%- include('escudo-equipo', { equipo }) %></span></span>
           </span>
