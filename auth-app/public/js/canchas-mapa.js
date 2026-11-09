@@ -8,12 +8,27 @@ const CENTRO_SANTIAGO = [-33.45, -70.66];
 const ZOOM_INICIAL = 12;
 const ZOOM_MINIMO_ENCUADRE = 11; // si encuadrar todo aleja más que esto, se centra en Santiago
 
+/**
+ * La lista de canchas manda los recintos compactos ({ m, c, r }, ver canchasController.mapaCompacto);
+ * la ficha de una cancha manda la lista de objetos de siempre. Ambos quedan como objetos.
+ */
+function desempacar(datos) {
+  if (Array.isArray(datos)) return datos;
+  return datos.r.map((fila) => {
+    const canchas = [];
+    for (let i = 5; i < fila.length; i += 4) {
+      canchas.push({ id: fila[i], nombre: fila[i + 1], modalidad: datos.m[fila[i + 2]], precio: fila[i + 3] });
+    }
+    return { latitud: fila[0], longitud: fila[1], nombre: fila[2], direccion: fila[3], comuna: datos.c[fila[4]], canchas };
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const contenedor = document.getElementById('mapa-canchas');
   const datos = document.getElementById('datos-mapa');
   if (!contenedor || !datos || typeof L === 'undefined') return;
 
-  const recintos = JSON.parse(datos.textContent);
+  const recintos = desempacar(JSON.parse(datos.textContent));
   const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
 
   const mapa = L.map(contenedor).setView(CENTRO_SANTIAGO, ZOOM_INICIAL);

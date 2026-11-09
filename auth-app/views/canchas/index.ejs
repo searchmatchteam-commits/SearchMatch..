@@ -62,11 +62,12 @@
       <% if (filtros.vista === 'mapa' && canchas.length > 0) { %>
         <!-- DE-003: mapa con un marcador por recinto (Leaflet + OpenStreetMap, ver canchas-mapa.js); la lista va debajo -->
         <div class="dash-panel eq-panel">
-          <p class="dash-panel__nota"><%= recintosMapa.length %> <%= recintosMapa.length === 1 ? 'recinto' : 'recintos' %> en el mapa · toca un marcador para ver sus canchas</p>
+          <p class="dash-panel__nota"><%= mapa.total.toLocaleString('es-CL') %> <%= mapa.total === 1 ? 'recinto' : 'recintos' %> en el mapa · toca un marcador para ver sus canchas</p>
           <div class="sm-mapa" id="mapa-canchas" role="region" aria-label="Mapa de recintos con canchas"></div>
           <noscript><p class="dash-panel__nota">El mapa necesita JavaScript. Usa la vista de lista.</p></noscript>
         </div>
-        <script type="application/json" id="datos-mapa"><%- JSON.stringify(recintosMapa).replace(/</g, '\\u003c') %></script>
+        <%# Formato compacto (canchasController.mapaCompacto); ya viene escapado %>
+        <script type="application/json" id="datos-mapa"><%- mapa.json %></script>
       <% } %>
 
       <% if (!hayFiltrosActivos) { %>

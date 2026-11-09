@@ -51,6 +51,33 @@ function recintosParaMapa(canchas) {
   return [...porRecinto.values()];
 }
 
+/**
+ * Recintos del mapa en formato compacto (con miles de recintos pesa menos de la mitad que los objetos):
+ *   { m: [modalidades], c: [comunas], r: [[lat, lon, nombre, dirección, iComuna, id, nombre, iModalidad, precio, ...]] }
+ * Cada recinto lleva sus canchas en fila de a 4 valores; comunas y modalidades van una sola vez y se citan por
+ * índice. Las coordenadas se redondean a 5 decimales (~1 m). Lo arma de vuelta canchas-mapa.js.
+ * Va como texto JSON listo para un <script type="application/json"> (sin "<" que cierre la etiqueta).
+ */
+function mapaCompacto(recintos) {
+  const indices = { m: new Map(), c: new Map() };
+  const indice = (tipo, valor) => {
+    if (!indices[tipo].has(valor)) indices[tipo].set(valor, indices[tipo].size);
+    return indices[tipo].get(valor);
+  };
+  const redondear = (n) => Math.round(n * 1e5) / 1e5;
+  const r = recintos.map((recinto) => [
+    redondear(recinto.latitud), redondear(recinto.longitud), recinto.nombre, recinto.direccion, indice('c', recinto.comuna),
+    ...recinto.canchas.flatMap((cancha) => [cancha.id, cancha.nombre, indice('m', cancha.modalidad), cancha.precio]),
+  ]);
+  return JSON.stringify({ m: [...indices.m.keys()], c: [...indices.c.keys()], r }).replace(/</g, '\\u003c');
+}
+
+// El mapa sin filtros (todo Chile) se arma y serializa una vez por plazo, no en cada visita.
+const leerMapaSinFiltros = cacheBreve(PLAZO_CATALOGO_MS, async () => {
+  const recintos = recintosParaMapa(await leerCanchasSinFiltros());
+  return { total: recintos.length, json: mapaCompacto(recintos) };
+});
+
 async function listar(req, res, next) {
   const filtros = leerFiltros(req.query);
   try {
@@ -74,6 +101,15 @@ async function listar(req, res, next) {
     }
     const canchas = canchasSinComuna || await buscarCanchas();
     const hayFiltrosActivos = conFiltros();
+    let mapa = null;
+    if (filtros.vista === 'mapa' && req.query.parcial !== '1') {
+      if (hayFiltrosActivos) {
+        const recintos = recintosParaMapa(canchas);
+        mapa = { total: recintos.length, json: mapaCompacto(recintos) };
+      } else {
+        mapa = await leerMapaSinFiltros();
+      }
+    }
 
     // "Cargar más canchas" con JavaScript: devuelve solo el siguiente lote de tarjetas (sin la página).
     if (req.query.parcial === '1') {
@@ -113,7 +149,7 @@ async function listar(req, res, next) {
       largoMinimo: LARGO_MINIMO_BUSQUEDA,
       urlMapa: `/canchas?${parametros.toString()}`,
       urlLista: `/canchas?${parametros.toString()}${parametros.toString() ? '&' : ''}vista=lista`,
-      recintosMapa: recintosParaMapa(canchas),
+      mapa,
     });
   } catch (err) {
     return next(err);
@@ -164,4 +200,4 @@ async function ficha(req, res, next) {
   }
 }
 
-module.exports = { listar, ficha };
+module.exports = { listar, ficha, recintosParaMapa, mapaCompacto };
