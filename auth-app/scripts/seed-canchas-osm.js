@@ -67,7 +67,9 @@ const ALIAS_COMUNAS = {
 // Servidores públicos de Overpass (si uno falla o limita, se prueba el siguiente)
 const SERVIDORES_OVERPASS = [
   'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
 ];
 const REINTENTOS_POR_SERVIDOR = 3;
 
