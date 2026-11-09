@@ -17,9 +17,8 @@
     <h1 class="auth__titulo">Crear cuenta</h1>
     <p class="auth__subtitulo">Toma menos de un minuto. Después podrás completar tu perfil de jugador.</p>
 
-    <% if (locals.aviso) { %>
-      <div class="alerta alerta--exito" role="status"><%= aviso %></div>
-    <% } %>
+    <!-- Con Google la cuenta se crea con su nombre, correo y foto; lo demás se pide después (/completar-perfil) -->
+    <%- include('partials/auth-google', { textoGoogle: 'Regístrate con Google' }) %>
 
     <form action="/registro" method="POST" class="formulario" data-validar="registro" novalidate
           data-requiere-aceptar>
