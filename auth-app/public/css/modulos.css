@@ -1148,3 +1148,76 @@ body .eq-desafios:not([open]) { gap: 0; }
   .editor__rango::-webkit-slider-thumb { width: 26px; height: 26px; }
   .editor__rango::-moz-range-thumb { width: 26px; height: 26px; }
 }
+
+/* =====================================================================
+   Celular: revisión en 280–430 px (Galaxy Fold, iPhone SE/5, Galaxy S8, iPhone 14, Pixel 7)
+   ===================================================================== */
+
+/* Nombres largos: se cortan entre palabras; una palabra solo se parte si no cabe sola en la línea
+   (con "anywhere" la columna se encogía y partía "Fantasmine-s" o "Nom-bre") */
+body :is(.eq-hero__titulo, .dash-miequipo__nombre, .ceq-identidad__nombre) { overflow-wrap: break-word; }
+
+/* Dashboard, "Mi equipo": "Nivel: Intermedio · 300" baja de línea en vez de salirse de la tarjeta */
+body .dash-miequipo__datos li { flex-wrap: wrap; min-width: 0; max-width: 100%; }
+
+/* Cabecera de los paneles del dashboard: si el título no cabe junto al enlace o la etiqueta, estos bajan
+   a la línea siguiente (antes el título se apretaba en 3 líneas y "Buscar equipos" se partía) */
+body .dash-panel__cabecera { flex-wrap: wrap; row-gap: 8px; }
+body .dash-panel__cabecera > :not(.dash-panel__titulo) { flex: none; white-space: nowrap; }
+
+/* Posiciones que buscamos: "Mediocampista" no cabe en media columna en los celulares más angostos */
+@media (max-width: 380px) {
+  body .sm-chequeos { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Mi equipo: en celular angosto el escudo va arriba y el nombre usa todo el ancho */
+@media (max-width: 420px) {
+  body .eq-hero { padding: 18px; }
+  body .eq-hero__identidad {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "escudo" "texto" "acciones";
+    gap: 14px;
+  }
+  body .eq-hero__escudo { justify-self: start; } /* el botón de la cámara queda pegado al escudo */
+  body .eq-hero__escudo .eq-escudo__imagen { width: 72px; height: 72px; }
+}
+
+/* Crear equipo, tarjeta de identidad: "Capitán" arriba del texto (antes lo tapaba y dejaba ~45 px al nombre) */
+@media (max-width: 479px) {
+  body .ceq-identidad {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "escudo capitan" "escudo texto";
+    align-items: start;
+    gap: 6px 14px;
+  }
+  body .ceq-identidad > .ceq-escudo { grid-area: escudo; align-self: center; }
+  body .ceq-identidad > .ceq-identidad__texto { grid-area: texto; }
+  body .ceq-identidad > .ceq-capitan { grid-area: capitan; justify-self: start; }
+
+  /* Volver / Continuar: los dos caben dentro de la tarjeta */
+  body .wizard__nav { gap: 10px; }
+  body .wizard__nav .btn { min-width: 0; padding-left: 14px; padding-right: 14px; }
+  body .wizard__nav .btn[data-volver], body .wizard__nav .btn--oscuro { flex: 0 1 auto; }
+}
+
+/* Dashboard, "Mi equipo": en los más angostos el escudo va arriba y el nombre usa todo el ancho */
+@media (max-width: 360px) {
+  body .dash-miequipo__tarjeta { grid-template-columns: minmax(0, 1fr); }
+  body .dash-miequipo__escudo { justify-self: start; }
+}
+
+/* Galaxy Fold y similares (≤ 340 px) */
+@media (max-width: 340px) {
+  /* Barra superior: logo + tema + 2 botones caben sin desplazar la página de lado */
+  body .navbar__interior { padding: 0 12px; gap: 8px; }
+  body .navbar__nav { gap: 4px; }
+  body .navbar .btn--chico:not(.navbar__salir) { padding: 8px 9px; font-size: 0.74rem; letter-spacing: 0; }
+  body .navbar .sm-icono-nav { width: 36px; height: 36px; }
+  body .navbar__salir { width: 36px; height: 36px; min-height: 36px; }
+
+  /* Botones anchos: nunca más anchos que la pantalla; el texto baja de línea */
+  body .btn { max-width: 100%; white-space: normal; text-align: center; line-height: 1.2; }
+  body .navbar .btn { white-space: nowrap; }
+  body .contenedor { padding: 0 12px; }
+}
