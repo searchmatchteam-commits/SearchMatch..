@@ -1165,6 +1165,54 @@ body .dash-miequipo__datos li { flex-wrap: wrap; min-width: 0; max-width: 100%; 
 body .dash-panel__cabecera { flex-wrap: wrap; row-gap: 8px; }
 body .dash-panel__cabecera > :not(.dash-panel__titulo) { flex: none; white-space: nowrap; }
 
+/* Torneos: el filtro (select con nombres largos) nunca más ancho que la pantalla */
+body .tl-acciones { flex-wrap: wrap; min-width: 0; max-width: 100%; }
+body :is(.tl-filtrar, .tl-filtrar select) { min-width: 0; max-width: 100%; }
+body .tl-filtrar select { text-overflow: ellipsis; }
+
+/* Tabla de posiciones de una liga: sigue siendo tabla en celular (la regla de las tablas del panel la
+   convertía en tarjetas sin encabezados: cada número quedaba suelto en su línea) */
+@media (max-width: 719px) {
+  body .sm-tabla--posiciones { display: table; width: 100%; font-size: 0.82rem; }
+  body .sm-tabla--posiciones thead { position: static; width: auto; height: auto; overflow: visible; clip: auto; display: table-header-group; }
+  body .sm-tabla--posiciones tbody { display: table-row-group; width: auto; }
+  body .sm-tabla--posiciones tr { display: table-row; width: auto; padding: 0; border: 0; }
+  body .sm-tabla--posiciones :is(td, th) { display: table-cell; width: auto; padding: 8px 4px; text-align: center; border-top: 1px solid var(--borde); }
+  body .sm-tabla--posiciones .sm-tabla__equipo { text-align: left; min-width: 0; max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
+}
+/* GF y GC se ocultan en los celulares angostos (DG ya resume la diferencia) */
+@media (max-width: 420px) {
+  body .sm-tabla--posiciones :is(th, td):is(:nth-child(7), :nth-child(8)) { display: none; }
+}
+
+/* Fixture: los nombres se cortan con guion entre sílabas, no en cualquier letra */
+body .sm-partido__equipo { overflow-wrap: break-word; hyphens: auto; }
+@media (max-width: 420px) {
+  body .sm-partido { font-size: 0.88rem; }
+}
+
+/* Desafío y partido: en celular angosto los equipos van uno sobre otro con el "VS" al medio
+   (en tres columnas los nombres largos se partían letra a letra: "Esperanz-a") */
+@media (max-width: 420px) {
+  body .sm-versus { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  body .sm-versus__vs { justify-self: center; }
+}
+
+/* Modal de campeón en pantallas bajas (iPhone SE, celular con barra del navegador): cabe casi entero
+   y "Entendido" queda a la vista */
+body .vic__caja { max-height: calc(100dvh - 32px); }
+@media (max-height: 700px) {
+  body .vic__contenido { gap: 10px; padding: 22px 20px 20px; }
+  body .vic__trofeo { width: 64px; height: 64px; }
+  body .vic__trofeo svg { width: 40px; height: 40px; }
+}
+
+/* Torneo: en celular la pestaña del cuadrante mide lo que su contenido (sin el alto mínimo de escritorio,
+   que dejaba un recuadro vacío antes de que existan partidos) */
+@media (max-width: 640px) {
+  body .trn-panel--cuadrante { min-height: 0; }
+}
+
 /* Posiciones que buscamos: "Mediocampista" no cabe en media columna en los celulares más angostos */
 @media (max-width: 380px) {
   body .sm-chequeos { grid-template-columns: minmax(0, 1fr); }

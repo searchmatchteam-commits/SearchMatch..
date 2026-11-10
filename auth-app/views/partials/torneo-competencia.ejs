@@ -19,7 +19,7 @@
   <div class="dash-panel eq-panel">
     <h2 class="dash-panel__titulo">Tabla de posiciones</h2>
     <div class="sm-tabla-contenedor">
-      <table class="sm-tabla">
+      <table class="sm-tabla sm-tabla--posiciones">
         <thead>
           <tr>
             <th scope="col">#</th><th scope="col" class="sm-tabla__equipo">Equipo</th>
@@ -46,6 +46,10 @@
 
 <div class="dash-panel eq-panel <%= admin ? 'sm-cargar' : '' %>" <%- admin ? 'data-cargar-resultados' : '' %>>
   <h2 class="dash-panel__titulo"><%= esLlave ? 'Llave del torneo' : 'Fixture' %></h2>
+  <% if (!admin && torneo.rondas.length === 0) { %>
+    <%# Inscripciones cerradas y el torneo aún no empieza: sin esto quedaba un recuadro vacío %>
+    <p class="dash-panel__nota">Los partidos aparecerán aquí cuando el torneo comience.</p>
+  <% } %>
   <% if (admin) { %>
     <!-- Buscador y filtros: los aplica torneo-admin.js sin recargar -->
     <div class="sm-cargar__barra">
