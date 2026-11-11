@@ -1,5 +1,5 @@
 const { pool } = require('../config/db');
-const { CLAVES_DIAS_ISO, ZONA_HORARIA } = require('../config/canchas');
+const { CLAVES_DIAS_ISO, ZONA_HORARIA, HORARIO_REFERENCIAL } = require('../config/canchas');
 
 async function listarBloques(idCancha) {
   const { rows } = await pool.query(
@@ -18,6 +18,19 @@ async function listarBloques(idCancha) {
     [idCancha, CLAVES_DIAS_ISO]
   );
   return rows.map((fila) => ({ ...fila, reservasFuturas: fila.reservas_futuras }));
+}
+
+/**
+ * Horario que ven los jugadores: el cargado por el recinto o, si la cancha no tiene ningún bloque,
+ * el horario referencial todos los días (referencial: true, para avisarlo en pantalla).
+ */
+async function horarioPublico(idCancha) {
+  const bloques = await listarBloques(idCancha);
+  if (bloques.length > 0) return { bloques, referencial: false };
+  return {
+    referencial: true,
+    bloques: CLAVES_DIAS_ISO.map((dia) => ({ dia, apertura: HORARIO_REFERENCIAL.apertura, cierre: HORARIO_REFERENCIAL.cierre })),
+  };
 }
 
 async function crearBloque(idCancha, { dia, apertura, cierre }) {
@@ -47,4 +60,4 @@ async function eliminarBloque(idBloque) {
   return { idCancha: rows[0].id_cancha, diaCerrado: quedan.rowCount === 0 };
 }
 
-module.exports = { listarBloques, crearBloque, eliminarBloque };
+module.exports = { listarBloques, horarioPublico, crearBloque, eliminarBloque };

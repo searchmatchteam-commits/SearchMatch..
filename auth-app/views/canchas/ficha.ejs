@@ -43,6 +43,9 @@
         <header class="dash-panel__cabecera">
           <h2 class="dash-panel__titulo">Horario de la semana</h2>
         </header>
+        <% if (referencial) { %>
+          <p class="sm-nota-horario">Horario referencial: el recinto aún no publica el suyo. Confírmalo por teléfono si es un horario límite.</p>
+        <% } %>
         <ul class="sm-horario">
           <% horario.forEach(function (dia) { %>
             <li class="sm-horario__dia <%= dia.bloques.length === 0 ? 'sm-horario__dia--cerrado' : '' %>">
@@ -84,19 +87,29 @@
       <header class="dash-panel__cabecera">
         <h2 class="dash-panel__titulo">Próximos 7 días</h2>
       </header>
+      <p class="sm-leyenda">
+        <span class="sm-franja sm-franja--libre sm-franja--muestra">Libre</span>
+        <span class="sm-franja sm-franja--ocupado sm-franja--muestra">Ocupado</span>
+        <span class="sm-leyenda__texto">Toca un horario libre para reservarlo.</span>
+      </p>
       <ul class="sm-agenda">
         <% dias.forEach(function (d) { %>
-          <li class="sm-agenda__dia <%= d.abierto.length === 0 ? 'sm-agenda__dia--cerrado' : '' %>">
-            <span class="sm-agenda__fecha"><%= d.etiqueta %></span>
-            <% if (d.abierto.length === 0) { %>
+          <li class="sm-agenda__dia <%= d.franjas.length === 0 ? 'sm-agenda__dia--cerrado' : '' %>">
+            <span class="sm-agenda__fecha"><%= d.etiqueta %>
+              <% if (d.franjas.length) { %><small class="sm-agenda__libres"><%= d.libres %> libre<%= d.libres === 1 ? '' : 's' %></small><% } %>
+            </span>
+            <% if (d.franjas.length === 0) { %>
               <span class="sm-horario__cerrado">Cerrado</span>
             <% } else { %>
-              <span class="sm-agenda__detalle">
-                Abierto <%= d.abierto.map(function (b) { return b.apertura + '–' + b.cierre; }).join(', ') %>
-                <% d.ocupados.forEach(function (o) { %>
-                  <span class="sm-bloque sm-bloque--ocupado">Ocupado <%= o.inicio %>–<%= o.fin %></span>
+              <span class="sm-franjas">
+                <% d.franjas.forEach(function (f) { %>
+                  <% if (f.estado === 'libre') { %>
+                    <a class="sm-franja sm-franja--libre" href="/canchas/<%= cancha.id %>/reservar?fecha=<%= d.fecha %>&inicio=<%= f.inicio %>&fin=<%= f.fin %>"
+                       aria-label="Reservar <%= d.etiqueta %> de <%= f.inicio %> a <%= f.fin %>"><%= f.inicio %></a>
+                  <% } else { %>
+                    <span class="sm-franja sm-franja--<%= f.estado %>" title="<%= f.estado === 'ocupado' ? 'Ocupado' : 'Ya pasó' %>"><%= f.inicio %></span>
+                  <% } %>
                 <% }) %>
-                <% if (d.ocupados.length === 0) { %><span class="sm-bloque sm-bloque--libre">Sin reservas</span><% } %>
               </span>
             <% } %>
           </li>

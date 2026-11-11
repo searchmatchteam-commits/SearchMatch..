@@ -1,5 +1,5 @@
 const { pool } = require('../config/db');
-const { CLAVES_DIAS_ISO, ZONA_HORARIA } = require('../config/canchas');
+const { CLAVES_DIAS_ISO, ZONA_HORARIA, HORARIO_REFERENCIAL } = require('../config/canchas');
 
 const SQL_AHORA = `(now() AT TIME ZONE '${ZONA_HORARIA}')`;
 
@@ -15,11 +15,15 @@ async function bloquearCanchaActiva(cliente, idCancha) {
 }
 
 async function dentroDeDisponibilidad(cliente, idCancha, fecha, inicio, fin) {
+  // Sin ningún bloque cargado, la cancha usa el horario referencial (ver config/canchas.js).
   const { rowCount } = await cliente.query(
     `SELECT 1 FROM disponibilidad_cancha
       WHERE id_cancha = $1 AND dia_semana = ($5::text[])[EXTRACT(ISODOW FROM $2::date)::int]
-        AND hora_apertura <= $3::time AND hora_cierre >= $4::time`,
-    [idCancha, fecha, inicio, fin, CLAVES_DIAS_ISO]
+        AND hora_apertura <= $3::time AND hora_cierre >= $4::time
+     UNION ALL
+     SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM disponibilidad_cancha WHERE id_cancha = $1)
+        AND $6::time <= $3::time AND $7::time >= $4::time`,
+    [idCancha, fecha, inicio, fin, CLAVES_DIAS_ISO, HORARIO_REFERENCIAL.apertura, HORARIO_REFERENCIAL.cierre]
   );
   return rowCount > 0;
 }

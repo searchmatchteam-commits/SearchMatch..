@@ -3,7 +3,9 @@ const canchaModel = require('../models/canchaModel');
 const disponibilidadModel = require('../models/disponibilidadModel');
 const notificacionModel = require('../models/notificacionModel');
 const { idValido } = require('../middlewares/validadoresAdmin');
-const { DIAS_SEMANA } = require('../config/canchas');
+const { DIAS_SEMANA, DIAS_RESERVA, MINUTOS_FRANJA } = require('../config/canchas');
+const REGEX_FECHA = /^d{4}-d{2}-d{2}$/;
+const REGEX_HORA = /^d{2}:d{2}$/;
 
 const ERRORES_RESERVA = {
   'cancha-inactiva': 'Esta cancha ya no está disponible para reservas.',
@@ -20,12 +22,31 @@ const AVISOS = {
 };
 
 async function renderFormulario(res, cancha, { status = 200, datos = {}, erroresCampo = {}, error = null } = {}) {
-  const bloques = await disponibilidadModel.listarBloques(cancha.id);
+  // Los controladores se cargan en orden: se pide aquí para no crear una dependencia circular.
+  const { proximosDias, minutoActualChile } = require('./canchasController');
+  const [{ bloques, referencial }, reservas] = await Promise.all([
+    disponibilidadModel.horarioPublico(cancha.id),
+    canchaModel.reservasConfirmadasProximas(cancha.id, DIAS_RESERVA - 1),
+  ]);
+  const horario = DIAS_SEMANA.map((d) => ({ ...d, bloques: bloques.filter((b) => b.dia === d.clave) }));
+  const dias = proximosDias(DIAS_RESERVA);
+  // Datos del selector de horarios (sm-reserva.js): horario por día de la semana y reservas ocupadas por fecha.
+  const agenda = {
+    franja: MINUTOS_FRANJA,
+    hoy: dias[0].fecha,
+    minutoHoy: minutoActualChile(),
+    dias: dias.map((d) => ({ fecha: d.fecha, clave: d.clave, etiqueta: d.etiqueta })),
+    horario: Object.fromEntries(horario.map((h) => [h.clave, h.bloques.map((b) => [b.apertura, b.cierre])])),
+    ocupados: reservas.reduce((acc, r) => { (acc[r.fecha] = acc[r.fecha] || []).push([r.inicio, r.fin]); return acc; }, {}),
+  };
   return res.status(status).render('reservas/nueva', {
     titulo: `Reservar ${cancha.nombre}`,
     pagina: 'equipo',
     cancha,
-    horario: DIAS_SEMANA.map((d) => ({ ...d, bloques: bloques.filter((b) => b.dia === d.clave) })),
+    horario,
+    referencial,
+    agendaJSON: JSON.stringify(agenda).replace(/</g, '\\u003c'),
+    fechaMaxima: dias[dias.length - 1].fecha,
     datos,
     erroresCampo,
     error,
@@ -37,7 +58,14 @@ async function formulario(req, res, next) {
     const idCancha = idValido(req.params.id);
     const cancha = idCancha ? await canchaModel.obtenerFichaCancha(idCancha) : null;
     if (!cancha) return res.status(404).render('canchas/no-disponible', { titulo: 'Cancha no disponible', pagina: 'equipo' });
-    return await renderFormulario(res, cancha);
+    // Desde la ficha se llega con una franja elegida: ?fecha=AAAA-MM-DD&inicio=HH:MM&fin=HH:MM
+    const q = req.query;
+    const datos = {
+      fecha: REGEX_FECHA.test(q.fecha || '') ? q.fecha : '',
+      inicio: REGEX_HORA.test(q.inicio || '') ? q.inicio : '',
+      fin: REGEX_HORA.test(q.fin || '') ? q.fin : '',
+    };
+    return await renderFormulario(res, cancha, { datos });
   } catch (err) {
     return next(err);
   }

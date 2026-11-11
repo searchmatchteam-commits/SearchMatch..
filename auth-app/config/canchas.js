@@ -35,6 +35,46 @@ const CANCHAS_POR_LOTE = 12;
 // Días hacia adelante que muestra la disponibilidad con reservas ocupadas (DE-006).
 const DIAS_DISPONIBILIDAD = 7;
 
+// Horario referencial: casi todas las canchas (cargadas desde OpenStreetMap) no tienen horario cargado por el
+// recinto. Sin este respaldo todas salían "Cerrado" y no se podían reservar. Una cancha SIN ningún bloque en
+// disponibilidad_cancha usa este horario todos los días; apenas el panel le carga un bloque, manda el suyo.
+const HORARIO_REFERENCIAL = { apertura: '09:00', cierre: '23:00' };
+
+// Duración de cada franja que se ofrece para reservar con un toque (minutos).
+const MINUTOS_FRANJA = 60;
+
+// Días hacia adelante que ofrece el selector de horarios al reservar.
+const DIAS_RESERVA = 30;
+
+const aMinutos = (hora) => {
+  const [h, m] = String(hora).split(':').map(Number);
+  return h * 60 + m;
+};
+const aHora = (minutos) => `${String(Math.floor(minutos / 60)).padStart(2, '0')}:${String(minutos % 60).padStart(2, '0')}`;
+
+/**
+ * Franjas de una fecha: cada bloque abierto partido en tramos de MINUTOS_FRANJA.
+ * @param {{apertura:string, cierre:string}[]} bloques - horario abierto ese día
+ * @param {{inicio:string, fin:string}[]} ocupados - reservas confirmadas ese día
+ * @param {number|null} minutoAhora - minutos transcurridos hoy (solo si la fecha es hoy), para marcar lo ya pasado
+ * @returns {{inicio:string, fin:string, estado:'libre'|'ocupado'|'pasado'}[]}
+ */
+function franjasDelDia(bloques, ocupados, minutoAhora = null) {
+  const franjas = [];
+  bloques.forEach((b) => {
+    const cierre = aMinutos(b.cierre === '00:00' ? '24:00' : b.cierre);
+    for (let ini = aMinutos(b.apertura); ini + MINUTOS_FRANJA <= cierre; ini += MINUTOS_FRANJA) {
+      const fin = ini + MINUTOS_FRANJA;
+      const ocupado = ocupados.some((o) => aMinutos(o.inicio) < fin && aMinutos(o.fin === '00:00' ? '24:00' : o.fin) > ini);
+      let estado = 'libre';
+      if (ocupado) estado = 'ocupado';
+      else if (minutoAhora !== null && ini <= minutoAhora) estado = 'pasado';
+      franjas.push({ inicio: aHora(ini), fin: aHora(fin), estado });
+    }
+  });
+  return franjas;
+}
+
 // Zona horaria de la plataforma (las fechas y horas de reservas y partidos son de Chile).
 const ZONA_HORARIA = 'America/Santiago';
 
@@ -47,4 +87,8 @@ module.exports = {
   CANCHAS_POR_LOTE,
   DIAS_DISPONIBILIDAD,
   ZONA_HORARIA,
+  HORARIO_REFERENCIAL,
+  MINUTOS_FRANJA,
+  DIAS_RESERVA,
+  franjasDelDia,
 };

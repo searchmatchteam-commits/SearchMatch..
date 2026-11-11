@@ -2,7 +2,9 @@ const canchaModel = require('../models/canchaModel');
 const disponibilidadModel = require('../models/disponibilidadModel');
 const ubicacionModel = require('../models/ubicacionModel');
 const { idValido } = require('../middlewares/validadoresAdmin');
-const { DIAS_SEMANA, LARGO_MINIMO_BUSQUEDA, CANCHAS_POR_LOTE, DIAS_DISPONIBILIDAD, ZONA_HORARIA } = require('../config/canchas');
+const {
+  DIAS_SEMANA, LARGO_MINIMO_BUSQUEDA, CANCHAS_POR_LOTE, DIAS_DISPONIBILIDAD, ZONA_HORARIA, franjasDelDia,
+} = require('../config/canchas');
 const { cacheBreve } = require('../config/cacheBreve');
 
 // /canchas sin filtros: catálogo público e igual para todos. Son más de mil filas, lo más pesado del dock.
@@ -171,6 +173,13 @@ function proximosDias(cantidad) {
   });
 }
 
+/** Minutos transcurridos hoy en Chile (para no ofrecer franjas que ya empezaron). */
+function minutoActualChile() {
+  const [h, m] = new Intl.DateTimeFormat('en-GB', { timeZone: ZONA_HORARIA, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+    .format(new Date()).split(':').map(Number);
+  return h * 60 + m;
+}
+
 async function ficha(req, res, next) {
   const idCancha = idValido(req.params.id);
   try {
@@ -178,21 +187,24 @@ async function ficha(req, res, next) {
     if (!cancha) {
       return res.status(404).render('canchas/no-disponible', { titulo: 'Cancha no disponible', pagina: 'equipo' });
     }
-    const [bloques, reservas] = await Promise.all([
-      disponibilidadModel.listarBloques(idCancha),
+    const [{ bloques, referencial }, reservas] = await Promise.all([
+      disponibilidadModel.horarioPublico(idCancha),
       canchaModel.reservasConfirmadasProximas(idCancha, DIAS_DISPONIBILIDAD - 1),
     ]);
     const horario = DIAS_SEMANA.map((d) => ({ ...d, bloques: bloques.filter((b) => b.dia === d.clave) }));
-    const dias = proximosDias(DIAS_DISPONIBILIDAD).map((d) => ({
-      ...d,
-      abierto: horario.find((h) => h.clave === d.clave).bloques,
-      ocupados: reservas.filter((r) => r.fecha === d.fecha),
-    }));
+    const minuto = minutoActualChile();
+    const dias = proximosDias(DIAS_DISPONIBILIDAD).map((d, i) => {
+      const abierto = horario.find((h) => h.clave === d.clave).bloques;
+      const ocupados = reservas.filter((r) => r.fecha === d.fecha);
+      const franjas = franjasDelDia(abierto, ocupados, i === 0 ? minuto : null);
+      return { ...d, abierto, ocupados, franjas, libres: franjas.filter((f) => f.estado === 'libre').length };
+    });
     return res.render('canchas/ficha', {
       titulo: cancha.nombre,
       pagina: 'equipo',
       cancha,
       horario,
+      referencial,
       dias,
     });
   } catch (err) {
@@ -200,4 +212,4 @@ async function ficha(req, res, next) {
   }
 }
 
-module.exports = { listar, ficha, recintosParaMapa, mapaCompacto };
+module.exports = { listar, ficha, recintosParaMapa, mapaCompacto, proximosDias, minutoActualChile };

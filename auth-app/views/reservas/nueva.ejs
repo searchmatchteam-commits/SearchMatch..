@@ -23,8 +23,13 @@
         <% if (error) { %><div class="alerta alerta--error" role="alert"><%= error %></div><% } %>
         <div class="campo <%= erroresCampo.fecha ? 'campo--error' : '' %>">
           <label for="fecha">Fecha</label>
-          <input type="date" id="fecha" name="fecha" min="<%= hoy %>" value="<%= datos.fecha || '' %>" required data-mensaje="Elige la fecha." aria-describedby="fecha-error" />
+          <input type="date" id="fecha" name="fecha" min="<%= hoy %>" max="<%= fechaMaxima %>" value="<%= datos.fecha || '' %>" required data-mensaje="Elige la fecha." aria-describedby="fecha-error" />
           <small class="campo__error" id="fecha-error"><%= erroresCampo.fecha || '' %></small>
+        </div>
+        <div class="sm-selector" data-selector-franjas hidden>
+          <p class="sm-selector__titulo">Horarios del día <span data-selector-dia></span></p>
+          <div class="sm-franjas" data-selector-lista role="group" aria-label="Horarios disponibles"></div>
+          <p class="sm-selector__ayuda">Toca un horario para elegirlo; toca otro seguido para alargar la reserva. También puedes escribir las horas abajo.</p>
         </div>
         <div class="formulario__fila">
           <div class="campo <%= erroresCampo.inicio ? 'campo--error' : '' %>">
@@ -47,6 +52,9 @@
 
       <div class="dash-panel eq-panel">
         <h2 class="dash-panel__titulo">Horario de la cancha</h2>
+        <% if (referencial) { %>
+          <p class="sm-nota-horario">Horario referencial: el recinto aún no publica el suyo.</p>
+        <% } %>
         <ul class="sm-horario">
           <% horario.forEach(function (dia) { %>
             <li class="sm-horario__dia <%= dia.bloques.length === 0 ? 'sm-horario__dia--cerrado' : '' %>">
@@ -63,6 +71,7 @@
   </div>
 </section>
 
+<script type="application/json" id="agenda-cancha"><%- agendaJSON %></script>
 <script src="/js/sm-reserva.js?v=<%= versionAssets %>" defer></script>
 
 <%- include('../partials/dock', { activo: 'canchas' }) %>
