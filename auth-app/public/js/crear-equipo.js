@@ -221,23 +221,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const selectRegion = formulario.querySelector('[data-select-region]');
   const selectComuna = formulario.querySelector('[data-select-comuna]');
   if (selectRegion && selectComuna) {
-    const grupos = Array.from(selectComuna.querySelectorAll('optgroup'));
-
-    function filtrarComunas() {
-      const region = selectRegion.value;
-      grupos.forEach((grupo) => {
-        const visible = grupo.dataset.region === region;
-        grupo.hidden = !visible;
-        grupo.disabled = !visible;
-      });
-      // Si la comuna marcada no es de esta región, se limpia
-      const marcada = selectComuna.selectedOptions[0];
-      if (marcada && marcada.parentElement.tagName === 'OPTGROUP' && marcada.parentElement.disabled) selectComuna.value = '';
-      selectComuna.disabled = !region;
-    }
-
-    selectRegion.addEventListener('change', filtrarComunas);
-    filtrarComunas();
+    // Solo las comunas de la región elegida; sin región, ninguna (función al final de este archivo)
+    comunasDeRegionEquipo(selectRegion, selectComuna, { sinRegion: 'ninguna' });
 
     // La zona parte con el nombre de la comuna si el capitán aún no escribió una
     selectComuna.addEventListener('change', () => {
@@ -392,3 +377,51 @@ document.addEventListener('DOMContentLoaded', () => {
   irA(pasoActual, { enfocar: false });
   actualizarVista();
 });
+
+/**
+ * Deja en el select de comunas solo las de la región elegida. Guarda todas las comunas (los <optgroup> con
+ * data-region) la primera vez y en cada cambio rearma las opciones. Si la comuna marcada es de otra región
+ * se limpia; si hay comuna pero no región (datos antiguos), se elige su región.
+ * @param {{ sinRegion: 'todas'|'ninguna' }} opciones - Sin región: mostrar todas (filtros) o ninguna (formularios).
+ */
+function comunasDeRegionEquipo(selectRegion, selectComuna, { sinRegion = 'ninguna' } = {}) {
+  const vacio = selectComuna.querySelector('option[value=""]');
+  const textoVacio = vacio ? vacio.textContent : 'Elige la comuna';
+  const grupos = Array.from(selectComuna.querySelectorAll('optgroup')).map((g) => ({
+    region: g.dataset.region,
+    etiqueta: g.label,
+    comunas: Array.from(g.querySelectorAll('option')).map((o) => ({ valor: o.value, texto: o.textContent })),
+  }));
+  const regionDe = (valor) => (grupos.find((g) => g.comunas.some((c) => c.valor === valor)) || {}).region || '';
+
+  if (!selectRegion.value && selectComuna.value) selectRegion.value = regionDe(selectComuna.value);
+
+  function rearmar() {
+    const region = selectRegion.value;
+    const anterior = selectComuna.value;
+    const opcionVacia = document.createElement('option');
+    opcionVacia.value = '';
+    opcionVacia.textContent = !region && sinRegion === 'ninguna' ? 'Primero elige la región' : textoVacio;
+    const nuevas = [opcionVacia];
+    grupos.forEach((g) => {
+      if (region ? g.region !== region : sinRegion === 'ninguna') return;
+      const contenedor = region ? null : document.createElement('optgroup');
+      if (contenedor) contenedor.label = g.etiqueta;
+      g.comunas.forEach((c) => {
+        const opcion = document.createElement('option');
+        opcion.value = c.valor;
+        opcion.textContent = c.texto;
+        (contenedor || { append: (o) => nuevas.push(o) }).append(opcion);
+      });
+      if (contenedor) nuevas.push(contenedor);
+    });
+    selectComuna.replaceChildren(...nuevas);
+    // Si la comuna anterior no quedó en la lista (es de otra región), vuelve a "Elige la comuna"
+    selectComuna.value = anterior;
+    if (!selectComuna.value) selectComuna.selectedIndex = 0;
+    selectComuna.disabled = !region && sinRegion === 'ninguna';
+  }
+
+  selectRegion.addEventListener('change', rearmar);
+  rearmar();
+}

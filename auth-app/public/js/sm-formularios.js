@@ -1,5 +1,54 @@
 const SM_REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+
+/**
+ * Deja en el select de comunas solo las de la región elegida. Guarda todas las comunas (los <optgroup> con
+ * data-region) la primera vez y en cada cambio rearma las opciones. Si la comuna marcada es de otra región
+ * se limpia; si hay comuna pero no región (datos antiguos), se elige su región.
+ * @param {{ sinRegion: 'todas'|'ninguna' }} opciones - Sin región: mostrar todas (filtros) o ninguna (formularios).
+ */
+function comunasDeRegion(selectRegion, selectComuna, { sinRegion = 'ninguna' } = {}) {
+  const vacio = selectComuna.querySelector('option[value=""]');
+  const textoVacio = vacio ? vacio.textContent : 'Elige la comuna';
+  const grupos = Array.from(selectComuna.querySelectorAll('optgroup')).map((g) => ({
+    region: g.dataset.region,
+    etiqueta: g.label,
+    comunas: Array.from(g.querySelectorAll('option')).map((o) => ({ valor: o.value, texto: o.textContent })),
+  }));
+  const regionDe = (valor) => (grupos.find((g) => g.comunas.some((c) => c.valor === valor)) || {}).region || '';
+
+  if (!selectRegion.value && selectComuna.value) selectRegion.value = regionDe(selectComuna.value);
+
+  function rearmar() {
+    const region = selectRegion.value;
+    const anterior = selectComuna.value;
+    const opcionVacia = document.createElement('option');
+    opcionVacia.value = '';
+    opcionVacia.textContent = !region && sinRegion === 'ninguna' ? 'Primero elige la región' : textoVacio;
+    const nuevas = [opcionVacia];
+    grupos.forEach((g) => {
+      if (region ? g.region !== region : sinRegion === 'ninguna') return;
+      const contenedor = region ? null : document.createElement('optgroup');
+      if (contenedor) contenedor.label = g.etiqueta;
+      g.comunas.forEach((c) => {
+        const opcion = document.createElement('option');
+        opcion.value = c.valor;
+        opcion.textContent = c.texto;
+        (contenedor || { append: (o) => nuevas.push(o) }).append(opcion);
+      });
+      if (contenedor) nuevas.push(contenedor);
+    });
+    selectComuna.replaceChildren(...nuevas);
+    // Si la comuna anterior no quedó en la lista (es de otra región), vuelve a "Elige la comuna"
+    selectComuna.value = anterior;
+    if (!selectComuna.value) selectComuna.selectedIndex = 0;
+    selectComuna.disabled = !region && sinRegion === 'ninguna';
+  }
+
+  selectRegion.addEventListener('change', rearmar);
+  rearmar();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
 
   function marcar(campo, mensaje) {
@@ -99,24 +148,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Región → comunas (partials/sm-ubicacion). En formularios obligatorios no hay comunas hasta elegir región;
+  // en los filtros ("Todas las regiones") se ven todas.
   document.querySelectorAll('select[data-sm-region]').forEach((selectRegion) => {
     const selectComuna = document.getElementById(selectRegion.dataset.smRegion);
     if (!selectComuna) return;
-    const grupos = Array.from(selectComuna.querySelectorAll('optgroup'));
-
-    function filtrar() {
-      const region = selectRegion.value;
-      grupos.forEach((grupo) => {
-        const visible = !region || grupo.dataset.region === region;
-        grupo.hidden = !visible;
-        grupo.disabled = !visible;
-      });
-      const marcada = selectComuna.selectedOptions[0];
-      if (marcada && marcada.parentElement.disabled) selectComuna.value = '';
-    }
-
-    selectRegion.addEventListener('change', filtrar);
-    filtrar();
+    comunasDeRegion(selectRegion, selectComuna, { sinRegion: selectRegion.required ? 'ninguna' : 'todas' });
   });
 
   // Posiciones (partials/sm-posiciones): la principal elegida no se puede marcar también como alternativa.
@@ -161,6 +198,29 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     grupo.addEventListener('change', revisar);
     revisar();
+  });
+
+  // Paleta rápida (partials/sm-colores-equipo): una muestra pone ese color en el selector de su fila.
+  document.querySelectorAll('[data-paleta]').forEach((paleta) => {
+    const entrada = paleta.querySelector('input[type="color"]');
+    const otro = paleta.querySelector('.sm-paleta__otro');
+    const muestras = [...paleta.querySelectorAll('[data-color]')];
+    const marcar = () => {
+      const valor = entrada.value.toLowerCase();
+      let enPaleta = false;
+      muestras.forEach((m) => {
+        const igual = m.dataset.color === valor;
+        if (igual) enPaleta = true;
+        m.setAttribute('aria-pressed', String(igual));
+      });
+      otro.classList.toggle('sm-paleta__otro--activo', !enPaleta);
+    };
+    muestras.forEach((m) => m.addEventListener('click', () => {
+      entrada.value = m.dataset.color;
+      entrada.dispatchEvent(new Event('input', { bubbles: true }));
+      marcar();
+    }));
+    entrada.addEventListener('input', marcar);
   });
 
   // Colores del equipo (partials/sm-colores-equipo): la vista previa de la carta y las camisetas sigue a cada selector.
