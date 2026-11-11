@@ -32,6 +32,7 @@ router.get('/avisos/:id', panel.abrirAviso);
 // AP-011 · solo el Administrador principal
 router.get('/administradores', requirePrincipal, administradores.listar);
 router.post('/administradores', requirePrincipal, administradores.crear);
+router.post('/administradores/asignar', requirePrincipal, administradores.asignar);
 router.post('/administradores/traspasar', requirePrincipal, administradores.traspasar);
 router.post('/administradores/:id/revocar', requirePrincipal, administradores.revocar);
 router.post('/administradores/:id/reactivar', requirePrincipal, administradores.reactivar);

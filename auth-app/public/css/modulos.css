@@ -1346,3 +1346,10 @@ body .vic__caja { max-height: calc(100dvh - 32px); }
 .sm-selector__titulo { margin: 0; font-weight: 700; font-size: 0.9rem; }
 .sm-selector__titulo span { color: var(--texto-suave); font-weight: 600; text-transform: capitalize; }
 .sm-selector__ayuda { margin: 0; font-size: 0.78rem; color: var(--texto-suave); }
+
+/* Administradores: resultados de "Asignar administrador a un usuario existente" */
+.sm-candidatos { list-style: none; display: flex; flex-direction: column; margin: 12px 0 0; padding: 0; }
+.sm-candidato { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 0; border-top: 1px solid var(--borde); }
+.sm-candidato:first-child { border-top: 0; }
+.sm-candidato__datos { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sm-candidato__datos small { color: var(--texto-suave); overflow-wrap: anywhere; }

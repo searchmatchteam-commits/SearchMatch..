@@ -13,6 +13,8 @@ const { idValido, leerMotivo, MSG_MOTIVO } = require('../middlewares/validadores
 
 const AVISOS = {
   creado: 'Administrador creado: le enviamos un correo para que defina su contraseña.',
+  asignado: 'Listo: ahora es administrador. Entra al panel con su misma cuenta (no es Administrador principal).',
+  'ya-es-admin': 'Esa persona ya es administrador.',
   'creado-sin-correo': 'Administrador creado, pero el correo de invitación no se pudo enviar: pídele que use "¿Olvidaste tu contraseña?".',
   revocado: 'Acceso revocado: su sesión del panel se cerró y ya no puede entrar.',
   reactivado: 'Acceso reactivado: ya puede volver a ingresar al panel.',
@@ -39,7 +41,11 @@ async function render(req, res, { status = 200, datos = {}, erroresCampo = {} } 
   const { filas, total } = await panelModel.listar(estado);
   const activos = (await panelModel.listar({ ...estado, texto: '', filtros: { estado: 'activo' }, pagina: 1, por: 100 })).filas
     .filter((a) => !a.esPrincipal);
+  const buscar = String(req.query.buscar || '').trim().slice(0, 100);
+  const candidatos = buscar.length >= 2 ? await panelModel.buscarCandidatos(buscar) : [];
   return res.status(status).render('admin/administradores', {
+    buscar,
+    candidatos,
     titulo: 'Administradores',
     pagina: 'equipo',
     seccion: 'administradores',
@@ -165,6 +171,21 @@ function cambiarAcceso(revocar) {
   };
 }
 
+/** Asigna el rol de administrador a un usuario que ya existe (no el de principal). */
+async function asignar(req, res, next) {
+  try {
+    const idUsuario = idValido(req.body.id_usuario);
+    const resultado = idUsuario ? await panelModel.asignarAdministrador(principal(req), idUsuario) : 'inexistente';
+    if (resultado === 'asignado') {
+      await notificarUsuario(idUsuario, 'moderacion',
+        'Ahora eres administrador de SearchMatch. Entra al panel con tu misma cuenta desde el acceso del panel.', '/admin/login');
+    }
+    return res.redirect(`/admin/administradores?aviso=${resultado}`);
+  } catch (err) {
+    return next(err);
+  }
+}
+
 /** AP-011 c6: confirma con la contraseña del principal actual. */
 async function traspasar(req, res, next) {
   try {
@@ -185,5 +206,5 @@ async function traspasar(req, res, next) {
 }
 
 module.exports = {
-  listar, crear, revocar: cambiarAcceso(true), reactivar: cambiarAcceso(false), traspasar, AVISOS,
+  listar, crear, asignar, revocar: cambiarAcceso(true), reactivar: cambiarAcceso(false), traspasar, AVISOS,
 };

@@ -13,8 +13,38 @@
       </div>
     </header>
 
+    <!-- Dar el rol de administrador a alguien que ya tiene cuenta (no el de principal) -->
+    <details class="dash-panel eq-panel sm-desplegable" id="asignar" <%= buscar ? 'open' : '' %>>
+      <summary class="dash-panel__titulo">+ Asignar administrador a un usuario existente</summary>
+      <p class="dash-panel__nota">Busca a la persona por su nombre o correo. Pasará a ser <strong>administrador</strong> (no Administrador principal) y seguirá usando su misma cuenta para jugar y para entrar al panel.</p>
+      <form class="sm-form sm-filtros" action="/admin/administradores#asignar" method="GET">
+        <div class="campo">
+          <label for="buscar">Nombre o correo</label>
+          <input type="search" id="buscar" name="buscar" value="<%= buscar %>" minlength="2" maxlength="100" placeholder="Ej. juan@correo.cl" />
+        </div>
+        <div class="sm-form__acciones"><button type="submit" class="btn btn--contorno">Buscar</button></div>
+      </form>
+      <% if (buscar && candidatos.length === 0) { %>
+        <p class="dash-panel__nota">No hay usuarios activos que coincidan (los que ya son administradores no aparecen).</p>
+      <% } else if (candidatos.length > 0) { %>
+        <ul class="sm-candidatos">
+          <% candidatos.forEach(function (c) { %>
+            <li class="sm-candidato">
+              <span class="sm-candidato__datos"><strong><%= c.nombre %></strong><small><%= c.correo %></small></span>
+              <form action="/admin/administradores/asignar" method="POST"
+                    data-confirmar="<%= c.nombre %> podrá entrar al panel como administrador. No tendrá el rol de Administrador principal."
+                    data-confirmar-titulo="¿Asignar como administrador?" data-confirmar-boton="Asignar">
+                <input type="hidden" name="id_usuario" value="<%= c.id %>" />
+                <button type="submit" class="btn btn--verde btn--chico">Asignar como administrador</button>
+              </form>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </details>
+
     <details class="dash-panel eq-panel sm-desplegable" <%= Object.keys(erroresCampo).length > 0 ? 'open' : '' %>>
-      <summary class="dash-panel__titulo">+ Crear administrador</summary>
+      <summary class="dash-panel__titulo">+ Crear administrador (cuenta nueva, solo para el panel)</summary>
       <form class="sm-form sm-filtros" action="/admin/administradores" method="POST" novalidate data-sm-validar
             data-confirmar="Se creará su cuenta del panel y le enviaremos un correo para que defina su contraseña."
             data-confirmar-titulo="¿Crear la cuenta de administrador?" data-confirmar-boton="Crear">

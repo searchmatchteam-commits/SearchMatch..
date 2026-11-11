@@ -240,6 +240,65 @@ async function crearAdministrador(principal, { authId, nombre, correo }) {
 }
 
 /**
+ * AP-011 · Usuarios existentes (jugadores) que se pueden asignar como administrador: activos, sin rol del panel,
+ * buscados por nombre, apodo, apellido o correo. Como mucho 10.
+ */
+async function buscarCandidatos(texto) {
+  const termino = String(texto || '').trim();
+  if (termino.length < 2) return [];
+  const patron = `%${termino.replace(/[%_\\]/g, (c) => `\\${c}`)}%`;
+  const { rows } = await pool.query(
+    `SELECT u.id, u.correo, trim(concat_ws(' ', j.nombre_apodo, j.apellido)) AS nombre
+       FROM usuario u
+       JOIN rol_aplicacion r ON r.id = u.id_rol_aplicacion
+       LEFT JOIN jugador j ON j.id_usuario = u.id
+      WHERE u.activo AND lower(r.nombre) <> ALL($2::text[])
+        AND (u.correo ILIKE $1 OR j.nombre_apodo ILIKE $1 OR j.apellido ILIKE $1
+             OR concat_ws(' ', j.nombre_apodo, j.apellido) ILIKE $1)
+      ORDER BY nombre NULLS LAST, u.correo
+      LIMIT 10`,
+    [patron, ROLES_PANEL]
+  );
+  return rows.map((f) => ({ id: f.id, correo: f.correo, nombre: f.nombre || f.correo }));
+}
+
+/**
+ * AP-011 · Asigna el rol de ADMINISTRADOR (nunca el de principal) a un usuario que ya existe. Conserva su
+ * perfil de jugador: sigue jugando con la misma cuenta y entra al panel con su sesión (/admin/entrar).
+ * @returns {Promise<'asignado'|'inexistente'|'ya-es-admin'|'propia'>}
+ */
+async function asignarAdministrador(principal, idUsuario) {
+  return enTransaccion(async (cliente) => {
+    if (idUsuario === principal.id) return 'propia';
+    const { rows } = await cliente.query(
+      `SELECT u.id, u.correo, u.activo, lower(r.nombre) AS rol,
+              coalesce(nullif(trim(concat_ws(' ', j.nombre_apodo, j.apellido)), ''), u.correo) AS nombre
+         FROM usuario u JOIN rol_aplicacion r ON r.id = u.id_rol_aplicacion
+         LEFT JOIN jugador j ON j.id_usuario = u.id
+        WHERE u.id = $1
+        FOR UPDATE OF u`,
+      [idUsuario]
+    );
+    const usuario = rows[0];
+    if (!usuario || !usuario.activo) return 'inexistente';
+    if (ROLES_PANEL.includes(usuario.rol)) return 'ya-es-admin';
+    await cliente.query(
+      `UPDATE usuario
+          SET id_rol_aplicacion = (SELECT id FROM rol_aplicacion WHERE lower(nombre) = 'administrador'),
+              admin_seleccionado_en = now(), admin_seleccionado_por = $2, admin_revocado_en = NULL
+        WHERE id = $1`,
+      [idUsuario, principal.id]
+    );
+    await actividad.registrar(cliente, {
+      admin: principal, seccion: 'administradores', accion: 'Asignar administrador',
+      elementoTipo: 'usuario', elementoId: idUsuario, elemento: `${usuario.nombre} <${usuario.correo}>`,
+      anterior: { rol: usuario.rol === 'jugador' ? 'Jugador' : usuario.rol }, nuevo: { rol: 'Administrador', estado: 'Activo' },
+    });
+    return 'asignado';
+  });
+}
+
+/**
  * AP-011 · Revoca o reactiva el acceso de un administrador (nunca del principal ni de uno mismo).
  * Al revocar se cierran todas sus sesiones del panel.
  * @returns {Promise<'revocado'|'reactivado'|'inexistente'|'principal'|'propia'|'sin-cambio'>}
@@ -307,5 +366,5 @@ async function traspasarPrincipal(principal, idNuevo, motivo) {
 
 module.exports = {
   ROLES_PANEL, LISTADO, abrirSesion, tocarSesion, cerrarSesion, cerrarSesionesDe, bloqueado, registrarFallo, reiniciarFallos,
-  cuentaPorAuth, obtener, idPrincipal, listar, correoEnUso, crearAdministrador, cambiarAcceso, traspasarPrincipal, enTransaccion,
+  cuentaPorAuth, obtener, idPrincipal, listar, correoEnUso, crearAdministrador, buscarCandidatos, asignarAdministrador, cambiarAcceso, traspasarPrincipal, enTransaccion,
 };
