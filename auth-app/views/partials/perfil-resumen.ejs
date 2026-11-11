@@ -7,6 +7,8 @@
     <div><dt>Edad</dt><dd><%= jugador.edad !== null ? jugador.edad + ' años' : '—' %></dd></div>
     <div><dt>Altura</dt><dd><%= jugador.altura ? jugador.altura + ' cm' : '—' %></dd></div>
     <div><dt>Peso</dt><dd><%= jugador.peso ? jugador.peso + ' kg' : '—' %></dd></div>
+    <% const imc = typeof calcularIMC === 'function' ? calcularIMC(jugador.altura, jugador.peso) : null; %>
+    <div><dt>IMC</dt><dd><%= imc ? imc.texto + ' · ' + imc.categoria : '—' %></dd></div>
   </dl>
 </article>
 

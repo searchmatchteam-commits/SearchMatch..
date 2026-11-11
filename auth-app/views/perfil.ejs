@@ -74,6 +74,11 @@
           <dt>Peso</dt>
           <dd><span class="pp-metrica__valor"><%= jugador.peso || '—' %></span><% if (jugador.peso) { %><span class="pp-metrica__unidad">kg</span><% } %></dd>
         </div>
+        <% const imc = calcularIMC(jugador.altura, jugador.peso); %>
+        <div class="pp-metrica" title="Índice de masa corporal: peso / altura². Es referencial: no distingue músculo de grasa.">
+          <dt>IMC</dt>
+          <dd><span class="pp-metrica__valor"><%= imc ? imc.texto : '—' %></span><% if (imc) { %><small class="pp-metrica__nota"><%= imc.categoria %></small><% } %></dd>
+        </div>
         <div class="pp-metrica pp-metrica--texto">
           <dt>Posiciones</dt>
           <dd><span class="pp-metrica__valor"><%= jugador.posiciones %></span></dd>

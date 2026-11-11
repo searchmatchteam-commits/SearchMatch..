@@ -1037,3 +1037,10 @@ html[data-theme="light"] .modo-liviano .pp-panel,
 html[data-theme="light"] .modo-liviano .perfil-pro .dock {
   background-color: #ffffff;
 }
+
+/* Con el IMC son 4 medidas: van en fila de 4 y "Posiciones" ocupa toda la fila de abajo */
+@media (min-width: 700px) {
+  .pp-metricas { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.pp-metrica--texto { grid-column: 1 / -1; }
+.pp-metrica__nota { display: block; margin-top: 2px; font-size: 0.72rem; font-weight: 600; color: var(--texto-suave); }

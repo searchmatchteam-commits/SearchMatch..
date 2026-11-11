@@ -123,7 +123,25 @@ function urlFoto(perfil) {
   return perfil.fotoVersion ? `/perfil/foto?v=${perfil.fotoVersion}` : null;
 }
 
+/**
+ * IMC (índice de masa corporal) = peso (kg) / altura (m)². Categorías de la OMS para adultos.
+ * Es solo referencial (no distingue músculo de grasa): la vista lo muestra como dato, sin juicios.
+ * @returns {{ valor: number, texto: string, categoria: string }|null} null si falta la altura o el peso.
+ */
+function calcularIMC(alturaCm, pesoKg) {
+  const altura = Number(alturaCm) / 100;
+  const peso = Number(pesoKg);
+  if (!(altura > 0) || !(peso > 0)) return null;
+  const valor = Math.round((peso / (altura * altura)) * 10) / 10;
+  let categoria = 'Normal';
+  if (valor < 18.5) categoria = 'Bajo peso';
+  else if (valor >= 30) categoria = 'Obesidad';
+  else if (valor >= 25) categoria = 'Sobrepeso';
+  return { valor, texto: valor.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), categoria };
+}
+
 module.exports = {
+  calcularIMC,
   POSICIONES,
   PIES,
   NIVELES,

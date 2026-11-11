@@ -194,6 +194,17 @@ document.addEventListener('DOMContentLoaded', () => {
     return textos.length > 0 ? textos.join(', ') : '—';
   }
 
+  /** IMC = peso / altura² (misma regla que config/perfilJugador.js calcularIMC). */
+  function imcTexto(alturaCm, pesoKg) {
+    if (!(alturaCm > 0) || !(pesoKg > 0)) return '—';
+    const valor = Math.round((pesoKg / ((alturaCm / 100) ** 2)) * 10) / 10;
+    let categoria = 'Normal';
+    if (valor < 18.5) categoria = 'Bajo peso';
+    else if (valor >= 30) categoria = 'Obesidad';
+    else if (valor >= 25) categoria = 'Sobrepeso';
+    return `${valor.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} · ${categoria}`;
+  }
+
   function llenarResumen() {
     const fecha = valorDe('fecha_nacimiento');
     const comuna = formulario.elements.id_comuna.selectedOptions[0];
@@ -202,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fecha_nacimiento: REGEX_FECHA.test(fecha) ? fecha.split('-').reverse().join('/') : '—',
       altura: valorDe('altura') ? `${valorDe('altura')} cm` : '—',
       peso: valorDe('peso') ? `${valorDe('peso')} kg` : '—',
+      imc: imcTexto(Number(valorDe('altura')), Number(valorDe('peso'))),
       posicion: [textoDeOpcion('posicion_principal'), textoDeOpcion('posicion_alternativa')].filter((t) => t !== '—').map((t, i) => (i === 0 ? `${t} (principal)` : t)).join(', ') || '—',
       rol: ROLES[valorDe('rol')] || '—',
       nombre_equipo: valorDe('nombre_equipo') || '—',
@@ -210,7 +222,8 @@ document.addEventListener('DOMContentLoaded', () => {
       modalidad: textoDeOpcion('modalidad'),
     };
     Object.entries(valores).forEach(([clave, valor]) => {
-      formulario.querySelector(`[data-resumen="${clave}"]`).textContent = valor;
+      const destino = formulario.querySelector(`[data-resumen="${clave}"]`);
+      if (destino) destino.textContent = valor;
     });
   }
 
