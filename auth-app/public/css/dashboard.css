@@ -850,9 +850,7 @@ html.js .vc:not(.vc--listo) .vc__dinamico {
   stroke-linejoin: round;
 }
 
-.vc__figura {
-  filter: drop-shadow(0 0 6px rgba(57, 255, 20, 0.45));
-}
+/* El brillo de .vc__figura es el filtro SVG #vc-brillo (atributo filter en el parcial); el tema claro lo quita con filter: none */
 
 .vc__altura line {
   stroke: #39ff14;

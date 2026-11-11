@@ -106,6 +106,13 @@
     (function () {
       var raiz = document.documentElement;
       raiz.classList.add('js');
+      // Carta de jugador plana (sin capas 3D ni texto recortado con degradado): en Safari (todo navegador de
+      // iPhone usa su motor) esas capas se dibujan mal, y sin mouse la carta no se inclina de todos modos.
+      try {
+        var esWebKit = window.CSS && CSS.supports && CSS.supports('font', '-apple-system-body')
+          || /iP(hone|ad|od)/.test(navigator.userAgent);
+        if (esWebKit || !matchMedia('(hover: hover) and (pointer: fine)').matches) raiz.classList.add('carta-plana');
+      } catch (e) { /* sin matchMedia: carta normal */ }
       try {
         if (localStorage.getItem('sm-tema') === 'light') {
           raiz.setAttribute('data-theme', 'light');

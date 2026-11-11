@@ -2995,6 +2995,7 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   inset: 0;
   padding: 0;
   background: none;
+  -webkit-clip-path: url(#carta-escudo-recorte);
   clip-path: url(#carta-escudo-recorte);
   /* Inter, la fuente del sitio: números y nombre muy gruesos, siglas más livianas */
   font-family: var(--fuente);
@@ -3988,4 +3989,32 @@ html.js .bento__tarjeta.revelar.visible:hover {
 @media (min-width: 900px) {
   .perfil { grid-template-areas: ". volver" ". cabecera" "carta info"; }
   .perfil > .perfil__volver { align-self: end; }
+}
+
+/* ---------- Carta plana (html.carta-plana: Safari/iPhone o pantalla táctil; ver views/partials/header.ejs) ----------
+   El nombre con degradado recortado al texto (background-clip: text) más drop-shadow se ve en Safari como un
+   bloque de color o desaparece: ahí va en color sólido con text-shadow (casi igual a la vista). */
+html.carta-plana .carta-jugador--perfil .carta-jugador__nombre,
+html.carta-plana[data-theme="light"] .carta-jugador--perfil .carta-jugador__nombre {
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: currentColor;
+  color: #eef2ee;
+  filter: none;
+  text-shadow:
+    0 calc(2 * var(--u)) 0 #000,
+    0 calc(4 * var(--u)) calc(8 * var(--u)) rgba(0, 0, 0, 0.8);
+}
+
+html.carta-plana[data-theme="light"] .carta-jugador--perfil .carta-jugador__nombre {
+  color: #0f172a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Contenedores sin "container queries" (iOS 15 o anterior): --u se calcula con el ancho de pantalla
+   (la carta mide como máximo 340px y deja 24px de margen). Sin esto todo el contenido se apilaba arriba. */
+@supports not (width: 1cqw) {
+  .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cuerpo { --u: calc(min(100vw - 24px, 340px) / 320); }
+  .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cuerpo { --u: calc(min(100vw - 24px, 300px) / 320); }
 }

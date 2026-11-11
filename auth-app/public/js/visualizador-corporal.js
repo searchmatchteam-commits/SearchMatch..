@@ -106,6 +106,11 @@
       cuadro = requestAnimationFrame(paso);
     }
 
+    // La etiqueta del peso se ubica según el ancho de su texto: con la fuente ya cargada ese ancho cambia
+    // (antes podía quedar encima de la mano o salirse de la cuadrícula). También al volver a mostrarse.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => dibujar(actual));
+    window.addEventListener('pageshow', () => dibujar(actual));
+
     new MutationObserver(() => animarHacia(leer()))
       .observe(visualizador, { attributes: true, attributeFilter: ['data-altura', 'data-peso'] });
   }

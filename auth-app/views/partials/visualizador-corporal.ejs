@@ -20,6 +20,13 @@
   <svg class="vc__svg" viewBox="0 0 240 320" role="img" aria-label="Altura <%= alturaCm %> cm, peso <%= pesoKg %> kg"
        data-piso="<%= PISO %>" data-px-cm="<%= PX_CM %>" data-centro="<%= CENTRO %>"
        data-limite-texto="<%= BORDE_DERECHO - MARGEN_TEXTO %>">
+    <!-- Brillo de la silueta como filtro SVG (con región amplia): el drop-shadow de CSS sobre un grupo SVG
+         escalado se dibujaba cortado o borroso en varios navegadores. -->
+    <defs>
+      <filter id="vc-brillo" x="-60%" y="-20%" width="220%" height="140%" color-interpolation-filters="sRGB">
+        <feDropShadow dx="0" dy="0" stdDeviation="1.3" flood-color="#39ff14" flood-opacity="0.45" />
+      </filter>
+    </defs>
     <!-- Papel milimetrado: líneas cada 5 cm (las de 10 cm más marcadas) -->
     <g class="vc__papel" aria-hidden="true">
       <% for (let cm = 5; cm <= 210; cm += 5) { %>
@@ -43,7 +50,7 @@
 
     <!-- Silueta en coordenadas propias: pies en y = 0, cabeza en y = -100, centrada en x = 0.
          .vc__cuerpo (torso, brazos y piernas) se ensancha según el IMC; la cabeza no. -->
-    <g class="vc__figura vc__dinamico" aria-hidden="true">
+    <g class="vc__figura vc__dinamico" aria-hidden="true" filter="url(#vc-brillo)">
       <g class="vc__cuerpo">
         <path class="vc__silueta" vector-effect="non-scaling-stroke" d="
           M -2.6 -88 L -2.6 -86.5 C -6 -86 -10 -85.5 -11.6 -83 C -12.2 -80 -11 -76 -10.4 -72

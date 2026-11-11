@@ -341,6 +341,7 @@
 
 /* Lustre fijo del cuerpo: ahora se recorta solo, con la silueta */
 .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cuerpo::after {
+  -webkit-clip-path: url(#carta-escudo-recorte);
   clip-path: url(#carta-escudo-recorte);
   transform: translateZ(1px);
 }
@@ -348,6 +349,7 @@
 /* Foil holográfico: un destello blanco-verde que sigue al cursor + un barrido iridiscente en diagonal
    que se desliza con --brillo-x. Siempre un poco visible (carta "premium" en reposo), intenso al inclinar. */
 .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__brillo {
+  -webkit-clip-path: url(#carta-escudo-recorte);
   clip-path: url(#carta-escudo-recorte);
   transform: translateZ(2px);
   opacity: calc(0.35 + var(--brillo-op) * 0.65);
@@ -1053,4 +1055,28 @@ html[data-theme="light"] .modo-liviano .perfil-pro .dock {
 /* "Volver" en su fila, sobre la columna de datos (la carta ocupa las tres filas a la izquierda) */
 @media (min-width: 900px) {
   .perfil--pro { grid-template-areas: "carta volver" "carta cabecera" "carta info"; }
+}
+
+/* ---------- Carta plana (html.carta-plana: Safari/iPhone o pantalla táctil; ver views/partials/header.ejs) ----------
+   Safari dibuja mal las capas con translateZ dentro de preserve-3d cuando llevan máscara, mix-blend-mode o
+   texto con degradado (la foto, el nombre y las stats se descolocaban o desaparecían). Sin mouse la carta no se
+   inclina, así que el 3D no aporta: todas las capas quedan en el plano de la carta. */
+html.carta-plana .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini),
+html.carta-plana .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__marco,
+html.carta-plana .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cuerpo,
+html.carta-plana .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cabecera,
+html.carta-plana .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__media {
+  transform-style: flat;
+}
+
+html.carta-plana .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__marca,
+html.carta-plana .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__stats,
+html.carta-plana .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__posicion,
+html.carta-plana .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__nombre,
+html.carta-plana .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__numero,
+html.carta-plana .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__bandera,
+html.carta-plana .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__foto,
+html.carta-plana .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cuerpo::before,
+html.carta-plana .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__cuerpo::after {
+  transform: none;
 }

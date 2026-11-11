@@ -190,7 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
           setTimeout(() => el.style.removeProperty('--retraso'), 1200);
         });
       },
-      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+      // Aparece apenas asoman 40px. Antes exigía ver el 15 % del elemento: uno más alto que ~6 pantallas
+      // (el formulario de crear torneo en celular) nunca llegaba a ese 15 % y quedaba invisible.
+      { threshold: 0, rootMargin: '0px 0px -40px 0px' }
     );
     revelables.forEach((el) => observador.observe(el));
   } else {

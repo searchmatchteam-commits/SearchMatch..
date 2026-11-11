@@ -55,13 +55,15 @@
             <rect x="3" width="3" height="3" fill="rgba(0, 0, 0, 0.22)" />
             <rect y="3" width="3" height="3" fill="rgba(0, 0, 0, 0.22)" />
           </pattern>
-          <path id="carta-escudo-forma" d="M160 16 L194 2 L288 2 L318 32 L318 160 L308 172 L318 184 L318 404 L236 476 L178 494 L160 518 L142 494 L84 476 L2 404 L2 184 L12 172 L2 160 L2 32 L32 2 L126 2 Z" />
+<% const formaEscudo = 'M160 16 L194 2 L288 2 L318 32 L318 160 L308 172 L318 184 L318 404 L236 476 L178 494 L160 518 L142 494 L84 476 L2 404 L2 184 L12 172 L2 160 L2 32 L32 2 L126 2 Z'; %>
+          <path id="carta-escudo-forma" d="<%= formaEscudo %>" />
+          <!-- Los clipPath llevan el path directo (no <use>): Safari/iPhone no recorta con <use> dentro de un clipPath -->
           <clipPath id="carta-escudo-recorte" clipPathUnits="objectBoundingBox">
-            <use href="#carta-escudo-forma" transform="scale(0.003125 0.001923)" />
+            <path d="<%= formaEscudo %>" transform="scale(0.003125 0.001923)" />
           </clipPath>
           <!-- Sombra interior: un trazo grueso y desenfocado sobre el contorno, recortado por dentro del escudo -->
           <clipPath id="carta-escudo-dentro">
-            <use href="#carta-escudo-forma" />
+            <path d="<%= formaEscudo %>" />
           </clipPath>
           <filter id="carta-escudo-difuso" x="-10%" y="-10%" width="120%" height="120%">
             <feGaussianBlur stdDeviation="7" />
