@@ -19,6 +19,18 @@ const PREDETERMINADOS = {
 
 const REGEX_COLOR = /^#[0-9a-f]{6}$/;
 
+// Paleta rápida del formulario (8 colores por cada color del equipo); "Otro" abre el selector libre.
+const PALETA = [
+  { valor: '#dc2626', nombre: 'Rojo' },
+  { valor: '#1d4ed8', nombre: 'Azul' },
+  { valor: '#38bdf8', nombre: 'Celeste' },
+  { valor: '#16a34a', nombre: 'Verde' },
+  { valor: '#facc15', nombre: 'Amarillo' },
+  { valor: '#f97316', nombre: 'Naranjo' },
+  { valor: '#111111', nombre: 'Negro' },
+  { valor: '#ffffff', nombre: 'Blanco' },
+];
+
 // Distancia "redmean" (aproxima cómo percibe el ojo la diferencia; va de 0 a ~765). Bajo este umbral dos
 // camisetas se confunden en la cancha (p. ej. rojo y granate, o blanco y crema).
 const UMBRAL_PARECIDOS = 120;
@@ -171,6 +183,7 @@ function soloCamiseta(fila, clave) {
 const MSG_COLOR_DEL_RIVAL = 'El equipo rival irá de ese color, cámbiala.';
 
 module.exports = {
+  PALETA,
   camisetasPorDefecto,
   MSG_COLOR_DEL_RIVAL,
   soloCamiseta,
