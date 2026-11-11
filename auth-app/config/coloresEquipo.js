@@ -54,17 +54,38 @@ function colorTexto(hex) {
 }
 
 /**
- * Lee y valida los cuatro colores del formulario del equipo.
+ * Camisetas que se asumen a partir de los colores del equipo: local = color principal y visita = secundario.
+ * Si los dos colores se confunden en la cancha, la de visita pasa a blanco o negro (la que más contraste).
+ */
+function camisetasPorDefecto(primario, secundario) {
+  const local = primario;
+  let visita = secundario || primario;
+  if (coloresParecidos(local, visita)) {
+    visita = distanciaColor(local, '#ffffff') >= distanciaColor(local, '#111111') ? '#ffffff' : '#111111';
+  }
+  return { camiseta_local: local, camiseta_visita: visita };
+}
+
+/**
+ * Lee y valida los colores del formulario del equipo.
+ * Al crear un equipo solo se piden sus dos colores: las camisetas se asumen iguales (camisetasPorDefecto) y se
+ * pueden cambiar después al editar el equipo o al elegir la equipación de un desafío. Si el formulario sí trae
+ * las camisetas (editar equipo), se validan como antes.
  * @returns {{ colores: object, errores: string[] }} colores con las claves de CAMPOS (null si no vino válido).
  */
 function leerColores(body) {
   const colores = {};
   const errores = [];
+  const conCamisetas = body.camiseta_local !== undefined || body.camiseta_visita !== undefined;
   Object.entries(CAMPOS).forEach(([campo, etiqueta]) => {
+    if (!conCamisetas && campo.startsWith('camiseta_')) return;
     colores[campo] = normalizarColor(body[campo]);
     if (!colores[campo]) errores.push(`Elige el color: ${etiqueta.toLowerCase()}.`);
   });
-  if (coloresParecidos(colores.camiseta_local, colores.camiseta_visita)) {
+  if (!conCamisetas) {
+    Object.assign(colores, colores.color_primario ? camisetasPorDefecto(colores.color_primario, colores.color_secundario)
+      : { camiseta_local: null, camiseta_visita: null });
+  } else if (coloresParecidos(colores.camiseta_local, colores.camiseta_visita)) {
     errores.push('Tus camisetas de local y de visita deben ser de colores distintos: así siempre hay una que no choca con el rival.');
   }
   return { colores, errores };
@@ -150,6 +171,7 @@ function soloCamiseta(fila, clave) {
 const MSG_COLOR_DEL_RIVAL = 'El equipo rival irá de ese color, cámbiala.';
 
 module.exports = {
+  camisetasPorDefecto,
   MSG_COLOR_DEL_RIVAL,
   soloCamiseta,
   CAMPOS,

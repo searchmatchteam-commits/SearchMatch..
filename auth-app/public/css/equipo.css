@@ -2433,3 +2433,96 @@ button.eq-mis__accion {
 @media (prefers-reduced-motion: reduce) {
   .eq-desafios__flecha, .dz-versus__camiseta { transition: none; }
 }
+
+/* ---------- Escudo con los colores del equipo (bug: la inicial pintaba un rectángulo encima de la silueta) ---------- */
+/* La inicial se recorta con la misma forma de escudo y la franja del segundo color sigue el contorno. */
+.eq-mis__emblema .escudo-equipo__inicial {
+  position: absolute;
+  inset: 3px;
+  width: auto;
+  height: auto;
+  padding-bottom: 12px;
+  clip-path: var(--silueta);
+  border-radius: 0;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.22), transparent 42%),
+    linear-gradient(180deg, var(--c1) 0 62%, var(--c2) 62% 100%);
+  color: var(--ct);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+/* Borde del escudo en el color principal en vez del verde neón */
+.eq-mis--con-colores .eq-mis__emblema::after { background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.25)); }
+.eq-mis--con-colores .eq-mis__emblema { filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55)); }
+
+/* ---------- Directorio: cada equipo es una carta (.eq-mis--carta) ---------- */
+.eq-mis-grilla--directorio {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+  gap: 22px;
+}
+@media (min-width: 768px) {
+  .eq-mis-grilla--directorio { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+}
+
+.eq-mis--carta {
+  --c1: var(--verde);
+  --c2: #0b0f0c;
+  --ct: #04140a;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  gap: 12px;
+  max-width: 340px;
+  width: 100%;
+  justify-self: center;
+  padding: 44px 16px 16px;
+  border: 2px solid transparent;
+  border-radius: 22px 22px 28px 28px;
+  background:
+    linear-gradient(180deg, #121614, #090909 70%) padding-box,
+    linear-gradient(160deg, var(--c1), rgba(255, 255, 255, 0.15) 45%, var(--c2) 100%) border-box;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+  transition: transform 0.3s var(--curva), box-shadow 0.3s ease;
+}
+/* Franja diagonal con los dos colores del equipo detrás del escudo, como el fondo de una carta */
+.eq-mis--carta::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 60%;
+  z-index: -1;
+  background:
+    linear-gradient(115deg, transparent 0 30%, color-mix(in srgb, var(--c1) 55%, transparent) 30% 52%, color-mix(in srgb, var(--c2) 55%, transparent) 52% 66%, transparent 66%),
+    radial-gradient(ellipse 80% 70% at 50% 0%, color-mix(in srgb, var(--c1) 35%, transparent), transparent 75%);
+  opacity: 0.5;
+  -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent);
+  mask-image: linear-gradient(180deg, #000 55%, transparent);
+}
+.eq-mis--carta:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px color-mix(in srgb, var(--c1) 40%, transparent); }
+.eq-mis--carta.eq-mis--capitan { box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45), 0 0 26px rgba(var(--verde-rgb), 0.28); }
+.eq-mis--carta .eq-mis__trofeo { width: 128px; height: 136px; }
+.eq-mis--carta .eq-mis__halo { background: radial-gradient(circle, color-mix(in srgb, var(--c1) 45%, transparent) 0%, transparent 70%); }
+.eq-mis--carta .eq-mis__nombre {
+  font-size: 1.35rem;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.eq-mis--carta .eq-mis__titulo { width: 100%; padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+
+.eq-carta__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  margin: 0;
+}
+.eq-carta__stats > div { min-width: 0; padding: 2px 6px; }
+.eq-carta__stats > div + div { border-left: 1px solid rgba(255, 255, 255, 0.1); }
+.eq-carta__stats dt { font-size: 0.64rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--texto-suave); }
+.eq-carta__stats dd { margin: 2px 0 0; font-family: var(--fuente-titulo); font-size: 0.98rem; font-weight: 700; color: var(--texto); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eq-mis--carta .eq-mis__accion { margin-top: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .eq-mis--carta, .eq-mis--carta:hover { transition: none; transform: none; }
+}

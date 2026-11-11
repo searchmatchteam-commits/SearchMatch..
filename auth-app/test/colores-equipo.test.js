@@ -22,6 +22,17 @@ test('leerColores: acepta #rrggbb (en minúsculas) y exige camisetas de local y 
   assert.match(iguales.errores.join(), /distintos/);
 });
 
+test('crear equipo: sin camisetas en el formulario, se asumen los colores del equipo', () => {
+  const { colores, errores } = leerColores({ color_primario: '#FF0000', color_secundario: '#0000ff' });
+  assert.deepEqual(errores, []);
+  assert.equal(colores.camiseta_local, '#ff0000');
+  assert.equal(colores.camiseta_visita, '#0000ff');
+  // Colores parecidos: la de visita pasa a blanco o negro para que siempre haya una que no choque
+  const parecidos = leerColores({ color_primario: '#16a34a', color_secundario: '#15a040' });
+  assert.equal(parecidos.colores.camiseta_visita, '#ffffff');
+  assert.equal(leerColores({ color_primario: '#f5f5f5', color_secundario: '#ffffff' }).colores.camiseta_visita, '#111111');
+});
+
 test('el validador de equipos incluye los colores en los datos y sus errores', () => {
   const req = { body: { nombre_equipo: 'Los Titanes', correo_contacto: 'a@b.cl', nivel: Object.keys(require('../config/perfilJugador').NIVELES)[0], id_comuna: '5',
     color_primario: '#000000', color_secundario: '#ffffff', camiseta_local: '#000000', camiseta_visita: '#ffffff' } };
@@ -67,9 +78,12 @@ test('validarEquipaciones rechaza el mismo color si existe otra combinación, y 
 });
 
 test('vistas: el formulario de colores y la inicial del escudo con los colores del equipo', async () => {
+  // Al crear un equipo solo se piden sus dos colores; las camisetas aparecen al editarlo (conCamisetas).
   const formulario = await ejs.renderFile(path.join(vistas, 'partials/sm-colores-equipo.ejs'), { colores: { color_primario: '#123456' } });
   assert.match(formulario, /name="color_primario" value="#123456"/);
-  assert.match(formulario, /name="camiseta_visita" value="#ffffff"/, 'lo que falta parte con el predeterminado');
+  assert.doesNotMatch(formulario, /name="camiseta_local"/, 'crear: sin camisetas');
+  const edicion = await ejs.renderFile(path.join(vistas, 'partials/sm-colores-equipo.ejs'), { colores: { color_primario: '#123456' }, conCamisetas: true });
+  assert.match(edicion, /name="camiseta_visita" value="#ffffff"/, 'lo que falta parte con el predeterminado');
   const inyectado = await ejs.renderFile(path.join(vistas, 'partials/sm-colores-equipo.ejs'), { colores: { color_primario: '"><script>' } });
   assert.doesNotMatch(inyectado, /<script>/);
 

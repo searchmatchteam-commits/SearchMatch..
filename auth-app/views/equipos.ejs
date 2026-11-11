@@ -61,7 +61,8 @@
            El equipo del capitán brilla en verde -->
       <ul class="eq-mis-grilla eq-mis-grilla--directorio">
         <% equipos.forEach(function (equipo) { const capitan = equipo.relacion === 'capitan'; %>
-          <li class="eq-mis eq-mis--escudo <%= capitan ? 'eq-mis--capitan' : '' %>" data-busqueda="<%= [equipo.nombre, equipo.zona].filter(Boolean).join(' ') %>">
+          <li class="eq-mis eq-mis--escudo eq-mis--carta <%= capitan ? 'eq-mis--capitan' : '' %> <%= equipo.colores ? 'eq-mis--con-colores' : '' %>"
+              style="<%= equipo.colores ? equipo.colores.estilo : '' %>" data-busqueda="<%= [equipo.nombre, equipo.zona].filter(Boolean).join(' ') %>">
             <a class="eq-mis__enlace" href="/equipos/<%= equipo.id %>">Ver ficha</a><%# NUEVO: PE-009 %>
 
             <!-- Escudo: la imagen que subió el capitán o, sin imagen, la inicial dentro de la silueta -->
@@ -79,20 +80,12 @@
               <% } %>
             </div>
 
-            <ul class="eq-mis__datos">
-              <li>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
-                <%= equipo.zona || 'Sin comuna' %>
-              </li>
-              <li>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7l4 3-1.5 4.5h-5L8 10z" /></svg>
-                <%= equipo.modalidad || 'Sin tipo de fútbol' %>
-              </li>
-              <li>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V14M10 20V9M16 20V4" /></svg>
-                <%= equipo.nivel || 'Nivel sin definir' %>
-              </li>
-            </ul>
+            <!-- Datos como las estadísticas de una carta: etiqueta corta arriba y el valor debajo -->
+            <dl class="eq-carta__stats">
+              <div><dt>Comuna</dt><dd title="<%= equipo.zona || 'Sin comuna' %>"><%= equipo.zona || '—' %></dd></div>
+              <div><dt>Fútbol</dt><dd><%= equipo.modalidad ? equipo.modalidad.replace(/^Fútbols*/i, '') : '—' %></dd></div>
+              <div><dt>Nivel</dt><dd title="<%= equipo.nivel || 'Nivel sin definir' %>"><%= equipo.nivel || '—' %></dd></div>
+            </dl>
 
             <% if (capitan) { %>
               <a class="eq-mis__accion eq-mis__accion--principal" href="/mi-equipo?equipo=<%= equipo.id %>">
