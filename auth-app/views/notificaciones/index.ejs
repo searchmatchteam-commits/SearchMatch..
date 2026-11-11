@@ -3,8 +3,37 @@
 <%- include('../partials/cursor-luz') %>
 
 <%
-  const formatoFecha = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', dateStyle: 'medium', timeStyle: 'short' });
+  const formatoFecha = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const sinLeer = notificaciones.filter(function (n) { return !n.leida; }).length;
+  // "hace 5 min", "hace 3 h", "ayer", o la fecha corta si pasó más de una semana.
+  const ahora = Date.now();
+  function cuando(fecha) {
+    const min = Math.max(0, Math.round((ahora - new Date(fecha).getTime()) / 60000));
+    if (min < 1) return 'ahora';
+    if (min < 60) return 'hace ' + min + ' min';
+    const h = Math.round(min / 60);
+    if (h < 24) return 'hace ' + h + ' h';
+    const d = Math.round(h / 24);
+    if (d === 1) return 'ayer';
+    if (d < 7) return 'hace ' + d + ' días';
+    return formatoFecha.format(new Date(fecha));
+  }
+  // Ícono por tipo (trazos de 24×24)
+  const ICONOS = {
+    solicitud_equipo: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/>',
+    invitacion: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
+    desafio: '<path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6M16 16l4 4M19 21l2-2"/>',
+    partido: '<circle cx="12" cy="12" r="10"/><path d="m12 7 4.5 3.3-1.7 5.2H9.2l-1.7-5.2z"/>',
+    reserva: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+    comentario: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+    equipo: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    moderacion: '<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
+    torneo: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.7V17c0 .6-.5 1-1 1.2C7.8 18.8 7 20.2 7 22M14 14.7V17c0 .6.5 1 1 1.2 1.2.6 2 2 2 3.8M18 2H6v7a6 6 0 0 0 12 0z"/>',
+  };
+  const grupos = [
+    { titulo: 'Nuevas', lista: notificaciones.filter(function (n) { return !n.leida; }) },
+    { titulo: 'Anteriores', lista: notificaciones.filter(function (n) { return n.leida; }) },
+  ].filter(function (g) { return g.lista.length > 0; });
 %>
 <section class="eq">
   <div class="contenedor sm-angosto">
@@ -17,16 +46,16 @@
       <% if (sinLeer > 0) { %>
         <div class="eq-cabecera__acciones">
           <form action="/notificaciones/leidas" method="POST">
-            <button type="submit" class="btn btn--contorno btn--grande">Marcar todas como leídas</button>
+            <button type="submit" class="btn btn--contorno btn--chico">✓ Marcar todas como leídas</button>
           </form>
         </div>
       <% } %>
     </header>
 
-    <nav class="sm-pestanas" aria-label="Filtrar por tipo">
+    <nav class="sm-pestanas sm-pestanas--notif" aria-label="Filtrar por tipo">
       <a class="sm-pestanas__item <%= !tipo ? 'sm-pestanas__item--activa' : '' %>" href="/notificaciones">Todas</a>
-      <% Object.entries(tipos).forEach(function ([clave, texto]) { %>
-        <a class="sm-pestanas__item <%= tipo === clave ? 'sm-pestanas__item--activa' : '' %>" href="/notificaciones?tipo=<%= clave %>"><%= texto %></a>
+      <% tipos.forEach(function (t) { %>
+        <a class="sm-pestanas__item <%= tipo === t.clave ? 'sm-pestanas__item--activa' : '' %>" href="/notificaciones?tipo=<%= t.clave %>"><%= t.texto %><% if (t.sinLeer) { %> <span class="sm-pestanas__cuenta"><%= t.sinLeer %></span><% } %></a>
       <% }) %>
     </nav>
 
@@ -37,19 +66,29 @@
         <a class="btn btn--contorno" href="<%= tipo ? '/notificaciones' : '/equipos' %>"><%= tipo ? 'Ver todas' : 'Explorar equipos' %></a>
       </div>
     <% } else { %>
-      <ul class="dash-panel eq-panel sm-notificaciones">
-        <% notificaciones.forEach(function (n) { %>
-          <li class="sm-notificacion <%= n.leida ? '' : 'sm-notificacion--nueva' %>">
-            <a class="sm-notificacion__enlace" href="/notificaciones/<%= n.id %>/abrir">
-              <span class="sm-notificacion__punto" aria-hidden="true"></span>
-              <span class="sm-notificacion__texto">
-                <span class="sm-notificacion__mensaje"><%= n.mensaje %></span>
-                <small><span class="sm-rol"><%= n.tipoTexto %></span> · <%= formatoFecha.format(n.fecha) %><%= n.leida ? '' : ' · Nueva' %></small>
-              </span>
-            </a>
-          </li>
-        <% }) %>
-      </ul>
+      <% grupos.forEach(function (g) { %>
+        <h2 class="sm-notif-grupo"><%= g.titulo %> <span><%= g.lista.length %></span></h2>
+        <ul class="sm-notificaciones">
+          <% g.lista.forEach(function (n) { %>
+            <li class="sm-notificacion sm-notificacion--<%= n.tipo %> <%= n.leida ? '' : 'sm-notificacion--nueva' %>">
+              <a class="sm-notificacion__enlace" href="/notificaciones/<%= n.id %>/abrir">
+                <span class="sm-notificacion__icono" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><%- ICONOS[n.tipo] || ICONOS.equipo %></svg>
+                </span>
+                <span class="sm-notificacion__texto">
+                  <span class="sm-notificacion__meta">
+                    <span class="sm-notificacion__tipo"><%= n.tipoTexto %></span>
+                    <time datetime="<%= new Date(n.fecha).toISOString() %>" title="<%= formatoFecha.format(new Date(n.fecha)) %>"><%= cuando(n.fecha) %></time>
+                  </span>
+                  <span class="sm-notificacion__mensaje"><%= n.mensaje %></span>
+                </span>
+                <% if (!n.leida) { %><span class="sm-notificacion__punto"><span class="sr-only">Nueva</span></span><% } %>
+                <svg class="sm-notificacion__flecha" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+              </a>
+            </li>
+          <% }) %>
+        </ul>
+      <% }) %>
     <% } %>
   </div>
 </section>

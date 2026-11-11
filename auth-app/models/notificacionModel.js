@@ -178,7 +178,20 @@ async function listar(authId, tipo = null) {
   return rows.map((fila) => ({ ...fila, tipoTexto: TIPOS[fila.tipo] || 'Aviso' }));
 }
 
-/** Cantidad sin leer (la campana de la barra superior). */
+/** Tipos que la cuenta tiene, con cuántas sin leer (para mostrar solo las pestañas útiles). */
+async function tiposDeLaCuenta(authId) {
+  const { rows } = await pool.query(
+    `SELECT lower(t.nombre) AS tipo, count(*) FILTER (WHERE NOT n.leida)::int AS sin_leer
+       FROM notificacion n
+       JOIN usuario u ON u.id = n.id_usuario
+       JOIN tipo_notificacion t ON t.id = n.id_tipo_notificacion
+      WHERE u.auth_id = $1
+      GROUP BY lower(t.nombre)`,
+    [authId]
+  );
+  return new Map(rows.map((f) => [f.tipo, f.sin_leer]));
+}
+
 /**
  * NT-003 / NT-004 · Marca una notificación de la cuenta como leída y devuelve su enlace.
  * Solo toca las que siguen sin leer (las leídas quedan igual).
@@ -206,6 +219,7 @@ async function marcarTodas(authId) {
 }
 
 module.exports = {
+  tiposDeLaCuenta,
   TIPOS,
   notificarUsuario,
   notificarEnTransaccion,
