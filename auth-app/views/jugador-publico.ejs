@@ -1,13 +1,14 @@
 <%- include('partials/header') %>
 <%# PE-010: perfil público de otro jugador. Solo datos deportivos y edad: nunca correo, teléfono ni fecha de nacimiento %>
 <section class="perfil">
+  <!-- "Volver" en su propia fila: arriba a la izquierda en celular (antes quedaba centrado bajo la carta) -->
+  <div class="perfil__volver"><%- include('partials/boton-volver', { fallbackUrl: '/equipos' }) %></div>
   <div class="perfil__carta">
     <%- include('partials/carta-jugador', { jugador, editor: false }) %>
     <%- include('partials/carta-alternativa', { jugador }) %>
   </div>
 
   <header class="perfil__cabecera">
-    <div class="perfil__volver"><%- include('partials/boton-volver', { fallbackUrl: '/equipos' }) %></div>
     <span class="rol__eyebrow">PERFIL DE JUGADOR</span>
     <h1 class="perfil__titulo"><%= jugador.nombreCompleto || jugador.nombre %></h1>
     <p class="perfil__subtitulo">«<%= jugador.apodo %>» · <%= jugador.posiciones %></p>

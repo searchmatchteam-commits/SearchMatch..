@@ -9,11 +9,12 @@
 %>
 <section class="eq">
   <div class="contenedor">
+    <!-- "Volver" fuera del encabezado: siempre arriba a la izquierda (antes quedaba al lado del escudo) -->
+    <div class="sm-volver-fila"><%- include('../partials/boton-volver', { fallbackUrl: '/equipos' }) %></div>
     <header class="eq-cabecera revelar<%= equipo.colores ? ' sm-carta-equipo' : '' %>"<% if (equipo.colores) { %> style="<%= equipo.colores.estilo %>"<% } %>>
       <div class="eq-cabecera__identidad">
         <div class="eq-escudo"><span class="eq-escudo__imagen"><%- include('../partials/escudo-equipo', { equipo }) %></span></div>
         <div class="eq-cabecera__texto">
-          <%- include('../partials/boton-volver', { fallbackUrl: '/equipos' }) %>
           <% if (!equipo.activo) { %><span class="sm-estado sm-estado--inactivo">Equipo inactivo</span><% } %>
           <h1 class="eq-cabecera__titulo"><%= equipo.nombre %></h1>
           <ul class="eq-cabecera__datos">

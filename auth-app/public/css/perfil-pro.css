@@ -1049,3 +1049,8 @@ html[data-theme="light"] .modo-liviano .perfil-pro .dock {
 .pp-metrica__nota.imc-normal { color: var(--verde); }
 .pp-metrica__nota.imc-sobrepeso { color: #facc15; }
 .pp-metrica__nota.imc-obesidad { color: #f87171; }
+
+/* "Volver" en su fila, sobre la columna de datos (la carta ocupa las tres filas a la izquierda) */
+@media (min-width: 900px) {
+  .perfil--pro { grid-template-areas: "carta volver" "carta cabecera" "carta info"; }
+}

@@ -6,13 +6,14 @@
 %>
 
 <section class="perfil">
+  <!-- "Volver" en su propia fila: arriba a la izquierda en celular (antes quedaba centrado bajo la carta) -->
+  <div class="perfil__volver"><%- include('partials/boton-volver', { fallbackUrl: '/mi-equipo' }) %></div>
   <div class="perfil__carta">
     <%- include('partials/carta-jugador', { jugador, editor: false }) %>
     <%- include('partials/carta-alternativa', { jugador }) %>
   </div>
 
   <header class="perfil__cabecera">
-    <div class="perfil__volver"><%- include('partials/boton-volver', { fallbackUrl: '/mi-equipo' }) %></div>
     <span class="rol__eyebrow">SOLICITUD PARA UNIRSE · <%= solicitud.equipo.nombre.toUpperCase() %></span>
     <h1 class="perfil__titulo"><%= jugador.nombreCompleto || jugador.nombre %></h1>
     <p class="perfil__subtitulo">Envió su solicitud el <%= fechaSolicitud %>.</p>

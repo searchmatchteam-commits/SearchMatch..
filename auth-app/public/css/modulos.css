@@ -1375,3 +1375,6 @@ body .vic__caja { max-height: calc(100dvh - 32px); }
 .sm-paleta__otro input[type="color"]::-webkit-color-swatch { border: 1px solid var(--borde-fuerte); border-radius: 50%; }
 .sm-paleta__otro input[type="color"]::-moz-color-swatch { border: 1px solid var(--borde-fuerte); border-radius: 50%; }
 .sm-paleta__otro--activo { border-style: solid; border-color: var(--texto); color: var(--texto); }
+
+/* "Volver" en su propia fila, arriba a la izquierda (ficha de equipo) */
+.sm-volver-fila { display: flex; justify-content: flex-start; margin: 0 0 14px; }

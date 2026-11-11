@@ -6,6 +6,8 @@
 %>
 
 <section class="perfil editor">
+  <!-- "Volver" en su propia fila: arriba a la izquierda en celular (antes quedaba centrado bajo la carta) -->
+  <div class="perfil__volver"><%- include('partials/boton-volver', { fallbackUrl: '/perfil' }) %></div>
   <!-- ============ COLUMNA IZQUIERDA: VISTA PREVIA DE LA CARTA + FOTO ============ -->
   <div class="perfil__carta">
     <%- include('partials/carta-jugador', { jugador, editor: true }) %>
@@ -28,7 +30,6 @@
   <!-- ============ COLUMNA DERECHA: FORMULARIO ============ -->
   <!-- Encabezado aparte: en escritorio va sobre la columna derecha y la carta queda al nivel de la primera tarjeta -->
   <header class="perfil__cabecera">
-    <div class="perfil__volver"><%- include('partials/boton-volver', { fallbackUrl: '/perfil' }) %></div>
     <span class="rol__eyebrow">SEARCH MATCH · PERFIL</span>
     <h1 class="perfil__titulo">Editar perfil</h1>
     <p class="perfil__subtitulo">Los cambios se ven en tu carta al instante; se guardan al presionar “Guardar cambios”.</p>

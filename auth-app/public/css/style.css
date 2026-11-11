@@ -3979,3 +3979,13 @@ html.js .bento__tarjeta.revelar.visible:hover {
   justify-content: center;
   height: calc(56 * var(--u));
 }
+
+/* ---------- "Volver" de las páginas de carta (perfil, editar perfil, perfil público, solicitud) ----------
+   Va en su propia fila de la grilla: en celular arriba de todo y a la izquierda (antes estaba dentro del
+   encabezado centrado, que en celular queda debajo de la carta); en escritorio, sobre la columna de datos. */
+.perfil { grid-template-areas: "volver" "carta" "cabecera" "info"; }
+.perfil > .perfil__volver { grid-area: volver; justify-self: start; margin-bottom: 0; }
+@media (min-width: 900px) {
+  .perfil { grid-template-areas: ". volver" ". cabecera" "carta info"; }
+  .perfil > .perfil__volver { align-self: end; }
+}

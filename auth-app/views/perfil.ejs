@@ -17,6 +17,8 @@
 %>
 
 <section class="perfil perfil--pro">
+  <!-- "Volver" en su propia fila: arriba a la izquierda en celular (antes quedaba centrado bajo la carta) -->
+  <div class="perfil__volver"><%- include('partials/boton-volver') %></div>
   <!-- ============ IZQUIERDA: EL HÉROE ============ -->
   <div class="perfil__carta">
     <!-- PE-001: aria-busy + skeleton mientras cargan la foto y las fuentes (perfil-pro.js los quita) -->
@@ -41,7 +43,6 @@
 
   <!-- ============ DERECHA: LOS DATOS ============ -->
   <header class="perfil__cabecera">
-    <div class="perfil__volver"><%- include('partials/boton-volver') %></div>
     <span class="pp-eyebrow"><span class="pp-eyebrow__punto" aria-hidden="true"></span>Perfil de jugador</span>
     <h1 class="perfil__titulo pp-titulo">Tu carta de jugador</h1>
     <p class="perfil__subtitulo">Así te verán otros jugadores al buscar partidos.</p>
