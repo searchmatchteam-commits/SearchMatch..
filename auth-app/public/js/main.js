@@ -14,6 +14,47 @@
 //  9) Dock: marca al instante la sección elegida; la página precargada que quedó vieja se vuelve a pedir.
 // La validación de login/registro está en auth.js (y la real, en el servidor).
 
+/* ---------- Nombre de las cartas ----------
+   Con más de una palabra ("JUAN PABLO") el nombre saltaba de línea y quedaba encima de las estadísticas.
+   Ahora va en una sola línea y, si no cabe, la letra se achica de a poco hasta caber (como mínimo al 45 %
+   del tamaño normal; un nombre aún más largo puede usar dos líneas). Se recalcula si cambia el ancho de la
+   carta (pestañas, giro del celular) y cuando el editor cambia el apodo (window.ajustarNombreCarta). */
+const ESCALA_MINIMA_NOMBRE = 0.45;
+
+function ajustarNombreCarta(nombre) {
+  if (!nombre || !nombre.isConnected) return;
+  nombre.style.fontSize = '';
+  nombre.style.whiteSpace = 'nowrap';
+  const ancho = nombre.clientWidth;
+  if (!ancho) return; // oculta (otra pestaña): se ajusta cuando se vea
+  nombre.dataset.anchoAjustado = String(ancho);
+  const base = parseFloat(getComputedStyle(nombre).fontSize);
+  let tamano = base;
+  while (nombre.scrollWidth > ancho + 1 && tamano > base * ESCALA_MINIMA_NOMBRE) {
+    tamano -= base * 0.03;
+    nombre.style.fontSize = `${tamano}px`;
+  }
+  if (nombre.scrollWidth > ancho + 1) nombre.style.whiteSpace = 'normal';
+}
+window.ajustarNombreCarta = ajustarNombreCarta;
+
+function ajustarNombresCartas() {
+  const nombres = document.querySelectorAll('[data-carta-nombre]');
+  if (!nombres.length) return;
+  const observador = 'ResizeObserver' in window ? new ResizeObserver((entradas) => {
+    entradas.forEach(({ target }) => {
+      if (target.dataset.anchoAjustado !== String(target.clientWidth)) ajustarNombreCarta(target);
+    });
+  }) : null;
+  nombres.forEach((nombre) => {
+    ajustarNombreCarta(nombre);
+    if (observador) observador.observe(nombre);
+  });
+  // Con la fuente del apodo ya cargada las medidas cambian: se ajusta otra vez
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => nombres.forEach(ajustarNombreCarta));
+}
+document.addEventListener('DOMContentLoaded', ajustarNombresCartas);
+
 const COLOR_BARRA = { light: '#ffffff', dark: '#0b0d0b' }; // <meta name="theme-color"> (barra del navegador en celulares)
 const MAX_ESPERA_PRECARGA_MS = 30000; // una sección preparada hace más que esto se vuelve a pedir al abrirla
 

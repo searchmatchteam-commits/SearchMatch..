@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const apodoInput = formulario.querySelector('[data-editor-apodo]');
   apodoInput.addEventListener('input', () => {
     nombreCarta.textContent = (apodoInput.value.trim() || '—').toUpperCase();
+    if (window.ajustarNombreCarta) window.ajustarNombreCarta(nombreCarta);
   });
 
   // ---------- Posiciones y estadísticas (config/perfilJugador.js: PESOS, cartasDe) ----------

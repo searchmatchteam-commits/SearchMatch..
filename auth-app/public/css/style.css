@@ -859,6 +859,8 @@ svg {
   margin: 12px 0 10px;
   padding-bottom: 10px;
   text-align: center;
+  white-space: nowrap; /* main.js achica la letra si el nombre no cabe */
+  overflow: hidden;
   font-weight: 900;
   font-size: 1rem;
   letter-spacing: 0.14em;
@@ -3238,7 +3240,9 @@ html.js .auth__tarjeta .campo__control:has(.campo__ojo) input {
   font-weight: 700;
   letter-spacing: calc(2.5 * var(--u));
   line-height: 1;
-  overflow-wrap: anywhere;
+  /* Una línea (main.js achica la letra para que quepa); nunca se corta una palabra a la mitad */
+  white-space: nowrap;
+  overflow-wrap: normal;
   /* Texto con degradado blanco → gris claro (metálico). Con el relleno transparente text-shadow se vería
      a través de las letras, así que la sombra dura va como drop-shadow. */
   background: linear-gradient(180deg, #ffffff 30%, #c9d1c9 70%, #9aa59a);
@@ -3965,4 +3969,13 @@ html.js .bento__tarjeta.revelar.visible:hover {
 .editor__eliminar-form[hidden],
 .editor__btn-eliminar[hidden] {
   display: none;
+}
+
+/* Nombre de la carta grande: centrado en un alto fijo, así un nombre largo (con la letra más chica) queda
+   a la misma altura que uno corto y no deja un hueco sobre la línea divisoria. */
+.carta-jugador--perfil .carta-jugador__nombre {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(56 * var(--u));
 }

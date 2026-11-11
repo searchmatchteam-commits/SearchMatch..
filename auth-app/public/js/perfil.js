@@ -159,10 +159,15 @@ async function dibujarCarta(datos, foto) {
   // Nombre
   ctx.textAlign = 'center';
   ctx.fillStyle = '#f2f5f2';
-  ctx.font = fuenteApodo(92);
-  let nombre = datos.nombre.toUpperCase();
-  while (ctx.measureText(nombre).width > ANCHO - 100 && nombre.length > 3) nombre = nombre.slice(0, -1);
-  ctx.fillText(nombre, ANCHO / 2, 470);
+  // Antes se le quitaban letras al final ("JUAN PAB"); ahora se achica la letra hasta que quepa entero
+  const nombre = datos.nombre.toUpperCase();
+  let tamanoNombre = 92;
+  ctx.font = fuenteApodo(tamanoNombre);
+  while (ctx.measureText(nombre).width > ANCHO - 100 && tamanoNombre > 36) {
+    tamanoNombre -= 2;
+    ctx.font = fuenteApodo(tamanoNombre);
+  }
+  ctx.fillText(nombre, ANCHO / 2, 470, ANCHO - 100);
 
   ctx.strokeStyle = 'rgba(57, 255, 20, 0.35)';
   ctx.lineWidth = 2;
