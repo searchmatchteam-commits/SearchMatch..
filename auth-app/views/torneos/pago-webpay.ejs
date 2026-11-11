@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Pagando con Webpay | SearchMatch</title>
+  <!-- Webpay exige recibir el token con un POST a su URL: este formulario se envía solo (y con un botón si no hay JS). -->
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0b0d0b; color: #e8ece8;
+           font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 16px; }
+    .caja { max-width: 360px; }
+    .giro { width: 42px; height: 42px; margin: 0 auto 18px; border-radius: 50%; border: 4px solid rgba(57, 255, 20, 0.2);
+            border-top-color: #39ff14; animation: girar 0.9s linear infinite; }
+    @keyframes girar { to { transform: rotate(360deg); } }
+    p { color: #9aa59a; margin: 8px 0 20px; }
+    button { border: 0; border-radius: 999px; padding: 12px 22px; font: inherit; font-weight: 800; background: #39ff14; color: #0b0d0b; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="caja">
+    <div class="giro" aria-hidden="true"></div>
+    <h1>Te llevamos a Webpay…</h1>
+    <p>Vas a pagar <strong><%= monto %></strong> de inscripción. Tu cupo queda reservado mientras pagas.</p>
+    <form action="<%= url %>" method="POST" id="ir-a-webpay">
+      <input type="hidden" name="token_ws" value="<%= token %>" />
+      <button type="submit">Ir a pagar</button>
+    </form>
+  </div>
+  <script>document.getElementById('ir-a-webpay').submit();</script>
+</body>
+</html>

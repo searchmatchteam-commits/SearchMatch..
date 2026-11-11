@@ -13,7 +13,9 @@
   const faltan = torneo.cuposLibres;
   // Inscripción: con un equipo que juega la modalidad se abre el modal; si ninguno la juega, el botón
   // queda deshabilitado y cada equipo trae "Habilitar <modalidad>" (un clic, sin salir del torneo).
-  const puedeInscribir = enInscripcion && faltan > 0 && disponibles.length > 0;
+  // Con precio solo se puede si el pago en línea (Webpay) está disponible para este torneo.
+  const sinPagoEnLinea = conPago && !pagoDisponible;
+  const puedeInscribir = enInscripcion && faltan > 0 && disponibles.length > 0 && !sinPagoEnLinea;
   const bloqueadoModalidad = enInscripcion && faltan > 0 && disponibles.length === 0 && otraModalidad.length > 0;
   // Pestaña por defecto: el cuadrante (vacío mientras se llenan los cupos, con resultados después)
   const pestanaInicial = 'cuadrante';
@@ -71,17 +73,28 @@
               <span class="trn-mi-equipo__check" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
               </span>
-              <span class="trn-mi-equipo__nombre"><strong><%= e.nombre %></strong><small>Inscrito</small></span>
+              <span class="trn-mi-equipo__nombre"><strong><%= e.nombre %></strong><small><%= e.pendiente ? 'Pago pendiente: cupo reservado unos minutos' : 'Inscrito' %></small></span>
               <% if (enInscripcion && !conPago) { %>
                 <button type="submit" class="trn-btn-retirar">Retirar</button>
               <% } %>
             </form>
+            <% if (e.pendiente && enInscripcion && pagoDisponible) { %>
+              <!-- Volvió sin terminar de pagar: puede retomar el pago mientras dure la reserva -->
+              <form action="/torneos/<%= torneo.id %>/inscribir" method="POST">
+                <input type="hidden" name="id_equipo" value="<%= e.id %>" />
+                <input type="hidden" name="acepto_reglas" value="si" />
+                <input type="hidden" name="medio_pago" value="webpay" />
+                <button type="submit" class="btn btn--verde btn--bloque trn-cta">Pagar <%= torneo.precioTexto %> con Webpay</button>
+              </form>
+            <% } %>
           <% }) %>
 
           <% if (enInscripcion) { %>
             <p class="dash-panel__nota">Inscripción: <strong><%= torneo.precioTexto %></strong> por equipo · hasta el <%= torneo.fechaLimiteTexto.corta || 'inicio' %>.</p>
             <% if (faltan === 0) { %>
               <p class="dash-panel__nota">No quedan cupos.</p>
+            <% } else if (sinPagoEnLinea && misEquipos.length > 0) { %>
+              <p class="dash-panel__nota">El pago en línea de este torneo no está disponible por ahora. Vuelve a intentarlo más tarde.</p>
             <% } else if (puedeInscribir) { %>
               <button type="button" class="btn btn--verde btn--bloque trn-cta" data-abrir-inscripcion>Inscribir mi equipo</button>
             <% } else if (bloqueadoModalidad) { %>
@@ -242,7 +255,13 @@
                 : 'Cruces por tómbola: se sortean cuando se llenen los cupos.' %>
             </li>
             <li>Se juega en <%= torneo.recinto %> · <%= torneo.cancha %><%= torneo.comuna ? ` (${torneo.comuna})` : '' %>.</li>
-            <li>Puedes retirar a tu equipo mientras las inscripciones sigan abiertas: su cupo queda libre.</li>
+            <% if (conPago) { %>
+              <li>La inscripción cuesta <strong><%= torneo.precioTexto %></strong> por equipo y se paga con Webpay (tarjeta de débito, crédito o prepago).</li>
+              <li>Tu cupo queda reservado <%= minutosReserva %> minutos mientras pagas; si el pago no se completa, se libera.</li>
+              <li>Con el pago aprobado tu equipo queda inscrito. Un retiro con reembolso lo gestiona la administración.</li>
+            <% } else { %>
+              <li>Puedes retirar a tu equipo mientras las inscripciones sigan abiertas: su cupo queda libre.</li>
+            <% } %>
             <li>El torneo empieza cuando se llenan los cupos; desde ahí ya no podrás retirarlo.</li>
           </ul>
         </div>
@@ -250,9 +269,10 @@
           <input type="checkbox" name="acepto_reglas" value="si" required />
           <span>Acepto las reglas del torneo</span>
         </label>
+        <% if (conPago) { %><input type="hidden" name="medio_pago" value="webpay" /><% } %>
         <div class="modal__acciones">
           <button type="button" class="btn btn--contorno" data-cerrar-modal>Cancelar</button>
-          <button type="submit" class="btn btn--verde">Confirmar inscripción</button>
+          <button type="submit" class="btn btn--verde"><%= conPago ? `Pagar ${torneo.precioTexto} con Webpay` : 'Confirmar inscripción' %></button>
         </div>
       </form>
     </div>

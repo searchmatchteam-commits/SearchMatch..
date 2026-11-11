@@ -667,7 +667,9 @@ async function equiposDelCapitan(authId, idTorneo, cliente = pool) {
             EXISTS (SELECT 1 FROM equipo_modalidad em WHERE em.id_equipo = e.id AND em.id_modalidad = t.id_modalidad)
               OR e.id_modalidad = t.id_modalidad AS juega_modalidad,
             EXISTS (SELECT 1 FROM torneo_equipo te WHERE te.id_equipo = e.id AND te.id_torneo = t.id
-                       AND (te.estado = ANY(${SQL_PARTICIPA}) OR (te.estado = 'pendiente_pago' AND te.reservada_hasta > now()))) AS inscrito
+                       AND (te.estado = ANY(${SQL_PARTICIPA}) OR (te.estado = 'pendiente_pago' AND te.reservada_hasta > now()))) AS inscrito,
+            EXISTS (SELECT 1 FROM torneo_equipo te WHERE te.id_equipo = e.id AND te.id_torneo = t.id
+                       AND te.estado = 'pendiente_pago' AND te.reservada_hasta > now()) AS pendiente
        FROM equipo e
        JOIN usuario u ON u.id = e.id_usuario_creador AND u.auth_id = $1
        CROSS JOIN torneo t
@@ -675,7 +677,8 @@ async function equiposDelCapitan(authId, idTorneo, cliente = pool) {
       ORDER BY e.nombre`,
     [authId, idTorneo]
   );
-  return rows.map((f) => ({ id: f.id, nombre: f.nombre, juegaModalidad: f.juega_modalidad, inscrito: f.inscrito }));
+  // pendiente: cupo reservado con el pago sin completar (puede volver a intentar pagar)
+  return rows.map((f) => ({ id: f.id, nombre: f.nombre, juegaModalidad: f.juega_modalidad, inscrito: f.inscrito, pendiente: f.pendiente }));
 }
 
 /**
@@ -776,6 +779,178 @@ async function inscribir(authId, idTorneo, idEquipo) {
     );
     await actualizarCompleto(cliente, idTorneo);
     return 'inscrito';
+  });
+}
+
+// ---------- Inscripción con pago (Webpay) ----------
+// 1) reservarParaPago: con el torneo bloqueado, el equipo queda 'pendiente_pago' con el cupo reservado
+//    MINUTOS_RESERVA_PAGO minutos y se registra el pago 'iniciado' (el monto sale del torneo, nunca del navegador).
+// 2) El controlador crea la transacción en Webpay y lleva al capitán a pagar.
+// 3) Al volver, aprobarPago (cobro confirmado) o rechazarPago (rechazo, anulación o tiempo agotado).
+// Solo un pago 'iniciado' se confirma en Webpay: un intento viejo que vuelva después no se cobra
+// (Transbank revierte sola la transacción que no se confirma).
+
+const SELECT_PAGO = `
+  SELECT p.id, p.estado, p.monto, p.entorno, p.orden_compra, p.id_inscripcion, te.id_torneo, te.id_equipo
+    FROM torneo_pago p JOIN torneo_equipo te ON te.id = p.id_inscripcion`;
+
+/**
+ * Reserva el cupo y registra el pago iniciado.
+ * @returns {Promise<{resultado:string, idPago?:number, ordenCompra?:string, monto?:number}>}
+ *   resultado: 'reservado' o el motivo (inexistente, cerrado, gratuito, sin-medio, no-capitan, ya-inscrito, modalidad, lleno).
+ */
+async function reservarParaPago(authId, idTorneo, idEquipo, pasarela, entorno) {
+  return enTransaccion(async (cliente) => {
+    const { rows: [t] } = await cliente.query(
+      `SELECT estado, cupo_max, precio, medios_pago, to_char(fecha_limite_inscripcion, 'YYYY-MM-DD') AS fecha_limite
+         FROM torneo WHERE id = $1 FOR UPDATE`,
+      [idTorneo]
+    );
+    if (!t || t.estado === 'borrador') return { resultado: 'inexistente' };
+    if (!reglas.CON_INSCRIPCIONES.includes(t.estado) || reglas.inscripcionVencida(t.fecha_limite)) return { resultado: 'cerrado' };
+    if (!(t.precio > 0)) return { resultado: 'gratuito' };
+    if (!(t.medios_pago || []).includes(pasarela)) return { resultado: 'sin-medio' };
+    const equipo = (await equiposDelCapitan(authId, idTorneo, cliente)).find((e) => e.id === idEquipo);
+    if (!equipo) return { resultado: 'no-capitan' };
+    if (equipo.inscrito && !equipo.pendiente) return { resultado: 'ya-inscrito' };
+    if (!equipo.juegaModalidad) return { resultado: 'modalidad' };
+    const { ocupados } = await contarInscripciones(cliente, idTorneo);
+    // Si reintenta, su propia reserva vigente ya está contada en ocupados.
+    if (ocupados - (equipo.pendiente ? 1 : 0) >= t.cupo_max) return { resultado: 'lleno' };
+
+    const { rows: [ins] } = await cliente.query(
+      `INSERT INTO torneo_equipo (id_torneo, id_equipo, estado, reservada_hasta, id_usuario_inscribe)
+       VALUES ($1, $2, 'pendiente_pago', now() + make_interval(mins => $4), (SELECT id FROM usuario WHERE auth_id = $3))
+       ON CONFLICT (id_torneo, id_equipo) DO UPDATE
+          SET estado = 'pendiente_pago', reservada_hasta = EXCLUDED.reservada_hasta, confirmada_en = NULL, motivo = NULL,
+              inscrito_en = CASE WHEN torneo_equipo.estado = 'pendiente_pago' THEN torneo_equipo.inscrito_en ELSE now() END,
+              actualizada_en = now(), id_usuario_inscribe = EXCLUDED.id_usuario_inscribe
+       RETURNING id`,
+      [idTorneo, idEquipo, authId, reglas.MINUTOS_RESERVA_PAGO]
+    );
+    // Intentos anteriores sin terminar: ya no se confirman (si el capitán vuelve de uno viejo, no se cobra).
+    await cliente.query(
+      `UPDATE torneo_pago SET estado = 'rechazado', motivo = 'Reemplazado por un nuevo intento de pago.', actualizado_en = now()
+        WHERE id_inscripcion = $1 AND estado = 'iniciado'`,
+      [ins.id]
+    );
+    // Orden de compra: máximo 26 caracteres en Webpay.
+    const ordenCompra = `SM${idTorneo}-${ins.id}-${Date.now().toString(36)}`.slice(0, 26);
+    const { rows: [pago] } = await cliente.query(
+      `INSERT INTO torneo_pago (id_inscripcion, pasarela, entorno, estado, monto, orden_compra)
+       VALUES ($1, $2, $3, 'iniciado', $4, $5) RETURNING id`,
+      [ins.id, pasarela, entorno === 'produccion' ? 'produccion' : 'pruebas', t.precio, ordenCompra]
+    );
+    await actualizarCompleto(cliente, idTorneo);
+    return { resultado: 'reservado', idPago: pago.id, ordenCompra, monto: t.precio };
+  });
+}
+
+/** Guarda el token que entregó la pasarela (con él se reconoce el pago al volver). */
+async function guardarTokenPago(idPago, token) {
+  await pool.query('UPDATE torneo_pago SET id_pasarela = $2, actualizado_en = now() WHERE id = $1', [idPago, token]);
+}
+
+async function pagoPorToken(token) {
+  const { rows } = await pool.query(`${SELECT_PAGO} WHERE p.id_pasarela = $1`, [String(token || '').slice(0, 120)]);
+  return rows[0] || null;
+}
+
+async function pagoPorOrden(ordenCompra) {
+  const { rows } = await pool.query(`${SELECT_PAGO} WHERE p.orden_compra = $1`, [String(ordenCompra || '').slice(0, 40)]);
+  return rows[0] || null;
+}
+
+/** Bloquea el torneo del pago y luego el pago (mismo orden que reservarParaPago: así no se traban entre sí). */
+async function bloquearPago(cliente, idPago) {
+  const { rows: [previo] } = await cliente.query(`${SELECT_PAGO} WHERE p.id = $1`, [idPago]);
+  if (!previo) return null;
+  await cliente.query('SELECT 1 FROM torneo WHERE id = $1 FOR UPDATE', [previo.id_torneo]);
+  const { rows: [p] } = await cliente.query(`${SELECT_PAGO} WHERE p.id = $1 FOR UPDATE OF p`, [idPago]);
+  return p || null;
+}
+
+/** Libera el cupo de una inscripción que seguía esperando el pago. */
+async function liberarReserva(cliente, idInscripcion, idTorneo, motivo) {
+  const { rowCount } = await cliente.query(
+    `UPDATE torneo_equipo SET estado = 'expirada', reservada_hasta = now(), motivo = $2, actualizada_en = now()
+      WHERE id = $1 AND estado = 'pendiente_pago'`,
+    [idInscripcion, motivo]
+  );
+  if (rowCount > 0) await actualizarCompleto(cliente, idTorneo);
+}
+
+/**
+ * Pago no completado (rechazado por el banco, anulado, tiempo agotado o error al crearlo): libera el cupo.
+ * Idempotente: un pago que ya no está 'iniciado' no cambia.
+ */
+async function rechazarPago(idPago, motivo, datos = null) {
+  return enTransaccion(async (cliente) => {
+    const p = await bloquearPago(cliente, idPago);
+    if (!p || p.estado !== 'iniciado') return p ? p.estado : null;
+    await cliente.query(
+      `UPDATE torneo_pago SET estado = 'rechazado', motivo = $2, comprobante = coalesce($3::jsonb, comprobante), actualizado_en = now()
+        WHERE id = $1`,
+      [idPago, motivo.slice(0, 500), datos ? JSON.stringify(datos) : null]
+    );
+    await liberarReserva(cliente, p.id_inscripcion, p.id_torneo, motivo.slice(0, 500));
+    return 'rechazado';
+  });
+}
+
+/**
+ * Cobro confirmado por la pasarela. Si el cupo sigue disponible, la inscripción queda confirmada.
+ * Si ya no (la reserva venció y otro equipo tomó el cupo, o el torneo cerró), el pago queda 'en_verificacion'
+ * para que la administración lo reembolse. Idempotente.
+ * @param {object} datos - Respuesta de la pasarela (se guarda como comprobante).
+ * @returns {Promise<'pagado'|'verificacion'|'rechazado'|null>}
+ */
+async function aprobarPago(idPago, { monto, autorizacion, datos }) {
+  return enTransaccion(async (cliente) => {
+    const p = await bloquearPago(cliente, idPago);
+    if (!p) return null;
+    if (p.estado !== 'iniciado') return p.estado === 'aprobado' ? 'pagado' : p.estado === 'en_verificacion' ? 'verificacion' : 'rechazado';
+    const { rows: [t] } = await cliente.query('SELECT nombre, estado, cupo_max FROM torneo WHERE id = $1', [p.id_torneo]);
+    const { rows: [ins] } = await cliente.query(
+      `SELECT estado, (estado = 'pendiente_pago' AND reservada_hasta > now()) AS vigente FROM torneo_equipo WHERE id = $1 FOR UPDATE`,
+      [p.id_inscripcion]
+    );
+    const { ocupados } = await contarInscripciones(cliente, p.id_torneo);
+    const hayCupo = ocupados - (ins.vigente ? 1 : 0) < t.cupo_max;
+    const puedeConfirmar = monto === p.monto && reglas.CON_INSCRIPCIONES.includes(t.estado) && hayCupo
+      && ['pendiente_pago', 'expirada'].includes(ins.estado);
+    const numero = `SM-${String(p.id).padStart(8, '0')}`;
+
+    if (!puedeConfirmar) {
+      const motivo = monto !== p.monto
+        ? `El monto pagado (${monto}) no coincide con el de la inscripción (${p.monto}).`
+        : 'Pago recibido cuando el cupo ya no estaba disponible: corresponde reembolsarlo.';
+      await cliente.query(
+        `UPDATE torneo_pago SET estado = 'en_verificacion', motivo = $2, id_transaccion = $3, comprobante = $4::jsonb,
+                numero_comprobante = $5, actualizado_en = now() WHERE id = $1`,
+        [idPago, motivo, autorizacion, JSON.stringify(datos), numero]
+      );
+      await liberarReserva(cliente, p.id_inscripcion, p.id_torneo, motivo);
+      await notificarCapitanesEnTransaccion(cliente, [p.id_equipo], 'torneo',
+        `Recibimos tu pago del torneo "${t.nombre}", pero el cupo ya no estaba disponible. La administración lo revisará para reembolsarlo (comprobante ${numero}).`,
+        `/torneos/${p.id_torneo}`);
+      return 'verificacion';
+    }
+
+    await cliente.query(
+      `UPDATE torneo_pago SET estado = 'aprobado', id_transaccion = $2, comprobante = $3::jsonb, numero_comprobante = $4,
+              aprobado_en = now(), actualizado_en = now(), motivo = NULL WHERE id = $1`,
+      [idPago, autorizacion, JSON.stringify(datos), numero]
+    );
+    await cliente.query(
+      `UPDATE torneo_equipo SET estado = 'confirmada', confirmada_en = now(), reservada_hasta = NULL, motivo = NULL, actualizada_en = now()
+        WHERE id = $1`,
+      [p.id_inscripcion]
+    );
+    await actualizarCompleto(cliente, p.id_torneo);
+    await notificarCapitanesEnTransaccion(cliente, [p.id_equipo], 'torneo',
+      `¡Pago aprobado! Tu equipo quedó inscrito en el torneo "${t.nombre}" (comprobante ${numero}).`, `/torneos/${p.id_torneo}`);
+    return 'pagado';
   });
 }
 
@@ -942,5 +1117,6 @@ async function registrarResultado(admin, idTorneo, idPartido, golesLocal, golesV
 module.exports = {
   LISTADO, listar, listarAdmin, catalogos, recintosParaTorneo, canchasDeRecinto, nivelesPorId, obtener, modalidades,
   crear, editar, publicar, cerrarInscripciones, cerrarVencidos, eliminar, obtenerFoto, obtenerLogo,
-  equiposDelCapitan, idsMisTorneos, resumenCapitan, eventosCalendario, inscribir, retirar, quitarEquipo, empezar, registrarResultado,
+  equiposDelCapitan, idsMisTorneos, resumenCapitan, eventosCalendario, inscribir, retirar,
+  reservarParaPago, guardarTokenPago, pagoPorToken, pagoPorOrden, aprobarPago, rechazarPago, quitarEquipo, empezar, registrarResultado,
 };

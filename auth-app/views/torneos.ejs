@@ -66,8 +66,7 @@
              let motivo = null;
              if (!abierto) motivo = 'Las inscripciones están cerradas.';
              else if (t.cuposLibres === 0) motivo = 'Este torneo no tiene cupos.';
-             else if (capitan.total === 0) motivo = 'Solo el capitán del equipo puede inscribirlo.';
-             else if (t.precio > 0) motivo = 'La inscripción con pago en línea se habilita muy pronto.'; %>
+             else if (capitan.total === 0) motivo = 'Solo el capitán del equipo puede inscribirlo.'; %>
           <li class="tl-carta" data-mio="<%= mio %>" data-formato="<%= t.formato %>" data-modalidad="<%= t.modalidad %>" data-fecha="<%= t.fechaInicio ? 'confirmada' : 'por-confirmar' %>">
             <div class="tl-carta__media">
               <!-- Sin foto (torneos antiguos) o si no carga, queda la imagen por defecto -->

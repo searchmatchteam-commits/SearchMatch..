@@ -1,7 +1,8 @@
 const { aceptoVersionesVigentes } = require('../config/legal');
 
 const RUTAS_LIBRES = ['/', '/login', '/registro', '/logout', '/terminos', '/privacidad', '/aceptar-terminos', '/completar-perfil'];
-const PREFIJOS_LIBRES = ['/auth/', '/recuperar'];
+// /torneos/pagos/: la vuelta desde la pasarela debe procesarse siempre (el cobro ya se hizo)
+const PREFIJOS_LIBRES = ['/auth/', '/recuperar', '/torneos/pagos/'];
 
 function rutaLibre(ruta) {
   return RUTAS_LIBRES.includes(ruta) || PREFIJOS_LIBRES.some((prefijo) => ruta.startsWith(prefijo));

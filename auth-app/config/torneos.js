@@ -72,6 +72,8 @@ const LIMITES = {
   reglamento: 10000,
 };
 const MAX_PATROCINADORES = 6;
+// Minutos que un equipo tiene reservado su cupo mientras paga (Webpay cierra su formulario antes de eso).
+const MINUTOS_RESERVA_PAGO = 15;
 const PUNTOS = { victoria: 3, empate: 1 };
 
 /**
@@ -301,7 +303,7 @@ function partirPremio(texto) {
 
 module.exports = {
   FORMATOS, ESTADOS, CON_INSCRIPCIONES, ESTADOS_INSCRIPCION, INSCRIPCION_PARTICIPA, INSCRIPCION_ACTIVA, MEDIOS_PAGO, CAMPOS, EMPAREJAMIENTOS, EQUIPOS_RELAMPAGO, EQUIPOS_LIGA,
-  LIMITES, MAX_PATROCINADORES,
+  LIMITES, MAX_PATROCINADORES, MINUTOS_RESERVA_PAGO,
   erroresCupos, erroresFechas, hoyChile, inscripcionVencida, estadoPorCupos, camposEditables, accionesTorneo, formatoCLP, aUSD, leerPrecio,
   textoFechaInicio, nombreRonda, fixtureLiga, primeraRondaLlave, tablaLiga, partirPremio,
 };

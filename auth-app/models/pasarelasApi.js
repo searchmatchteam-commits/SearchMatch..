@@ -36,6 +36,20 @@ async function webpayCrear(c, entorno, { ordenCompra, sesion, monto, urlRetorno 
   return { ok: false, error: (r.cuerpo && r.cuerpo.error_message) || `HTTP ${r.status}` };
 }
 
+/**
+ * Confirma (commit) la transacción al volver el usuario de Webpay. Solo con esta llamada el cobro queda hecho.
+ * Aprobada = response_code 0 y status AUTHORIZED.
+ * @returns {Promise<{ok:boolean, aprobada?:boolean, datos?:object, error?:string}>}
+ */
+async function webpayConfirmar(c, entorno, token) {
+  const r = await llamar(`${urlBase('webpay', entorno)}/rswebpaytransaction/api/webpay/v1.2/transactions/${encodeURIComponent(token)}`, {
+    method: 'PUT',
+    headers: cabecerasWebpay(c),
+  });
+  if (!r.ok || !r.cuerpo) return { ok: false, error: (r.cuerpo && r.cuerpo.error_message) || `HTTP ${r.status}` };
+  return { ok: true, aprobada: r.cuerpo.response_code === 0 && r.cuerpo.status === 'AUTHORIZED', datos: r.cuerpo };
+}
+
 // ---------- Mercado Pago ----------
 
 function cabecerasMP(c) {
@@ -88,4 +102,4 @@ async function probarConexion(clave, credenciales, entorno) {
   }
 }
 
-module.exports = { llamar, urlBase, probarConexion, webpayCrear, cabecerasWebpay, cabecerasMP, paypalToken };
+module.exports = { llamar, urlBase, probarConexion, webpayCrear, webpayConfirmar, cabecerasWebpay, cabecerasMP, paypalToken };
