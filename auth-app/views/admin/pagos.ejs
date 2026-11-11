@@ -1,0 +1,115 @@
+<%- include('../partials/admin-inicio', { seccion }) %>
+
+<%
+  // Color del estado del pago con las clases que ya existen
+  const claseEstado = {
+    aprobado: 'sm-estado--activo', reembolsado: 'sm-estado--inscripcion-reembolsada', rechazado: 'sm-estado--rechazado',
+    iniciado: 'sm-estado--inscripcion-expirada', en_verificacion: 'sm-estado--pendiente',
+    reembolso_solicitado: 'sm-estado--inscripcion-pendiente_pago', reembolso_fallido: 'sm-estado--inactivo',
+  };
+  const filtroActual = filtros.find((f) => f.clave === filtro);
+%>
+<section class="eq">
+  <div class="contenedor">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Panel</span>
+        <h1 class="eq-cabecera__titulo">Pagos</h1>
+        <p class="eq-cabecera__stats">Inscripciones a torneos pagadas en línea. Primero las que necesitan una decisión: pagos cobrados sin cupo y reembolsos pendientes.</p>
+      </div>
+    </header>
+
+    <% if (aviso) { %><div class="alerta alerta--<%= tipoAviso %>" role="<%= tipoAviso === 'error' ? 'alert' : 'status' %>"><%= aviso %></div><% } %>
+
+    <form class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/pagos" role="search">
+      <div class="campo">
+        <label for="texto">Buscar por torneo, equipo o comprobante</label>
+        <input type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. Copa Primavera o SM-00000012" maxlength="100" />
+      </div>
+      <% if (filtro !== 'resolver') { %><input type="hidden" name="estado" value="<%= filtro %>" /><% } %>
+      <div class="sm-form__acciones">
+        <button type="submit" class="btn btn--verde">Buscar</button>
+        <% if (texto) { %><a class="btn btn--contorno" href="/admin/pagos<%= filtro !== 'resolver' ? `?estado=${filtro}` : '' %>">Limpiar</a><% } %>
+      </div>
+    </form>
+
+    <nav class="sm-chips-estado" aria-label="Filtrar por estado">
+      <% filtros.forEach(function (f) { %>
+        <a class="sm-chip-estado <%= f.clave === filtro ? 'sm-chip-estado--activo' : '' %>" href="<%= f.href %>" <%- f.clave === filtro ? 'aria-current="true"' : '' %>>
+          <%= f.nombre %> <span><%= f.cantidad %></span>
+        </a>
+      <% }) %>
+    </nav>
+
+    <% if (pagos.length === 0) { %>
+      <div class="dash-panel eq-panel sm-vacio">
+        <p class="sm-vacio__titulo">
+          <%= texto ? 'No hay pagos con esa búsqueda' : filtro === 'resolver' ? 'No hay pagos por resolver' : `No hay pagos en "${filtroActual.nombre}"` %>
+        </p>
+        <% if (filtro === 'resolver' && !texto) { %><p class="dash-panel__nota">Aquí aparecerán los pagos cobrados sin cupo y los reembolsos que fallen.</p><% } %>
+      </div>
+    <% } else { %>
+      <div class="dash-panel eq-panel">
+        <ul class="sm-filas sm-filas--cuentas">
+          <% pagos.forEach(function (p) { %>
+            <li class="sm-fila <%= ['rechazado', 'iniciado'].includes(p.estado) ? 'sm-fila--inactiva' : '' %>">
+              <span class="sm-fila__principal">
+                <strong><%= p.montoTexto %> · <a href="/equipos/<%= p.id_equipo %>"><%= p.equipo %></a></strong>
+                <small>
+                  <a href="/admin/torneos/<%= p.id_torneo %>"><%= p.torneo %></a> (<%= p.estadoTorneoTexto.toLowerCase() %>)
+                  · <%= p.numero_comprobante || p.orden_compra %>
+                  · <%= p.pasarela === 'webpay' ? 'Webpay' : p.pasarela %><%= p.entorno === 'pruebas' ? ' (pruebas)' : '' %>
+                  <% if (p.tarjeta) { %>· tarjeta ****<%= p.tarjeta %><% } %>
+                  · <%= p.fechaTexto %>
+                </small>
+                <% if (p.reembolsoTexto) { %><small>Reembolsado: <%= p.reembolsoTexto %> · <%= p.actualizadoTexto %></small><% } %>
+                <% if (p.monto_pagado !== null && p.monto_pagado !== p.monto) { %><small>Monto cobrado por la pasarela: $<%= p.monto_pagado %></small><% } %>
+                <% if (p.motivo) { %><small><%= p.motivo %></small><% } %>
+              </span>
+              <span class="sm-estado <%= claseEstado[p.estado] || '' %>"><%= p.estadoTexto %></span>
+              <span class="sm-fila__accion">
+                <% if (p.acciones.confirmar) { %>
+                  <form action="/admin/pagos/<%= p.id %>/confirmar" method="POST"
+                        data-confirmar="El pago queda aprobado y el equipo inscrito (si el torneo tiene cupo libre). Se le avisará al capitán."
+                        data-confirmar-titulo="¿Inscribir a <%= p.equipo %>?" data-confirmar-boton="Inscribir">
+                    <input type="hidden" name="volver" value="<%= volverA %>" />
+                    <button type="submit" class="btn btn--verde btn--chico">Confirmar inscripción</button>
+                  </form>
+                <% } %>
+                <% if (p.acciones.reembolsar) { %>
+                  <%- include('../partials/admin-accion-motivo', {
+                    accion: `/admin/pagos/${p.id}/reembolsar`,
+                    boton: p.estado === 'aprobado' ? 'Reembolsar' : p.estado === 'en_verificacion' ? 'Reembolsar' : 'Reintentar reembolso',
+                    peligro: true,
+                    titulo: `¿Reembolsar ${p.montoTexto} a ${p.equipo}?`,
+                    texto: p.estado === 'aprobado'
+                      ? 'Se devuelve el total por Webpay y el equipo sale del torneo (su cupo queda libre). No se puede deshacer.'
+                      : 'Se devuelve el total por Webpay. No se puede deshacer.',
+                    ocultos: [['volver', volverA]],
+                  }) %>
+                <% } %>
+                <% if (p.acciones.marcarReembolsado) { %>
+                  <%- include('../partials/admin-accion-motivo', {
+                    accion: `/admin/pagos/${p.id}/marcar-reembolsado`, boton: 'Marcar como reembolsado',
+                    titulo: `¿Marcar como reembolsado el pago de ${p.equipo}?`,
+                    texto: 'Úsalo solo si devolviste el dinero por otro medio (p. ej. transferencia). Indica cómo en el motivo.',
+                    ocultos: [['volver', volverA]],
+                  }) %>
+                <% } %>
+              </span>
+            </li>
+          <% }) %>
+        </ul>
+        <% if (paginas > 1) { %>
+          <nav class="sm-paginacion" aria-label="Páginas">
+            <% if (anterior) { %><a class="btn btn--contorno btn--chico" href="<%= anterior %>">← Anteriores</a><% } %>
+            <span>Página <%= paginaActual %> de <%= paginas %> · <%= total %> pagos</span>
+            <% if (siguiente) { %><a class="btn btn--contorno btn--chico" href="<%= siguiente %>">Siguientes →</a><% } %>
+          </nav>
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('../partials/admin-fin') %>

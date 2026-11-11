@@ -1118,5 +1118,5 @@ module.exports = {
   LISTADO, listar, listarAdmin, catalogos, recintosParaTorneo, canchasDeRecinto, nivelesPorId, obtener, modalidades,
   crear, editar, publicar, cerrarInscripciones, cerrarVencidos, eliminar, obtenerFoto, obtenerLogo,
   equiposDelCapitan, idsMisTorneos, resumenCapitan, eventosCalendario, inscribir, retirar,
-  reservarParaPago, guardarTokenPago, pagoPorToken, pagoPorOrden, aprobarPago, rechazarPago, quitarEquipo, empezar, registrarResultado,
+  reservarParaPago, guardarTokenPago, pagoPorToken, pagoPorOrden, aprobarPago, rechazarPago, contarInscripciones, actualizarCompleto, quitarEquipo, empezar, registrarResultado,
 };

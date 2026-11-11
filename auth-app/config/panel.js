@@ -19,6 +19,7 @@ const SECCIONES = [
   { clave: 'equipos', texto: 'Equipos', href: '/admin/equipos' },
   { clave: 'partidos', texto: 'Partidos', href: '/admin/partidos' },
   { clave: 'torneos', texto: 'Torneos', href: '/admin/torneos' },
+  { clave: 'pagos', texto: 'Pagos', href: '/admin/pagos' },
   { clave: 'recintos', texto: 'Recintos y canchas', href: '/admin/recintos' },
   { clave: 'administradores', texto: 'Administradores', href: '/admin/administradores', soloPrincipal: true },
   { clave: 'configuracion', texto: 'Configuración', href: '/admin/catalogos' },

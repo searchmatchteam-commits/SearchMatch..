@@ -65,5 +65,5 @@ test('el menú del panel solo tiene secciones con página propia (sin "próximam
     assert.equal(s.fase, undefined, `${s.texto} sigue marcada como pendiente`);
   });
   assert.deepEqual(SECCIONES.map((s) => s.clave),
-    ['resumen', 'usuarios', 'equipos', 'partidos', 'torneos', 'recintos', 'administradores', 'configuracion', 'actividad']);
+    ['resumen', 'usuarios', 'equipos', 'partidos', 'torneos', 'pagos', 'recintos', 'administradores', 'configuracion', 'actividad']);
 });

@@ -11,6 +11,7 @@ const superAdmin = require('../controllers/superAdminController');
 const torneos = require('../controllers/adminTorneosController');
 const config = require('../controllers/adminConfigController');
 const partidos = require('../controllers/adminPartidosController');
+const pagos = require('../controllers/adminPagosController');
 const { requireAdmin, requirePrincipal } = require('../middlewares/rolMiddleware');
 const {
   validarRecinto, validarCancha, validarBloque, validarCatalogo, validarTorneo, subirImagenesTorneo,
@@ -90,6 +91,12 @@ router.post('/torneos/:id/empezar', torneos.empezar);
 router.post('/torneos/:id/equipos/:idEquipo/quitar', torneos.quitarEquipo);
 router.post('/torneos/:id/partidos/:idPartido', torneos.registrarResultado);
 
+// Pagos de inscripción a torneos: los que esperan revisión y los reembolsos (Webpay)
+router.get('/pagos', pagos.listar);
+router.post('/pagos/:id/reembolsar', pagos.reembolsar);
+router.post('/pagos/:id/marcar-reembolsado', pagos.marcarReembolsado);
+router.post('/pagos/:id/confirmar', pagos.confirmar);
+
 // Configuración → Pasarelas de pago (TO-013)
 router.get('/configuracion', (req, res) => res.redirect('/admin/catalogos'));
 router.get('/configuracion/pasarelas', config.mostrar);
@@ -99,7 +106,7 @@ router.post('/configuracion/pasarelas/:clave/activar', config.activar);
 router.post('/configuracion/pasarelas/:clave/desactivar', config.desactivar);
 
 // Secciones que aún no existen: se quitaron del menú; sus direcciones vuelven al resumen.
-['desafios', 'reservas', 'valoraciones', 'comentarios', 'anuncios', 'apelaciones', 'pagos', 'estadisticas']
+['desafios', 'reservas', 'valoraciones', 'comentarios', 'anuncios', 'apelaciones', 'estadisticas']
   .forEach((clave) => router.get(`/${clave}`, (req, res) => res.redirect('/admin')));
 
 router.get('/super', (req, res) => res.redirect('/admin'));

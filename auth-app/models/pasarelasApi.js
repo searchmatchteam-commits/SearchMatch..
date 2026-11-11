@@ -50,6 +50,22 @@ async function webpayConfirmar(c, entorno, token) {
   return { ok: true, aprobada: r.cuerpo.response_code === 0 && r.cuerpo.status === 'AUTHORIZED', datos: r.cuerpo };
 }
 
+/**
+ * Reembolsa (total o parcial) una transacción confirmada. Transbank responde REVERSED (se anuló antes del
+ * abono al comercio) o NULLIFIED con response_code 0 (devolución). Cualquier otra cosa es un reembolso fallido.
+ * @returns {Promise<{ok:boolean, datos?:object, error?:string}>}
+ */
+async function webpayReembolsar(c, entorno, token, monto) {
+  const r = await llamar(`${urlBase('webpay', entorno)}/rswebpaytransaction/api/webpay/v1.2/transactions/${encodeURIComponent(token)}/refunds`, {
+    method: 'POST',
+    headers: cabecerasWebpay(c),
+    body: JSON.stringify({ amount: monto }),
+  });
+  const d = r.cuerpo || {};
+  const ok = r.ok && (d.type === 'REVERSED' || (d.type === 'NULLIFIED' && d.response_code === 0));
+  return ok ? { ok: true, datos: d } : { ok: false, datos: d, error: d.error_message || `HTTP ${r.status}${d.type ? ` (${d.type}, código ${d.response_code})` : ''}` };
+}
+
 // ---------- Mercado Pago ----------
 
 function cabecerasMP(c) {
@@ -102,4 +118,4 @@ async function probarConexion(clave, credenciales, entorno) {
   }
 }
 
-module.exports = { llamar, urlBase, probarConexion, webpayCrear, webpayConfirmar, cabecerasWebpay, cabecerasMP, paypalToken };
+module.exports = { llamar, urlBase, probarConexion, webpayCrear, webpayConfirmar, webpayReembolsar, cabecerasWebpay, cabecerasMP, paypalToken };

@@ -25,6 +25,18 @@ const CONSULTAS = {
            GROUP BY t.id, t.nombre, t.cupo_min
           HAVING count(te.id_equipo) < t.cupo_min`,
   },
+  // Pagos cobrados que esperan una decisión: inscribir, reembolsar o reintentar un reembolso fallido.
+  'pago-por-resolver': {
+    titulo: 'Pagos por resolver',
+    sql: `SELECT p.id, 'Pago ' || coalesce(p.numero_comprobante, p.orden_compra) || ' de "' || e.nombre || '" en el torneo "' || t.nombre || '": '
+                 || CASE p.estado WHEN 'en_verificacion' THEN 'cobrado sin cupo confirmado (inscribir o reembolsar).'
+                                  WHEN 'reembolso_fallido' THEN 'el reembolso falló (reintentar o marcar como reembolsado).'
+                                  ELSE 'reembolso sin terminar (reintentar).' END AS texto,
+                 '/admin/pagos' AS enlace
+            FROM torneo_pago p
+            JOIN torneo_equipo te ON te.id = p.id_inscripcion JOIN torneo t ON t.id = te.id_torneo JOIN equipo e ON e.id = te.id_equipo
+           WHERE p.estado IN ('en_verificacion', 'reembolso_solicitado', 'reembolso_fallido')`,
+  },
 };
 
 /** Alertas pendientes, opcionalmente de un solo tipo. */
