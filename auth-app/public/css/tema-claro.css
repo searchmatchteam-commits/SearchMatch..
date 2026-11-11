@@ -1419,3 +1419,72 @@ html[data-theme="light"] .auth-separador::before,
 html[data-theme="light"] .auth-separador::after {
   background: #e5e7eb;
 }
+
+/* Botones verdes deshabilitados (registro, aceptar términos): gris claro, sin sombra ni movimiento */
+html[data-theme="light"] .btn.btn--verde:disabled,
+html[data-theme="light"] .btn.btn--verde:disabled:hover,
+html[data-theme="light"] .auth__tarjeta .formulario .btn--verde:disabled,
+html[data-theme="light"] .auth__tarjeta .formulario .btn--verde:disabled:hover,
+html[data-theme="light"] .pagina-auth .auth__tarjeta .formulario .auth-btn:disabled,
+html[data-theme="light"] .pagina-auth .auth__tarjeta .formulario .auth-btn:disabled:hover {
+  opacity: 1;
+  background: #eef1f4;
+  color: #8a94a3;
+  box-shadow: inset 0 0 0 1px #d9dee5;
+  transform: none;
+}
+
+/* Franjas de disponibilidad */
+html[data-theme="light"] .sm-franja--ocupado { color: #b42318; background: #fef3f2; border-color: #fecdca; }
+html[data-theme="light"] .sm-franja--libre { color: var(--verde); background: #ecfdf3; border-color: #abefc6; }
+html[data-theme="light"] .sm-franja--libre:hover { background: #d1fadf; color: #05603a; }
+html[data-theme="light"] .sm-franja--elegida, html[data-theme="light"] .sm-franja--elegida:hover { background: var(--neon); color: #fff; border-color: var(--neon); }
+html[data-theme="light"] .sm-selector, html[data-theme="light"] .sm-nota-horario { background: #f8fafc; }
+
+/* Notificaciones en tarjetas */
+html[data-theme="light"] .sm-notificacion__enlace { background: #ffffff; border-color: #e5e7eb; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+html[data-theme="light"] .sm-notificacion--nueva .sm-notificacion__enlace { background: #f0fdf4; border-color: #bbf7d0; }
+html[data-theme="light"] .sm-notificacion__enlace:hover { background: #f8fafc; border-color: rgba(var(--tono), 0.5); }
+html[data-theme="light"] .sm-notificacion { --tono: 71, 85, 105; }
+html[data-theme="light"] .sm-notificacion--desafio { --tono: 194, 65, 12; }
+html[data-theme="light"] .sm-notificacion--partido, html[data-theme="light"] .sm-notificacion--torneo { --tono: 161, 98, 7; }
+html[data-theme="light"] .sm-notificacion--reserva { --tono: 3, 105, 161; }
+html[data-theme="light"] .sm-notificacion--comentario { --tono: 109, 40, 217; }
+html[data-theme="light"] .sm-notificacion--moderacion { --tono: 185, 28, 28; }
+html[data-theme="light"] .sm-notificacion--solicitud_equipo, html[data-theme="light"] .sm-notificacion--invitacion, html[data-theme="light"] .sm-notificacion--equipo { --tono: 21, 128, 61; }
+
+/* Directorio de equipos en cartas */
+html[data-theme="light"] .eq-mis--carta {
+  background:
+    linear-gradient(180deg, #ffffff, #f6f8f7 70%) padding-box,
+    linear-gradient(160deg, var(--c1), rgba(15, 23, 42, 0.12) 45%, var(--c2) 100%) border-box;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+}
+html[data-theme="light"] .eq-mis--carta .eq-mis__titulo { border-bottom-color: #e5e7eb; }
+html[data-theme="light"] .eq-carta__stats > div + div { border-left-color: #e5e7eb; }
+html[data-theme="light"] .eq-mis--carta::before { opacity: 0.35; }
+
+/* ---------- Carta de jugador con silueta (perfil, dashboard): arreglos del modo blanco ---------- */
+/* El degradado del marco de la carta clásica se pintaba como un rectángulo verde detrás de la silueta */
+html[data-theme="light"] .carta-jugador--perfil .carta-jugador__marco { background: none; }
+/* La posición (DEL, MED...) era blanca sobre la carta clara: no se leía */
+html[data-theme="light"] .carta-jugador__posicion,
+html[data-theme="light"] .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__posicion {
+  color: #14532d;
+  text-shadow: none;
+}
+
+/* ---------- Auditoría del modo blanco (contraste y fondos oscuros que quedaban) ---------- */
+/* Torneos sin resultados: era una caja gris oscura con el texto ilegible */
+html[data-theme="light"] .tl-vacio { background: #ffffff; border-color: #d1d5db; color: #6b7280; }
+/* "Volver" en torneos: en Torneos es un enlace de texto, sin la píldora blanca a medias */
+html[data-theme="light"] .tl .boton-volver,
+html[data-theme="light"] .tl .boton-volver:hover { background: transparent; border: 0; box-shadow: none; }
+/* Calendario: el número de hoy quedaba negro sobre el círculo verde */
+html[data-theme="light"] .sm-cal__dia.sm-cal__dia--hoy,
+html[data-theme="light"] .sm-cal__dia.sm-cal__dia--hoy:hover,
+html[data-theme="light"] .sm-cal__dia.sm-cal__dia--hoy[aria-pressed="true"] { color: #ffffff; }
+/* Puesto vacío del arquero en la cancha: amarillo sobre verde claro no se leía */
+html[data-theme="light"] .cancha__puesto[data-linea="arquero"] .cancha__vacio { color: #a16207; border-color: rgba(161, 98, 7, 0.45); }
+/* "Ya eres parte" / "Solicitud enviada": gris legible */
+html[data-theme="light"] .eq-mis__accion:disabled { color: #475569; }
