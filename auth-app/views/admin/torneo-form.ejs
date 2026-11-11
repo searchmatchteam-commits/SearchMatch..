@@ -51,7 +51,7 @@
           <label for="foto">Foto del torneo<% if (torneo && torneo.foto) { %> <span class="sm-opcional">(déjala vacía para mantener la actual)</span><% } %></label>
           <% if (torneo && torneo.foto) { %><img class="sm-torneo-miniatura sm-torneo-miniatura--grande" src="<%= torneo.foto %>" alt="Foto actual" data-foto-vista /><% } else { %><img class="sm-torneo-miniatura sm-torneo-miniatura--grande" alt="" hidden data-foto-vista /><% } %>
           <input type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/webp" <%= torneo && torneo.foto ? '' : 'required' %> <%= dis('foto') %> aria-describedby="foto-error foto-ayuda" data-foto-input />
-          <small class="campo__ayuda" id="foto-ayuda">Obligatoria. JPG, PNG o WebP de hasta 5 MB.</small>
+          <small class="campo__ayuda" id="foto-ayuda">Obligatoria. JPG, PNG o WebP; si es muy pesada (foto de celular) se achica sola antes de enviar.</small>
           <small class="campo__error" id="foto-error"><%= erroresCampo.foto || '' %></small>
         </div>
 

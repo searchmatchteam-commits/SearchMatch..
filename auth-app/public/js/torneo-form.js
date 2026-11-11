@@ -13,6 +13,71 @@
   const form = document.querySelector('[data-torneo-form]');
   if (!form) return;
 
+  const TIPOS = ['image/jpeg', 'image/png', 'image/webp'];
+  // Vercel corta cualquier envío de más de 4,5 MB (error 413) y una foto de celular suele pesar eso o más:
+  // antes de enviar, la foto se achica en el navegador (1600 px, JPEG) y cada logo a 512 px.
+  const MAX_ORIGINAL = 30 * 1024 * 1024;
+  const pendientes = new Set();
+
+  function cargarImagen(archivo) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(archivo);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('ilegible')); };
+      img.src = url;
+    });
+  }
+
+  /** Devuelve un File más liviano (o el original si ya era chico o el navegador no puede reducirlo). */
+  async function achicar(archivo, { ladoMaximo, conservarTransparencia }) {
+    if (archivo.size <= 300 * 1024) return archivo; // ya es liviana
+    const img = await cargarImagen(archivo);
+    const escala = Math.min(1, ladoMaximo / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * escala));
+    canvas.height = Math.max(1, Math.round(img.naturalHeight * escala));
+    const ctx = canvas.getContext('2d');
+    const tipo = conservarTransparencia && archivo.type !== 'image/jpeg' ? 'image/png' : 'image/jpeg';
+    if (tipo === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, tipo, 0.85));
+    if (!blob || blob.size >= archivo.size) return archivo;
+    const nombre = archivo.name.replace(/\.[^.]+$/, '') + (tipo === 'image/png' ? '.png' : '.jpg');
+    return new File([blob], nombre, { type: tipo, lastModified: Date.now() });
+  }
+
+  /** Reemplaza el archivo elegido por su versión achicada. Devuelve un mensaje de error o ''. */
+  async function prepararArchivo(input, opciones) {
+    const archivo = input.files[0];
+    if (!archivo) return '';
+    if (!TIPOS.includes(archivo.type)) return 'La imagen debe ser JPG, PNG o WebP.';
+    if (archivo.size > MAX_ORIGINAL) return 'La imagen es demasiado grande (más de 30 MB). Elige otra.';
+    try {
+      const liviano = await achicar(archivo, opciones);
+      if (liviano !== archivo && typeof DataTransfer === 'function') {
+        const dt = new DataTransfer();
+        dt.items.add(liviano);
+        input.files = dt.files;
+      }
+      return input.files[0].size > opciones.maximo ? `La imagen sigue pesando más de ${Math.round(opciones.maximo / 1024 / 1024)} MB: elige una más liviana.` : '';
+    } catch (err) {
+      return 'No se pudo leer la imagen. Prueba con otra JPG, PNG o WebP.';
+    }
+  }
+
+  function vigilar(input, opciones, alTerminar) {
+    input.addEventListener('change', () => {
+      if (!input.files[0]) return;
+      const tarea = prepararArchivo(input, opciones).then((mensaje) => {
+        if (mensaje) input.value = '';
+        alTerminar(mensaje);
+      });
+      pendientes.add(tarea);
+      tarea.finally(() => pendientes.delete(tarea));
+    });
+  }
+
   const inputFoto = form.querySelector('[data-foto-input]');
   const vistaFoto = form.querySelector('[data-foto-vista]');
   if (inputFoto && vistaFoto) {
@@ -23,29 +88,54 @@
       errorFoto.textContent = mensaje;
     }
 
-    inputFoto.addEventListener('change', () => {
-      const archivo = inputFoto.files[0];
-      if (!archivo) return;
-      let mensaje = '';
-      if (!['image/jpeg', 'image/png', 'image/webp'].includes(archivo.type)) mensaje = 'La foto debe ser una imagen JPG, PNG o WebP.';
-      else if (archivo.size > 5 * 1024 * 1024) mensaje = 'La foto puede pesar como máximo 5 MB.';
+    vigilar(inputFoto, { ladoMaximo: 1600, maximo: 3 * 1024 * 1024 }, (mensaje) => {
       marcarFoto(mensaje);
-      if (mensaje) {
-        inputFoto.value = '';
-        return;
-      }
-      vistaFoto.src = URL.createObjectURL(archivo);
+      if (mensaje) { vistaFoto.hidden = true; return; }
+      vistaFoto.src = URL.createObjectURL(inputFoto.files[0]);
       vistaFoto.hidden = false;
     });
-
-    // El formulario es novalidate: sin este aviso, recién el servidor diría que falta la foto.
-    form.addEventListener('submit', (e) => {
-      if (inputFoto.disabled || !inputFoto.required || inputFoto.files.length > 0) return;
-      e.preventDefault();
-      marcarFoto('La foto del torneo es obligatoria: sube una imagen JPG, PNG o WebP.');
-      inputFoto.focus();
-    });
   }
+
+  // Logos de patrocinadores: igual que la foto, pero más chicos y conservando la transparencia.
+  form.querySelectorAll('input[type="file"][name^="patrocinador_logo_"]').forEach((input) => {
+    vigilar(input, { ladoMaximo: 512, conservarTransparencia: true, maximo: 1024 * 1024 }, (mensaje) => {
+      const bloque = input.closest('[data-patrocinador]') || input.closest('.campo');
+      if (!bloque) return;
+      let error = bloque.querySelector('[data-error-logo]');
+      if (!error) {
+        error = document.createElement('small');
+        error.className = 'campo__error';
+        error.setAttribute('data-error-logo', '');
+        input.insertAdjacentElement('afterend', error);
+      }
+      error.textContent = mensaje;
+    });
+  });
+
+  // El formulario es novalidate: sin este aviso, recién el servidor diría que falta la foto.
+  // Además espera a que terminen de achicarse las imágenes antes de enviar.
+  const botonGuardar = [...form.querySelectorAll('button[type="submit"]')].find((b) => b.name !== 'accion');
+  form.addEventListener('submit', async (e) => {
+    if (e.submitter && e.submitter.name === 'accion') return;
+    if (form.dataset.listo === 'si') return;
+    e.preventDefault();
+    if (pendientes.size > 0) {
+      if (botonGuardar) { botonGuardar.disabled = true; botonGuardar.dataset.texto = botonGuardar.textContent; botonGuardar.textContent = 'Preparando imágenes…'; }
+      await Promise.all([...pendientes]);
+      if (botonGuardar) { botonGuardar.disabled = false; botonGuardar.textContent = botonGuardar.dataset.texto; }
+    }
+    if (inputFoto && !inputFoto.disabled && inputFoto.required && inputFoto.files.length === 0) {
+      const campoFoto = inputFoto.closest('.campo');
+      campoFoto.classList.add('campo--error');
+      form.querySelector('#foto-error').textContent = 'La foto del torneo es obligatoria: sube una imagen JPG, PNG o WebP.';
+      campoFoto.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      inputFoto.focus({ preventScroll: true });
+      return;
+    }
+    form.dataset.listo = 'si';
+    if (botonGuardar) { botonGuardar.disabled = true; botonGuardar.textContent = 'Guardando…'; }
+    form.submit();
+  });
 
   const bloques = [...form.querySelectorAll('[data-patrocinador]')];
   const botonAgregar = form.querySelector('[data-agregar-patrocinador]');
