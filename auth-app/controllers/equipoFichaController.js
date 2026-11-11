@@ -196,7 +196,9 @@ async function guardarEdicion(req, res, next) {
     });
     if (!actualizado) return res.redirect(`/equipos/${equipo.id}?aviso=sin-permiso`);
     if (escudo) await equipoModel.guardarEscudo(req.usuario.idAuth, equipo.id, escudo.datos, escudo.tipo);
-    return res.redirect(`/equipos/${equipo.id}?aviso=editado`);
+    // Tras editar (p. ej. el nivel) vuelve al panel con "Desafiar" abierto: ahí se ven los rivales de su nivel nuevo
+    // y de su tipo de fútbol.
+    return res.redirect(`/mi-equipo?equipo=${equipo.id}&aviso=editado#desafiar`);
   } catch (err) {
     return next(err);
   }

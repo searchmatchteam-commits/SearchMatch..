@@ -140,6 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
       totalRivales.textContent = `${visibles} ${visibles === 1 ? 'equipo disponible' : 'equipos disponibles'}`;
       sinRivales.hidden = visibles > 0;
     });
+    // Arranca filtrado por el tipo de fútbol que está viendo el capitán (el de la alineación abierta)
+    filtroRivales.querySelector('[data-filtro-inicial]')?.click();
   }
 
   if (modal) {

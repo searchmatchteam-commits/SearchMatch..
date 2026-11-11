@@ -79,7 +79,8 @@ const AVISOS_PANEL = {
   aceptada: 'Solicitud aceptada: el jugador ya es parte de tu plantel.',
   rechazada: 'Solicitud rechazada.',
   inexistente: 'Esa solicitud ya fue respondida o no es de tu equipo.',
-  modalidades: 'Tipos de fútbol actualizados: arma la alineación de cada uno.',
+  modalidades: 'Tipos de fútbol actualizados: arma la alineación de cada uno. En "Desafiar" ya ves los rivales de esos tipos.',
+  editado: 'Equipo actualizado. En "Desafiar a otro equipo" están los rivales de tu nivel y tipo de fútbol.',
   'sin-modalidad': 'Tu equipo debe jugar al menos un tipo de fútbol.',
   'sin-permiso': 'Solo el capitán que creó el equipo puede cambiar sus tipos de fútbol.',
   // PE-016 (el aviso de éxito lleva el nombre del nuevo capitán: lo arma panel() con datos de la base)
@@ -381,6 +382,7 @@ async function panel(req, res, next) {
       rivales,
       regiones,
       filtrosRivales: filtros, // DE-007
+      abrirDesafiar: req.query.aviso === 'editado',
       invitables: invitables.map(jugadorInvitable),
       aviso: (req.query.aviso === 'capitania' && plantel.find((j) => j.capitan)
         ? `La capitanía se transfirió a ${nombreConApodo(plantel.find((j) => j.capitan))}` : null) // PE-016
@@ -537,7 +539,8 @@ async function actualizarModalidades(req, res, next) {
     if (!idEquipo) return res.redirect('/mi-equipo');
     if (modalidades.length === 0) return res.redirect(`/mi-equipo?equipo=${idEquipo}&aviso=sin-modalidad`);
     const resultado = await equipoModel.actualizarModalidades(req.usuario.idAuth, idEquipo, modalidades);
-    return res.redirect(`/mi-equipo?equipo=${idEquipo}&aviso=${resultado === 'actualizadas' ? 'modalidades' : 'sin-permiso'}`);
+    // La pestaña (y el filtro de rivales) queda en el primer tipo elegido
+    return res.redirect(`/mi-equipo?equipo=${idEquipo}&modalidad=${modalidades[0]}&aviso=${resultado === 'actualizadas' ? 'modalidades' : 'sin-permiso'}`);
   } catch (err) {
     return pasarError(err, next);
   }

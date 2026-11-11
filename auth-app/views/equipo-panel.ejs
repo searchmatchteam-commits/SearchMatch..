@@ -176,7 +176,7 @@
         // DE-007: con un filtro de región o comuna activo, el panel se abre para mostrar el resultado
         const hayFiltros = Boolean(filtrosRivales.idRegion || filtrosRivales.idComuna);
       %>
-      <details class="dash-panel eq-panel eq-desafios revelar" id="desafiar" data-desafios <%= hayFiltros ? 'open' : '' %>>
+      <details class="dash-panel eq-panel eq-desafios revelar" id="desafiar" data-desafios <%= hayFiltros || locals.abrirDesafiar ? 'open' : '' %>>
         <summary class="eq-desafios__cabecera">
           <span class="eq-desafios__titulos">
             <h2 class="dash-panel__titulo">Desafiar a otro equipo</h2>
@@ -185,7 +185,7 @@
           <svg class="eq-desafios__flecha" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
         </summary>
         <!-- DE-007: rivales del mismo nivel, del puntaje más cercano al más lejano; filtros por región y comuna -->
-        <p class="dash-panel__nota">Equipos de tu mismo nivel, ordenados por el puntaje más cercano al tuyo.</p>
+        <p class="dash-panel__nota">Equipos de tu mismo nivel<%= equipo.nivel ? ' (' + equipo.nivel + ')' : '' %> que juegan tu tipo de fútbol, ordenados por el puntaje más cercano al tuyo.</p>
         <form class="sm-form eq-filtro-rivales eq-filtro-rivales--linea" action="/mi-equipo#desafiar" method="GET">
           <input type="hidden" name="equipo" value="<%= equipo.id %>" />
           <%- include('partials/sm-ubicacion', { regiones, idRegion: filtrosRivales.idRegion, idComuna: filtrosRivales.idComuna, obligatorio: false }) %>
@@ -202,11 +202,11 @@
         <% } else { %>
           <% if (misModalidades.length > 1) { %>
             <div class="eq-filtro-modalidad" role="group" aria-label="Filtrar rivales por modalidad" data-filtro-rivales hidden>
-              <button type="button" class="eq-filtro-modalidad__opcion eq-filtro-modalidad__opcion--activa" data-filtro-modalidad="" aria-pressed="true">
+              <button type="button" class="eq-filtro-modalidad__opcion <%= misModalidades.includes(modalidadActiva) ? '' : 'eq-filtro-modalidad__opcion--activa' %>" data-filtro-modalidad="" aria-pressed="<%= !misModalidades.includes(modalidadActiva) %>">
                 Todas <span>(<%= rivales.length %>)</span>
               </button>
               <% misModalidades.forEach(function (n) { %>
-                <button type="button" class="eq-filtro-modalidad__opcion" data-filtro-modalidad="<%= n %>" aria-pressed="false">
+                <button type="button" class="eq-filtro-modalidad__opcion <%= n === modalidadActiva ? 'eq-filtro-modalidad__opcion--activa' : '' %>" data-filtro-modalidad="<%= n %>" aria-pressed="<%= n === modalidadActiva %>" <%- n === modalidadActiva ? 'data-filtro-inicial' : '' %>>
                   <%= MODALIDADES[n] %> <span>(<%= rivales.filter(function (r) { return r.comunes.includes(n); }).length %>)</span>
                 </button>
               <% }) %>
