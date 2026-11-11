@@ -4,8 +4,7 @@ const cuentaModel = require('../models/cuentaModel');
 const { TERMINOS, PRIVACIDAD } = require('../config/legal');
 const { proveedorHabilitado } = require('../config/supabase');
 const { urlApp, origenPropio } = require('../config/urlApp');
-const { validarFechaNacimiento, ALTURA_CM, PESO_KG } = require('../middlewares/validators');
-const { POSICIONES } = require('../config/perfilJugador');
+const { validarFechaNacimiento, normalizarTelefono } = require('../middlewares/validators');
 const jugadorModel = require('../models/jugadorModel');
 const { detectarTipoImagen } = require('./jugadorController');
 
@@ -326,8 +325,8 @@ async function guardarFotoDeGoogle(idJugador, usuarioAuth) {
 // ---------------------------------------------------------------
 // GET /auth/callback → Google vuelve aquí con ?code: se crea la sesión y, si el correo aún no tiene
 // cuenta en SearchMatch, se crea con los datos de Google (nombre, apellido, correo y foto). Lo que
-// Google no entrega (fecha de nacimiento 18+, altura, peso y posición) se pide en /completar-perfil
-// y los términos se aceptan en /aceptar-terminos (exigirTerminos), antes de usar la plataforma.
+// Google no entrega (fecha de nacimiento 18+ y WhatsApp) y la aceptación de los términos se piden en
+// /completar-perfil, en un solo paso; la carta de jugador se arma después en /perfil-jugador.
 // ---------------------------------------------------------------
 async function callbackGoogle(req, res, next) {
   const { code, error: errorOAuth } = req.query;
@@ -379,7 +378,7 @@ async function callbackGoogle(req, res, next) {
       perfil = await userModel.findByAuthId(usuarioAuth.id);
     }
 
-    // Cuenta creada con Google: faltan la fecha de nacimiento (18+), altura, peso y posición.
+    // Cuenta creada con Google: falta la fecha de nacimiento (18+), el WhatsApp y aceptar los términos.
     if (!perfil || !perfil.fecha_nacimiento) return res.redirect('/completar-perfil');
 
     return res.redirect(rutaDeInicio(usuarioAuth.user_metadata && usuarioAuth.user_metadata.rol_inicio));
@@ -389,16 +388,18 @@ async function callbackGoogle(req, res, next) {
 }
 
 // ---------------------------------------------------------------
-// GET/POST /completar-perfil → onboarding tras el primer acceso con Google
+// GET/POST /completar-perfil → único paso tras el primer acceso con Google: lo que Google no entrega y
+// la plataforma necesita antes de entrar (fecha de nacimiento 18+, WhatsApp) y aceptar los términos.
+// Altura, peso y posición NO se piden aquí: los pide la carta de jugador (/perfil-jugador) justo después.
 // ---------------------------------------------------------------
-function renderCompletarPerfil(res, { status = 200, errores = [], datos = {} } = {}) {
+function renderCompletarPerfil(res, { status = 200, errores = {}, datos = {} } = {}) {
   return res.status(status).render('completar-perfil', {
-    titulo: 'Completa tu carta',
+    titulo: 'Completa tu registro',
     pagina: 'equipo',
     errores,
     datos,
-    posiciones: POSICIONES,
-    rangos: { ALTURA_CM, PESO_KG },
+    terminos: TERMINOS,
+    privacidad: PRIVACIDAD,
   });
 }
 
@@ -408,35 +409,27 @@ function mostrarCompletarPerfil(req, res) {
 }
 
 async function guardarCompletarPerfil(req, res, next) {
+  if (!req.usuario.faltaEdad) return res.redirect('/dashboard');
   const datos = {
     fecha_nacimiento: (req.body.fecha_nacimiento || '').trim(),
-    altura: (req.body.altura || '').trim(),
-    peso: (req.body.peso || '').trim(),
-    posicion: req.body.posicion || '',
+    telefono: (req.body.telefono || '').trim(),
+    acepto: req.body.acepto === 'si',
   };
-  const altura = Number(datos.altura);
-  const peso = Number(datos.peso);
+  const telefono = normalizarTelefono(datos.telefono);
 
-  const errores = [];
+  const errores = {};
   const errorFecha = validarFechaNacimiento(datos.fecha_nacimiento);
-  if (errorFecha) errores.push(errorFecha);
-  if (!(altura >= ALTURA_CM.min && altura <= ALTURA_CM.max)) {
-    errores.push(`La altura debe estar entre ${ALTURA_CM.min} y ${ALTURA_CM.max} cm.`);
-  }
-  if (!(peso >= PESO_KG.min && peso <= PESO_KG.max)) {
-    errores.push(`El peso debe estar entre ${PESO_KG.min} y ${PESO_KG.max} kg.`);
-  }
-  if (!Object.hasOwn(POSICIONES, datos.posicion)) errores.push('Elige tu posición.');
-  if (errores.length) return renderCompletarPerfil(res, { status: 400, errores, datos });
+  if (errorFecha) errores.fecha_nacimiento = errorFecha;
+  if (!datos.telefono) errores.telefono = 'El teléfono es obligatorio.';
+  else if (!telefono) errores.telefono = 'Ingresa un celular chileno válido: +56 9 XXXX XXXX.';
+  if (!datos.acepto) errores.acepto = 'Debes confirmar que tienes 18 años o más y aceptar los términos.';
+  if (Object.keys(errores).length) return renderCompletarPerfil(res, { status: 400, errores, datos });
 
   try {
-    await userModel.completarPerfil(req.usuario.idAuth, {
-      fechaNacimiento: datos.fecha_nacimiento,
-      altura,
-      peso,
-      posicionDb: POSICIONES[datos.posicion].db,
-    });
-    return res.redirect('/dashboard');
+    await userModel.completarRegistroGoogle(req.usuario.idAuth, { fechaNacimiento: datos.fecha_nacimiento, telefono });
+    await cuentaModel.guardarAceptacion(req.usuario.idAuth, { terminos: TERMINOS.version, privacidad: PRIVACIDAD.version });
+    // Siguiente paso natural: crear la carta (ahí van altura, peso y posiciones).
+    return res.redirect('/perfil-jugador');
   } catch (err) {
     return next(err);
   }

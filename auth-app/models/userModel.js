@@ -131,40 +131,19 @@ async function guardarFechaNacimiento(authId, fechaNacimiento) {
   );
 }
 
-// /completar-perfil: datos que Google no entrega (fecha, altura, peso y posición principal).
-async function completarPerfil(authId, { fechaNacimiento, altura, peso, posicionDb }) {
-  const cliente = await pool.connect();
-  try {
-    await cliente.query('BEGIN');
-    const jugador = await cliente.query(
-      `UPDATE jugador j SET fecha_nacimiento = $2, altura = $3, peso = $4
-         FROM usuario u
-        WHERE j.id_usuario = u.id AND u.auth_id = $1
-        RETURNING j.id`,
-      [authId, fechaNacimiento, altura, peso]
-    );
-    if (jugador.rowCount === 0) throw new Error('El usuario no tiene perfil de jugador.');
-    const idJugador = jugador.rows[0].id;
-
-    await cliente.query('DELETE FROM jugador_posicion WHERE id_jugador = $1', [idJugador]);
-    await cliente.query(
-      `INSERT INTO jugador_posicion (id_jugador, id_posicion)
-       SELECT $1, id FROM posicion WHERE lower(nombre) = ANY($2) ORDER BY id LIMIT 1`,
-      [idJugador, posicionDb.map((n) => n.toLowerCase())]
-    );
-
-    await cliente.query('COMMIT');
-  } catch (err) {
-    await cliente.query('ROLLBACK').catch(() => {});
-    throw err;
-  } finally {
-    cliente.release();
-  }
+// /completar-perfil: lo que Google no entrega (fecha de nacimiento y WhatsApp). La carta pide el resto.
+async function completarRegistroGoogle(authId, { fechaNacimiento, telefono }) {
+  const { rowCount } = await pool.query(
+    `WITH u AS (UPDATE usuario SET telefono = $3 WHERE auth_id = $1 RETURNING id)
+     UPDATE jugador j SET fecha_nacimiento = $2 FROM u WHERE j.id_usuario = u.id`,
+    [authId, fechaNacimiento, telefono]
+  );
+  if (rowCount === 0) throw new Error('El usuario no tiene perfil de jugador.');
 }
 
 module.exports = {
   guardarFechaNacimiento,
-  completarPerfil,
+  completarRegistroGoogle,
   registrarEnAuth,
   iniciarSesionEnAuth,
   urlInicioConGoogle,
