@@ -144,7 +144,7 @@ html[data-theme="light"] body.sm-con-fondo:not(.pagina-matchmaking) {
 }
 
 html[data-theme="light"] body:not(.pagina-matchmaking) .sm-fondo {
-  --sm-fondo-neon-rgb: 21, 128, 61;
+  --sm-fondo-neon-rgb: 17, 17, 17;
   background: radial-gradient(ellipse 120% 90% at 50% 0%, #ffffff 0%, #f8fafc 70%);
 }
 
@@ -153,7 +153,7 @@ html[data-theme="light"] body:not(.pagina-matchmaking) .sm-fondo__malla {
 }
 
 html[data-theme="light"] body:not(.pagina-matchmaking) .sm-fondo__malla span:nth-child(1) {
-  background: radial-gradient(circle, rgba(21, 128, 61, 0.22), transparent 65%);
+  background: radial-gradient(circle, rgba(17, 17, 17, 0.22), transparent 65%);
 }
 
 html[data-theme="light"] body:not(.pagina-matchmaking) .sm-fondo__malla span:nth-child(2) {
@@ -161,17 +161,17 @@ html[data-theme="light"] body:not(.pagina-matchmaking) .sm-fondo__malla span:nth
 }
 
 html[data-theme="light"] body:not(.pagina-matchmaking) .sm-fondo__malla span:nth-child(3) {
-  background: radial-gradient(circle, rgba(21, 128, 61, 0.16), transparent 65%);
+  background: radial-gradient(circle, rgba(17, 17, 17, 0.16), transparent 65%);
 }
 
 html[data-theme="light"] body:not(.pagina-matchmaking) .sm-fondo__malla span:nth-child(4) {
-  background: radial-gradient(circle, rgba(21, 128, 61, 0.1), transparent 65%);
+  background: radial-gradient(circle, rgba(17, 17, 17, 0.1), transparent 65%);
 }
 
 html[data-theme="light"] body:not(.pagina-matchmaking) .sm-fondo__reticula {
   background-image:
-    linear-gradient(rgba(21, 128, 61, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(21, 128, 61, 0.07) 1px, transparent 1px);
+    linear-gradient(rgba(17, 17, 17, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 17, 17, 0.07) 1px, transparent 1px);
 }
 
 html[data-theme="light"] body:not(.pagina-matchmaking) .sm-fondo__grano {

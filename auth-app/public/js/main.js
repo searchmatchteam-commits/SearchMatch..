@@ -15,7 +15,6 @@
 // La validación de login/registro está en auth.js (y la real, en el servidor).
 
 const COLOR_BARRA = { light: '#ffffff', dark: '#0b0d0b' }; // <meta name="theme-color"> (barra del navegador en celulares)
-const DURACION_CAMBIO_TEMA = 350;
 const MAX_ESPERA_PRECARGA_MS = 30000; // una sección preparada hace más que esto se vuelve a pedir al abrirla
 
 /* ---------- 9) Sección precargada ---------- */
@@ -40,17 +39,25 @@ function pintarBotonTema(boton) {
   boton.setAttribute('aria-label', texto);
 }
 
-/** Cambia el tema con una transición de colores breve (solo durante el cambio, no en cada hover). */
+/**
+ * Cambia el tema de una sola vez. Antes cada elemento hacía su propia transición: los colores lisos se
+ * fundían en 300 ms pero los degradados y brillos saltaban de golpe, y por un momento se mezclaban los dos
+ * temas (se veía "bugueado"). Ahora:
+ *  - con View Transitions (Chrome, Edge, Safari 18+): la página entera se funde del tema viejo al nuevo;
+ *  - sin ella: el cambio es instantáneo y parejo (.tema-sin-transicion apaga las transiciones un cuadro).
+ */
 function aplicarTema(tema) {
   const raiz = document.documentElement;
   const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!sinMovimiento) {
-    raiz.classList.add('tema-transicion');
-    clearTimeout(aplicarTema.espera);
-    aplicarTema.espera = setTimeout(() => raiz.classList.remove('tema-transicion'), DURACION_CAMBIO_TEMA);
-  }
-  if (tema === 'light') raiz.setAttribute('data-theme', 'light');
-  else raiz.removeAttribute('data-theme');
+  const cambiar = () => {
+    raiz.classList.add('tema-sin-transicion');
+    if (tema === 'light') raiz.setAttribute('data-theme', 'light');
+    else raiz.removeAttribute('data-theme');
+    void raiz.offsetWidth; // aplica los colores nuevos sin transición
+    requestAnimationFrame(() => requestAnimationFrame(() => raiz.classList.remove('tema-sin-transicion')));
+  };
+  if (!sinMovimiento && typeof document.startViewTransition === 'function') document.startViewTransition(cambiar);
+  else cambiar();
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', COLOR_BARRA[tema]);
   try {

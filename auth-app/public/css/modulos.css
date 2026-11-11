@@ -891,15 +891,15 @@ html[data-theme="light"] .sm-tema__luna { display: block; }
 }
 
 html[data-theme="light"] .dash-panel.sm-cargar {
-  --sc-neon: #16a34a;
-  --sc-neon-rgb: 22, 163, 74;
+  --sc-neon: #111111;
+  --sc-neon-rgb: 17, 17, 17;
   --sc-texto: #111827;
   --sc-gris: #374151;
   --sc-gris-suave: #6b7280;
   --sc-linea: #e5e7eb;
   background:
-    linear-gradient(rgba(22, 163, 74, 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
-    linear-gradient(90deg, rgba(22, 163, 74, 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(rgba(17, 17, 17, 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, rgba(17, 17, 17, 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
     #fff;
 }
 html[data-theme="light"] .sm-cargar__buscar input,
@@ -910,7 +910,7 @@ html[data-theme="light"] .sm-pcard__penales option { background: #fff; }
 html[data-theme="light"] .sm-cargar__pill { border-color: #d1d5db; }
 html[data-theme="light"] .sm-cargar__pill[aria-pressed="true"],
 html[data-theme="light"] .sm-pcard__guardar { color: #fff; box-shadow: none; }
-html[data-theme="light"] .sm-pcard__guardar:hover { background: #15803d; box-shadow: 0 6px 16px rgba(22, 163, 74, 0.3); }
+html[data-theme="light"] .sm-pcard__guardar:hover { background: #111111; box-shadow: 0 6px 16px rgba(17, 17, 17, 0.3); }
 html[data-theme="light"] .sm-marcador__caja::placeholder { color: #d1d5db; }
 html[data-theme="light"] .sm-pcard__escudo,
 html[data-theme="light"] .sm-pcard__equipo--gano { filter: none; text-shadow: none; }

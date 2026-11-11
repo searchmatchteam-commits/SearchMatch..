@@ -5,10 +5,11 @@
    gana sin !important y las hojas originales no cambian.
    Idea del modo claro ("clean white"): fondo y tarjetas #FFFFFF, controles y superficies internas #F8FAFC,
    bordes fríos #E2E8F0 y texto muy oscuro #0F172A. La profundidad viene de bordes y sombras, no del gris.
-   El neón NO se usa en claro: sobre fondo claro es ilegible (contraste ~1.3:1) y sus resplandores se ven
-   sucios. Acentos y botones principales pasan a un verde sólido oscuro (#15803D) con texto blanco encima
-   (--neon y --verde valen eso aquí), y los brillos verdes se apagan (sección final "Sin brillos neón").
-   Secciones: tokens · transición del cambio · base y navbar · botones y rellenos · superficies ·
+   El neón NO se usa en claro: sobre fondo claro es ilegible y sus resplandores se ven sucios. En claro el
+   acento es NEGRO: botones principales, pestañas activas, carta y pelota pasan de verde a negro con texto
+   blanco encima (--neon y --verde valen #111111 aquí). La única excepción es el IMC "Normal", que es verde
+   a propósito (color de su categoría).
+   Secciones: tokens · cambio de tema · base y navbar · botones y rellenos · superficies ·
    formularios · fondos de página · landing · wizard y registro · carta de jugador · dashboard y dock ·
    equipo y modales · mapa · módulos (sm-*) · estados y alertas · sin brillos neón. */
 
@@ -25,17 +26,17 @@ html[data-theme="light"] body {
   --borde-fuerte: #cbd5e1;
   --texto: #0f172a;
   --texto-suave: #475569;
-  /* Acento: verde sólido oscuro en vez de neón (texto blanco encima: contraste 5:1) */
-  --verde: #15803d;
-  --verde-rgb: 21, 128, 61;
-  --verde-hover: #166534;
-  --verde-oscuro: #14532d;
-  --verde-tenue: rgba(21, 128, 61, 0.08);
-  --verde-borde: rgba(21, 128, 61, 0.3);
-  /* Los rellenos que en oscuro son neón (botones, pestañas activas, pasos) usan --neon: aquí, el verde sólido */
-  --neon: #15803d;
-  --neon-hover: #166534;
-  --neon-rgb: 21, 128, 61;
+  /* Acento: negro en vez de neón (texto blanco encima) */
+  --verde: #111111;
+  --verde-rgb: 17, 17, 17;
+  --verde-hover: #000000;
+  --verde-oscuro: #000000;
+  --verde-tenue: rgba(17, 17, 17, 0.08);
+  --verde-borde: rgba(17, 17, 17, 0.3);
+  /* Los rellenos que en oscuro son neón (botones, pestañas activas, pasos) usan --neon: aquí, negro */
+  --neon: #111111;
+  --neon-hover: #000000;
+  --neon-rgb: 17, 17, 17;
   --sobre-verde: #ffffff;
   --error: #dc2626;
   --sombra-suave: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
@@ -49,20 +50,24 @@ html[data-theme="light"] body {
   --auth-fondo: #ffffff;
   --auth-resplandor: #f8fafc;
   --auth-linea: rgba(15, 23, 42, 0.05);
-  /* bento y torneos: halo verde muy suave, sin neón */
-  --glow-borde: rgba(21, 128, 61, 0.22);
-  --bracket-linea: rgba(21, 128, 61, 0.35);
+  /* bento y torneos: halo gris muy suave, sin neón */
+  --glow-borde: rgba(17, 17, 17, 0.22);
+  --bracket-linea: rgba(17, 17, 17, 0.35);
 }
 
 /* ---------- Transición del cambio de tema ---------- */
-/* Solo mientras dura el cambio (main.js pone y quita .tema-transicion): así el fondo y los textos se
-   funden en 300 ms en vez de parpadear, sin volver lentos los hover del resto del tiempo. */
-html.tema-transicion,
-html.tema-transicion *,
-html.tema-transicion *::before,
-html.tema-transicion *::after {
-  transition: background-color 0.3s ease, background 0.3s ease, color 0.3s ease, border-color 0.3s ease,
-    fill 0.3s ease, stroke 0.3s ease, box-shadow 0.3s ease !important;
+/* El cambio es de una sola vez (main.js): sin transiciones por elemento, que mezclaban los dos temas. */
+html.tema-sin-transicion,
+html.tema-sin-transicion *,
+html.tema-sin-transicion *::before,
+html.tema-sin-transicion *::after {
+  transition: none !important;
+}
+/* Fundido de la página completa al cambiar de tema (main.js, document.startViewTransition) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.35s;
+  animation-timing-function: ease;
 }
 
 /* ---------- Base y navbar ---------- */
@@ -142,12 +147,12 @@ html[data-theme="light"] .eq-filtro-modalidad__opcion--activa:hover {
 
 /* Sombra verde suave y corta (no halo neón) */
 html[data-theme="light"] .btn--verde {
-  box-shadow: 0 1px 2px rgba(21, 128, 61, 0.18), 0 8px 18px rgba(21, 128, 61, 0.16);
+  box-shadow: 0 1px 2px rgba(17, 17, 17, 0.18), 0 8px 18px rgba(17, 17, 17, 0.16);
 }
 
 html[data-theme="light"] .btn--verde:hover {
   background: var(--neon-hover);
-  box-shadow: 0 2px 4px rgba(21, 128, 61, 0.2), 0 10px 22px rgba(21, 128, 61, 0.18);
+  box-shadow: 0 2px 4px rgba(17, 17, 17, 0.2), 0 10px 22px rgba(17, 17, 17, 0.18);
 }
 
 html[data-theme="light"] .sm-pestanas--vista .sm-pestanas__item--activa {
@@ -223,7 +228,7 @@ html[data-theme="light"] .rol-tarjeta {
 html[data-theme="light"] .rol-tarjeta:has(.rol-tarjeta__radio:checked) {
   background: #f3fbf4;
   border-color: var(--verde);
-  box-shadow: 0 0 0 1px var(--verde), 0 10px 30px rgba(21, 128, 61, 0.12);
+  box-shadow: 0 0 0 1px var(--verde), 0 10px 30px rgba(17, 17, 17, 0.12);
 }
 
 html[data-theme="light"] .rol-tarjeta--apagada:hover {
@@ -256,7 +261,7 @@ html[data-theme="light"] .wizard .opcion:has(.opcion__radio:checked),
 html[data-theme="light"] .editor__seccion .opcion:has(.opcion__radio:checked) {
   background: #f0faf2;
   border-color: var(--verde);
-  box-shadow: 0 0 0 1px rgba(21, 128, 61, 0.15);
+  box-shadow: 0 0 0 1px rgba(17, 17, 17, 0.15);
 }
 
 html[data-theme="light"] .opcion__cancha,
@@ -399,7 +404,7 @@ html[data-theme="light"] .pagina-perfil::before {
 }
 
 html[data-theme="light"] .auth__filo::after {
-  background: linear-gradient(90deg, transparent, rgba(21, 128, 61, 0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(17, 17, 17, 0.5), transparent);
 }
 
 html[data-theme="light"] [data-ripple="claro"] .ripple {
@@ -428,7 +433,7 @@ html[data-theme="light"] .dash-hero .ball-cuadricula {
 
 html[data-theme="light"] .ball-anillo::before,
 html[data-theme="light"] .dash-hero .ball-anillo::before {
-  border-color: rgba(21, 128, 61, calc(0.25 + var(--energia) * 0.4));
+  border-color: rgba(17, 17, 17, calc(0.25 + var(--energia) * 0.4));
 }
 
 html[data-theme="light"] .ball-anillo,
@@ -437,7 +442,7 @@ html[data-theme="light"] .dash-orbita--2 {
 }
 
 html[data-theme="light"] .dash-particula:nth-child(3n) {
-  background: rgba(21, 128, 61, 0.35);
+  background: rgba(17, 17, 17, 0.35);
 }
 
 html[data-theme="light"] .bento__tarjeta {
@@ -448,7 +453,7 @@ html[data-theme="light"] .bento__tarjeta {
 html[data-theme="light"] .bento__tarjeta::after {
   background:
     radial-gradient(260px circle at var(--mx) var(--my), var(--glow-borde), transparent 60%),
-    linear-gradient(160deg, rgba(17, 24, 39, 0.1), rgba(17, 24, 39, 0.04) 45%, rgba(21, 128, 61, 0.18));
+    linear-gradient(160deg, rgba(17, 24, 39, 0.1), rgba(17, 24, 39, 0.04) 45%, rgba(17, 17, 17, 0.18));
 }
 
 html[data-theme="light"] .bento__tarjeta:hover {
@@ -509,13 +514,13 @@ html[data-theme="light"] .pasos__item--activo .pasos__marca {
 html[data-theme="light"] #carta-escudo-fondo stop:nth-child(1) { stop-color: #fdfefd; }
 html[data-theme="light"] #carta-escudo-fondo stop:nth-child(2) { stop-color: #e6eae7; }
 html[data-theme="light"] #carta-escudo-fondo stop:nth-child(3) { stop-color: #c7cec9; }
-html[data-theme="light"] #carta-escudo-borde stop:nth-child(1) { stop-color: #16a34a; }
-html[data-theme="light"] #carta-escudo-borde stop:nth-child(2) { stop-color: #15803d; }
+html[data-theme="light"] #carta-escudo-borde stop:nth-child(1) { stop-color: #111111; }
+html[data-theme="light"] #carta-escudo-borde stop:nth-child(2) { stop-color: #111111; }
 html[data-theme="light"] #carta-escudo-rayas rect { fill: rgba(17, 24, 39, 0.05); }
 html[data-theme="light"] #carta-escudo-rayas rect:nth-child(n + 3) { fill: rgba(255, 255, 255, 0.35); }
 html[data-theme="light"] .carta-jugador__grosor use { stroke-opacity: 0.22; }
-html[data-theme="light"] .carta-jugador__silueta use[stroke="#39ff14"] { stroke: #15803d; }
-html[data-theme="light"] .carta-jugador__filos { stroke: #15803d; }
+html[data-theme="light"] .carta-jugador__silueta use[stroke="#39ff14"] { stroke: #111111; }
+html[data-theme="light"] .carta-jugador__filos { stroke: #111111; }
 
 /* Carta: sombra neutra que sigue la silueta, sin halo verde */
 html[data-theme="light"] .carta-jugador--perfil {
@@ -538,11 +543,11 @@ html[data-theme="light"] .eq-ficha--fantasma .carta-jugador {
 }
 
 html[data-theme="light"] .carta-jugador--perfil .carta-jugador__cuerpo::before {
-  background: linear-gradient(90deg, transparent, #15803d, transparent);
+  background: linear-gradient(90deg, transparent, #111111, transparent);
 }
 
 html[data-theme="light"] .carta-jugador--perfil .carta-jugador__numero {
-  color: #15803d;
+  color: #111111;
   text-shadow: none;
 }
 
@@ -554,7 +559,7 @@ html[data-theme="light"] .carta-jugador--perfil .carta-jugador__nombre {
 
 html[data-theme="light"] .carta-jugador--perfil .carta-jugador__stats div {
   background: rgba(17, 24, 39, 0.05);
-  box-shadow: inset 0 0 0 1px rgba(21, 128, 61, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.18);
 }
 
 html[data-theme="light"] .carta-jugador--perfil .carta-jugador__stats dt {
@@ -563,7 +568,7 @@ html[data-theme="light"] .carta-jugador--perfil .carta-jugador__stats dt {
 }
 
 html[data-theme="light"] .carta-jugador--perfil .carta-jugador__stats dd {
-  color: #0b5f1f;
+  color: #111111;
   text-shadow: none;
 }
 
@@ -573,7 +578,7 @@ html[data-theme="light"] .carta-jugador--perfil .carta-jugador__foto img {
 }
 
 html[data-theme="light"] .carta-jugador--perfil .carta-jugador__foto::after {
-  border-color: #15803d;
+  border-color: #111111;
   box-shadow: inset 0 0 calc(8 * var(--u)) rgba(17, 24, 39, 0.15);
 }
 
@@ -651,7 +656,7 @@ html[data-theme="light"] .dash-resumen {
 
 html[data-theme="light"] .dash-cta,
 html[data-theme="light"] .pagina-auth .auth-btn {
-  box-shadow: 0 1px 2px rgba(21, 128, 61, 0.18), 0 8px 18px rgba(21, 128, 61, 0.16);
+  box-shadow: 0 1px 2px rgba(17, 17, 17, 0.18), 0 8px 18px rgba(17, 17, 17, 0.16);
 }
 
 html[data-theme="light"] .dash-stat__barra,
@@ -665,7 +670,7 @@ html[data-theme="light"] .dash-skeleton {
 }
 
 html[data-theme="light"] .skeleton::after {
-  background: linear-gradient(90deg, transparent, rgba(21, 128, 61, 0.06) 40%, rgba(255, 255, 255, 0.8) 50%, transparent 70%);
+  background: linear-gradient(90deg, transparent, rgba(17, 17, 17, 0.06) 40%, rgba(255, 255, 255, 0.8) 50%, transparent 70%);
 }
 
 html[data-theme="light"] .dash-hero__pista {
@@ -716,9 +721,9 @@ html[data-theme="light"] .eq-escudo__cambiar {
 /* Cancha de la alineación: césped claro con franjas */
 html[data-theme="light"] .cancha {
   background:
-    repeating-linear-gradient(180deg, rgba(21, 128, 61, 0.05) 0 10%, transparent 10% 20%),
+    repeating-linear-gradient(180deg, rgba(17, 17, 17, 0.05) 0 10%, transparent 10% 20%),
     linear-gradient(180deg, #e3f3e6, #d4ead8);
-  box-shadow: inset 0 0 30px rgba(21, 128, 61, 0.12);
+  box-shadow: inset 0 0 30px rgba(17, 17, 17, 0.12);
 }
 
 html[data-theme="light"] .cancha__vacio {
@@ -783,7 +788,7 @@ html[data-theme="light"] .eq-ovr__numero {
 }
 
 html[data-theme="light"] .eq-ovr--alto {
-  background: #dcfce7;
+  background: #f4f4f5;
   border-color: var(--verde);
 }
 
@@ -798,8 +803,8 @@ html[data-theme="light"] .eq-barras--vacias .eq-barra__numero {
 }
 
 html[data-theme="light"] .eq-etiqueta--libre {
-  background: #dcfce7;
-  color: #166534;
+  background: #f4f4f5;
+  color: #000000;
 }
 
 html[data-theme="light"] .eq-etiqueta--equipo {
@@ -958,7 +963,7 @@ html[data-theme="light"] .sm-estado--cancelada {
 
 html[data-theme="light"] .alerta--exito,
 html[data-theme="light"] .pagina-auth .alerta--exito {
-  color: #166534;
+  color: #000000;
 }
 
 html[data-theme="light"] .sm-alerta-advertencia,
@@ -1165,23 +1170,23 @@ html[data-theme="light"] .eq-mis {
 }
 
 html[data-theme="light"] .eq-mis--capitan {
-  border-color: #15803d;
-  box-shadow: 0 0 0 1px rgba(21, 128, 61, 0.18), 0 8px 24px rgba(15, 23, 42, 0.08);
+  border-color: #111111;
+  box-shadow: 0 0 0 1px rgba(17, 17, 17, 0.18), 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
 html[data-theme="light"] .eq-mis__nombre { color: var(--texto); }
 html[data-theme="light"] .eq-mis__rol { background: #f1f5f9; border-color: #e2e8f0; color: #475569; }
-html[data-theme="light"] .eq-mis__rol--capitan { background: #dcfce7; border-color: #86efac; color: #15803d; }
+html[data-theme="light"] .eq-mis__rol--capitan { background: #f4f4f5; border-color: #d4d4d8; color: #111111; }
 html[data-theme="light"] .eq-mis--capitan .eq-mis__escudo { box-shadow: none; }
 html[data-theme="light"] .eq-mis__escudo,
 html[data-theme="light"] .eq-mis__datos svg,
-html[data-theme="light"] .eq-mis__plantel[open] summary svg { color: #15803d; }
+html[data-theme="light"] .eq-mis__plantel[open] summary svg { color: #111111; }
 html[data-theme="light"] .eq-mis__accion--principal {
-  background: #15803d;
+  background: #111111;
   color: #fff;
-  box-shadow: 0 1px 2px rgba(21, 128, 61, 0.18), 0 8px 18px rgba(21, 128, 61, 0.16);
+  box-shadow: 0 1px 2px rgba(17, 17, 17, 0.18), 0 8px 18px rgba(17, 17, 17, 0.16);
 }
-html[data-theme="light"] .eq-mis__accion--principal:hover { background: #166534; }
+html[data-theme="light"] .eq-mis__accion--principal:hover { background: #000000; }
 html[data-theme="light"] .eq-mis__accion--secundaria { background: #fff; color: var(--texto); border-color: #cbd5e1; box-shadow: var(--sombra-suave); }
 html[data-theme="light"] .eq-mis__emblema,
 html[data-theme="light"] .eq-mis--hero:hover .eq-mis__emblema {
@@ -1198,7 +1203,7 @@ html[data-theme="light"] .auth-pestanas {
 
 html[data-theme="light"] .auth-pestanas__indicador {
   background: #ffffff;
-  border-color: rgba(21, 128, 61, 0.22);
+  border-color: rgba(17, 17, 17, 0.22);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
 }
 
@@ -1212,17 +1217,17 @@ html[data-theme="light"] .auth-pestanas__item:hover {
 
 html[data-theme="light"] .auth-pestanas__item--activa,
 html[data-theme="light"] .auth-pestanas__item--activa:hover {
-  color: #15803d;
+  color: #111111;
 }
 
 /* Títulos con degradado: los originales empiezan en blanco y desaparecen sobre claro */
 html[data-theme="light"] .dash-hero__nombre {
-  background-image: linear-gradient(100deg, #0f172a 0%, #334155 45%, #15803d 100%);
+  background-image: linear-gradient(100deg, #0f172a 0%, #334155 45%, #111111 100%);
   filter: none;
 }
 
 html[data-theme="light"] .auth-marca__titulo em {
-  background-image: linear-gradient(100deg, #15803d 0%, #166534 55%, #14532d 100%);
+  background-image: linear-gradient(100deg, #111111 0%, #000000 55%, #000000 100%);
 }
 
 /* Controles nativos: sin esto el calendario, reloj y flechas de select siguen en oscuro */
@@ -1246,12 +1251,12 @@ html[data-theme="light"] .pagina-auth .auth__tarjeta .campo input::placeholder {
 
 /* El bracket redefine su propio token en style.css: hay que ganarle en su selector */
 html[data-theme="light"] .bracket {
-  --bracket-linea: rgba(21, 128, 61, 0.35);
+  --bracket-linea: rgba(17, 17, 17, 0.35);
 }
 
 /* El hover de bento también redefine el glow en style.css */
 html[data-theme="light"] .bento__tarjeta:hover {
-  --glow-borde: rgba(21, 128, 61, 0.28);
+  --glow-borde: rgba(17, 17, 17, 0.28);
 }
 
 html[data-theme="light"] .tarjeta {
@@ -1263,12 +1268,12 @@ html[data-theme="light"] .auth__tarjeta .formulario .btn--verde,
 html[data-theme="light"] .auth__tarjeta .formulario .btn--verde:hover {
   background: var(--verde);
   color: #ffffff;
-  box-shadow: 0 1px 2px rgba(21, 128, 61, 0.18), 0 8px 18px rgba(21, 128, 61, 0.16);
+  box-shadow: 0 1px 2px rgba(17, 17, 17, 0.18), 0 8px 18px rgba(17, 17, 17, 0.16);
 }
 
 html[data-theme="light"] .auth__tarjeta .formulario .btn--verde:hover {
   background: var(--verde-hover);
-  box-shadow: 0 2px 4px rgba(21, 128, 61, 0.2), 0 10px 22px rgba(21, 128, 61, 0.18);
+  box-shadow: 0 2px 4px rgba(17, 17, 17, 0.2), 0 10px 22px rgba(17, 17, 17, 0.18);
 }
 
 html[data-theme="light"] .eq-mis__accion:disabled {
@@ -1318,15 +1323,15 @@ html[data-theme="light"] .dash-panel--calendario::after { opacity: 0.25; }
 html[data-theme="light"] .dash-panel--calendario .dash-panel__titulo { color: #111827; }
 html[data-theme="light"] .sm-cal__semana { color: #6b7280; }
 html[data-theme="light"] .sm-cal__dia { color: #111827; }
-html[data-theme="light"] .sm-cal__icono { color: var(--icono-evento, #15803d); filter: none; }
+html[data-theme="light"] .sm-cal__icono { color: var(--icono-evento, #111111); filter: none; }
 html[data-theme="light"] .sm-cal__dia--hoy.sm-cal__dia--evento { color: var(--sobre-verde); border-color: transparent; }
 html[data-theme="light"] .sm-cal__dia--evento,
 html[data-theme="light"] .sm-cal__dia[aria-pressed="true"] {
-  border-color: #16a34a;
-  color: #15803d;
+  border-color: #111111;
+  color: #111111;
   box-shadow: none;
 }
-html[data-theme="light"] .sm-cal__dia[aria-pressed="true"] { background: rgba(22, 163, 74, 0.1); }
+html[data-theme="light"] .sm-cal__dia[aria-pressed="true"] { background: rgba(17, 17, 17, 0.1); }
 html[data-theme="light"] .sm-cal__dia--hoy .sm-cal__icono { color: currentColor; }
 html[data-theme="light"] .sm-cal__tarjeta { background: #f9fafb; border-color: var(--borde); }
 html[data-theme="light"] .sm-cal__tarjeta-etiqueta { background: #fff; border-color: var(--borde); color: #6b7280; }
@@ -1342,52 +1347,52 @@ html[data-theme="light"] .sm-cal__cta:hover { color: #854d0e; box-shadow: none; 
 
 /* "Mis equipos" en tarjetas: blanco con borde verde, textos oscuros, escudo con borde verde sólido */
 html[data-theme="light"] .dash-tequipos__buscar { border-color: var(--borde-fuerte); color: #111827; }
-html[data-theme="light"] .dash-tequipos__buscar:hover { border-color: #16a34a; color: #15803d; box-shadow: none; }
+html[data-theme="light"] .dash-tequipos__buscar:hover { border-color: #111111; color: #111111; box-shadow: none; }
 html[data-theme="light"] .dash-tequipo {
-  background: radial-gradient(90% 60% at 50% 0%, rgba(22, 163, 74, 0.08), transparent 70%), #ffffff;
-  border-color: rgba(22, 163, 74, 0.45);
+  background: radial-gradient(90% 60% at 50% 0%, rgba(17, 17, 17, 0.08), transparent 70%), #ffffff;
+  border-color: rgba(17, 17, 17, 0.45);
   box-shadow: var(--sombra-media);
 }
-html[data-theme="light"] .dash-tequipo__escudo { filter: drop-shadow(0 4px 10px rgba(22, 163, 74, 0.3)); }
-html[data-theme="light"] .dash-tequipo__escudo-forma { background: #16a34a; }
-html[data-theme="light"] .dash-tequipo__escudo-interior { background: #f1f5f9; color: #15803d; }
+html[data-theme="light"] .dash-tequipo__escudo { filter: drop-shadow(0 4px 10px rgba(17, 17, 17, 0.3)); }
+html[data-theme="light"] .dash-tequipo__escudo-forma { background: #111111; }
+html[data-theme="light"] .dash-tequipo__escudo-interior { background: #f1f5f9; color: #111111; }
 html[data-theme="light"] .dash-tequipo__nombre,
 html[data-theme="light"] .dash-tequipo__ver { color: #111827; }
-html[data-theme="light"] .dash-tequipo__rol { color: #15803d; border-color: rgba(22, 163, 74, 0.45); background: rgba(22, 163, 74, 0.06); }
+html[data-theme="light"] .dash-tequipo__rol { color: #111111; border-color: rgba(17, 17, 17, 0.45); background: rgba(17, 17, 17, 0.06); }
 html[data-theme="light"] .dash-tequipo__rol--jugador { color: #374151; border-color: var(--borde-fuerte); background: #f8fafc; }
 html[data-theme="light"] .dash-tequipo__datos { color: #4b5563; }
-html[data-theme="light"] .dash-tequipo__icono { stroke: #16a34a; }
+html[data-theme="light"] .dash-tequipo__icono { stroke: #111111; }
 html[data-theme="light"] .dash-tequipo__ver:hover { background: rgba(17, 24, 39, 0.05); }
 html[data-theme="light"] .dash-tequipo__admin { background: var(--neon); color: #fff; box-shadow: none; }
-html[data-theme="light"] .dash-tequipo__admin:hover { background: var(--neon-hover); box-shadow: 0 6px 16px rgba(22, 163, 74, 0.3); }
+html[data-theme="light"] .dash-tequipo__admin:hover { background: var(--neon-hover); box-shadow: 0 6px 16px rgba(17, 17, 17, 0.3); }
 
 /* Widget "Mi equipo" compacto: blanco con borde verde, rejilla casi invisible, escudo con borde verde sólido */
-html[data-theme="light"] .dash-miequipo { background: #ffffff; border-color: rgba(22, 163, 74, 0.3); box-shadow: var(--sombra-media); }
+html[data-theme="light"] .dash-miequipo { background: #ffffff; border-color: rgba(17, 17, 17, 0.3); box-shadow: var(--sombra-media); }
 html[data-theme="light"] .dash-miequipo::after { opacity: 0.35; }
 html[data-theme="light"] .dash-miequipo__pestana { color: #4b5563; border-color: var(--borde-fuerte); }
 html[data-theme="light"] .dash-miequipo__pestana:hover { color: #111827; }
 html[data-theme="light"] .dash-miequipo__pestana--activa,
-html[data-theme="light"] .dash-miequipo__pestana--activa:hover { color: #111827; border-color: #16a34a; background: rgba(22, 163, 74, 0.08); box-shadow: none; }
+html[data-theme="light"] .dash-miequipo__pestana--activa:hover { color: #111827; border-color: #111111; background: rgba(17, 17, 17, 0.08); box-shadow: none; }
 html[data-theme="light"] .dash-miequipo__mini-escudo,
-html[data-theme="light"] .dash-miequipo__escudo-interior { background: #f1f5f9; color: #15803d; }
-html[data-theme="light"] .dash-miequipo__mini-escudo { border-color: rgba(22, 163, 74, 0.4); }
-html[data-theme="light"] .dash-miequipo__escudo { filter: drop-shadow(0 3px 6px rgba(22, 163, 74, 0.3)); }
-html[data-theme="light"] .dash-miequipo__escudo-forma { background: #16a34a; }
-html[data-theme="light"] .dash-miequipo__tarjeta { background: #f8fafc; border-color: rgba(22, 163, 74, 0.25); }
+html[data-theme="light"] .dash-miequipo__escudo-interior { background: #f1f5f9; color: #111111; }
+html[data-theme="light"] .dash-miequipo__mini-escudo { border-color: rgba(17, 17, 17, 0.4); }
+html[data-theme="light"] .dash-miequipo__escudo { filter: drop-shadow(0 3px 6px rgba(17, 17, 17, 0.3)); }
+html[data-theme="light"] .dash-miequipo__escudo-forma { background: #111111; }
+html[data-theme="light"] .dash-miequipo__tarjeta { background: #f8fafc; border-color: rgba(17, 17, 17, 0.25); }
 html[data-theme="light"] .dash-miequipo__nombre { color: #111827; }
-html[data-theme="light"] .dash-miequipo__rol { color: #15803d; border-color: rgba(22, 163, 74, 0.45); background: rgba(22, 163, 74, 0.08); }
+html[data-theme="light"] .dash-miequipo__rol { color: #111111; border-color: rgba(17, 17, 17, 0.45); background: rgba(17, 17, 17, 0.08); }
 html[data-theme="light"] .dash-miequipo__rol--jugador { color: #374151; border-color: var(--borde-fuerte); background: #f8fafc; }
 html[data-theme="light"] .dash-miequipo__datos,
 html[data-theme="light"] .dash-miequipo__partido span { color: #4b5563; }
 html[data-theme="light"] .dash-miequipo__icono,
-html[data-theme="light"] .dash-miequipo__estado-icono { stroke: #16a34a; }
+html[data-theme="light"] .dash-miequipo__estado-icono { stroke: #111111; }
 html[data-theme="light"] .dash-miequipo__admin { background: var(--neon); color: #fff; box-shadow: none; }
-html[data-theme="light"] .dash-miequipo__admin:hover { background: var(--neon-hover); box-shadow: 0 6px 14px rgba(22, 163, 74, 0.3); }
+html[data-theme="light"] .dash-miequipo__admin:hover { background: var(--neon-hover); box-shadow: 0 6px 14px rgba(17, 17, 17, 0.3); }
 html[data-theme="light"] .dash-miequipo__admin--ver { background: transparent; color: #111827; border-color: var(--borde-fuerte); }
-html[data-theme="light"] .dash-miequipo__admin--ver:hover { background: #f8fafc; color: #15803d; box-shadow: none; }
+html[data-theme="light"] .dash-miequipo__admin--ver:hover { background: #f8fafc; color: #111111; box-shadow: none; }
 html[data-theme="light"] .dash-miequipo__estado { color: #374151; }
-html[data-theme="light"] .dash-miequipo__estado a { color: #15803d; text-shadow: none; }
-html[data-theme="light"] .dash-miequipo__partido small { color: #15803d; }
+html[data-theme="light"] .dash-miequipo__estado a { color: #111111; text-shadow: none; }
+html[data-theme="light"] .dash-miequipo__partido small { color: #111111; }
 
 /* Panel de administración (AP-002 / AP-003) */
 html[data-theme="light"] .sm-admin-menu__lista { background: rgba(255, 255, 255, 0.92); }
@@ -1436,14 +1441,14 @@ html[data-theme="light"] .pagina-auth .auth__tarjeta .formulario .auth-btn:disab
 
 /* Franjas de disponibilidad */
 html[data-theme="light"] .sm-franja--ocupado { color: #b42318; background: #fef3f2; border-color: #fecdca; }
-html[data-theme="light"] .sm-franja--libre { color: var(--verde); background: #ecfdf3; border-color: #abefc6; }
-html[data-theme="light"] .sm-franja--libre:hover { background: #d1fadf; color: #05603a; }
+html[data-theme="light"] .sm-franja--libre { color: var(--verde); background: #f4f4f5; border-color: #d4d4d8; }
+html[data-theme="light"] .sm-franja--libre:hover { background: #e4e4e7; color: #000000; }
 html[data-theme="light"] .sm-franja--elegida, html[data-theme="light"] .sm-franja--elegida:hover { background: var(--neon); color: #fff; border-color: var(--neon); }
 html[data-theme="light"] .sm-selector, html[data-theme="light"] .sm-nota-horario { background: #f8fafc; }
 
 /* Notificaciones en tarjetas */
 html[data-theme="light"] .sm-notificacion__enlace { background: #ffffff; border-color: #e5e7eb; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
-html[data-theme="light"] .sm-notificacion--nueva .sm-notificacion__enlace { background: #f0fdf4; border-color: #bbf7d0; }
+html[data-theme="light"] .sm-notificacion--nueva .sm-notificacion__enlace { background: #f4f4f5; border-color: #d4d4d8; }
 html[data-theme="light"] .sm-notificacion__enlace:hover { background: #f8fafc; border-color: rgba(var(--tono), 0.5); }
 html[data-theme="light"] .sm-notificacion { --tono: 71, 85, 105; }
 html[data-theme="light"] .sm-notificacion--desafio { --tono: 194, 65, 12; }
@@ -1451,7 +1456,7 @@ html[data-theme="light"] .sm-notificacion--partido, html[data-theme="light"] .sm
 html[data-theme="light"] .sm-notificacion--reserva { --tono: 3, 105, 161; }
 html[data-theme="light"] .sm-notificacion--comentario { --tono: 109, 40, 217; }
 html[data-theme="light"] .sm-notificacion--moderacion { --tono: 185, 28, 28; }
-html[data-theme="light"] .sm-notificacion--solicitud_equipo, html[data-theme="light"] .sm-notificacion--invitacion, html[data-theme="light"] .sm-notificacion--equipo { --tono: 21, 128, 61; }
+html[data-theme="light"] .sm-notificacion--solicitud_equipo, html[data-theme="light"] .sm-notificacion--invitacion, html[data-theme="light"] .sm-notificacion--equipo { --tono: 17, 17, 17; }
 
 /* Directorio de equipos en cartas */
 html[data-theme="light"] .eq-mis--carta {
@@ -1470,7 +1475,7 @@ html[data-theme="light"] .carta-jugador--perfil .carta-jugador__marco { backgrou
 /* La posición (DEL, MED...) era blanca sobre la carta clara: no se leía */
 html[data-theme="light"] .carta-jugador__posicion,
 html[data-theme="light"] .perfil-pro .carta-jugador--perfil:not(.carta-jugador--mini) .carta-jugador__posicion {
-  color: #14532d;
+  color: #000000;
   text-shadow: none;
 }
 
@@ -1490,7 +1495,7 @@ html[data-theme="light"] .cancha__puesto[data-linea="arquero"] .cancha__vacio { 
 html[data-theme="light"] .eq-mis__accion:disabled { color: #475569; }
 
 /* IMC y medidas del dashboard: tonos más oscuros para leerse sobre blanco */
-html[data-theme="light"] .dash-medidas .dash-medida { --tono: 21, 128, 61; background: rgba(var(--tono), 0.06); }
+html[data-theme="light"] .dash-medidas .dash-medida { --tono: 17, 17, 17; background: rgba(var(--tono), 0.06); }
 html[data-theme="light"] .dash-medidas .dash-medida.dash-medida--imc-bajo { --tono: 3, 105, 161; }
 html[data-theme="light"] .dash-medidas .dash-medida.dash-medida--imc-normal { --tono: 21, 128, 61; }
 html[data-theme="light"] .dash-medidas .dash-medida.dash-medida--imc-sobrepeso { --tono: 161, 98, 7; }
@@ -1522,3 +1527,6 @@ html[data-theme="light"] .ball-fallback {
 }
 html[data-theme="light"] .ball-fallback::before { background: #111111; }
 html[data-theme="light"] .ball-fallback::after { background: #ffffff; }
+
+/* Nota de la carta en el dashboard: degradado negro en vez de verde neón */
+html[data-theme="light"] .dash-resumen__media { background: linear-gradient(135deg, #3f3f46, #111111 55%, #000000); color: #ffffff; }

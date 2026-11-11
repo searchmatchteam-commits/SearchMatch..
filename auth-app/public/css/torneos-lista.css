@@ -520,9 +520,9 @@ html[data-theme="light"] .tl {
   --tl-carta: #ffffff;
   --tl-superficie: #f3f4f6;
   --tl-borde: #e5e7eb;
-  --tl-neon: #16a34a;
-  --tl-neon-hover: #15803d;
-  --tl-neon-rgb: 22, 163, 74;
+  --tl-neon: #111111;
+  --tl-neon-hover: #111111;
+  --tl-neon-rgb: 17, 17, 17;
   --tl-texto: #111827;
   --tl-gris: #6b7280;
   --tl-gris-claro: #4b5563;
