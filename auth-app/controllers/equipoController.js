@@ -101,11 +101,22 @@ const AVISOS_ALINEACION = {
 // Avisos tras "Enviar Desafío" (?desafio=... o JSON): solo textos fijos.
 const AVISOS_DESAFIO = {
   enviado: '¡Desafío enviado! El capitán rival lo verá en su panel.',
-  pendiente: 'Ya hay un desafío pendiente con ese equipo.',
-  'sin-equipo': 'Solo el capitán que creó el equipo puede enviar desafíos.',
-  inexistente: 'Ese equipo ya no está disponible.',
-  modalidad: 'Solo puedes desafiar en una modalidad que jueguen los dos equipos.', // CORRECCIÓN: regla 12
+  pendiente: 'Ya hay un desafío pendiente con ese equipo: espera su respuesta o revísalo en Desafíos.',
+  'sin-equipo': 'No se envió: solo el capitán que creó el equipo (y con el equipo activo) puede enviar desafíos.',
+  inexistente: 'No se envió: ese equipo ya no está disponible (se desactivó o es otro equipo tuyo).',
+  modalidad: 'No se envió: elige un tipo de fútbol que jueguen los dos equipos.', // CORRECCIÓN: regla 12
 };
+
+/** Motivo legible de un error inesperado al guardar el desafío (el detalle técnico queda en el registro). */
+function motivoErrorDesafio(err) {
+  if (err && (err.code === 'ECONNREFUSED' || err.code === 'ETIMEDOUT' || /timeout|terminated|connect/i.test(err.message || ''))) {
+    return 'No se envió: la base de datos no respondió a tiempo. Inténtalo de nuevo en unos segundos.';
+  }
+  if (err && err.code === '23503') return 'No se envió: uno de los dos equipos ya no existe o cambió mientras lo enviabas. Recarga la página.';
+  if (err && err.code === '23505') return 'No se envió: ese desafío ya se había registrado. Recarga la página para verlo.';
+  if (err && /^42/.test(String(err.code || ''))) return 'No se envió: falta actualizar la base de datos del servidor. Avísale al administrador.';
+  return 'No se envió por un error del servidor. Inténtalo de nuevo; si sigue pasando, avísale al administrador.';
+}
 
 // Avisos tras "Enviar Invitación" (?invitacion=... o JSON): solo textos fijos.
 const AVISOS_INVITACION = {
@@ -725,9 +736,18 @@ async function desafiar(req, res, next) {
         ['local', 'visita'].includes(req.body.camiseta) ? req.body.camiseta : null) // equipación con la que irá
       : 'inexistente';
     if (resultado === 'enviado') await avisosEquipo.desafioEnviado(req.usuario, idRival, idPropio); // NUEVO: NT-001 / DE-008
-    if (quiereJson) return res.json({ resultado, mensaje: AVISOS_DESAFIO[resultado] });
+    if (quiereJson) {
+      const mensaje = AVISOS_DESAFIO[resultado] || 'No se envió el desafío.';
+      // Solo "enviado" y "pendiente" son éxito para la pantalla; el resto lleva su motivo como error.
+      if (resultado === 'enviado' || resultado === 'pendiente') return res.json({ resultado, mensaje });
+      return res.status(409).json({ resultado, error: mensaje });
+    }
     return res.redirect(`${panel}desafio=${resultado}`);
   } catch (err) {
+    if (quiereJson) {
+      console.error('⚠️  No se pudo enviar el desafío:', err.code, err.message);
+      return res.status(500).json({ error: motivoErrorDesafio(err) });
+    }
     return pasarError(err, next);
   }
 }

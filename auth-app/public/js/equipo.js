@@ -21,6 +21,25 @@
 //     "Invitar" se envía con fetch y el botón queda gris como "Invitación Enviada".
 
 // (dashboard.js, cargado en la misma página, ya declara DURACION_AVISO_MS)
+
+/**
+ * Motivo legible cuando un envío por fetch no salió: la respuesta trae su error (validación, desafío
+ * pendiente, etc.), la sesión venció (el servidor redirige al login), no hay conexión, o el servidor falló.
+ */
+function motivoFallo(respuesta, datos, err) {
+  if (datos && (datos.error || datos.mensaje)) return datos.error || datos.mensaje;
+  if (!respuesta) return 'No se envió: no hay conexión a internet. Revísala e inténtalo de nuevo.';
+  // El servidor redirige (al login, a aceptar términos...) cuando la sesión ya no sirve para esta acción
+  if (respuesta.redirected) {
+    return 'No se envió: tu sesión venció. Vuelve a iniciar sesión e inténtalo de nuevo.';
+  }
+  if (respuesta.status === 401 || respuesta.status === 403) return 'No se envió: no tienes permiso para hacer esto con esta cuenta.';
+  if (respuesta.status === 413) return 'No se envió: el mensaje es demasiado largo.';
+  if (respuesta.status === 429) return 'No se envió: hiciste demasiados intentos seguidos. Espera un momento.';
+  if (respuesta.status >= 500) return `No se envió por un error del servidor (código ${respuesta.status}). Inténtalo de nuevo en unos segundos.`;
+  return (err && err.message) || 'No se envió el desafío. Inténtalo de nuevo.';
+}
+
 const DURACION_EXITO_MS = 3200;
 
 // Alineación: cuántos px hay que mover el puntero para que un toque se vuelva arrastre
@@ -236,14 +255,16 @@ document.addEventListener('DOMContentLoaded', () => {
       botonEnviar.disabled = true;
       errorModal.hidden = true;
 
+      let respuesta = null;
+      let datos = null;
       try {
-        const respuesta = await fetch(formularioRival.action, {
+        respuesta = await fetch(formularioRival.action, {
           method: 'POST',
           headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams(new FormData(formModal)),
         });
-        const datos = await respuesta.json().catch(() => ({}));
-        if (!respuesta.ok || !datos.resultado) throw new Error(datos.error || 'No se pudo enviar el desafío. Inténtalo de nuevo.');
+        datos = await respuesta.json().catch(() => null);
+        if (!respuesta.ok || !datos || !datos.resultado) throw new Error(motivoFallo(respuesta, datos));
 
         // Enviado (o ya había uno pendiente): el botón queda gris y deshabilitado
         const boton = formularioRival.querySelector('button');
@@ -256,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (datos.mensaje) mostrarAviso(datos.mensaje);
       } catch (err) {
         console.error('No se pudo enviar el desafío:', err);
-        errorModal.textContent = err.message;
+        errorModal.textContent = respuesta ? err.message : motivoFallo(null, null, err);
         errorModal.hidden = false;
       } finally {
         botonEnviar.disabled = false;

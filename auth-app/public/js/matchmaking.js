@@ -9,6 +9,25 @@
 //  3) "Enviar desafío" → POST /mi-equipo/desafios/:id con fetch (JSON); "Buscar otro rival" vuelve a 1.
 //     Sin rivales (o todos ya desafiados) muestra la vista "vacio". Escape sale de la pantalla.
 
+
+/**
+ * Motivo legible cuando un envío por fetch no salió: la respuesta trae su error (validación, desafío
+ * pendiente, etc.), la sesión venció (el servidor redirige al login), no hay conexión, o el servidor falló.
+ */
+function motivoFallo(respuesta, datos, err) {
+  if (datos && (datos.error || datos.mensaje)) return datos.error || datos.mensaje;
+  if (!respuesta) return 'No se envió: no hay conexión a internet. Revísala e inténtalo de nuevo.';
+  // El servidor redirige (al login, a aceptar términos...) cuando la sesión ya no sirve para esta acción
+  if (respuesta.redirected) {
+    return 'No se envió: tu sesión venció. Vuelve a iniciar sesión e inténtalo de nuevo.';
+  }
+  if (respuesta.status === 401 || respuesta.status === 403) return 'No se envió: no tienes permiso para hacer esto con esta cuenta.';
+  if (respuesta.status === 413) return 'No se envió: el mensaje es demasiado largo.';
+  if (respuesta.status === 429) return 'No se envió: hiciste demasiados intentos seguidos. Espera un momento.';
+  if (respuesta.status >= 500) return `No se envió por un error del servidor (código ${respuesta.status}). Inténtalo de nuevo en unos segundos.`;
+  return (err && err.message) || 'No se envió el desafío. Inténtalo de nuevo.';
+}
+
 const CAMBIO_TEXTO_MS = 2000;
 const DURACION_BUSQUEDA_MS = [4000, 6500]; // primera búsqueda
 const DURACION_OTRO_MS = [2200, 3600]; // "Buscar otro rival"
@@ -185,14 +204,15 @@ const DURACION_FLASH_MS = 700;
     textoDesafiar.textContent = 'Enviando...';
     resultado.classList.remove('is-error');
     resultado.textContent = '';
+    let respuesta = null;
     try {
-      const respuesta = await fetch(form.action, {
+      respuesta = await fetch(form.action, {
         method: 'POST',
         headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams(),
       });
-      const datos = await respuesta.json().catch(() => ({}));
-      if (!respuesta.ok || !datos.resultado) throw new Error(datos.error || 'No se pudo enviar el desafío. Inténtalo de nuevo.');
+      const datos = await respuesta.json().catch(() => null);
+      if (!respuesta.ok || !datos || !datos.resultado) throw new Error(motivoFallo(respuesta, datos));
 
       if (datos.resultado === 'enviado' || datos.resultado === 'pendiente') {
         desafiados.add(rivalActual.id);
@@ -202,14 +222,14 @@ const DURACION_FLASH_MS = 700;
         resultado.textContent = datos.mensaje || '';
         botonOtro.disabled = false;
       } else {
-        throw new Error(datos.mensaje || 'No se pudo enviar el desafío.');
+        throw new Error(datos.mensaje || 'No se envió el desafío.');
       }
     } catch (err) {
       botonDesafiar.disabled = false;
       botonOtro.disabled = false;
       textoDesafiar.textContent = 'Enviar desafío';
       resultado.classList.add('is-error');
-      resultado.textContent = err.message;
+      resultado.textContent = respuesta ? err.message : motivoFallo(null, null, err);
     }
   });
 
