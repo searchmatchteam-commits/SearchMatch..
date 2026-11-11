@@ -1499,3 +1499,16 @@ html[data-theme="light"] .pp-metrica__nota.imc-bajo { color: #0369a1; }
 html[data-theme="light"] .pp-metrica__nota.imc-normal { color: #15803d; }
 html[data-theme="light"] .pp-metrica__nota.imc-sobrepeso { color: #a16207; }
 html[data-theme="light"] .pp-metrica__nota.imc-obesidad { color: #b91c1c; }
+
+/* Pelota del dashboard en modo claro: lo que en oscuro es verde neón alrededor (partículas, punto de la
+   órbita y el anillo de energía) pasa a negro, igual que las costuras de la pelota (ball.js). */
+html[data-theme="light"] .dash-hero .dash-particula,
+html[data-theme="light"] .dash-hero .dash-particula:nth-child(3n),
+html[data-theme="light"] .dash-hero .dash-orbita::after {
+  background: #111111;
+  box-shadow: none;
+}
+html[data-theme="light"] .dash-hero .ball-anillo::before,
+html[data-theme="light"] .ball-anillo::before {
+  border-color: rgba(17, 17, 17, calc(0.18 + var(--energia) * 0.4));
+}

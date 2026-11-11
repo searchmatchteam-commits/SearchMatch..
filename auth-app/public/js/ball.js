@@ -5,6 +5,11 @@ const LIVIANO = document.documentElement.classList.contains('modo-liviano');
 const INTERVALO_CUADRO = LIVIANO ? 1000 / 30 - 2 : 1000 / 60 - 2;
 
 let NEON;
+// Modo claro: los paneles negros pasan a blanco y todo lo verde neón (costuras, brillo, órbitas, chispas)
+// pasa a negro. En modo oscuro la pelota queda tal cual. Cambia en vivo con el botón de tema.
+let CLARO = document.documentElement.getAttribute('data-theme') === 'light';
+let ACENTO; // NEON en oscuro, negro en claro
+const temaClaro = () => document.documentElement.getAttribute('data-theme') === 'light';
 
 function buildTruncatedIcosahedron(radius) {
   const t = (1 + Math.sqrt(5)) / 2;
@@ -148,7 +153,7 @@ function makeRingTexture(size = 256) {
 
 function crearEntorno(renderer) {
   const env = new THREE.Scene();
-  env.background = new THREE.Color(0x030403);
+  env.background = new THREE.Color(CLARO ? 0xdfe3e1 : 0x030403);
 
   function foco(color, fuerza, ancho, alto, x, y, z) {
     const m = new THREE.Mesh(
@@ -161,8 +166,8 @@ function crearEntorno(renderer) {
   }
   foco(0xffffff, 5, 6, 2.5, 0, 6, 1);
   foco(0xeaffe0, 2.5, 2.5, 3.5, 5, 1.5, 4);
-  foco(NEON, 4, 1, 7, -6, 0, -1);
-  foco(NEON, 2.5, 7, 0.8, 0, -5, -2);
+  foco(CLARO ? 0x9aa29d : NEON, CLARO ? 1 : 4, 1, 7, -6, 0, -1);
+  foco(CLARO ? 0x9aa29d : NEON, CLARO ? 1 : 2.5, 7, 0.8, 0, -5, -2);
 
   const pmrem = new THREE.PMREMGenerator(renderer);
   const textura = pmrem.fromScene(env, 0.035).texture;
@@ -179,14 +184,13 @@ function crearOrbita(radio, rotX, rotY, velocidad, fase, glow) {
     const a = (i / 160) * Math.PI * 2;
     puntos.push(new THREE.Vector3(Math.cos(a) * radio, Math.sin(a) * radio, 0));
   }
-  grupo.add(new THREE.LineLoop(
-    new THREE.BufferGeometry().setFromPoints(puntos),
-    new THREE.LineBasicMaterial({ color: NEON, transparent: true, opacity: 0.18, depthWrite: false, blending: THREE.AdditiveBlending })
-  ));
+  const lineaMat = new THREE.LineBasicMaterial({ color: NEON, transparent: true, opacity: 0.18, depthWrite: false, blending: THREE.AdditiveBlending });
+  grupo.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(puntos), lineaMat));
 
-  const cabeza = new THREE.Sprite(new THREE.SpriteMaterial({
+  const cabezaMat = new THREE.SpriteMaterial({
     map: glow, color: 0xd8ffcc, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false
-  }));
+  });
+  const cabeza = new THREE.Sprite(cabezaMat);
   cabeza.scale.setScalar(0.32);
   grupo.add(cabeza);
 
@@ -196,14 +200,23 @@ function crearOrbita(radio, rotX, rotY, velocidad, fase, glow) {
   const estelaGeo = new THREE.BufferGeometry();
   estelaGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   estelaGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  grupo.add(new THREE.Points(estelaGeo, new THREE.PointsMaterial({
+  const estelaMat = new THREE.PointsMaterial({
     size: 0.14, map: glow, vertexColors: true, transparent: true, depthWrite: false,
     blending: THREE.AdditiveBlending, toneMapped: false
-  })));
+  });
+  grupo.add(new THREE.Points(estelaGeo, estelaMat));
 
   let angulo = fase;
   return {
     grupo,
+    tema(claro) {
+      // En claro no sirve sumar luz (se pierde en el fondo blanco): se pinta en negro con mezcla normal
+      const mezcla = claro ? THREE.NormalBlending : THREE.AdditiveBlending;
+      [lineaMat, cabezaMat, estelaMat].forEach((m) => { m.blending = mezcla; m.needsUpdate = true; });
+      lineaMat.color.set(claro ? 0x111111 : NEON);
+      lineaMat.opacity = claro ? 0.22 : 0.18;
+      cabezaMat.color.set(claro ? 0x111111 : 0xd8ffcc);
+    },
     actualizar(dt, energia) {
       angulo += dt * velocidad * (1 + energia * 2.5);
       cabeza.position.set(Math.cos(angulo) * radio, Math.sin(angulo) * radio, 0);
@@ -211,7 +224,9 @@ function crearOrbita(radio, rotX, rotY, velocidad, fase, glow) {
         const a = angulo - Math.sign(velocidad) * k * 0.035;
         pos.set([Math.cos(a) * radio, Math.sin(a) * radio, 0], k * 3);
         const f = Math.pow(1 - k / LARGO, 1.6) * (0.6 + energia * 0.6);
-        col.set([NEON.r * f, NEON.g * f, NEON.b * f], k * 3);
+        // En claro la estela va de negro (cerca de la cabeza) a blanco (se funde con el fondo)
+        if (CLARO) col.set([1 - f, 1 - f, 1 - f], k * 3);
+        else col.set([NEON.r * f, NEON.g * f, NEON.b * f], k * 3);
       }
       estelaGeo.attributes.position.needsUpdate = true;
       estelaGeo.attributes.color.needsUpdate = true;
@@ -349,10 +364,11 @@ function initBall(stage, container) {
   const chispaGeo = new THREE.BufferGeometry();
   chispaGeo.setAttribute('position', new THREE.BufferAttribute(chispaPos, 3));
   chispaGeo.setAttribute('color', new THREE.BufferAttribute(chispaCol, 3));
-  scene.add(new THREE.Points(chispaGeo, new THREE.PointsMaterial({
+  const chispaMat = new THREE.PointsMaterial({
     size: 0.13, map: glow, vertexColors: true, transparent: true, depthWrite: false,
     blending: THREE.AdditiveBlending, toneMapped: false
-  })));
+  });
+  scene.add(new THREE.Points(chispaGeo, chispaMat));
   let siguienteChispa = 0;
 
   function emitirChispas(origen, normal, cantidad) {
@@ -370,7 +386,7 @@ function initBall(stage, container) {
   function actualizarChispas(dt) {
     for (let i = 0; i < CHISPAS; i++) {
       if (chispaVida[i] <= 0) {
-        chispaCol.set([0, 0, 0], i * 3);
+        chispaCol.set(CLARO ? [1, 1, 1] : [0, 0, 0], i * 3);
         continue;
       }
       chispaVida[i] -= dt * 1.3;
@@ -381,6 +397,11 @@ function initBall(stage, container) {
       chispaPos[i * 3 + 1] += v.y * dt;
       chispaPos[i * 3 + 2] += v.z * dt;
       const vida = Math.max(chispaVida[i], 0);
+      if (CLARO) {
+        const gris = 1 - Math.min(1, vida * 1.4); // negras al salir, se aclaran hasta desaparecer en el blanco
+        chispaCol.set([gris, gris, gris], i * 3);
+        continue;
+      }
       const blanco = vida * vida;
       chispaCol.set([
         (NEON.r + (1 - NEON.r) * blanco) * vida * 1.5,
@@ -405,6 +426,39 @@ function initBall(stage, container) {
     scene.add(mesh);
     return { mesh, retraso };
   });
+
+  /** Pinta la pelota según el tema (se llama al iniciar y cada vez que cambia data-theme). */
+  function aplicarTema() {
+    CLARO = temaClaro();
+    ACENTO = CLARO ? new THREE.Color(0x000000) : NEON;
+    const mezcla = CLARO ? THREE.NormalBlending : THREE.AdditiveBlending;
+    // Paneles: negros en oscuro, blancos en claro
+    hexMat.color.set(CLARO ? 0xf2f4f3 : 0x283028);
+    pentMat.color.set(CLARO ? 0xffffff : 0x060806);
+    pentMat.emissive.set(CLARO ? 0x000000 : NEON);
+    // Brillo alrededor: en claro, una sombra suave negra en vez del halo neón
+    haloMat.blending = mezcla;
+    haloMat.uniforms.uColor.value.copy(ACENTO);
+    // Luces de contorno: neón en oscuro, blancas en claro (no tiñen de verde los paneles blancos)
+    rim1.color.set(CLARO ? 0xffffff : NEON);
+    rim2.color.set(CLARO ? 0xffffff : NEON);
+    rim1.intensity = CLARO ? 0.8 : 2.4;
+    rim2.intensity = CLARO ? 0.4 : 1.2;
+    renderer.toneMappingExposure = CLARO ? 1.0 : 1.15;
+    polvoMat.color.set(CLARO ? 0x222222 : 0x9cff85);
+    polvoMat.opacity = CLARO ? 0.35 : 0.6;
+    [polvoMat, chispaMat].forEach((m) => { m.blending = mezcla; m.needsUpdate = true; });
+    ondas.forEach(({ mesh }) => { mesh.material.color.copy(ACENTO); mesh.material.blending = mezcla; mesh.material.needsUpdate = true; });
+    haloMat.needsUpdate = true;
+    orbitas.forEach((o) => o.tema(CLARO));
+    // Reflejos: el entorno se arma con los focos del tema
+    const anterior = scene.environment;
+    scene.environment = crearEntorno(renderer);
+    if (anterior) anterior.dispose();
+  }
+  aplicarTema();
+  new MutationObserver(() => { if (temaClaro() !== CLARO) aplicarTema(); })
+    .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
   function resize() {
     const w = container.clientWidth;
@@ -589,9 +643,10 @@ function initBall(stage, container) {
     const energiaObjetivo = Math.min(1, Math.min(1, velocidad / 0.14) * 0.85 + hover * 0.3);
     energia += (energiaObjetivo - energia) * (1 - Math.pow(0.9, f));
 
-    nucleoMat.color.copy(NEON).multiplyScalar(0.5 + energia * 0.9 + flash * 1.5);
+    if (CLARO) nucleoMat.color.setScalar(0.04 + energia * 0.05); // costuras negras (apenas se aclaran al rematar)
+    else nucleoMat.color.copy(NEON).multiplyScalar(0.5 + energia * 0.9 + flash * 1.5);
     pentMat.emissiveIntensity = 0.06 + energia * 0.45 + flash * 1.2;
-    haloMat.uniforms.uIntensidad.value = 0.55 + energia * 0.55 + flash * 0.9;
+    haloMat.uniforms.uIntensidad.value = (0.55 + energia * 0.55 + flash * 0.9) * (CLARO ? 0.35 : 1);
     luzCursor.intensity += (luzObjetivo * 28 - luzCursor.intensity) * (1 - Math.pow(0.9, f));
 
     pelota.rotation.y += (inclinacion.x * 0.28 - pelota.rotation.y) * (1 - Math.pow(0.94, f));
@@ -675,7 +730,10 @@ if (canvasBall && document.documentElement.classList.contains('red-lenta')) {
   const stage = canvasBall.closest('.ball-stage');
   try {
     THREE = await import(THREE_CDN);
-    NEON = new THREE.Color(getComputedStyle(stage).getPropertyValue('--verde').trim() || '#39ff14');
+    // El neón es siempre el del modo oscuro: si la página carga en claro, --verde es el verde oscuro y al
+    // volver a oscuro la pelota quedaba con ese tono. El modo claro usa negro (aplicarTema).
+    const verdeCss = getComputedStyle(stage).getPropertyValue('--verde').trim();
+    NEON = new THREE.Color(temaClaro() || !verdeCss ? '#39ff14' : verdeCss);
     await new Promise((listo) => {
       if ('requestIdleCallback' in window) requestIdleCallback(listo, { timeout: 800 });
       else setTimeout(listo, 200);
