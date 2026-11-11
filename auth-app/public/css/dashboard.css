@@ -747,13 +747,41 @@
 .dash-invitacion__texto {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  /* Base de 14rem: si no cabe junto a los botones, los botones bajan a otra fila
+     (con base 0 el texto quedaba apretado en una columna angosta en celular) */
+  flex: 1 1 14rem;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .dash-invitacion__acciones {
   display: flex;
   gap: 8px;
+}
+
+/* Celular: escudo + texto arriba; Aceptar y Rechazar abajo, a todo el ancho */
+@media (max-width: 559px) {
+  .dash-invitacion {
+    align-items: flex-start;
+  }
+
+  .dash-invitacion__texto {
+    flex-basis: calc(100% - 54px);
+  }
+
+  .dash-invitacion__acciones {
+    flex: 1 1 100%;
+  }
+
+  .dash-invitacion__acciones form {
+    flex: 1;
+  }
+
+  .dash-invitacion__acciones .btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
 }
 
 /* ---------- Tu carta: silueta + físico y estadísticas ---------- */
