@@ -1044,3 +1044,8 @@ html[data-theme="light"] .modo-liviano .perfil-pro .dock {
 }
 .pp-metrica--texto { grid-column: 1 / -1; }
 .pp-metrica__nota { display: block; margin-top: 2px; font-size: 0.72rem; font-weight: 600; color: var(--texto-suave); }
+/* Categoría del IMC con su color */
+.pp-metrica__nota.imc-bajo { color: #38bdf8; }
+.pp-metrica__nota.imc-normal { color: var(--verde); }
+.pp-metrica__nota.imc-sobrepeso { color: #facc15; }
+.pp-metrica__nota.imc-obesidad { color: #f87171; }

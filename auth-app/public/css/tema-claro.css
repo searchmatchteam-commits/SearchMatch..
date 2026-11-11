@@ -1488,3 +1488,14 @@ html[data-theme="light"] .sm-cal__dia.sm-cal__dia--hoy[aria-pressed="true"] { co
 html[data-theme="light"] .cancha__puesto[data-linea="arquero"] .cancha__vacio { color: #a16207; border-color: rgba(161, 98, 7, 0.45); }
 /* "Ya eres parte" / "Solicitud enviada": gris legible */
 html[data-theme="light"] .eq-mis__accion:disabled { color: #475569; }
+
+/* IMC y medidas del dashboard: tonos más oscuros para leerse sobre blanco */
+html[data-theme="light"] .dash-medidas .dash-medida { --tono: 21, 128, 61; background: rgba(var(--tono), 0.06); }
+html[data-theme="light"] .dash-medidas .dash-medida.dash-medida--imc-bajo { --tono: 3, 105, 161; }
+html[data-theme="light"] .dash-medidas .dash-medida.dash-medida--imc-normal { --tono: 21, 128, 61; }
+html[data-theme="light"] .dash-medidas .dash-medida.dash-medida--imc-sobrepeso { --tono: 161, 98, 7; }
+html[data-theme="light"] .dash-medidas .dash-medida.dash-medida--imc-obesidad { --tono: 185, 28, 28; }
+html[data-theme="light"] .pp-metrica__nota.imc-bajo { color: #0369a1; }
+html[data-theme="light"] .pp-metrica__nota.imc-normal { color: #15803d; }
+html[data-theme="light"] .pp-metrica__nota.imc-sobrepeso { color: #a16207; }
+html[data-theme="light"] .pp-metrica__nota.imc-obesidad { color: #b91c1c; }

@@ -133,11 +133,13 @@ function calcularIMC(alturaCm, pesoKg) {
   const peso = Number(pesoKg);
   if (!(altura > 0) || !(peso > 0)) return null;
   const valor = Math.round((peso / (altura * altura)) * 10) / 10;
-  let categoria = 'Normal';
-  if (valor < 18.5) categoria = 'Bajo peso';
-  else if (valor >= 30) categoria = 'Obesidad';
-  else if (valor >= 25) categoria = 'Sobrepeso';
-  return { valor, texto: valor.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), categoria };
+  // clave: para el color en pantalla (bajo = azul, normal = verde, sobrepeso = amarillo, obesidad = rojo)
+  let clave = 'normal';
+  if (valor < 18.5) clave = 'bajo';
+  else if (valor >= 30) clave = 'obesidad';
+  else if (valor >= 25) clave = 'sobrepeso';
+  const categoria = { bajo: 'Bajo peso', normal: 'Normal', sobrepeso: 'Sobrepeso', obesidad: 'Obesidad' }[clave];
+  return { valor, texto: valor.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), categoria, clave };
 }
 
 module.exports = {

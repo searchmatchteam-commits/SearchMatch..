@@ -142,10 +142,14 @@
         <!-- A la derecha: altura, peso y estadísticas -->
         <div class="dash-fisico">
           <dl class="dash-medidas">
-            <div><dt>Altura</dt><dd><%= carta.altura ? Math.round(carta.altura) + ' cm' : '—' %></dd></div>
-            <div><dt>Peso</dt><dd><%= carta.peso ? Math.round(carta.peso) + ' kg' : '—' %></dd></div>
+            <div class="dash-medida"><dt>Altura</dt><dd><% if (carta.altura) { %><%= Math.round(carta.altura) %><span class="dash-medida__unidad">cm</span><% } else { %>—<% } %></dd></div>
+            <div class="dash-medida"><dt>Peso</dt><dd><% if (carta.peso) { %><%= Math.round(carta.peso) %><span class="dash-medida__unidad">kg</span><% } else { %>—<% } %></dd></div>
             <% const imc = calcularIMC(carta.altura, carta.peso); %>
-            <div title="Índice de masa corporal (referencial)"><dt>IMC</dt><dd><%= imc ? imc.texto : '—' %><% if (imc) { %> <small><%= imc.categoria %></small><% } %></dd></div>
+            <!-- IMC a todo el ancho; el color sigue la categoría (azul, verde, amarillo o rojo) -->
+            <div class="dash-medida dash-medida--imc <%= imc ? 'dash-medida--imc-' + imc.clave : '' %>" title="Índice de masa corporal: peso / altura². Es referencial: no distingue músculo de grasa.">
+              <dt>IMC</dt>
+              <dd><%= imc ? imc.texto : '—' %><% if (imc) { %><span class="dash-medida__categoria"><%= imc.categoria %></span><% } %></dd>
+            </div>
           </dl>
           <ul class="dash-stats">
             <% carta.stats.forEach(function (stat) { %>

@@ -2397,3 +2397,64 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
 .dash-panel__titulo-enlace { color: inherit; text-decoration: none; }
 .dash-panel__titulo-enlace:hover, .dash-panel__titulo-enlace:focus-visible { color: var(--verde); }
 .dash-panel--calendario .sm-cal__flechas { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ---------- Altura, peso e IMC (rediseño) ----------
+   Las dos medidas arriba, del mismo alto, con el número grande y la unidad chica (antes el texto se salía
+   de cajas muy angostas). El IMC va abajo a todo el ancho, con la misma altura, y toma el color de su
+   categoría: azul bajo peso, verde normal, amarillo sobrepeso y rojo obesidad. */
+.dash-medidas { gap: 10px; }
+.dash-medidas .dash-medida {
+  --tono: var(--verde-rgb);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 74px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(var(--tono), 0.22);
+  background: rgba(var(--tono), 0.06);
+}
+.dash-medidas .dash-medida dt { font-size: 0.68rem; line-height: 1; }
+.dash-medidas .dash-medida dd {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 0;
+  font-size: clamp(1.4rem, 1.1rem + 1vw, 1.75rem);
+  line-height: 1;
+  color: rgb(var(--tono));
+}
+.dash-medida__unidad { font-size: 0.55em; font-weight: 700; opacity: 0.8; }
+
+.dash-medida--imc { grid-column: 1 / -1; position: relative; overflow: hidden; }
+.dash-medida--imc::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: rgb(var(--tono));
+}
+.dash-medida--imc dd { justify-content: space-between; align-items: center; }
+.dash-medida__categoria {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-family: var(--fuente-texto, inherit);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: rgb(var(--tono));
+  background: rgba(var(--tono), 0.14);
+  border: 1px solid rgba(var(--tono), 0.35);
+}
+.dash-medidas .dash-medida.dash-medida--imc-bajo { --tono: 56, 189, 248; }
+.dash-medidas .dash-medida.dash-medida--imc-normal { --tono: var(--verde-rgb); }
+.dash-medidas .dash-medida.dash-medida--imc-sobrepeso { --tono: 250, 204, 21; }
+.dash-medidas .dash-medida.dash-medida--imc-obesidad { --tono: 248, 113, 113; }
+
+/* Escritorio: la silueta un poco más angosta para que la columna de datos respire */
+@media (min-width: 768px) {
+  .dash-panel--carta { column-gap: 18px; }
+  .dash-panel--carta .vc { width: 200px; }
+}
