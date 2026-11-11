@@ -218,8 +218,13 @@ async function guardarPosicionesBuscadas(authId, idEquipo, idsPosiciones) {
   }
 }
 
-/** "Equipos disponibles": activos que buscan al menos una posición, con su nivel (PE-021). */
-async function listarEquiposQueBuscan() {
+/**
+ * "Equipos disponibles": activos que buscan al menos una posición, con su nivel (PE-021).
+ * Sin los equipos de quien mira (los que creó o donde ya está en el plantel, como capitán o jugador):
+ * el capitán que publica que busca un arquero no debe verse invitado a postular a su propio equipo.
+ * @param {string|null} [authId] - Cuenta que mira la lista.
+ */
+async function listarEquiposQueBuscan(authId = null) {
   const { rows } = await pool.query(
     `SELECT e.id, e.nombre, n.nombre AS nivel, m.nombre AS modalidad, coalesce(c.nombre, e.zona) AS comuna,
             (SELECT array_agg(mm.cantidad_de_jugadores ORDER BY mm.cantidad_de_jugadores)
@@ -232,8 +237,15 @@ async function listarEquiposQueBuscan() {
        LEFT JOIN modalidad m ON m.id = e.id_modalidad
        LEFT JOIN comunas c ON c.id = e.id_comuna
       WHERE e.activo
+        AND NOT EXISTS (
+          SELECT 1 FROM usuario u
+           WHERE u.auth_id = $1
+             AND (e.id_usuario_creador = u.id
+                  OR EXISTS (SELECT 1 FROM equipo_jugador ej JOIN jugador j ON j.id = ej.id_jugador
+                              WHERE ej.id_equipo = e.id AND j.id_usuario = u.id)))
       GROUP BY e.id, n.nombre, m.nombre, c.nombre
-      ORDER BY e.nombre`
+      ORDER BY e.nombre`,
+    [authId]
   );
   return rows.map((fila) => ({ ...fila, modalidad: textoModalidades(fila.modalidades) || fila.modalidad }));
 }

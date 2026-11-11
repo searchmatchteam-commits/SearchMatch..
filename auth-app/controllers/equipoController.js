@@ -438,7 +438,7 @@ async function directorio(req, res, next) {
       equipoModel.listarEquipos(req.usuario.idAuth),
       equipoModel.obtenerMiEquipo(req.usuario.idAuth),
       estadoCreacionEquipo(req.usuario), // CORRECCIÓN: regla 5
-      equipoFichaModel.listarEquiposQueBuscan(), // NUEVO: PE-021
+      equipoFichaModel.listarEquiposQueBuscan(req.usuario.idAuth), // NUEVO: PE-021 (sin los equipos propios)
     ]);
     return res.render('equipos', {
       titulo: 'Directorio de Equipos',
