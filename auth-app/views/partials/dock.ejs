@@ -1,7 +1,8 @@
 <%
   // Barra de navegación inferior (dock flotante). Uso:
   //   include('partials/dock', { activo: 'inicio' })
-  // "Perfil" siempre lleva a la carta (/perfil); los equipos del capitán están en "Mis equipos".
+  // "Perfil" siempre lleva a la carta (/perfil). "Mis equipos" (/mis-equipos) y "Calendario" (/agenda) ya no están
+  // en la barra: se abren desde sus paneles del dashboard. En sus páginas se marca el ítem más cercano.
   // AP-001: las cuentas del panel no juegan ni ven esta barra (navegan con el menú lateral del panel).
   // Un ítem sin href (Canchas: aún no existe) es un botón que muestra un aviso de "próximamente"
   // (lo maneja public/js/dashboard.js con data-proximamente).
@@ -12,15 +13,15 @@
       icono: '<rect x="3" y="5" width="18" height="14" rx="2" /><path d="M12 5v14" /><circle cx="12" cy="12" r="2.6" /><path d="M3 9.5h2.5v5H3M21 9.5h-2.5v5H21" />' },
     { clave: 'equipos', texto: 'Equipos', href: '/equipos',
       icono: '<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6z" /><circle cx="12" cy="11.5" r="3" />' },
-    { clave: 'mis-equipos', texto: 'Mis equipos', href: '/mis-equipos',
-      icono: '<circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><circle cx="17" cy="9" r="2.4" /><path d="M16 14.2a4.5 4.5 0 0 1 5 4.8" />' },
     { clave: 'torneos', texto: 'Torneos', href: '/torneos',
       icono: '<path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4v3h-4z" />' },
-    { clave: 'calendario', texto: 'Calendario', href: '/agenda', // AG-001: partidos de mis equipos por mes
-      icono: '<rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /><path d="M7.5 14h2M11 14h2M14.5 14h2M7.5 17.5h2M11 17.5h2" />' },
     { clave: 'perfil', texto: 'Perfil', href: '/perfil',
       icono: '<rect x="4" y="3" width="16" height="18" rx="3" /><circle cx="12" cy="10" r="3" /><path d="M7.5 17.5a4.5 4.5 0 0 1 9 0" />' },
   ];
+%>
+<%
+  const ACTIVO_EQUIVALENTE = { 'mis-equipos': 'equipos', calendario: 'inicio' };
+  activo = ACTIVO_EQUIVALENTE[activo] || activo;
 %>
 <% if (!usuario.esCuentaPanel) { %>
 <nav class="dock" aria-label="Navegación principal">

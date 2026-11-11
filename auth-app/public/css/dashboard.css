@@ -2391,3 +2391,9 @@ html.js .dash-panel--carta:not(.visible) .dash-stat__relleno {
     opacity: 0.8;
   }
 }
+
+/* Enlaces de panel del dashboard hacia Mis equipos y la agenda (ya no están en la barra inferior) */
+.dash-panel__enlaces { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dash-panel__titulo-enlace { color: inherit; text-decoration: none; }
+.dash-panel__titulo-enlace:hover, .dash-panel__titulo-enlace:focus-visible { color: var(--verde); }
+.dash-panel--calendario .sm-cal__flechas { display: inline-flex; align-items: center; gap: 6px; }

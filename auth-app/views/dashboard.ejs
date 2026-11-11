@@ -144,6 +144,8 @@
           <dl class="dash-medidas">
             <div><dt>Altura</dt><dd><%= carta.altura ? Math.round(carta.altura) + ' cm' : '—' %></dd></div>
             <div><dt>Peso</dt><dd><%= carta.peso ? Math.round(carta.peso) + ' kg' : '—' %></dd></div>
+            <% const imc = calcularIMC(carta.altura, carta.peso); %>
+            <div title="Índice de masa corporal (referencial)"><dt>IMC</dt><dd><%= imc ? imc.texto : '—' %><% if (imc) { %> <small><%= imc.categoria %></small><% } %></dd></div>
           </dl>
           <ul class="dash-stats">
             <% carta.stats.forEach(function (stat) { %>
@@ -201,13 +203,16 @@
     </article>
 
     <!-- Calendario del mes con eventos (el mismo de /agenda) -->
-    <%- include('partials/calendario-eventos') %>
+    <%- include('partials/calendario-eventos', { enlaceAgenda: true }) %>
 
     <!-- Mis equipos: cada equipo se despliega con su plantel; en los que creó, "Administrar" -->
     <article class="dash-panel dash-panel--equipos revelar">
       <header class="dash-panel__cabecera">
-        <h2 class="dash-panel__titulo">Mis equipos</h2>
-        <a class="dash-tequipos__buscar" href="/equipos">Buscar equipos</a>
+        <h2 class="dash-panel__titulo"><a class="dash-panel__titulo-enlace" href="/mis-equipos">Mis equipos</a></h2>
+        <span class="dash-panel__enlaces">
+          <a class="dash-tequipos__buscar" href="/equipos">Buscar equipos</a>
+          <a class="dash-tequipos__buscar" href="/mis-equipos">Ver todos →</a>
+        </span>
       </header>
 
       <%- include('partials/mis-equipos', { misEquipos, volver: '/dashboard' }) %>
