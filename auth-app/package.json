@@ -9,6 +9,7 @@
     "start": "node app.js",
     "dev": "node --watch app.js",
     "build": "node scripts/minificar.js",
+    "datos-prueba": "node scripts/simular-torneo-y-partidos.js --aplicar",
     "test": "node --test \"test/*.test.js\""
   },
   "keywords": [

@@ -14,6 +14,7 @@
 //   node scripts/simular-torneo-y-partidos.js --jugador=tu@correo.cl                 (simulacro)
 //   node scripts/simular-torneo-y-partidos.js --jugador=tu@correo.cl --aplicar       (guarda)
 //   node scripts/simular-torneo-y-partidos.js --solo-torneo --aplicar              (solo el torneo)
+//   npm run datos-prueba                                                           (todo y guarda; sin --jugador)
 //   Opcional: --torneo=ID si hay más de un torneo con inscripciones abiertas.
 
 const { pool } = require('../config/db');
@@ -124,13 +125,18 @@ async function inscribirTodos(c) {
 
 // ---------------------------------------------------------------- 2) Partidos que buscan jugadores
 async function crearPartidos(c) {
-  const { rows: [yo] } = await c.query(
-    `SELECT u.id AS id_usuario, j.id AS id_jugador FROM usuario u LEFT JOIN jugador j ON j.id_usuario = u.id
-      WHERE lower(u.correo) = lower($1)`,
-    [String(args.jugador)]
-  );
-  if (!yo) { console.log(`\n⚠️  Partidos: no existe una cuenta con el correo ${args.jugador}.`); return; }
-  if (!yo.id_jugador) console.log('\n⚠️  Esa cuenta aún no tiene carta de jugador: créala para poder postular.');
+  // Sin --jugador no se excluye a nadie (quien juegue en uno de los dos equipos no verá ese partido)
+  let yo = { id_usuario: 0, id_jugador: 0 };
+  if (args.jugador) {
+    const { rows } = await c.query(
+      `SELECT u.id AS id_usuario, j.id AS id_jugador FROM usuario u LEFT JOIN jugador j ON j.id_usuario = u.id
+        WHERE lower(u.correo) = lower($1)`,
+      [String(args.jugador)]
+    );
+    if (!rows[0]) { console.log(`\n⚠️  Partidos: no existe una cuenta con el correo ${args.jugador}.`); return; }
+    yo = rows[0];
+    if (!yo.id_jugador) console.log('\n⚠️  Esa cuenta aún no tiene carta de jugador: créala para poder postular.');
+  }
 
   // Pares de equipos activos de distinto capitán, con una modalidad en común, sin el jugador en ninguno
   const { rows: pares } = await c.query(
@@ -240,16 +246,11 @@ async function crearPartidos(c) {
 }
 
 async function main() {
-  if (!args.jugador && !args['solo-torneo']) {
-    console.error('Indica tu cuenta de jugador: --jugador=tu@correo.cl (los partidos se arman entre equipos donde no juegas).');
-    process.exitCode = 1;
-    return;
-  }
   const c = await pool.connect();
   try {
     await c.query('BEGIN');
     await inscribirTodos(c);
-    if (args.jugador) await crearPartidos(c);
+    if (!args['solo-torneo']) await crearPartidos(c);
     if (APLICAR) {
       await c.query('COMMIT');
       console.log('\n💾 Guardado.');
