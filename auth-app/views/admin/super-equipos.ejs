@@ -10,10 +10,10 @@
       </div>
     </header>
 
-    <form class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/equipos" role="search">
+    <form autocomplete="off" class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/equipos" role="search">
       <div class="campo">
         <label for="texto">Buscar por nombre del equipo o correo del capitán</label>
-        <input type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. Los Cracks o juan@correo.cl" />
+        <input autocomplete="off" type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. Los Cracks o juan@correo.cl" />
       </div>
       <div class="sm-form__acciones">
         <button type="submit" class="btn btn--verde">Buscar</button>

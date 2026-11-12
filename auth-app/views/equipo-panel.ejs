@@ -24,7 +24,7 @@
             <label class="eq-escudo__cambiar">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
               <span class="solo-lectores">Cambiar escudo</span>
-              <input type="file" class="solo-lectores" accept="image/jpeg,image/png,image/webp"
+              <input autocomplete="off" type="file" class="solo-lectores" accept="image/jpeg,image/png,image/webp"
                      data-escudo-input data-url="/equipos/<%= equipo.id %>/escudo" />
             </label>
           <% } %>
@@ -122,10 +122,10 @@
                 </span>
                 <span class="eq-solicitud__acciones">
                   <a class="btn btn--contorno btn--chico" href="/mi-equipo/solicitudes/<%= solicitud.id %>">Ver perfil</a>
-                  <form action="/mi-equipo/solicitudes/<%= solicitud.id %>/aceptar?equipo=<%= equipo.id %>" method="POST" data-responder>
+                  <form autocomplete="off" action="/mi-equipo/solicitudes/<%= solicitud.id %>/aceptar?equipo=<%= equipo.id %>" method="POST" data-responder>
                     <button type="submit" class="btn btn--verde btn--chico">Aceptar</button>
                   </form>
-                  <form action="/mi-equipo/solicitudes/<%= solicitud.id %>/rechazar?equipo=<%= equipo.id %>" method="POST" data-responder>
+                  <form autocomplete="off" action="/mi-equipo/solicitudes/<%= solicitud.id %>/rechazar?equipo=<%= equipo.id %>" method="POST" data-responder>
                     <button type="submit" class="btn btn--contorno btn--chico">Rechazar</button>
                   </form>
                 </span>
@@ -186,8 +186,8 @@
         </summary>
         <!-- DE-007: rivales del mismo nivel, del puntaje más cercano al más lejano; filtros por región y comuna -->
         <p class="dash-panel__nota">Equipos de tu mismo nivel<%= equipo.nivel ? ' (' + equipo.nivel + ')' : '' %> que juegan tu tipo de fútbol, ordenados por el puntaje más cercano al tuyo.</p>
-        <form class="sm-form eq-filtro-rivales eq-filtro-rivales--linea" action="/mi-equipo#desafiar" method="GET">
-          <input type="hidden" name="equipo" value="<%= equipo.id %>" />
+        <form autocomplete="off" class="sm-form eq-filtro-rivales eq-filtro-rivales--linea" action="/mi-equipo#desafiar" method="GET">
+          <input autocomplete="off" type="hidden" name="equipo" value="<%= equipo.id %>" />
           <%- include('partials/sm-ubicacion', { regiones, idRegion: filtrosRivales.idRegion, idComuna: filtrosRivales.idComuna, obligatorio: false }) %>
           <div class="sm-form__acciones">
             <button type="submit" class="btn btn--contorno btn--chico">Filtrar</button>
@@ -233,7 +233,7 @@
                 <% if (rival.desafio) { %>
                   <button type="button" class="btn eq-rival__boton" disabled><%= estadosDesafio[rival.desafio] %></button>
                 <% } else { %>
-                  <form class="eq-rival__accion" action="/mi-equipo/desafios/<%= rival.id %>?equipo=<%= equipo.id %>" method="POST" data-desafiar
+                  <form autocomplete="off" class="eq-rival__accion" action="/mi-equipo/desafios/<%= rival.id %>?equipo=<%= equipo.id %>" method="POST" data-desafiar
                         data-rival="<%= rival.nombre %>" data-comunes="<%= rival.comunes.join(',') %>"
                         data-escudo="<%= rival.escudo || '' %>" data-estilo="<%= rival.colores ? rival.colores.estilo : '' %>">
                     <button type="submit" class="btn btn--verde eq-rival__boton">Desafiar</button>
@@ -272,7 +272,7 @@
             </div>
           </div>
 
-          <form class="modal__form dz-form" data-form-desafio novalidate>
+          <form autocomplete="off" class="modal__form dz-form" data-form-desafio novalidate>
             <div class="dz-grupo" role="radiogroup" aria-labelledby="dz-modalidad" data-campo-modalidad>
               <span class="dz-grupo__titulo" id="dz-modalidad">Modalidad</span>
               <div class="dz-segmentos" data-modal-modalidad></div>
@@ -284,7 +284,7 @@
                 <div class="sm-kit">
                   <% misCamisetas.forEach(function (c, i) { %>
                     <label class="sm-kit__opcion">
-                      <input type="radio" name="camiseta" value="<%= c[0] %>" data-color="<%= c[2] %>" <%= i === 0 ? 'checked' : '' %> />
+                      <input autocomplete="off" type="radio" name="camiseta" value="<%= c[0] %>" data-color="<%= c[2] %>" <%= i === 0 ? 'checked' : '' %> />
                       <svg class="sm-kit__camiseta" viewBox="0 0 24 24" style="--color:<%= c[2] %>" aria-hidden="true"><path d="M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z" /></svg>
                       <%= c[1] %>
                     </label>
@@ -300,17 +300,17 @@
               <span class="dz-grupo__titulo" id="dz-cuando">Fecha y hora <span class="dz-opcional">opcional</span></span>
               <div class="modal__fila">
                 <label class="modal__campo"><span class="solo-lectores">Fecha tentativa</span>
-                  <input type="date" name="fecha" min="<%= new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date()) %>">
+                  <input autocomplete="off" type="date" name="fecha" min="<%= new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date()) %>">
                 </label>
                 <label class="modal__campo"><span class="solo-lectores">Hora</span>
-                  <input type="time" name="hora">
+                  <input autocomplete="off" type="time" name="hora">
                 </label>
               </div>
             </div>
 
             <label class="modal__campo dz-grupo">
               <span class="dz-grupo__titulo">Mensaje para el capitán rival <span class="dz-opcional">opcional</span></span>
-              <textarea name="mensaje" rows="2" maxlength="200" placeholder="Ej. ¿Jugamos en La Florida el sábado?"></textarea>
+              <textarea autocomplete="off" name="mensaje" rows="2" maxlength="200" placeholder="Ej. ¿Jugamos en La Florida el sábado?"></textarea>
             </label>
 
             <p class="modal__error" role="alert" hidden data-modal-error></p>
@@ -377,7 +377,7 @@
                     <% if (jugador.invitado) { %>
                       <button type="button" class="btn eq-invitar" disabled>Invitación Enviada</button>
                     <% } else { %>
-                      <form action="/equipos/<%= equipo.id %>/invitaciones/<%= jugador.id %>" method="POST" data-invitar>
+                      <form autocomplete="off" action="/equipos/<%= equipo.id %>/invitaciones/<%= jugador.id %>" method="POST" data-invitar>
                         <button type="submit" class="btn btn--verde eq-invitar">
                           <svg class="eq-invitar__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
                           Invitar
@@ -417,13 +417,13 @@
       </div>
 
       <% if (equipo.soyCapitan) { %>
-        <form class="eq-tipos" action="/equipos/<%= equipo.id %>/modalidades" method="POST" data-form-modalidades>
+        <form autocomplete="off" class="eq-tipos" action="/equipos/<%= equipo.id %>/modalidades" method="POST" data-form-modalidades>
           <span class="eq-tipos__titulo" id="eq-tipos-titulo">Tipos de fútbol que juega</span>
           <div class="eq-tipos__opciones" role="group" aria-labelledby="eq-tipos-titulo">
             <% Object.entries(MODALIDADES).forEach(function ([jugadores, nombre]) {
                  const marcada = alineaciones.some(function (a) { return String(a.jugadores) === jugadores; }); %>
               <label class="eq-tipos__opcion">
-                <input type="checkbox" name="modalidad" value="<%= jugadores %>" <%= marcada ? 'checked' : '' %>
+                <input autocomplete="off" type="checkbox" name="modalidad" value="<%= jugadores %>" <%= marcada ? 'checked' : '' %>
                        data-marcada="<%= marcada %>" data-nombre="<%= nombre %>">
                 <span><%= nombre %></span>
               </label>
@@ -460,7 +460,7 @@
             <% if (equipo.soyCapitan) { %>
               <div class="campo eq-alineacion__campo">
                 <label for="eq-formacion-<%= alineacion.jugadores %>">Formación <%= alineacion.nombre %></label>
-                <select id="eq-formacion-<%= alineacion.jugadores %>" data-select-formacion>
+                <select autocomplete="off" id="eq-formacion-<%= alineacion.jugadores %>" data-select-formacion>
                   <% alineacion.formaciones.forEach(function (formacion) { %>
                     <option value="<%= formacion %>" <%= formacion === alineacion.formacion ? 'selected' : '' %>><%= formacion %></option>
                   <% }) %>
@@ -540,7 +540,7 @@
             <li class="sm-fila">
               <a href="/jugadores/<%= j.id %>"><%= j.nombre %><% if (j.nombreCarta && j.nombreCarta !== j.nombre) { %> «<%= j.nombreCarta %>»<% } %></a>
               <span><%= j.posicion %></span>
-              <form action="/equipos/<%= equipo.id %>/capitania/<%= j.id %>" method="POST"
+              <form autocomplete="off" action="/equipos/<%= equipo.id %>/capitania/<%= j.id %>" method="POST"
                     data-confirmar="<%= j.nombre %><% if (j.nombreCarta && j.nombreCarta !== j.nombre) { %> («<%= j.nombreCarta %>»)<% } %> pasará a ser el capitán de <%= equipo.nombre %> y tú quedarás como jugador. Solo el nuevo capitán podrá devolverte la capitanía."
                     data-confirmar-titulo="¿Transferir la capitanía?" data-confirmar-boton="Transferir">
                 <button type="submit" class="btn btn--contorno btn--chico">Hacer capitán</button>

@@ -12,12 +12,12 @@
       </div>
     </header>
 
-    <form class="dash-panel eq-panel sm-form" action="/equipos/<%= equipo.id %>/posiciones" method="POST">
+    <form autocomplete="off" class="dash-panel eq-panel sm-form" action="/equipos/<%= equipo.id %>/posiciones" method="POST">
       <p class="dash-panel__nota">Marca una o más posiciones. Los jugadores las verán en el directorio y podrán postular.</p>
       <div class="sm-chequeos">
         <% posiciones.forEach(function (p) { %>
           <label class="sm-check sm-chequeo">
-            <input type="checkbox" name="posicion" value="<%= p.id %>" <%= p.buscada ? 'checked' : '' %> />
+            <input autocomplete="off" type="checkbox" name="posicion" value="<%= p.id %>" <%= p.buscada ? 'checked' : '' %> />
             <span><%= p.nombre %></span>
           </label>
         <% }) %>

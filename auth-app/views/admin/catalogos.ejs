@@ -27,17 +27,17 @@
           <% cat.elementos.forEach(function (el) {
                const usoTexto = el.usos.map(function (u) { return u.total + ' ' + u.etiqueta; }).join(', '); %>
             <li class="sm-catalogo__fila">
-              <form action="/admin/catalogos/<%= cat.tipo %>/<%= el.id %>" method="POST" class="sm-catalogo__form" novalidate data-sm-validar>
+              <form autocomplete="off" action="/admin/catalogos/<%= cat.tipo %>/<%= el.id %>" method="POST" class="sm-catalogo__form" novalidate data-sm-validar>
                 <div class="campo">
                   <label class="solo-lectores" for="<%= cat.tipo %>-<%= el.id %>-nombre">Nombre</label>
-                  <input type="text" id="<%= cat.tipo %>-<%= el.id %>-nombre" name="nombre" value="<%= el.nombre %>" maxlength="50" required
+                  <input autocomplete="off" type="text" id="<%= cat.tipo %>-<%= el.id %>-nombre" name="nombre" value="<%= el.nombre %>" maxlength="50" required
                          <%= el.protegido && cat.tipo !== 'modalidades' ? 'readonly' : '' %> />
                   <small class="campo__error"></small>
                 </div>
                 <% if (cat.tipo === 'modalidades') { %>
                   <div class="campo">
                     <label class="solo-lectores" for="<%= cat.tipo %>-<%= el.id %>-jugadores">Jugadores</label>
-                    <input type="number" id="<%= cat.tipo %>-<%= el.id %>-jugadores" name="jugadores" value="<%= el.cantidad_de_jugadores %>" min="1" max="30" required
+                    <input autocomplete="off" type="number" id="<%= cat.tipo %>-<%= el.id %>-jugadores" name="jugadores" value="<%= el.cantidad_de_jugadores %>" min="1" max="30" required
                            <%= el.protegido ? 'readonly' : '' %> title="Jugadores por equipo" />
                     <small class="campo__error"></small>
                   </div>
@@ -45,12 +45,12 @@
                 <% if (cat.tipo === 'niveles') { %>
                   <div class="campo">
                     <label class="solo-lectores" for="<%= cat.tipo %>-<%= el.id %>-min">Puntaje mínimo</label>
-                    <input type="number" id="<%= cat.tipo %>-<%= el.id %>-min" name="min" value="<%= el.puntaje_min %>" min="0" required title="Puntaje mínimo" />
+                    <input autocomplete="off" type="number" id="<%= cat.tipo %>-<%= el.id %>-min" name="min" value="<%= el.puntaje_min %>" min="0" required title="Puntaje mínimo" />
                     <small class="campo__error"></small>
                   </div>
                   <div class="campo">
                     <label class="solo-lectores" for="<%= cat.tipo %>-<%= el.id %>-max">Puntaje máximo</label>
-                    <input type="number" id="<%= cat.tipo %>-<%= el.id %>-max" name="max" value="<%= el.puntaje_max %>" min="0" required title="Puntaje máximo" />
+                    <input autocomplete="off" type="number" id="<%= cat.tipo %>-<%= el.id %>-max" name="max" value="<%= el.puntaje_max %>" min="0" required title="Puntaje máximo" />
                     <small class="campo__error"></small>
                   </div>
                 <% } %>
@@ -61,7 +61,7 @@
                 <%= usoTexto ? 'En uso: ' + usoTexto : 'Sin uso' %>
               </span>
               <% if (!el.protegido && !usoTexto) { %>
-                <form action="/admin/catalogos/<%= cat.tipo %>/<%= el.id %>/eliminar" method="POST"
+                <form autocomplete="off" action="/admin/catalogos/<%= cat.tipo %>/<%= el.id %>/eliminar" method="POST"
                       data-confirmar="Se eliminará del catálogo."
                       data-confirmar-titulo="¿Eliminar <%= el.nombre %>?" data-confirmar-boton="Eliminar">
                   <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Eliminar</button>
@@ -71,29 +71,29 @@
           <% }) %>
         </ul>
 
-        <form action="/admin/catalogos/<%= cat.tipo %>" method="POST" class="sm-catalogo__form sm-catalogo__nuevo" novalidate data-sm-validar>
+        <form autocomplete="off" action="/admin/catalogos/<%= cat.tipo %>" method="POST" class="sm-catalogo__form sm-catalogo__nuevo" novalidate data-sm-validar>
           <div class="campo">
             <label for="<%= cat.tipo %>-nuevo-nombre">Nueva <%= cat.singular %></label>
-            <input type="text" id="<%= cat.tipo %>-nuevo-nombre" name="nombre" maxlength="50" required placeholder="Nombre"
+            <input autocomplete="off" type="text" id="<%= cat.tipo %>-nuevo-nombre" name="nombre" maxlength="50" required placeholder="Nombre"
                    data-mensaje="Escribe el nombre." />
             <small class="campo__error"></small>
           </div>
           <% if (cat.tipo === 'modalidades') { %>
             <div class="campo">
               <label for="<%= cat.tipo %>-nuevo-jugadores">Jugadores por equipo</label>
-              <input type="number" id="<%= cat.tipo %>-nuevo-jugadores" name="jugadores" min="1" max="30" required placeholder="Ej. 8" data-mensaje="Indica cuántos jugadores." />
+              <input autocomplete="off" type="number" id="<%= cat.tipo %>-nuevo-jugadores" name="jugadores" min="1" max="30" required placeholder="Ej. 8" data-mensaje="Indica cuántos jugadores." />
               <small class="campo__error"></small>
             </div>
           <% } %>
           <% if (cat.tipo === 'niveles') { %>
             <div class="campo">
               <label for="<%= cat.tipo %>-nuevo-min">Puntaje mínimo</label>
-              <input type="number" id="<%= cat.tipo %>-nuevo-min" name="min" min="0" required data-mensaje="Indica el mínimo." />
+              <input autocomplete="off" type="number" id="<%= cat.tipo %>-nuevo-min" name="min" min="0" required data-mensaje="Indica el mínimo." />
               <small class="campo__error"></small>
             </div>
             <div class="campo">
               <label for="<%= cat.tipo %>-nuevo-max">Puntaje máximo</label>
-              <input type="number" id="<%= cat.tipo %>-nuevo-max" name="max" min="0" required data-mensaje="Indica el máximo." />
+              <input autocomplete="off" type="number" id="<%= cat.tipo %>-nuevo-max" name="max" min="0" required data-mensaje="Indica el máximo." />
               <small class="campo__error"></small>
             </div>
           <% } %>

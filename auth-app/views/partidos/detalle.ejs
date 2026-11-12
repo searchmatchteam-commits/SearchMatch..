@@ -52,18 +52,18 @@
     <%- include('../partials/partido-asistencia', { partido, convocatoria, posiciones }) %>
 
     <% if (puedeRegistrar) { %>
-      <form class="dash-panel eq-panel sm-form" action="/partidos/<%= partido.id %>/resultado" method="POST" novalidate data-sm-validar
+      <form autocomplete="off" class="dash-panel eq-panel sm-form" action="/partidos/<%= partido.id %>/resultado" method="POST" novalidate data-sm-validar
             data-confirmar="El resultado no se podrá modificar después y avisaremos al capitán rival." data-confirmar-titulo="¿Registrar este resultado?" data-confirmar-boton="Registrar">
         <h2 class="dash-panel__titulo">Registrar resultado</h2>
         <div class="formulario__fila">
           <div class="campo">
             <label for="marcador_desafiante">Goles de <%= partido.desafiante %></label>
-            <input type="number" id="marcador_desafiante" name="marcador_desafiante" min="0" max="99" step="1" inputmode="numeric" required data-mensaje="Ingresa el marcador." />
+            <input autocomplete="off" type="number" id="marcador_desafiante" name="marcador_desafiante" min="0" max="99" step="1" inputmode="numeric" required data-mensaje="Ingresa el marcador." />
             <small class="campo__error"></small>
           </div>
           <div class="campo">
             <label for="marcador_desafiado">Goles de <%= partido.desafiado %></label>
-            <input type="number" id="marcador_desafiado" name="marcador_desafiado" min="0" max="99" step="1" inputmode="numeric" required data-mensaje="Ingresa el marcador." />
+            <input autocomplete="off" type="number" id="marcador_desafiado" name="marcador_desafiado" min="0" max="99" step="1" inputmode="numeric" required data-mensaje="Ingresa el marcador." />
             <small class="campo__error"></small>
           </div>
         </div>
@@ -72,13 +72,13 @@
     <% } %>
 
     <% if (puedeCancelar) { %>
-      <form class="dash-panel eq-panel sm-form sm-peligro" action="/partidos/<%= partido.id %>/cancelar" method="POST"
+      <form autocomplete="off" class="dash-panel eq-panel sm-form sm-peligro" action="/partidos/<%= partido.id %>/cancelar" method="POST"
             data-confirmar="Se liberará la reserva de la cancha y avisaremos a los integrantes de ambos equipos. El puntaje no cambia."
             data-confirmar-titulo="¿Cancelar el partido?" data-confirmar-boton="Cancelar partido">
         <h2 class="dash-panel__titulo">Cancelar partido</h2>
         <div class="campo">
           <label for="motivo">Motivo <span class="sm-opcional">(opcional)</span></label>
-          <input type="text" id="motivo" name="motivo" maxlength="200" placeholder="Ej. No completamos el equipo" />
+          <input autocomplete="off" type="text" id="motivo" name="motivo" maxlength="200" placeholder="Ej. No completamos el equipo" />
         </div>
         <div class="sm-form__acciones"><button type="submit" class="btn btn--contorno sm-btn-peligro">Cancelar partido</button></div>
       </form>

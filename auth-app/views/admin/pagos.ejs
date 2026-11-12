@@ -21,12 +21,12 @@
 
     <% if (aviso) { %><div class="alerta alerta--<%= tipoAviso %>" role="<%= tipoAviso === 'error' ? 'alert' : 'status' %>"><%= aviso %></div><% } %>
 
-    <form class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/pagos" role="search">
+    <form autocomplete="off" class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/pagos" role="search">
       <div class="campo">
         <label for="texto">Buscar por torneo, equipo o comprobante</label>
-        <input type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. Copa Primavera o SM-00000012" maxlength="100" />
+        <input autocomplete="off" type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. Copa Primavera o SM-00000012" maxlength="100" />
       </div>
-      <% if (filtro !== 'resolver') { %><input type="hidden" name="estado" value="<%= filtro %>" /><% } %>
+      <% if (filtro !== 'resolver') { %><input autocomplete="off" type="hidden" name="estado" value="<%= filtro %>" /><% } %>
       <div class="sm-form__acciones">
         <button type="submit" class="btn btn--verde">Buscar</button>
         <% if (texto) { %><a class="btn btn--contorno" href="/admin/pagos<%= filtro !== 'resolver' ? `?estado=${filtro}` : '' %>">Limpiar</a><% } %>
@@ -69,10 +69,10 @@
               <span class="sm-estado <%= claseEstado[p.estado] || '' %>"><%= p.estadoTexto %></span>
               <span class="sm-fila__accion">
                 <% if (p.acciones.confirmar) { %>
-                  <form action="/admin/pagos/<%= p.id %>/confirmar" method="POST"
+                  <form autocomplete="off" action="/admin/pagos/<%= p.id %>/confirmar" method="POST"
                         data-confirmar="El pago queda aprobado y el equipo inscrito (si el torneo tiene cupo libre). Se le avisará al capitán."
                         data-confirmar-titulo="¿Inscribir a <%= p.equipo %>?" data-confirmar-boton="Inscribir">
-                    <input type="hidden" name="volver" value="<%= volverA %>" />
+                    <input autocomplete="off" type="hidden" name="volver" value="<%= volverA %>" />
                     <button type="submit" class="btn btn--verde btn--chico">Confirmar inscripción</button>
                   </form>
                 <% } %>

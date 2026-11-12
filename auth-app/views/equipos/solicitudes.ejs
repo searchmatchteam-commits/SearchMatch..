@@ -32,7 +32,7 @@
             <span class="sm-estado sm-estado--<%= s.estado %>"><%= nombres[s.estado] || s.estado %></span>
             <% if (s.estado === 'pendiente') { %>
               <span class="sm-fila__accion">
-                <form action="/solicitudes/<%= s.id %>/cancelar" method="POST" data-confirmar="El capitán de <%= s.equipo %> ya no la verá. Podrás volver a postular después." data-confirmar-titulo="¿Cancelar la solicitud?" data-confirmar-boton="Cancelar solicitud">
+                <form autocomplete="off" action="/solicitudes/<%= s.id %>/cancelar" method="POST" data-confirmar="El capitán de <%= s.equipo %> ya no la verá. Podrás volver a postular después." data-confirmar-titulo="¿Cancelar la solicitud?" data-confirmar-boton="Cancelar solicitud">
                   <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Cancelar</button>
                 </form>
               </span>

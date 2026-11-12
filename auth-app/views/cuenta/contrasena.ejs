@@ -17,7 +17,7 @@
         <div class="alerta alerta--error" role="alert">Revisa los campos marcados en rojo.</div>
       <% } %>
 
-      <form action="/cuenta/contrasena" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+      <form autocomplete="off" action="/cuenta/contrasena" method="POST" class="formulario sm-form" novalidate data-sm-validar>
         <% [
              ['password_actual', 'Contraseña actual', 'current-password', 'Escribe tu contraseña actual.'],
              ['password', 'Contraseña nueva', 'new-password', 'Escribe la contraseña nueva.'],
@@ -26,7 +26,7 @@
           <div class="campo <%= erroresCampo[nombre] ? 'campo--error' : '' %>">
             <label for="<%= nombre %>"><%= etiqueta %></label>
             <div class="campo__control">
-              <input type="password" id="<%= nombre %>" name="<%= nombre %>" autocomplete="<%= auto %>"
+              <input type="password" id="<%= nombre %>" name="<%= nombre %>" autocomplete="off"
                      aria-describedby="<%= nombre %>-error" required data-mensaje="<%= mensaje %>" />
               <%- include('../partials/sm-ojo', { campo: nombre }) %>
             </div>

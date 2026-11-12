@@ -20,13 +20,13 @@
       <div class="alerta alerta--exito" role="status"><%= mensajeEnviado %></div>
       <p class="auth__pie">¿No llegó? Espera unos minutos y <a href="/recuperar">pide otro enlace</a>.</p>
     <% } else { %>
-      <form action="/recuperar" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+      <form autocomplete="off" action="/recuperar" method="POST" class="formulario sm-form" novalidate data-sm-validar>
         <div class="campo <%= erroresCampo.correo ? 'campo--error' : '' %>">
           <label for="correo">Correo</label>
           <div class="campo__control">
             <svg class="campo__icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
             <input type="email" id="correo" name="correo" placeholder="tucorreo@ejemplo.com" value="<%= datos.correo || '' %>"
-                   autocomplete="email" maxlength="150" aria-describedby="correo-error" required
+                   autocomplete="off" maxlength="150" aria-describedby="correo-error" required
                    data-mensaje="Escribe el correo de tu cuenta." />
           </div>
           <small class="campo__error" id="correo-error"><%= erroresCampo.correo || '' %></small>

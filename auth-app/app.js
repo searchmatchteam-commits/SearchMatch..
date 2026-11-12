@@ -45,6 +45,12 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 
 app.use(express.urlencoded({ extended: false }));
+// Express 5 deja req.body en undefined cuando el POST llega sin cuerpo (en Vercel, un fetch con cuerpo
+// vacío llega sin Content-Length): "Enviar desafío" de Buscar partido caía en req.body.fecha con un 500.
+app.use((req, res, next) => {
+  if (req.body === undefined) req.body = {};
+  next();
+});
 
 app.use(cookieParser());
 

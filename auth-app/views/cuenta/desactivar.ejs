@@ -27,16 +27,16 @@
           <% equiposCapitan.forEach(function (e) { %><a class="btn btn--contorno" href="/equipos/<%= e.id %>#titulo-peligro">Ir a <%= e.nombre %></a><% }) %>
         </div>
       <% } else { %>
-        <form action="/cuenta/desactivar" method="POST" class="sm-form" novalidate data-sm-validar data-requiere-aceptar
+        <form autocomplete="off" action="/cuenta/desactivar" method="POST" class="sm-form" novalidate data-sm-validar data-requiere-aceptar
               data-confirmar="Tu cuenta quedará inactiva y se cerrará tu sesión." data-confirmar-titulo="¿Desactivar tu cuenta?" data-confirmar-boton="Desactivar">
           <label class="sm-check">
-            <input type="checkbox" name="confirmo" value="si" data-casilla-aceptar />
+            <input autocomplete="off" type="checkbox" name="confirmo" value="si" data-casilla-aceptar />
             <span>Entiendo las consecuencias y quiero desactivar mi cuenta.</span>
           </label>
           <div class="campo">
             <label for="password_actual">Contraseña</label>
             <div class="campo__control">
-              <input type="password" id="password_actual" name="password_actual" autocomplete="current-password" required data-mensaje="Escribe tu contraseña." />
+              <input type="password" id="password_actual" name="password_actual" autocomplete="off" required data-mensaje="Escribe tu contraseña." />
               <%- include('../partials/sm-ojo', { campo: 'password_actual' }) %>
             </div>
             <small class="campo__error"></small>

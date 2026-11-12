@@ -16,10 +16,10 @@
         <p class="eq-cabecera__stats"><%= equipo ? equipo.nombre : 'Sin equipo' %></p>
       </div>
       <% if (equipos.length > 1) { %>
-        <form method="GET" action="/desafios" class="sm-selector-equipo">
-          <input type="hidden" name="ver" value="<%= ver %>" />
+        <form autocomplete="off" method="GET" action="/desafios" class="sm-selector-equipo">
+          <input autocomplete="off" type="hidden" name="ver" value="<%= ver %>" />
           <label class="solo-lectores" for="equipo">Equipo</label>
-          <select id="equipo" name="equipo" onchange="this.form.submit()">
+          <select autocomplete="off" id="equipo" name="equipo" onchange="this.form.submit()">
             <% equipos.forEach(function (e) { %>
               <option value="<%= e.id %>" <%= equipo && e.id === equipo.id ? 'selected' : '' %>><%= e.nombre %><%= e.soyCapitan ? ' (capitán)' : '' %></option>
             <% }) %>

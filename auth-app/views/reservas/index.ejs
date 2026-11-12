@@ -45,7 +45,7 @@
               <% if (r.id_partido) { %>
                 <p class="dash-panel__nota">Para liberarla, cancela o reprograma el partido.</p>
               <% } else { %>
-                <form action="/reservas/<%= r.id %>/cancelar" method="POST" data-confirmar="El horario quedará libre para otros usuarios." data-confirmar-titulo="¿Cancelar la reserva de <%= r.cancha %>?" data-confirmar-boton="Cancelar reserva">
+                <form autocomplete="off" action="/reservas/<%= r.id %>/cancelar" method="POST" data-confirmar="El horario quedará libre para otros usuarios." data-confirmar-titulo="¿Cancelar la reserva de <%= r.cancha %>?" data-confirmar-boton="Cancelar reserva">
                   <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Cancelar reserva</button>
                 </form>
               <% } %>

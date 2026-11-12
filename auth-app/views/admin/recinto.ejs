@@ -18,13 +18,13 @@
       <div class="eq-cabecera__acciones">
         <a class="btn btn--contorno btn--grande" href="/admin/recintos/<%= recinto.id %>/editar">Editar</a>
         <% if (recinto.activo) { %>
-          <form action="/admin/recintos/<%= recinto.id %>/desactivar" method="POST"
+          <form autocomplete="off" action="/admin/recintos/<%= recinto.id %>/desactivar" method="POST"
                 data-confirmar="Sus canchas dejarán de mostrarse a los usuarios y no se podrán reservar mientras esté inactivo.<%= advertenciaReservas %>"
                 data-confirmar-titulo="¿Desactivar <%= recinto.nombre %>?" data-confirmar-boton="Desactivar">
             <button type="submit" class="btn btn--contorno btn--grande sm-btn-peligro">Desactivar</button>
           </form>
         <% } else { %>
-          <form action="/admin/recintos/<%= recinto.id %>/activar" method="POST"
+          <form autocomplete="off" action="/admin/recintos/<%= recinto.id %>/activar" method="POST"
                 data-confirmar="Sus canchas activas volverán a mostrarse a los usuarios. Las canchas inactivas seguirán ocultas."
                 data-confirmar-titulo="¿Activar <%= recinto.nombre %>?" data-confirmar-boton="Activar">
             <button type="submit" class="btn btn--verde btn--grande">Activar</button>
@@ -70,7 +70,7 @@
           <% if (errores.length > 0) { %>
             <div class="alerta alerta--error" role="alert"><%= errores[0] %></div>
           <% } %>
-          <form action="/admin/recintos/<%= recinto.id %>/canchas#nueva-cancha" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+          <form autocomplete="off" action="/admin/recintos/<%= recinto.id %>/canchas#nueva-cancha" method="POST" class="formulario sm-form" novalidate data-sm-validar>
             <%- include('../partials/sm-cancha-campos', { datos: datosCancha, erroresCampo, modalidades }) %>
             <div class="sm-form__acciones">
               <button type="submit" class="btn btn--verde">Agregar cancha</button>

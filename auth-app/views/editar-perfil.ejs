@@ -24,7 +24,7 @@
       </button>
     </div>
     <p class="editor__ayuda">JPG, PNG o WebP. La recortamos y comprimimos antes de guardarla.</p>
-    <input type="file" id="foto" accept="image/jpeg,image/png,image/webp" class="solo-lectores" data-foto-input />
+    <input autocomplete="off" type="file" id="foto" accept="image/jpeg,image/png,image/webp" class="solo-lectores" data-foto-input />
   </div>
 
   <!-- ============ COLUMNA DERECHA: FORMULARIO ============ -->
@@ -36,7 +36,7 @@
   </header>
 
   <div class="perfil__info">
-    <form action="/perfil/editar" method="POST" class="formulario editor__form" data-editor>
+    <form autocomplete="off" action="/perfil/editar" method="POST" class="formulario editor__form" data-editor>
       <!-- Errores del servidor o de editar-perfil.js -->
       <div class="alerta alerta--error" role="alert" data-alerta-errores <%= errores.length > 0 ? '' : 'hidden' %>>
         <ul>
@@ -53,40 +53,40 @@
           <div class="campo">
             <label for="nombre">Nombre</label>
             <input type="text" id="nombre" name="nombre" value="<%= datos.nombre || '' %>" maxlength="100"
-                   autocomplete="given-name" required />
+                   autocomplete="off" required />
           </div>
           <div class="campo">
             <label for="apellido">Apellido</label>
             <input type="text" id="apellido" name="apellido" value="<%= datos.apellido || '' %>" maxlength="100"
-                   autocomplete="family-name" required />
+                   autocomplete="off" required />
           </div>
         </div>
 
         <div class="campo">
           <label for="apodo">Apodo</label>
           <input type="text" id="apodo" name="apodo" value="<%= datos.apodo || '' %>" placeholder="Ej. El Niño Maravilla"
-                 maxlength="20" autocomplete="nickname" aria-describedby="apodo-ayuda" required data-editor-apodo />
+                 maxlength="20" autocomplete="off" aria-describedby="apodo-ayuda" required data-editor-apodo />
           <small class="campo__ayuda" id="apodo-ayuda">Es el nombre que aparece en tu carta.</small>
         </div>
 
         <div class="campo">
           <label for="fecha_nacimiento">Fecha de nacimiento</label>
           <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" value="<%= datos.fechaNacimiento || '' %>"
-                 max="<%= hoy %>" autocomplete="bday" required />
+                 max="<%= hoy %>" autocomplete="off" required />
         </div>
 
         <div class="formulario__fila">
           <div class="campo">
             <label for="altura">Altura</label>
             <div class="campo__unidad" data-unidad="cm">
-              <input type="number" id="altura" name="altura" value="<%= datos.altura || '' %>"
+              <input autocomplete="off" type="number" id="altura" name="altura" value="<%= datos.altura || '' %>"
                      inputmode="numeric" min="<%= rangos.ALTURA_CM.min %>" max="<%= rangos.ALTURA_CM.max %>" required />
             </div>
           </div>
           <div class="campo">
             <label for="peso">Peso</label>
             <div class="campo__unidad" data-unidad="kg">
-              <input type="number" id="peso" name="peso" value="<%= datos.peso || '' %>"
+              <input autocomplete="off" type="number" id="peso" name="peso" value="<%= datos.peso || '' %>"
                      inputmode="numeric" min="<%= rangos.PESO_KG.min %>" max="<%= rangos.PESO_KG.max %>" required />
             </div>
           </div>
@@ -123,7 +123,7 @@
                   <label class="editor__stat-nombre" for="stat_<%= s.clave %>">
                     <span class="barras__sigla"><%= s.sigla %></span> <%= s.nombre %>
                   </label>
-                  <input class="editor__rango" type="range" id="stat_<%= s.clave %>" name="stat_<%= s.clave %>"
+                  <input autocomplete="off" class="editor__rango" type="range" id="stat_<%= s.clave %>" name="stat_<%= s.clave %>"
                          min="<%= rangos.STAT.min %>" max="<%= rangos.STAT.max %>" step="1" value="<%= s.valor %>"
                          style="--valor: <%= s.valor %>" data-editor-stat="<%= s.clave %>" data-sigla="<%= s.sigla %>" data-grupo="<%= grupo.clave %>" />
                   <output class="barras__valor" for="stat_<%= s.clave %>" data-editor-valor="<%= s.clave %>"><%= s.valor %></output>
@@ -162,7 +162,7 @@
         Eliminar mi cuenta
       </button>
 
-      <form action="/cuenta/eliminar" method="POST" class="editor__eliminar-form" id="form-eliminar"
+      <form autocomplete="off" action="/cuenta/eliminar" method="POST" class="editor__eliminar-form" id="form-eliminar"
             data-eliminar-form <%= locals.errorEliminar ? '' : 'hidden' %>>
         <% if (locals.errorEliminar) { %><div class="alerta alerta--error" role="alert"><%= errorEliminar %></div><% } %>
         <div class="campo">

@@ -36,14 +36,14 @@
         </p>
         <div class="sm-form__acciones">
           <% if (c.miAsistencia !== 'confirmado') { %>
-            <form action="/partidos/<%= partido.id %>/asistencia" method="POST">
-              <input type="hidden" name="estado" value="confirmado" />
+            <form autocomplete="off" action="/partidos/<%= partido.id %>/asistencia" method="POST">
+              <input autocomplete="off" type="hidden" name="estado" value="confirmado" />
               <button type="submit" class="btn btn--verde">Confirmar asistencia</button>
             </form>
           <% } %>
           <% if (c.miAsistencia !== 'no_asiste') { %>
-            <form action="/partidos/<%= partido.id %>/asistencia" method="POST">
-              <input type="hidden" name="estado" value="no_asiste" />
+            <form autocomplete="off" action="/partidos/<%= partido.id %>/asistencia" method="POST">
+              <input autocomplete="off" type="hidden" name="estado" value="no_asiste" />
               <button type="submit" class="btn btn--contorno">No podré asistir esta vez</button>
             </form>
           <% } %>
@@ -76,12 +76,12 @@
         <% } else { %>¿Te faltan jugadores? Indica cuántos necesitas por posición y publica el partido para que otros se inscriban.
           Si hay un solo interesado por cupo entra directo; si hay más, tú eliges.<% } %>
       </p>
-      <form action="/partidos/<%= partido.id %>/cupos" method="POST" class="sm-convocatoria__form">
+      <form autocomplete="off" action="/partidos/<%= partido.id %>/cupos" method="POST" class="sm-convocatoria__form">
         <div class="sm-convocatoria__posiciones">
           <% posiciones.forEach(function (p) { const actual = eq.cupos.find((x) => x.idPosicion === p.id); %>
             <div class="campo sm-convocatoria__campo">
               <label for="cupo_<%= p.id %>"><%= p.nombre %></label>
-              <input type="number" id="cupo_<%= p.id %>" name="cupo_<%= p.id %>" min="<%= actual ? actual.aceptados.length : 0 %>" max="11" step="1"
+              <input autocomplete="off" type="number" id="cupo_<%= p.id %>" name="cupo_<%= p.id %>" min="<%= actual ? actual.aceptados.length : 0 %>" max="11" step="1"
                      inputmode="numeric" value="<%= actual ? actual.cupos : 0 %>" />
             </div>
           <% }) %>
@@ -91,7 +91,7 @@
         </div>
       </form>
       <% if (eq.cuposPublicados) { %>
-        <form action="/partidos/<%= partido.id %>/cupos/cerrar" method="POST"
+        <form autocomplete="off" action="/partidos/<%= partido.id %>/cupos/cerrar" method="POST"
               data-confirmar="Nadie más podrá inscribirse. Los jugadores que ya entraron siguen inscritos y los que esperaban quedan rechazados."
               data-confirmar-titulo="¿Dejar de buscar jugadores?" data-confirmar-boton="Dejar de buscar">
           <button type="submit" class="btn btn--contorno btn--chico">Dejar de buscar</button>
@@ -107,7 +107,7 @@
               <li class="sm-fila">
                 <a href="/jugadores/<%= j.idJugador %>"><%= j.nombre %></a>
                 <span class="sm-estado sm-estado--aceptado">Dentro</span>
-                <form class="sm-fila__accion" action="/partidos/<%= partido.id %>/postulaciones/<%= j.id %>/quitar" method="POST"
+                <form autocomplete="off" class="sm-fila__accion" action="/partidos/<%= partido.id %>/postulaciones/<%= j.id %>/quitar" method="POST"
                       data-confirmar="Su cupo quedará libre para que elijas a otro." data-confirmar-titulo="¿Quitar a <%= j.nombre %>?" data-confirmar-boton="Quitar">
                   <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Quitar</button>
                 </form>
@@ -119,11 +119,11 @@
                 <span class="sm-estado sm-estado--pendiente">Esperando</span>
                 <span class="sm-fila__accion sm-form__acciones">
                   <% if (cupo.libres > 0) { %>
-                    <form action="/partidos/<%= partido.id %>/postulaciones/<%= j.id %>/aceptar" method="POST">
+                    <form autocomplete="off" action="/partidos/<%= partido.id %>/postulaciones/<%= j.id %>/aceptar" method="POST">
                       <button type="submit" class="btn btn--verde btn--chico">Elegir</button>
                     </form>
                   <% } %>
-                  <form action="/partidos/<%= partido.id %>/postulaciones/<%= j.id %>/rechazar" method="POST">
+                  <form autocomplete="off" action="/partidos/<%= partido.id %>/postulaciones/<%= j.id %>/rechazar" method="POST">
                     <button type="submit" class="btn btn--contorno btn--chico">Rechazar</button>
                   </form>
                 </span>
@@ -148,7 +148,7 @@
         </span>
       </p>
       <% if (c.abierto && mp.estado !== 'rechazada') { %>
-        <form action="/partidos/<%= partido.id %>/retirarme" method="POST"
+        <form autocomplete="off" action="/partidos/<%= partido.id %>/retirarme" method="POST"
               data-confirmar="Tu cupo quedará libre y avisaremos al capitán." data-confirmar-titulo="¿Retirarte del partido?" data-confirmar-boton="Retirarme">
           <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Retirarme</button>
         </form>
@@ -170,9 +170,9 @@
                 <span class="sm-fila__principal"><%= cupo.posicion %>
                   <small><%= cupo.libres ? `${cupo.libres} cupo${cupo.libres === 1 ? '' : 's'} libre${cupo.libres === 1 ? '' : 's'}` : 'Lleno: el capitán puede elegirte igual' %><%= cupo.pendientes.length ? ` · ${cupo.pendientes.length} esperando` : '' %></small>
                 </span>
-                <form class="sm-fila__accion" action="/partidos/<%= partido.id %>/postular" method="POST">
-                  <input type="hidden" name="id_equipo" value="<%= e.idEquipo %>" />
-                  <input type="hidden" name="id_posicion" value="<%= cupo.idPosicion %>" />
+                <form autocomplete="off" class="sm-fila__accion" action="/partidos/<%= partido.id %>/postular" method="POST">
+                  <input autocomplete="off" type="hidden" name="id_equipo" value="<%= e.idEquipo %>" />
+                  <input autocomplete="off" type="hidden" name="id_posicion" value="<%= cupo.idPosicion %>" />
                   <button type="submit" class="btn btn--verde btn--chico">Inscribirme</button>
                 </form>
               </li>

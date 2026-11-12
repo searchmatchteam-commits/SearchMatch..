@@ -13,13 +13,13 @@
     </header>
 
     <div class="dash-panel eq-panel revelar">
-      <form action="/completar-perfil" method="POST" class="sm-form" novalidate data-requiere-aceptar>
+      <form autocomplete="off" action="/completar-perfil" method="POST" class="sm-form" novalidate data-requiere-aceptar>
         <div class="formulario__fila">
           <div class="campo<%= errores.fecha_nacimiento ? ' campo--error' : '' %>">
             <label for="fecha_nacimiento">Fecha de nacimiento</label>
             <div class="campo__control">
               <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" value="<%= datos.fecha_nacimiento || '' %>"
-                     max="<%= new Date().toISOString().slice(0, 10) %>" autocomplete="bday"
+                     max="<%= new Date().toISOString().slice(0, 10) %>" autocomplete="off"
                      aria-describedby="fecha_nacimiento-error fecha_nacimiento-ayuda" required />
             </div>
             <small class="campo__error" id="fecha_nacimiento-error"><%= errores.fecha_nacimiento || '' %></small>
@@ -30,7 +30,7 @@
             <label for="telefono">Teléfono (WhatsApp)</label>
             <div class="campo__control">
               <input type="tel" id="telefono" name="telefono" placeholder="+56 9 1234 5678" value="<%= datos.telefono || '' %>"
-                     autocomplete="tel" inputmode="tel" data-telefono-cl
+                     autocomplete="off" inputmode="tel" data-telefono-cl
                      aria-describedby="telefono-error telefono-ayuda" required />
             </div>
             <small class="campo__error" id="telefono-error"><%= errores.telefono || '' %></small>
@@ -40,7 +40,7 @@
 
         <div class="campo sm-check-campo<%= errores.acepto ? ' campo--error' : '' %>">
           <label class="sm-check">
-            <input type="checkbox" name="acepto" value="si" <%= datos.acepto ? 'checked' : '' %> data-casilla-aceptar />
+            <input autocomplete="off" type="checkbox" name="acepto" value="si" <%= datos.acepto ? 'checked' : '' %> data-casilla-aceptar />
             <span>Tengo 18 años o más y acepto los
               <a href="/terminos" target="_blank" rel="noopener">términos y condiciones</a> (v<%= terminos.version %>) y la
               <a href="/privacidad" target="_blank" rel="noopener">política de privacidad</a> (v<%= privacidad.version %>).</span>
@@ -54,7 +54,7 @@
         </div>
       </form>
 
-      <form action="/logout" method="POST" class="sm-form__secundaria">
+      <form autocomplete="off" action="/logout" method="POST" class="sm-form__secundaria">
         <button type="submit" class="sm-enlace">Ahora no, cerrar sesión</button>
       </form>
     </div>

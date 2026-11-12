@@ -98,7 +98,7 @@
         </div>
       </div>
     <% } else { %>
-      <form action="/crear-equipo" method="POST" class="formulario wizard__form" data-wizard-equipo data-paso-inicial="<%= paso %>" novalidate>
+      <form autocomplete="off" action="/crear-equipo" method="POST" class="formulario wizard__form" data-wizard-equipo data-paso-inicial="<%= paso %>" novalidate>
         <!-- ============ PASO 1: IDENTIDAD ============ -->
         <fieldset class="wizard__paso" data-paso="1">
           <legend class="wizard__titulo">Crea tu equipo</legend>
@@ -112,10 +112,10 @@
               <!-- El archivo no se envía: crear-equipo.js lo reduce y lo guarda como data URL en el campo oculto "escudo" -->
               <label class="ceq-subir">
                 Subir escudo
-                <input type="file" accept="image/png,image/jpeg,image/webp" class="solo-lectores" data-subir-escudo />
+                <input autocomplete="off" type="file" accept="image/png,image/jpeg,image/webp" class="solo-lectores" data-subir-escudo />
               </label>
               <small class="campo__error" data-escudo-error></small>
-              <input type="hidden" name="escudo" value="<%= datos.escudo || '' %>" data-escudo-datos />
+              <input autocomplete="off" type="hidden" name="escudo" value="<%= datos.escudo || '' %>" data-escudo-datos />
             </span>
             <span class="ceq-capitan">Capitán</span>
           </div>
@@ -137,7 +137,7 @@
             <div class="campo__control">
               <svg class="campo__icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
               <input type="email" id="correo_contacto" name="correo_contacto" value="<%= datos.correo || '' %>"
-                     autocomplete="email" maxlength="150" aria-describedby="correo_contacto-error correo_contacto-ayuda" required />
+                     autocomplete="off" maxlength="150" aria-describedby="correo_contacto-error correo_contacto-ayuda" required />
             </div>
             <small class="campo__error" id="correo_contacto-error"></small>
             <small class="campo__ayuda" id="correo_contacto-ayuda">Por defecto, el correo de tu cuenta. Los rivales lo usarán para contactarte.</small>
@@ -154,7 +154,7 @@
             <div class="opciones opciones--3">
               <% Object.entries(catalogos.NIVELES).forEach(function ([clave, nombre]) { %>
                 <label class="opcion opcion--nivel">
-                  <input class="opcion__radio" type="radio" name="nivel" value="<%= clave %>" <%= datos.nivel === clave ? 'checked' : '' %> />
+                  <input autocomplete="off" class="opcion__radio" type="radio" name="nivel" value="<%= clave %>" <%= datos.nivel === clave ? 'checked' : '' %> />
                   <span class="ceq-marca" aria-hidden="true"><svg viewBox="0 0 24 24"><%- iconoCheck %></svg></span>
                   <span class="opcion__barras" aria-hidden="true">
                     <% for (let b = 1; b <= 3; b++) { %><span class="<%= b <= catalogos.BARRAS_NIVEL[clave] ? 'llena' : '' %>"></span><% } %>
@@ -172,7 +172,7 @@
           <div class="formulario__fila">
             <div class="campo">
               <label for="id_region">Región</label>
-              <select id="id_region" name="id_region" data-select-region aria-describedby="id_region-error">
+              <select autocomplete="off" id="id_region" name="id_region" data-select-region aria-describedby="id_region-error">
                 <option value="">Elige la región</option>
                 <% (locals.regiones || []).forEach(function (region) { %>
                   <option value="<%= region.id %>" <%= String(datos.idRegion) === String(region.id) ? 'selected' : '' %>><%= region.nombre %></option>
@@ -182,7 +182,7 @@
             </div>
             <div class="campo">
               <label for="id_comuna">Comuna</label>
-              <select id="id_comuna" name="id_comuna" data-select-comuna aria-describedby="id_comuna-error" required>
+              <select autocomplete="off" id="id_comuna" name="id_comuna" data-select-comuna aria-describedby="id_comuna-error" required>
                 <option value="">Elige la comuna</option>
                 <% (locals.regiones || []).forEach(function (region) { %>
                   <optgroup label="<%= region.nombre %>" data-region="<%= region.id %>">
@@ -201,7 +201,7 @@
             <div class="campo__control">
               <svg class="campo__icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
               <input type="text" id="zona" name="zona" placeholder="Ej. Puente Alto" value="<%= datos.zona || '' %>"
-                     autocomplete="address-level2" maxlength="100" aria-describedby="zona-error zona-ayuda" required />
+                     autocomplete="off" maxlength="100" aria-describedby="zona-error zona-ayuda" required />
             </div>
             <small class="campo__error" id="zona-error"></small>
             <small class="campo__ayuda" id="zona-ayuda">El sector o la cancha donde suelen jugar. Los rivales cercanos se buscan por la comuna.</small><%# CORRECCIÓN: regla 11 %>
@@ -216,7 +216,7 @@
             <div class="opciones opciones--3 ceq-modalidades">
               <% Object.keys(catalogos.MODALIDADES).forEach(function (jugadores) { %>
                 <label class="opcion opcion--modalidad">
-                  <input class="opcion__radio" type="checkbox" name="modalidad" value="<%= jugadores %>" <%= (datos.modalidades || []).includes(Number(jugadores)) ? 'checked' : '' %>
+                  <input autocomplete="off" class="opcion__radio" type="checkbox" name="modalidad" value="<%= jugadores %>" <%= (datos.modalidades || []).includes(Number(jugadores)) ? 'checked' : '' %>
                          data-texto="<%= catalogos.MODALIDADES[jugadores] %>" />
                   <span class="ceq-marca" aria-hidden="true"><svg viewBox="0 0 24 24"><%- iconoCheck %></svg></span>
                   <span class="ceq-numero"><%= jugadores %></span>
@@ -250,8 +250,8 @@
           <p class="ceq-ubicacion__estado" data-ubicacion-estado role="status" aria-live="polite"></p>
           <noscript><p class="campo__ayuda">El mapa necesita JavaScript: podrás marcar la ubicación después en tu panel.</p></noscript>
 
-          <input type="hidden" name="latitud" value="<%= ubicacion ? ubicacion.lat : '' %>" data-latitud />
-          <input type="hidden" name="longitud" value="<%= ubicacion ? ubicacion.lng : '' %>" data-longitud />
+          <input autocomplete="off" type="hidden" name="latitud" value="<%= ubicacion ? ubicacion.lat : '' %>" data-latitud />
+          <input autocomplete="off" type="hidden" name="longitud" value="<%= ubicacion ? ubicacion.lng : '' %>" data-longitud />
         </fieldset>
 
         <!-- Errores del servidor o de crear-equipo.js -->

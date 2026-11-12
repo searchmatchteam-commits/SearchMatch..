@@ -17,25 +17,25 @@
 
     <% if (locals.conSesion) { %>
       <%# Jugador que además es administrador: entra con la sesión que ya tiene (POST /admin/entrar) %>
-      <form action="/admin/entrar" method="POST" class="formulario">
+      <form autocomplete="off" action="/admin/entrar" method="POST" class="formulario">
         <p class="auth__subtitulo">Tienes la sesión iniciada como <strong><%= conSesion.nombre %></strong> (<%= conSesion.correo %>).</p>
         <button type="submit" class="btn btn--verde btn--bloque btn--grande">Entrar al panel</button>
       </form>
       <p class="auth__pie"><a href="/dashboard">Volver a mi cuenta</a></p>
     <% } else { %>
-    <form action="/admin/login" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+    <form autocomplete="off" action="/admin/login" method="POST" class="formulario sm-form" novalidate data-sm-validar>
       <div class="campo">
         <label for="correo">Correo</label>
         <div class="campo__control">
           <svg class="campo__icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
-          <input type="email" id="correo" name="correo" value="<%= correo %>" autocomplete="username" required data-mensaje="Ingresa tu correo." />
+          <input type="email" id="correo" name="correo" value="<%= correo %>" autocomplete="off" required data-mensaje="Ingresa tu correo." />
         </div>
       </div>
       <div class="campo">
         <label for="password">Contraseña</label>
         <div class="campo__control">
           <svg class="campo__icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-          <input type="password" id="password" name="password" autocomplete="current-password" required data-mensaje="Ingresa tu contraseña." />
+          <input type="password" id="password" name="password" autocomplete="off" required data-mensaje="Ingresa tu contraseña." />
           <%- include('../partials/sm-ojo', { campo: 'password' }) %>
         </div>
       </div>

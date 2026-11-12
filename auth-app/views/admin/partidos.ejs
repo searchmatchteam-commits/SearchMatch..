@@ -10,12 +10,12 @@
       </div>
     </header>
 
-    <form class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/partidos" role="search">
+    <form autocomplete="off" class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/partidos" role="search">
       <div class="campo">
         <label for="texto">Buscar por equipo o recinto</label>
-        <input type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. Los Cracks o Complejo Sur" maxlength="100" />
+        <input autocomplete="off" type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. Los Cracks o Complejo Sur" maxlength="100" />
       </div>
-      <% if (estado !== 'todos') { %><input type="hidden" name="estado" value="<%= estado %>" /><% } %>
+      <% if (estado !== 'todos') { %><input autocomplete="off" type="hidden" name="estado" value="<%= estado %>" /><% } %>
       <div class="sm-form__acciones">
         <button type="submit" class="btn btn--verde">Buscar</button>
         <% if (texto || estado !== 'todos') { %><a class="btn btn--contorno" href="/admin/partidos">Ver todos</a><% } %>

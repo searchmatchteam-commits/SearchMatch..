@@ -112,10 +112,10 @@
                 <% } %>
               </span>
               <span class="dash-invitacion__acciones">
-                <form action="/invitaciones/<%= invitacion.id %>/aceptar" method="POST">
+                <form autocomplete="off" action="/invitaciones/<%= invitacion.id %>/aceptar" method="POST">
                   <button type="submit" class="btn btn--verde btn--chico">Aceptar</button>
                 </form>
-                <form action="/invitaciones/<%= invitacion.id %>/rechazar" method="POST">
+                <form autocomplete="off" action="/invitaciones/<%= invitacion.id %>/rechazar" method="POST">
                   <button type="submit" class="btn btn--contorno btn--chico">Rechazar</button>
                 </form>
               </span>

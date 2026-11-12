@@ -77,7 +77,7 @@
       </ol>
     </div>
 
-    <form action="/perfil-jugador" method="POST" class="formulario wizard__form" data-wizard data-paso-inicial="<%= paso %>" novalidate>
+    <form autocomplete="off" action="/perfil-jugador" method="POST" class="formulario wizard__form" data-wizard data-paso-inicial="<%= paso %>" novalidate>
       <!-- ============ PASO 2: DATOS PERSONALES ============ -->
       <fieldset class="wizard__paso" data-paso="2">
         <legend class="wizard__titulo">Datos personales</legend>
@@ -87,7 +87,7 @@
         <div class="campo">
           <label for="apodo">Apodo</label>
           <input type="text" id="apodo" name="apodo" placeholder="Ej. El Niño Maravilla" value="<%= datos.apodo || '' %>"
-                 autocomplete="nickname" maxlength="20" aria-describedby="apodo-ayuda apodo-error" required />
+                 autocomplete="off" maxlength="20" aria-describedby="apodo-ayuda apodo-error" required />
           <small class="campo__ayuda" id="apodo-ayuda">Es el nombre que aparecerá en tu carta.</small>
           <small class="campo__error" id="apodo-error"></small>
         </div>
@@ -95,7 +95,7 @@
         <div class="campo">
           <label for="fecha_nacimiento">Fecha de nacimiento</label>
           <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" value="<%= datos.fechaNacimiento || '' %>"
-                 max="<%= hoy %>" autocomplete="bday" aria-describedby="fecha_nacimiento-error" required />
+                 max="<%= hoy %>" autocomplete="off" aria-describedby="fecha_nacimiento-error" required />
           <small class="campo__error" id="fecha_nacimiento-error"></small>
         </div>
 
@@ -103,7 +103,7 @@
           <div class="campo">
             <label for="altura">Altura</label>
             <div class="campo__unidad" data-unidad="cm">
-              <input type="number" id="altura" name="altura" placeholder="Ej. 175" value="<%= datos.altura || '' %>"
+              <input autocomplete="off" type="number" id="altura" name="altura" placeholder="Ej. 175" value="<%= datos.altura || '' %>"
                      inputmode="numeric" min="<%= rangos.ALTURA_CM.min %>" max="<%= rangos.ALTURA_CM.max %>"
                      aria-describedby="altura-error" required />
             </div>
@@ -112,7 +112,7 @@
           <div class="campo">
             <label for="peso">Peso</label>
             <div class="campo__unidad" data-unidad="kg">
-              <input type="number" id="peso" name="peso" placeholder="Ej. 70" value="<%= datos.peso || '' %>"
+              <input autocomplete="off" type="number" id="peso" name="peso" placeholder="Ej. 70" value="<%= datos.peso || '' %>"
                      inputmode="numeric" min="<%= rangos.PESO_KG.min %>" max="<%= rangos.PESO_KG.max %>"
                      aria-describedby="peso-error" required />
             </div>
@@ -139,7 +139,7 @@
           <span class="solo-lectores" id="rol-label">Tu rol en Search Match</span>
           <div class="rol__opciones">
             <label class="rol-tarjeta">
-              <input class="rol-tarjeta__radio" type="radio" name="rol" value="jugador" <%= datos.rol === 'jugador' ? 'checked' : '' %> />
+              <input autocomplete="off" class="rol-tarjeta__radio" type="radio" name="rol" value="jugador" <%= datos.rol === 'jugador' ? 'checked' : '' %> />
               <span class="rol-tarjeta__check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" /></svg></span>
               <span class="rol-tarjeta__icono" aria-hidden="true">
                 <!-- Camiseta -->
@@ -159,7 +159,7 @@
             </label>
 
             <label class="rol-tarjeta <%= puedeSerCapitan ? '' : 'rol-tarjeta--apagada' %>">
-              <input class="rol-tarjeta__radio" type="radio" name="rol" value="capitan" <%= datos.rol === 'capitan' && puedeSerCapitan ? 'checked' : '' %> <%= puedeSerCapitan ? '' : 'disabled' %> />
+              <input autocomplete="off" class="rol-tarjeta__radio" type="radio" name="rol" value="capitan" <%= datos.rol === 'capitan' && puedeSerCapitan ? 'checked' : '' %> <%= puedeSerCapitan ? '' : 'disabled' %> />
               <span class="rol-tarjeta__check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" /></svg></span>
               <span class="rol-tarjeta__icono rol-tarjeta__icono--escudo" aria-hidden="true">
                 <!-- Escudo con la palabra CAPITÁN -->
@@ -203,11 +203,11 @@
             <small class="campo__ayuda" id="escudo-ayuda">Opcional · JPG, PNG o WebP. También puedes subirlo después en tu panel.</small>
             <label class="btn btn--oscuro btn--chico wizard-escudo__boton" data-escudo-boton hidden>
               Subir escudo
-              <input type="file" accept="image/png,image/jpeg,image/webp" class="solo-lectores" aria-describedby="escudo-ayuda escudo-error" data-escudo-archivo />
+              <input autocomplete="off" type="file" accept="image/png,image/jpeg,image/webp" class="solo-lectores" aria-describedby="escudo-ayuda escudo-error" data-escudo-archivo />
             </label>
             <small class="campo__error" id="escudo-error" data-escudo-error></small>
           </span>
-          <input type="hidden" name="escudo" value="<%= datos.escudo || '' %>" data-escudo-datos />
+          <input autocomplete="off" type="hidden" name="escudo" value="<%= datos.escudo || '' %>" data-escudo-datos />
         </div>
 
         <%- include('partials/sm-colores-equipo', { colores: equipo.colores }) %>
@@ -226,7 +226,7 @@
           <div class="opciones opciones--3">
             <% Object.entries(catalogos.NIVELES).forEach(function ([clave, nombre]) { %>
               <label class="opcion opcion--nivel">
-                <input class="opcion__radio" type="radio" name="nivel" value="<%= clave %>" <%= equipo.nivel === clave ? 'checked' : '' %> />
+                <input autocomplete="off" class="opcion__radio" type="radio" name="nivel" value="<%= clave %>" <%= equipo.nivel === clave ? 'checked' : '' %> />
                 <span class="opcion__barras" aria-hidden="true">
                   <% for (let b = 1; b <= 3; b++) { %><span class="<%= b <= catalogos.BARRAS_NIVEL[clave] ? 'llena' : '' %>"></span><% } %>
                 </span>
@@ -244,7 +244,7 @@
           <div class="opciones opciones--3">
             <% Object.entries(catalogos.MODALIDADES).forEach(function ([jugadores, nombre]) { %>
               <label class="opcion">
-                <input class="opcion__radio" type="checkbox" name="modalidad" value="<%= jugadores %>" <%= (equipo.modalidades || []).includes(Number(jugadores)) ? 'checked' : '' %> />
+                <input autocomplete="off" class="opcion__radio" type="checkbox" name="modalidad" value="<%= jugadores %>" <%= (equipo.modalidades || []).includes(Number(jugadores)) ? 'checked' : '' %> />
                 <span class="opcion__sigla">F<%= jugadores %></span>
                 <span class="opcion__nombre"><%= nombre %></span>
               </label>

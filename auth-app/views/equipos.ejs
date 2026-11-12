@@ -95,7 +95,7 @@
             <% } else if (equipo.relacion) { %>
               <button type="button" class="eq-mis__accion" disabled><%= estados[equipo.relacion] %></button>
             <% } else { %>
-              <form class="eq-mis__form" action="/equipos/<%= equipo.id %>/unirme" method="POST" data-unirme data-equipo="<%= equipo.nombre %>">
+              <form autocomplete="off" class="eq-mis__form" action="/equipos/<%= equipo.id %>/unirme" method="POST" data-unirme data-equipo="<%= equipo.nombre %>">
                 <button type="submit" class="eq-mis__accion eq-mis__accion--principal">Solicitar unirme</button>
               </form>
             <% } %>
@@ -116,10 +116,10 @@
   <div class="modal__caja" role="dialog" aria-modal="true" aria-labelledby="modal-union-titulo">
     <h2 class="modal__titulo" id="modal-union-titulo">Unirme a <span class="texto-verde" data-modal-equipo></span></h2>
     <p class="modal__texto">Cuéntale al capitán quién eres: lo verá junto a tu perfil antes de aceptarte.</p>
-    <form class="modal__form" data-form-union novalidate>
+    <form autocomplete="off" class="modal__form" data-form-union novalidate>
       <label class="modal__campo">
         <span>Mensaje para el capitán</span>
-        <textarea name="mensaje" rows="3" maxlength="<%= LONGITUD_MENSAJE %>" required
+        <textarea autocomplete="off" name="mensaje" rows="3" maxlength="<%= LONGITUD_MENSAJE %>" required
                   placeholder="Ej. Juego de lateral derecho y puedo los fines de semana."></textarea>
       </label>
       <p class="modal__error" role="alert" hidden data-modal-error></p>

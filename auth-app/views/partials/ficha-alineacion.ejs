@@ -14,7 +14,7 @@
   <% if (jugador.capitan) { %><span class="cancha__c" aria-hidden="true">C</span><% } %>
   <% if (editable && !jugador.capitan) { %>
     <!-- Sacar del plantel (equipo.js pide confirmación y lo envía sin recargar) -->
-    <form class="cancha__sacar" action="/equipos/<%= equipo.id %>/plantel/<%= jugador.id %>/sacar" method="POST"
+    <form autocomplete="off" class="cancha__sacar" action="/equipos/<%= equipo.id %>/plantel/<%= jugador.id %>/sacar" method="POST"
           data-sacar data-nombre="<%= jugador.nombre %>">
       <button type="submit" class="cancha__sacar-boton" title="Sacar a <%= jugador.nombre %> del equipo" aria-label="Sacar a <%= jugador.nombre %> del equipo">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>

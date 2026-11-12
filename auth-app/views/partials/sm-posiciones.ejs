@@ -17,7 +17,7 @@
     <div class="opciones opciones--4">
       <% Object.entries(catalogo).forEach(function ([clave, pos]) { %>
         <label class="opcion opcion--posicion">
-          <input class="opcion__radio" type="radio" name="posicion_principal" value="<%= clave %>" data-sigla="<%= pos.sigla %>"
+          <input autocomplete="off" class="opcion__radio" type="radio" name="posicion_principal" value="<%= clave %>" data-sigla="<%= pos.sigla %>"
                  <%= principal === clave ? 'checked' : '' %> required />
           <%- cancha(clave) %>
           <span class="opcion__sigla"><%= pos.sigla %></span>
@@ -34,7 +34,7 @@
     <div class="opciones opciones--4">
       <% Object.entries(catalogo).forEach(function ([clave, pos]) { %>
         <label class="opcion opcion--posicion">
-          <input class="opcion__radio" type="checkbox" name="posicion_alternativa" value="<%= clave %>" data-sigla="<%= pos.sigla %>"
+          <input autocomplete="off" class="opcion__radio" type="checkbox" name="posicion_alternativa" value="<%= clave %>" data-sigla="<%= pos.sigla %>"
                  <%= principal !== clave && elegidas.includes(clave) ? 'checked' : '' %> <%= principal === clave ? 'disabled' : '' %> />
           <%- cancha(clave) %>
           <span class="opcion__sigla"><%= pos.sigla %></span>

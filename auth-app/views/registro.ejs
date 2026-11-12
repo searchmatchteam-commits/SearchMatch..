@@ -20,7 +20,7 @@
     <!-- Con Google la cuenta se crea con su nombre, correo y foto; lo demás se pide después (/completar-perfil) -->
     <%- include('partials/auth-google', { textoGoogle: 'Regístrate con Google' }) %>
 
-    <form action="/registro" method="POST" class="formulario" data-validar="registro" novalidate
+    <form autocomplete="off" action="/registro" method="POST" class="formulario" data-validar="registro" novalidate
           data-requiere-aceptar>
       <div class="formulario__fila">
         <div class="campo">
@@ -33,7 +33,7 @@
               name="nombre"
               placeholder="Tu nombre"
               value="<%= datos.nombre || '' %>"
-              autocomplete="given-name"
+              autocomplete="off"
               maxlength="100"
               aria-describedby="nombre-error"
               required
@@ -52,7 +52,7 @@
               name="apellido"
               placeholder="Tu apellido"
               value="<%= datos.apellido || '' %>"
-              autocomplete="family-name"
+              autocomplete="off"
               maxlength="100"
               aria-describedby="apellido-error"
               required
@@ -72,7 +72,7 @@
             name="correo"
             placeholder="tucorreo@ejemplo.com"
             value="<%= datos.correo || '' %>"
-            autocomplete="email"
+            autocomplete="off"
             maxlength="150"
             aria-describedby="correo-error"
             required
@@ -91,7 +91,7 @@
             name="correo_secundario"
             placeholder="otrocorreo@ejemplo.com"
             value="<%= datos.correo_secundario || '' %>"
-            autocomplete="email"
+            autocomplete="off"
             maxlength="150"
             aria-describedby="correo_secundario-error correo_secundario-ayuda"
           />
@@ -111,7 +111,7 @@
               name="telefono"
               placeholder="+56 9 1234 5678"
               value="<%= datos.telefono || '' %>"
-              autocomplete="tel"
+              autocomplete="off"
               inputmode="tel"
               data-telefono-cl
               aria-describedby="telefono-error"
@@ -132,7 +132,7 @@
               name="fecha_nacimiento"
               value="<%= datos.fecha_nacimiento || '' %>"
               max="<%= new Date().toISOString().slice(0, 10) %>"
-              autocomplete="bday"
+              autocomplete="off"
               aria-describedby="fecha_nacimiento-error"
               required
             />
@@ -151,7 +151,7 @@
               id="password"
               name="password"
               placeholder="8+ caracteres, letras y números"
-              autocomplete="new-password"
+              autocomplete="off"
               minlength="8"
               aria-describedby="password-error"
               required
@@ -173,7 +173,7 @@
               id="confirmar_password"
               name="confirmar_password"
               placeholder="Repite tu contraseña"
-              autocomplete="new-password"
+              autocomplete="off"
               minlength="8"
               aria-describedby="confirmar_password-error"
               required
@@ -189,7 +189,7 @@
 
       <div class="campo sm-check-campo">
         <label class="sm-check">
-          <input type="checkbox" name="acepto_terminos" value="si" <%= datos.acepto_terminos ? 'checked' : '' %> data-casilla-aceptar />
+          <input autocomplete="off" type="checkbox" name="acepto_terminos" value="si" <%= datos.acepto_terminos ? 'checked' : '' %> data-casilla-aceptar />
           <span>Tengo 18 años o más y acepto los
             <a href="/terminos" target="_blank" rel="noopener">términos y condiciones</a> y la
             <a href="/privacidad" target="_blank" rel="noopener">política de privacidad</a>.</span>

@@ -35,18 +35,18 @@
         <a class="btn btn--verde" href="/equipos">Ver equipos</a>
       </div>
     <% } else { %>
-      <form class="dash-panel eq-panel sm-filtros" method="GET" action="/canchas" role="search">
-        <input type="hidden" name="vista" value="<%= filtros.vista %>" />
+      <form autocomplete="off" class="dash-panel eq-panel sm-filtros" method="GET" action="/canchas" role="search">
+        <input autocomplete="off" type="hidden" name="vista" value="<%= filtros.vista %>" />
         <div class="campo <%= filtros.terminoCorto ? 'campo--error' : '' %>">
           <label for="texto">Buscar por nombre de cancha o recinto</label>
-          <input type="search" id="texto" name="texto" value="<%= filtros.textoIngresado %>" maxlength="100"
+          <input autocomplete="off" type="search" id="texto" name="texto" value="<%= filtros.textoIngresado %>" maxlength="100"
                  placeholder="Ej. El Potrero" aria-describedby="texto-error" />
           <small class="campo__error" id="texto-error"><%= filtros.terminoCorto ? `Escribe al menos ${largoMinimo} letras para buscar por nombre.` : '' %></small>
         </div>
         <%- include('../partials/sm-ubicacion', { regiones, idRegion: filtros.idRegion, idComuna: filtros.idComuna, obligatorio: false }) %>
         <div class="campo">
           <label for="id_modalidad">Modalidad</label>
-          <select id="id_modalidad" name="id_modalidad">
+          <select autocomplete="off" id="id_modalidad" name="id_modalidad">
             <option value="">Todas las modalidades</option>
             <% modalidades.forEach(function (m) { %>
               <option value="<%= m.id %>" <%= String(filtros.idModalidad) === String(m.id) ? 'selected' : '' %>><%= m.nombre %> (<%= m.jugadores %> jugadores)</option>

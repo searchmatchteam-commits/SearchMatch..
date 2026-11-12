@@ -5,7 +5,7 @@
   const secciones = locals.seccionesPanel || [];
   const actual = secciones.find(function (s) { return s.clave === seccion; });
 %>
-<input type="checkbox" id="sm-admin-menu" class="sm-admin-menu__check" />
+<input autocomplete="off" type="checkbox" id="sm-admin-menu" class="sm-admin-menu__check" />
 <label for="sm-admin-menu" class="sm-admin-menu__boton">
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
   <span>Menú<% if (actual) { %> · <%= actual.texto %><% } %></span>
@@ -28,7 +28,7 @@
     <%# Jugador que además es administrador: vuelve a su cuenta (el panel sigue abierto) o cierra solo el panel %>
     <div class="sm-admin-menu__cuenta">
       <a class="sm-admin-menu__item" href="/dashboard"><span>Volver a mi cuenta</span></a>
-      <form action="/admin/logout" method="POST">
+      <form autocomplete="off" action="/admin/logout" method="POST">
         <button type="submit" class="sm-admin-menu__item sm-admin-menu__salir"><span>Salir del panel</span></button>
       </form>
     </div>

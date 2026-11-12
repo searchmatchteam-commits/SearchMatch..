@@ -6,7 +6,7 @@
 <div class="formulario__fila">
   <div class="campo <%= errores.id_region ? 'campo--error' : '' %>">
     <label for="id_region">Región</label>
-    <select id="id_region" name="id_region" data-sm-region="id_comuna" <%= obligatorio ? 'required' : '' %>
+    <select autocomplete="off" id="id_region" name="id_region" data-sm-region="id_comuna" <%= obligatorio ? 'required' : '' %>
             data-mensaje="Elige la región." aria-describedby="id_region-error">
       <option value=""><%= textoVacio %><%= obligatorio ? ' la región' : ' las regiones' %></option>
       <% regiones.forEach(function (region) { %>
@@ -17,7 +17,7 @@
   </div>
   <div class="campo <%= errores.id_comuna ? 'campo--error' : '' %>">
     <label for="id_comuna">Comuna</label>
-    <select id="id_comuna" name="id_comuna" <%= obligatorio ? 'required' : '' %> data-mensaje="Elige la comuna."
+    <select autocomplete="off" id="id_comuna" name="id_comuna" <%= obligatorio ? 'required' : '' %> data-mensaje="Elige la comuna."
             aria-describedby="id_comuna-error">
       <option value=""><%= textoVacio %><%= obligatorio ? ' la comuna' : ' las comunas' %></option>
       <% regiones.forEach(function (region) { %>

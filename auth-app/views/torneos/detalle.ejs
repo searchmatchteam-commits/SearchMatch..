@@ -75,7 +75,7 @@
           <% } %>
 
           <% inscritos.forEach(function (e) { %>
-            <form class="trn-mi-equipo" action="/torneos/<%= torneo.id %>/retirar/<%= e.id %>" method="POST"
+            <form autocomplete="off" class="trn-mi-equipo" action="/torneos/<%= torneo.id %>/retirar/<%= e.id %>" method="POST"
                   data-confirmar="Su cupo quedará libre para otro equipo." data-confirmar-titulo="¿Retirar a <%= e.nombre %> del torneo?" data-confirmar-boton="Retirar">
               <span class="trn-mi-equipo__check" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
@@ -87,10 +87,10 @@
             </form>
             <% if (e.pendiente && enInscripcion && pagoDisponible) { %>
               <!-- Volvió sin terminar de pagar: puede retomar el pago mientras dure la reserva -->
-              <form action="/torneos/<%= torneo.id %>/inscribir" method="POST">
-                <input type="hidden" name="id_equipo" value="<%= e.id %>" />
-                <input type="hidden" name="acepto_reglas" value="si" />
-                <input type="hidden" name="medio_pago" value="webpay" />
+              <form autocomplete="off" action="/torneos/<%= torneo.id %>/inscribir" method="POST">
+                <input autocomplete="off" type="hidden" name="id_equipo" value="<%= e.id %>" />
+                <input autocomplete="off" type="hidden" name="acepto_reglas" value="si" />
+                <input autocomplete="off" type="hidden" name="medio_pago" value="webpay" />
                 <button type="submit" class="btn btn--verde btn--bloque trn-cta">Pagar <%= torneo.precioTexto %> con Webpay</button>
               </form>
             <% } %>
@@ -112,8 +112,8 @@
                   no <%= otraModalidad.length === 1 ? 'juega' : 'juegan' %> <strong><%= torneo.modalidad %></strong>. Habilítala con un clic para inscribirlo:
                 </p>
                 <% otraModalidad.forEach(function (e) { %>
-                  <form class="trn-requisito__fila" action="/torneos/<%= torneo.id %>/habilitar-modalidad" method="POST">
-                    <input type="hidden" name="id_equipo" value="<%= e.id %>" />
+                  <form autocomplete="off" class="trn-requisito__fila" action="/torneos/<%= torneo.id %>/habilitar-modalidad" method="POST">
+                    <input autocomplete="off" type="hidden" name="id_equipo" value="<%= e.id %>" />
                     <span class="trn-requisito__nombre"><%= e.nombre %></span>
                     <button type="submit" class="btn btn--contorno btn--chico">Habilitar <%= torneo.modalidad %></button>
                   </form>
@@ -245,10 +245,10 @@
       <p class="modal__texto">
         <%= faltan === 1 ? 'Queda 1 cupo' : `Quedan ${faltan} cupos` %>. Elige el equipo y confirma las reglas.
       </p>
-      <form class="modal__form" action="/torneos/<%= torneo.id %>/inscribir" method="POST">
+      <form autocomplete="off" class="modal__form" action="/torneos/<%= torneo.id %>/inscribir" method="POST">
         <label class="modal__campo">
           <span>Equipo</span>
-          <select name="id_equipo" required>
+          <select autocomplete="off" name="id_equipo" required>
             <% disponibles.forEach(function (e) { %><option value="<%= e.id %>"><%= e.nombre %></option><% }) %>
           </select>
         </label>
@@ -273,10 +273,10 @@
           </ul>
         </div>
         <label class="trn-reglas__acepto">
-          <input type="checkbox" name="acepto_reglas" value="si" required />
+          <input autocomplete="off" type="checkbox" name="acepto_reglas" value="si" required />
           <span>Acepto las reglas del torneo</span>
         </label>
-        <% if (conPago) { %><input type="hidden" name="medio_pago" value="webpay" /><% } %>
+        <% if (conPago) { %><input autocomplete="off" type="hidden" name="medio_pago" value="webpay" /><% } %>
         <div class="modal__acciones">
           <button type="button" class="btn btn--contorno" data-cerrar-modal>Cancelar</button>
           <button type="submit" class="btn btn--verde"><%= conPago ? `Pagar ${torneo.precioTexto} con Webpay` : 'Confirmar inscripción' %></button>

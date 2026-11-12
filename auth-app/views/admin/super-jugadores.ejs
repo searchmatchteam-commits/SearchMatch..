@@ -14,14 +14,14 @@
       </div>
     </header>
 
-    <form class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/super/jugadores" role="search">
+    <form autocomplete="off" class="dash-panel eq-panel sm-filtros sm-filtros--linea" method="GET" action="/admin/super/jugadores" role="search">
       <div class="campo">
         <label for="texto">Buscar por correo o nombre</label>
-        <input type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. juan@correo.cl o Juan Pérez" />
+        <input autocomplete="off" type="search" id="texto" name="texto" value="<%= texto %>" placeholder="Ej. juan@correo.cl o Juan Pérez" />
       </div>
       <div class="campo">
         <label for="filtro">Mostrar</label>
-        <select id="filtro" name="filtro">
+        <select autocomplete="off" id="filtro" name="filtro">
           <% filtros.forEach(function (f) { %>
             <option value="<%= f.clave %>" <%= f.clave === filtro ? 'selected' : '' %>><%= f.texto %></option>
           <% }) %>

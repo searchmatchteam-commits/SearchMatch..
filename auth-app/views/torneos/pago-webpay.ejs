@@ -22,8 +22,8 @@
     <div class="giro" aria-hidden="true"></div>
     <h1>Te llevamos a Webpay…</h1>
     <p>Vas a pagar <strong><%= monto %></strong> de inscripción. Tu cupo queda reservado mientras pagas.</p>
-    <form action="<%= url %>" method="POST" id="ir-a-webpay">
-      <input type="hidden" name="token_ws" value="<%= token %>" />
+    <form autocomplete="off" action="<%= url %>" method="POST" id="ir-a-webpay">
+      <input autocomplete="off" type="hidden" name="token_ws" value="<%= token %>" />
       <button type="submit">Ir a pagar</button>
     </form>
   </div>

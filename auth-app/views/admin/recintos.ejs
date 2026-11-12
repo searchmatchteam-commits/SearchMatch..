@@ -23,15 +23,15 @@
         <a class="btn btn--verde" href="/admin/recintos/nuevo">Registrar recinto</a>
       </div>
     <% } else { %>
-      <form class="dash-panel eq-panel sm-filtros" method="GET" action="/admin/recintos" role="search">
+      <form autocomplete="off" class="dash-panel eq-panel sm-filtros" method="GET" action="/admin/recintos" role="search">
         <div class="campo">
           <label for="texto">Buscar por nombre</label>
-          <input type="search" id="texto" name="texto" value="<%= filtros.texto %>" placeholder="Ej. Complejo El Potrero" />
+          <input autocomplete="off" type="search" id="texto" name="texto" value="<%= filtros.texto %>" placeholder="Ej. Complejo El Potrero" />
         </div>
         <%- include('../partials/sm-ubicacion', { regiones, idRegion: filtros.idRegion, idComuna: filtros.idComuna, obligatorio: false }) %>
         <div class="campo">
           <label for="estado">Estado</label>
-          <select id="estado" name="estado">
+          <select autocomplete="off" id="estado" name="estado">
             <option value="">Todos</option>
             <option value="activos" <%= filtros.estado === 'activos' ? 'selected' : '' %>>Activos</option>
             <option value="inactivos" <%= filtros.estado === 'inactivos' ? 'selected' : '' %>>Inactivos</option>

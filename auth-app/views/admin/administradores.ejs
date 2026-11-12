@@ -17,10 +17,10 @@
     <details class="dash-panel eq-panel sm-desplegable" id="asignar" <%= buscar ? 'open' : '' %>>
       <summary class="dash-panel__titulo">+ Asignar administrador a un usuario existente</summary>
       <p class="dash-panel__nota">Busca a la persona por su nombre o correo. Pasará a ser <strong>administrador</strong> (no Administrador principal) y seguirá usando su misma cuenta para jugar y para entrar al panel.</p>
-      <form class="sm-form sm-filtros" action="/admin/administradores#asignar" method="GET">
+      <form autocomplete="off" class="sm-form sm-filtros" action="/admin/administradores#asignar" method="GET">
         <div class="campo">
           <label for="buscar">Nombre o correo</label>
-          <input type="search" id="buscar" name="buscar" value="<%= buscar %>" minlength="2" maxlength="100" placeholder="Ej. juan@correo.cl" />
+          <input autocomplete="off" type="search" id="buscar" name="buscar" value="<%= buscar %>" minlength="2" maxlength="100" placeholder="Ej. juan@correo.cl" />
         </div>
         <div class="sm-form__acciones"><button type="submit" class="btn btn--contorno">Buscar</button></div>
       </form>
@@ -31,10 +31,10 @@
           <% candidatos.forEach(function (c) { %>
             <li class="sm-candidato">
               <span class="sm-candidato__datos"><strong><%= c.nombre %></strong><small><%= c.correo %></small></span>
-              <form action="/admin/administradores/asignar" method="POST"
+              <form autocomplete="off" action="/admin/administradores/asignar" method="POST"
                     data-confirmar="<%= c.nombre %> podrá entrar al panel como administrador. No tendrá el rol de Administrador principal."
                     data-confirmar-titulo="¿Asignar como administrador?" data-confirmar-boton="Asignar">
-                <input type="hidden" name="id_usuario" value="<%= c.id %>" />
+                <input autocomplete="off" type="hidden" name="id_usuario" value="<%= c.id %>" />
                 <button type="submit" class="btn btn--verde btn--chico">Asignar como administrador</button>
               </form>
             </li>
@@ -45,17 +45,17 @@
 
     <details class="dash-panel eq-panel sm-desplegable" <%= Object.keys(erroresCampo).length > 0 ? 'open' : '' %>>
       <summary class="dash-panel__titulo">+ Crear administrador (cuenta nueva, solo para el panel)</summary>
-      <form class="sm-form sm-filtros" action="/admin/administradores" method="POST" novalidate data-sm-validar
+      <form autocomplete="off" class="sm-form sm-filtros" action="/admin/administradores" method="POST" novalidate data-sm-validar
             data-confirmar="Se creará su cuenta del panel y le enviaremos un correo para que defina su contraseña."
             data-confirmar-titulo="¿Crear la cuenta de administrador?" data-confirmar-boton="Crear">
         <div class="campo <%= erroresCampo.nombre ? 'campo--error' : '' %>">
           <label for="nombre">Nombre</label>
-          <input type="text" id="nombre" name="nombre" value="<%= datos.nombre || '' %>" maxlength="100" required data-mensaje="Escribe el nombre." />
+          <input autocomplete="off" type="text" id="nombre" name="nombre" value="<%= datos.nombre || '' %>" maxlength="100" required data-mensaje="Escribe el nombre." />
           <small class="campo__error"><%= erroresCampo.nombre || '' %></small>
         </div>
         <div class="campo <%= erroresCampo.correo ? 'campo--error' : '' %>">
           <label for="correo">Correo</label>
-          <input type="email" id="correo" name="correo" value="<%= datos.correo || '' %>" maxlength="150" required data-mensaje="Escribe un correo válido." />
+          <input autocomplete="off" type="email" id="correo" name="correo" value="<%= datos.correo || '' %>" maxlength="150" required data-mensaje="Escribe un correo válido." />
           <small class="campo__error"><%= erroresCampo.correo || '' %></small>
         </div>
         <div class="sm-form__acciones"><button type="submit" class="btn btn--verde">Crear y enviar invitación</button></div>
@@ -117,23 +117,23 @@
       <% if (candidatosPrincipal.length === 0) { %>
         <p class="dash-panel__nota">Primero crea otro administrador con acceso vigente.</p>
       <% } else { %>
-        <form class="sm-form sm-filtros" action="/admin/administradores/traspasar" method="POST" novalidate data-sm-validar
+        <form autocomplete="off" class="sm-form sm-filtros" action="/admin/administradores/traspasar" method="POST" novalidate data-sm-validar
               data-confirmar="La otra persona pasará a ser Administrador principal y tú quedarás como administrador: ya no podrás gestionar administradores."
               data-confirmar-titulo="¿Traspasar el rol de principal?" data-confirmar-boton="Traspasar">
           <div class="campo">
             <label for="id_nuevo">Nuevo Administrador principal</label>
-            <select id="id_nuevo" name="id_nuevo" required data-mensaje="Elige a quién.">
+            <select autocomplete="off" id="id_nuevo" name="id_nuevo" required data-mensaje="Elige a quién.">
               <option value="">Elige un administrador</option>
               <% candidatosPrincipal.forEach(function (a) { %><option value="<%= a.id %>"><%= a.nombre %> (<%= a.correo %>)</option><% }) %>
             </select>
           </div>
           <div class="campo">
             <label for="motivo-traspaso">Motivo</label>
-            <textarea id="motivo-traspaso" name="motivo" rows="2" minlength="5" maxlength="500" required data-mensaje="Indica el motivo."></textarea>
+            <textarea autocomplete="off" id="motivo-traspaso" name="motivo" rows="2" minlength="5" maxlength="500" required data-mensaje="Indica el motivo."></textarea>
           </div>
           <div class="campo">
             <label for="password-traspaso">Tu contraseña (para confirmar)</label>
-            <input type="password" id="password-traspaso" name="password" autocomplete="current-password" required data-mensaje="Ingresa tu contraseña." />
+            <input type="password" id="password-traspaso" name="password" autocomplete="off" required data-mensaje="Ingresa tu contraseña." />
           </div>
           <div class="sm-form__acciones"><button type="submit" class="btn btn--contorno sm-btn-peligro">Traspasar rol</button></div>
         </form>

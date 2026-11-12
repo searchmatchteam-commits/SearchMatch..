@@ -17,13 +17,13 @@
     </header>
 
     <div class="sm-columnas">
-      <form class="dash-panel eq-panel sm-form" action="/canchas/<%= cancha.id %>/reservar" method="POST" novalidate data-sm-validar
+      <form autocomplete="off" class="dash-panel eq-panel sm-form" action="/canchas/<%= cancha.id %>/reservar" method="POST" novalidate data-sm-validar
             data-costo-por-hora="<%= cancha.precio %>">
         <h2 class="dash-panel__titulo">Tu reserva</h2>
         <% if (error) { %><div class="alerta alerta--error" role="alert"><%= error %></div><% } %>
         <div class="campo <%= erroresCampo.fecha ? 'campo--error' : '' %>">
           <label for="fecha">Fecha</label>
-          <input type="date" id="fecha" name="fecha" min="<%= hoy %>" max="<%= fechaMaxima %>" value="<%= datos.fecha || '' %>" required data-mensaje="Elige la fecha." aria-describedby="fecha-error" />
+          <input autocomplete="off" type="date" id="fecha" name="fecha" min="<%= hoy %>" max="<%= fechaMaxima %>" value="<%= datos.fecha || '' %>" required data-mensaje="Elige la fecha." aria-describedby="fecha-error" />
           <small class="campo__error" id="fecha-error"><%= erroresCampo.fecha || '' %></small>
         </div>
         <div class="sm-selector" data-selector-franjas hidden>
@@ -34,12 +34,12 @@
         <div class="formulario__fila">
           <div class="campo <%= erroresCampo.inicio ? 'campo--error' : '' %>">
             <label for="inicio">Desde</label>
-            <input type="time" id="inicio" name="inicio" step="1800" value="<%= datos.inicio || '' %>" required data-mensaje="Indica la hora de inicio." aria-describedby="inicio-error" />
+            <input autocomplete="off" type="time" id="inicio" name="inicio" step="1800" value="<%= datos.inicio || '' %>" required data-mensaje="Indica la hora de inicio." aria-describedby="inicio-error" />
             <small class="campo__error" id="inicio-error"><%= erroresCampo.inicio || '' %></small>
           </div>
           <div class="campo <%= erroresCampo.fin ? 'campo--error' : '' %>">
             <label for="fin">Hasta</label>
-            <input type="time" id="fin" name="fin" step="1800" value="<%= datos.fin || '' %>" required data-mensaje="Indica la hora de fin." aria-describedby="fin-error" />
+            <input autocomplete="off" type="time" id="fin" name="fin" step="1800" value="<%= datos.fin || '' %>" required data-mensaje="Indica la hora de fin." aria-describedby="fin-error" />
             <small class="campo__error" id="fin-error"><%= erroresCampo.fin || '' %></small>
           </div>
         </div>

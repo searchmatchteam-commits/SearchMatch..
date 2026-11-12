@@ -16,23 +16,23 @@
       </div>
     </header>
 
-    <form class="dash-panel eq-panel sm-form" action="/partidos/programar/<%= desafio.id %>" method="POST" novalidate data-sm-validar>
+    <form autocomplete="off" class="dash-panel eq-panel sm-form" action="/partidos/programar/<%= desafio.id %>" method="POST" novalidate data-sm-validar>
       <% if (error) { %><div class="alerta alerta--error" role="alert"><%= error %></div><% } %>
       <div class="formulario__fila">
         <div class="campo <%= erroresCampo.fecha ? 'campo--error' : '' %>">
           <label for="fecha">Fecha</label>
-          <input type="date" id="fecha" name="fecha" min="<%= hoy %>" value="<%= datos.fecha || '' %>" required data-mensaje="Elige la fecha." aria-describedby="fecha-error" />
+          <input autocomplete="off" type="date" id="fecha" name="fecha" min="<%= hoy %>" value="<%= datos.fecha || '' %>" required data-mensaje="Elige la fecha." aria-describedby="fecha-error" />
           <small class="campo__error" id="fecha-error"><%= erroresCampo.fecha || '' %></small>
         </div>
         <div class="campo <%= erroresCampo.hora ? 'campo--error' : '' %>">
           <label for="hora">Hora de inicio</label>
-          <input type="time" id="hora" name="hora" step="1800" value="<%= datos.hora || '' %>" required data-mensaje="Indica la hora." aria-describedby="hora-error" />
+          <input autocomplete="off" type="time" id="hora" name="hora" step="1800" value="<%= datos.hora || '' %>" required data-mensaje="Indica la hora." aria-describedby="hora-error" />
           <small class="campo__error" id="hora-error"><%= erroresCampo.hora || '' %></small>
         </div>
       </div>
       <div class="campo <%= erroresCampo.id_modalidad ? 'campo--error' : '' %>">
         <label for="id_modalidad">Modalidad</label>
-        <select id="id_modalidad" name="id_modalidad" required data-mensaje="Elige la modalidad." aria-describedby="id_modalidad-error">
+        <select autocomplete="off" id="id_modalidad" name="id_modalidad" required data-mensaje="Elige la modalidad." aria-describedby="id_modalidad-error">
           <% modalidades.forEach(function (m) { %>
             <option value="<%= m.id %>" <%= String(datos.idModalidad) === String(m.id) ? 'selected' : '' %>><%= m.nombre %> (<%= m.jugadores %> jugadores)</option>
           <% }) %>
@@ -44,7 +44,7 @@
         <% if (canchas.length === 0) { %>
           <p class="dash-panel__nota">No hay canchas disponibles todavía.</p>
         <% } else { %>
-          <select id="id_cancha" name="id_cancha" required data-mensaje="Elige la cancha." aria-describedby="id_cancha-error">
+          <select autocomplete="off" id="id_cancha" name="id_cancha" required data-mensaje="Elige la cancha." aria-describedby="id_cancha-error">
             <option value="">Elige la cancha</option>
             <% canchas.forEach(function (c) { %>
               <option value="<%= c.id %>" <%= String(datos.idCancha) === String(c.id) ? 'selected' : '' %>><%= c.nombre %> · <%= c.recinto %> (<%= c.comuna %>) · <%= c.modalidad %> · <%= pesos.format(c.precio) %>/h</option>
@@ -73,7 +73,7 @@
                   <div class="sm-kit">
                     <% equipacion[lado[0]].forEach(function (c) { %>
                       <label class="sm-kit__opcion">
-                        <input type="radio" name="camiseta_<%= lado[0] %>" value="<%= c.clave %>" data-color="<%= c.color %>"
+                        <input autocomplete="off" type="radio" name="camiseta_<%= lado[0] %>" value="<%= c.clave %>" data-color="<%= c.color %>"
                                <%= lado[2] === c.clave || fija ? 'checked' : '' %> <%= fija ? 'disabled' : 'required' %> />
                         <svg class="sm-kit__camiseta" viewBox="0 0 24 24" style="--color:<%= c.color %>" aria-hidden="true"><path d="M8 2 3 5l2 5 2-1v13h10V9l2 1 2-5-5-3c-.5 1.7-2 3-4 3S8.5 3.7 8 2z" /></svg>
                         <%= c.nombre %>

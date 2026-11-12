@@ -164,7 +164,7 @@
         </button>
         <% if (usuario && usuario.esCuentaPanel) { %>
           <!-- AP-001: cuenta del panel. Solo su sesión del panel; salir pide confirmar y vuelve al login del panel -->
-          <form action="/admin/logout" method="POST" class="navbar__form"
+          <form autocomplete="off" action="/admin/logout" method="POST" class="navbar__form"
                 data-confirmar="Volverás al ingreso del panel y sus páginas quedarán bloqueadas hasta que ingreses de nuevo."
                 data-confirmar-titulo="¿Cerrar sesión del panel?" data-confirmar-boton="Cerrar sesión">
             <button type="submit" class="btn btn--verde btn--chico navbar__salir" aria-label="Cerrar sesión"><svg class="navbar__salir-icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3M16 17l5-5-5-5M21 12H9" /></svg><span class="navbar__salir-texto">Cerrar sesión</span></button>
@@ -186,7 +186,7 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 20a2 2 0 0 0 4 0" /></svg>
             <% if (locals.notificacionesSinLeer) { %><span class="sm-icono-nav__contador"><%= notificacionesSinLeer > 99 ? '99+' : notificacionesSinLeer %></span><% } %>
           </a>
-          <form action="/logout" method="POST" class="navbar__form"
+          <form autocomplete="off" action="/logout" method="POST" class="navbar__form"
                 data-confirmar="Tendrás que volver a iniciar sesión para entrar a tu cuenta."
                 data-confirmar-titulo="¿Cerrar sesión?" data-confirmar-boton="Cerrar sesión">
             <button type="submit" class="btn btn--verde btn--chico navbar__salir" aria-label="Cerrar sesión"><svg class="navbar__salir-icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3M16 17l5-5-5-5M21 12H9" /></svg><span class="navbar__salir-texto">Cerrar sesión</span></button>

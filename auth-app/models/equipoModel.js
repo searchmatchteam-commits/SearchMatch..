@@ -650,6 +650,9 @@ async function listarRivales(idEquipo, { idRegion = null, idComuna = null } = {}
       WHERE e.activo AND e.id <> $1
         -- El capitán puede tener varios equipos: no se desafía a sí mismo
         AND e.id_usuario_creador <> propio.id_usuario_creador
+        -- Ni equipos en los que el capitán juega como integrante del plantel
+        AND NOT EXISTS (SELECT 1 FROM equipo_jugador ej JOIN jugador j ON j.id = ej.id_jugador
+                         WHERE ej.id_equipo = e.id AND j.id_usuario = propio.id_usuario_creador)
         -- DE-007: solo equipos del mismo nivel, con filtros opcionales de región y comuna
         AND e.id_nivel = propio.id_nivel
         AND ($3::int IS NULL OR cz.id_region = $3)
@@ -737,7 +740,11 @@ async function enviarDesafio(authId, idRival, mensaje, jugadores = null, idEquip
       // 2) Rival válido y sin desafío pendiente entre ambos
       const rival = await cliente.query(
         `SELECT 1 FROM equipo WHERE id = $1 AND activo AND id <> $2
-            AND id_usuario_creador <> (SELECT id_usuario_creador FROM equipo WHERE id = $2)`,
+            AND id_usuario_creador <> (SELECT id_usuario_creador FROM equipo WHERE id = $2)
+            -- ni un equipo en el que el capitán juega (igual que listarRivales)
+            AND NOT EXISTS (SELECT 1 FROM equipo_jugador ej JOIN jugador j ON j.id = ej.id_jugador
+                             WHERE ej.id_equipo = $1
+                               AND j.id_usuario = (SELECT id_usuario_creador FROM equipo WHERE id = $2))`,
         [idRival, idEquipo]
       );
       const estado = await cliente.query('SELECT id FROM estado_desafio WHERE lower(nombre) = $1', [ESTADO_DESAFIO_PENDIENTE]);

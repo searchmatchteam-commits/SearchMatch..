@@ -19,13 +19,13 @@
       </div>
       <div class="eq-cabecera__acciones">
         <% if (cancha.activo) { %>
-          <form action="/admin/canchas/<%= cancha.id %>/desactivar" method="POST"
+          <form autocomplete="off" action="/admin/canchas/<%= cancha.id %>/desactivar" method="POST"
                 data-confirmar="Dejará de mostrarse y no se podrán hacer nuevas reservas ni partidos en ella. Las demás canchas del recinto siguen disponibles.<%= advertenciaReservas %>"
                 data-confirmar-titulo="¿Desactivar <%= cancha.nombre %>?" data-confirmar-boton="Desactivar">
             <button type="submit" class="btn btn--contorno btn--grande sm-btn-peligro">Desactivar</button>
           </form>
         <% } else { %>
-          <form action="/admin/canchas/<%= cancha.id %>/activar" method="POST"
+          <form autocomplete="off" action="/admin/canchas/<%= cancha.id %>/activar" method="POST"
                 data-confirmar="<%= cancha.recinto_activo ? 'Volverá a mostrarse a los usuarios y se podrá reservar.' : 'Quedará activa, pero NO será visible mientras su recinto esté inactivo.' %>"
                 data-confirmar-titulo="¿Activar <%= cancha.nombre %>?" data-confirmar-boton="Activar">
             <button type="submit" class="btn btn--verde btn--grande">Activar</button>
@@ -49,9 +49,9 @@
         <% if (advertencia) { %>
           <div class="alerta sm-alerta-advertencia" role="alert"><%= advertencia %></div>
         <% } %>
-        <form action="/admin/canchas/<%= cancha.id %>/editar" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+        <form autocomplete="off" action="/admin/canchas/<%= cancha.id %>/editar" method="POST" class="formulario sm-form" novalidate data-sm-validar>
           <%- include('../partials/sm-cancha-campos', { datos, erroresCampo, modalidades }) %>
-          <% if (advertencia) { %><input type="hidden" name="confirmado" value="si" /><% } %>
+          <% if (advertencia) { %><input autocomplete="off" type="hidden" name="confirmado" value="si" /><% } %>
           <p class="campo__ayuda">Las reservas ya confirmadas mantienen el costo con que se reservaron.</p>
           <div class="sm-form__acciones">
             <button type="submit" class="btn btn--verde"><%= advertencia ? 'Guardar de todas formas' : 'Guardar cambios' %></button>
@@ -67,10 +67,10 @@
         <% if (Object.keys(erroresB).length > 0) { %>
           <div class="alerta alerta--error" role="alert"><%= Object.values(erroresB)[0] %></div>
         <% } %>
-        <form action="/admin/canchas/<%= cancha.id %>/disponibilidad#horario" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+        <form autocomplete="off" action="/admin/canchas/<%= cancha.id %>/disponibilidad#horario" method="POST" class="formulario sm-form" novalidate data-sm-validar>
           <div class="campo <%= erroresB.dia ? 'campo--error' : '' %>">
             <label for="dia">Día</label>
-            <select id="dia" name="dia" required data-mensaje="Elige el día." aria-describedby="dia-error">
+            <select autocomplete="off" id="dia" name="dia" required data-mensaje="Elige el día." aria-describedby="dia-error">
               <option value="">Elige el día</option>
               <% dias.forEach(function (d) { %>
                 <option value="<%= d.clave %>" <%= datosBloque.dia === d.clave ? 'selected' : '' %>><%= d.nombre %></option>
@@ -81,12 +81,12 @@
           <div class="formulario__fila">
             <div class="campo <%= erroresB.apertura ? 'campo--error' : '' %>">
               <label for="apertura">Apertura</label>
-              <input type="time" id="apertura" name="apertura" value="<%= datosBloque.apertura || '' %>" required data-mensaje="Indica la hora de apertura." aria-describedby="apertura-error" />
+              <input autocomplete="off" type="time" id="apertura" name="apertura" value="<%= datosBloque.apertura || '' %>" required data-mensaje="Indica la hora de apertura." aria-describedby="apertura-error" />
               <small class="campo__error" id="apertura-error"><%= erroresB.apertura || '' %></small>
             </div>
             <div class="campo <%= erroresB.cierre ? 'campo--error' : '' %>">
               <label for="cierre">Cierre</label>
-              <input type="time" id="cierre" name="cierre" value="<%= datosBloque.cierre || '' %>" required data-mensaje="Indica la hora de cierre." aria-describedby="cierre-error" />
+              <input autocomplete="off" type="time" id="cierre" name="cierre" value="<%= datosBloque.cierre || '' %>" required data-mensaje="Indica la hora de cierre." aria-describedby="cierre-error" />
               <small class="campo__error" id="cierre-error"><%= erroresB.cierre || '' %></small>
             </div>
           </div>
@@ -114,7 +114,7 @@
                      const avisoCerrado = dia.bloques.length === 1 ? ` Es el único horario del ${dia.nombre.toLowerCase()}: ese día quedará cerrado.` : ''; %>
                   <span class="sm-bloque">
                     <%= b.apertura %>–<%= b.cierre %>
-                    <form action="/admin/disponibilidad/<%= b.id %>/eliminar" method="POST"
+                    <form autocomplete="off" action="/admin/disponibilidad/<%= b.id %>/eliminar" method="POST"
                           data-confirmar="Dejará de mostrarse como disponible.<%= avisoCerrado %><%= avisoReservas %>"
                           data-confirmar-titulo="¿Eliminar <%= dia.nombre %> <%= b.apertura %>–<%= b.cierre %>?" data-confirmar-boton="Eliminar">
                       <button type="submit" class="sm-bloque__quitar" aria-label="Eliminar el horario <%= dia.nombre %> <%= b.apertura %> a <%= b.cierre %>">×</button>

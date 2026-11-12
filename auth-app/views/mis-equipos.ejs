@@ -52,8 +52,8 @@
         <% misEquipos.forEach(function (equipo) { const total = equipo.plantel.length; %>
           <li class="eq-mis eq-mis--hero <%= equipo.soyCapitan ? 'eq-mis--capitan' : '' %>">
             <% if (!equipo.soyCapitan) { %>
-              <form class="eq-mis__salir eq-mis__salir--esquina" action="/equipos/<%= equipo.id %>/salir" method="POST" data-salir data-nombre="<%= equipo.nombre %>">
-                <input type="hidden" name="volver" value="/mis-equipos">
+              <form autocomplete="off" class="eq-mis__salir eq-mis__salir--esquina" action="/equipos/<%= equipo.id %>/salir" method="POST" data-salir data-nombre="<%= equipo.nombre %>">
+                <input autocomplete="off" type="hidden" name="volver" value="/mis-equipos">
                 <button type="submit" class="eq-mis__salir-boton">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
                   Salir

@@ -36,13 +36,13 @@
             <a class="btn btn--contorno btn--grande" href="/equipos/<%= equipo.id %>/editar">Editar equipo</a>
             <a class="btn btn--contorno btn--grande" href="/equipos/<%= equipo.id %>/posiciones">Posiciones que buscamos</a>
           <% } else { %>
-            <form action="/equipos/<%= equipo.id %>/reactivar" method="POST" data-confirmar="Volverá a aparecer en búsquedas con su puntaje anterior (<%= equipo.puntaje_nivel %> pts)." data-confirmar-titulo="¿Reactivar <%= equipo.nombre %>?" data-confirmar-boton="Reactivar">
+            <form autocomplete="off" action="/equipos/<%= equipo.id %>/reactivar" method="POST" data-confirmar="Volverá a aparecer en búsquedas con su puntaje anterior (<%= equipo.puntaje_nivel %> pts)." data-confirmar-titulo="¿Reactivar <%= equipo.nombre %>?" data-confirmar-boton="Reactivar">
               <button type="submit" class="btn btn--verde btn--grande">Reactivar equipo</button>
             </form>
           <% } %>
         <% } else if (relacion.esIntegrante) { %>
-          <form action="/equipos/<%= equipo.id %>/salir" method="POST" data-confirmar="Dejarás de ser parte del plantel de <%= equipo.nombre %>." data-confirmar-titulo="¿Salir del equipo?" data-confirmar-boton="Salir">
-            <input type="hidden" name="volver" value="/mis-equipos" />
+          <form autocomplete="off" action="/equipos/<%= equipo.id %>/salir" method="POST" data-confirmar="Dejarás de ser parte del plantel de <%= equipo.nombre %>." data-confirmar-titulo="¿Salir del equipo?" data-confirmar-boton="Salir">
+            <input autocomplete="off" type="hidden" name="volver" value="/mis-equipos" />
             <button type="submit" class="btn btn--contorno btn--grande sm-btn-peligro">Salir del equipo</button>
           </form>
         <% } else { %>
@@ -71,36 +71,36 @@
     <% } %>
 
     <% if (equipo.activo && !relacion.esIntegrante && !relacion.postulo) { %>
-      <form class="dash-panel eq-panel sm-form" id="postular" action="/equipos/<%= equipo.id %>/unirme" method="POST" novalidate data-sm-validar>
+      <form autocomplete="off" class="dash-panel eq-panel sm-form" id="postular" action="/equipos/<%= equipo.id %>/unirme" method="POST" novalidate data-sm-validar>
         <h2 class="dash-panel__titulo">Postular a <%= equipo.nombre %></h2>
         <div class="campo">
           <label for="mensaje-postular">Mensaje para el capitán</label>
-          <textarea id="mensaje-postular" name="mensaje" maxlength="200" required data-mensaje="Cuéntale al capitán quién eres." placeholder="Ej. Juego de lateral derecho y puedo los fines de semana."></textarea>
+          <textarea autocomplete="off" id="mensaje-postular" name="mensaje" maxlength="200" required data-mensaje="Cuéntale al capitán quién eres." placeholder="Ej. Juego de lateral derecho y puedo los fines de semana."></textarea>
           <small class="campo__error"></small>
         </div>
         <div class="sm-form__acciones"><button type="submit" class="btn btn--verde">Enviar solicitud</button></div>
       </form>
     <% } %>
     <% if (equipo.activo && relacion.idEquipoParaDesafiar && !desafioPendiente && !relacion.esIntegrante) { %>
-      <form class="dash-panel eq-panel sm-form" id="desafiar" action="/mi-equipo/desafios/<%= equipo.id %>?equipo=<%= relacion.idEquipoParaDesafiar %>" method="POST">
+      <form autocomplete="off" class="dash-panel eq-panel sm-form" id="desafiar" action="/mi-equipo/desafios/<%= equipo.id %>?equipo=<%= relacion.idEquipoParaDesafiar %>" method="POST">
         <h2 class="dash-panel__titulo">Desafiar a <%= equipo.nombre %></h2>
         <%# Modalidad del partido: una de las que juegan los dos equipos (equipoFichaModel.relacionConFicha) %>
         <% if (relacion.modalidadesParaDesafiar.length > 1) { %>
           <div class="campo">
             <label for="modalidad-desafio">Modalidad del partido</label>
-            <select id="modalidad-desafio" name="modalidad">
+            <select autocomplete="off" id="modalidad-desafio" name="modalidad">
               <% relacion.modalidadesParaDesafiar.forEach(function (n) { %>
                 <option value="<%= n %>">Fútbol <%= n %></option>
               <% }) %>
             </select>
           </div>
         <% } else if (relacion.modalidadesParaDesafiar.length === 1) { %>
-          <input type="hidden" name="modalidad" value="<%= relacion.modalidadesParaDesafiar[0] %>" />
+          <input autocomplete="off" type="hidden" name="modalidad" value="<%= relacion.modalidadesParaDesafiar[0] %>" />
           <p class="dash-panel__nota">Modalidad del partido: <strong>Fútbol <%= relacion.modalidadesParaDesafiar[0] %></strong></p>
         <% } %>
         <div class="campo">
           <label for="mensaje-desafio">Mensaje <span class="sm-opcional">(opcional)</span></label>
-          <textarea id="mensaje-desafio" name="mensaje" maxlength="200" placeholder="Ej. ¿Jugamos el sábado en la tarde?"></textarea>
+          <textarea autocomplete="off" id="mensaje-desafio" name="mensaje" maxlength="200" placeholder="Ej. ¿Jugamos el sábado en la tarde?"></textarea>
         </div>
         <div class="sm-form__acciones"><button type="submit" class="btn btn--verde">Enviar desafío</button></div>
       </form>
@@ -161,7 +161,7 @@
               <p class="sm-comentario__autor"><strong><%= c.autor %></strong> · <small><%= formatoFecha.format(c.fecha) %></small></p>
               <p class="sm-comentario__texto"><%= c.mensaje %></p>
               <% if (usuario.esAdmin) { %>
-                <form action="/comentarios/<%= c.id %>/ocultar" method="POST" data-confirmar="El comentario dejará de verse para todos y avisaremos a su autor." data-confirmar-titulo="¿Retirar este comentario?" data-confirmar-boton="Retirar">
+                <form autocomplete="off" action="/comentarios/<%= c.id %>/ocultar" method="POST" data-confirmar="El comentario dejará de verse para todos y avisaremos a su autor." data-confirmar-titulo="¿Retirar este comentario?" data-confirmar-boton="Retirar">
                   <button type="submit" class="sm-enlace">Retirar por moderación</button>
                 </form>
               <% } %>
@@ -169,10 +169,10 @@
           <% }) %>
         </ul>
       <% } %>
-      <form action="/equipos/<%= equipo.id %>/comentarios#comentarios" method="POST" class="sm-form" novalidate data-sm-validar>
+      <form autocomplete="off" action="/equipos/<%= equipo.id %>/comentarios#comentarios" method="POST" class="sm-form" novalidate data-sm-validar>
         <div class="campo <%= errorComentario ? 'campo--error' : '' %>">
           <label for="comentario">Deja tu comentario</label>
-          <textarea id="comentario" name="mensaje" maxlength="<%= largoComentario %>" required data-mensaje="El comentario no puede estar vacío."
+          <textarea autocomplete="off" id="comentario" name="mensaje" maxlength="<%= largoComentario %>" required data-mensaje="El comentario no puede estar vacío."
                     aria-describedby="comentario-error comentario-ayuda" placeholder="Cuenta cómo fue jugar con o contra este equipo."><%= mensaje %></textarea>
           <small class="campo__error" id="comentario-error"><%= errorComentario || '' %></small>
           <small class="campo__ayuda" id="comentario-ayuda">Máximo <%= largoComentario %> caracteres. Sé respetuoso: los administradores retiran comentarios ofensivos.</small>
@@ -185,7 +185,7 @@
       <section class="dash-panel eq-panel sm-peligro" aria-labelledby="titulo-peligro">
         <h2 class="dash-panel__titulo" id="titulo-peligro">Desactivar equipo</h2>
         <p class="dash-panel__nota"><%= advertencia %></p>
-        <form action="/equipos/<%= equipo.id %>/desactivar" method="POST" data-confirmar="<%= advertencia %>" data-confirmar-titulo="¿Desactivar <%= equipo.nombre %>?" data-confirmar-boton="Desactivar">
+        <form autocomplete="off" action="/equipos/<%= equipo.id %>/desactivar" method="POST" data-confirmar="<%= advertencia %>" data-confirmar-titulo="¿Desactivar <%= equipo.nombre %>?" data-confirmar-boton="Desactivar">
           <button type="submit" class="btn btn--contorno sm-btn-peligro">Desactivar equipo</button>
         </form>
       </section>

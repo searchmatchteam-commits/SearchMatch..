@@ -38,11 +38,11 @@
         </div>
       <% } %>
 
-      <form action="<%= accion %>" method="POST" enctype="multipart/form-data" class="formulario sm-form sm-form--torneo" novalidate data-torneo-form>
+      <form autocomplete="off" action="<%= accion %>" method="POST" enctype="multipart/form-data" class="formulario sm-form sm-form--torneo" novalidate data-torneo-form>
         <h2 class="sm-subtitulo">Datos generales</h2>
         <div class="campo <%= error('nombre') %>">
           <label for="nombre">Nombre del torneo</label>
-          <input type="text" id="nombre" name="nombre" value="<%= datos.nombre || '' %>" maxlength="100" <%= dis('nombre') %>
+          <input autocomplete="off" type="text" id="nombre" name="nombre" value="<%= datos.nombre || '' %>" maxlength="100" <%= dis('nombre') %>
                  placeholder="Ej. Copa Primavera 2026" required aria-describedby="nombre-error" />
           <small class="campo__error" id="nombre-error"><%= erroresCampo.nombre || '' %></small>
         </div>
@@ -50,14 +50,14 @@
         <div class="campo <%= error('foto') %>">
           <label for="foto">Foto del torneo<% if (torneo && torneo.foto) { %> <span class="sm-opcional">(déjala vacía para mantener la actual)</span><% } %></label>
           <% if (torneo && torneo.foto) { %><img class="sm-torneo-miniatura sm-torneo-miniatura--grande" src="<%= torneo.foto %>" alt="Foto actual" data-foto-vista /><% } else { %><img class="sm-torneo-miniatura sm-torneo-miniatura--grande" alt="" hidden data-foto-vista /><% } %>
-          <input type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/webp" <%= torneo && torneo.foto ? '' : 'required' %> <%= dis('foto') %> aria-describedby="foto-error foto-ayuda" data-foto-input />
+          <input autocomplete="off" type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/webp" <%= torneo && torneo.foto ? '' : 'required' %> <%= dis('foto') %> aria-describedby="foto-error foto-ayuda" data-foto-input />
           <small class="campo__ayuda" id="foto-ayuda">Obligatoria. JPG, PNG o WebP; si es muy pesada (foto de celular) se achica sola antes de enviar.</small>
           <small class="campo__error" id="foto-error"><%= erroresCampo.foto || '' %></small>
         </div>
 
         <div class="campo <%= error('descripcion') %>">
           <label for="descripcion">Descripción</label>
-          <textarea id="descripcion" name="descripcion" rows="3" maxlength="<%= limites.descripcion %>" required <%= dis('descripcion') %>
+          <textarea autocomplete="off" id="descripcion" name="descripcion" rows="3" maxlength="<%= limites.descripcion %>" required <%= dis('descripcion') %>
                     placeholder="Qué es el torneo, para quién es y cómo se juega." aria-describedby="descripcion-error"><%= datos.descripcion || '' %></textarea>
           <small class="campo__error" id="descripcion-error"><%= erroresCampo.descripcion || '' %></small>
         </div>
@@ -65,7 +65,7 @@
         <div class="formulario__fila">
           <div class="campo <%= error('formato') %>">
             <label for="formato">Formato</label>
-            <select id="formato" name="formato" required aria-describedby="formato-error formato-ayuda" <%= dis('formato') %> data-formato>
+            <select autocomplete="off" id="formato" name="formato" required aria-describedby="formato-error formato-ayuda" <%= dis('formato') %> data-formato>
               <option value="">Elige…</option>
               <% Object.entries(formatos).forEach(function ([clave, texto]) { %>
                 <option value="<%= clave %>" <%= datos.formato === clave ? 'selected' : '' %>><%= texto %></option>
@@ -76,7 +76,7 @@
           </div>
           <div class="campo <%= error('id_modalidad') %>">
             <label for="id_modalidad">Modalidad</label>
-            <select id="id_modalidad" name="id_modalidad" required aria-describedby="id_modalidad-error" <%= dis('id_modalidad') %> data-modalidad>
+            <select autocomplete="off" id="id_modalidad" name="id_modalidad" required aria-describedby="id_modalidad-error" <%= dis('id_modalidad') %> data-modalidad>
               <option value="">Elige…</option>
               <% modalidades.forEach(function (m) { %>
                 <option value="<%= m.id %>" <%= datos.idModalidad === m.id ? 'selected' : '' %>><%= m.nombre %></option>
@@ -89,7 +89,7 @@
         <div class="formulario__fila">
           <div class="campo <%= error('id_nivel_min') %>">
             <label for="id_nivel_min">Nivel mínimo admitido</label>
-            <select id="id_nivel_min" name="id_nivel_min" required aria-describedby="id_nivel_min-error" <%= dis('id_nivel_min') %>>
+            <select autocomplete="off" id="id_nivel_min" name="id_nivel_min" required aria-describedby="id_nivel_min-error" <%= dis('id_nivel_min') %>>
               <option value="">Elige…</option>
               <% niveles.forEach(function (n) { %><option value="<%= n.id %>" <%= datos.idNivelMin === n.id ? 'selected' : '' %>><%= n.nombre %></option><% }) %>
             </select>
@@ -97,7 +97,7 @@
           </div>
           <div class="campo <%= error('id_nivel_max') %>">
             <label for="id_nivel_max">Nivel máximo admitido</label>
-            <select id="id_nivel_max" name="id_nivel_max" required aria-describedby="id_nivel_max-error" <%= dis('id_nivel_max') %>>
+            <select autocomplete="off" id="id_nivel_max" name="id_nivel_max" required aria-describedby="id_nivel_max-error" <%= dis('id_nivel_max') %>>
               <option value="">Elige…</option>
               <% niveles.forEach(function (n) { %><option value="<%= n.id %>" <%= datos.idNivelMax === n.id ? 'selected' : '' %>><%= n.nombre %></option><% }) %>
             </select>
@@ -107,7 +107,7 @@
 
         <div class="campo <%= error('emparejamiento') %>">
           <label for="emparejamiento">Emparejamiento</label>
-          <select id="emparejamiento" name="emparejamiento" required aria-describedby="emparejamiento-error emparejamiento-ayuda" <%= dis('emparejamiento') %>>
+          <select autocomplete="off" id="emparejamiento" name="emparejamiento" required aria-describedby="emparejamiento-error emparejamiento-ayuda" <%= dis('emparejamiento') %>>
             <% Object.entries(emparejamientos).forEach(function ([clave, texto]) { %>
               <option value="<%= clave %>" <%= (datos.emparejamiento || 'sorteo') === clave ? 'selected' : '' %>><%= texto %></option>
             <% }) %>
@@ -119,7 +119,7 @@
         <h2 class="sm-subtitulo">Lugar</h2>
         <div class="campo <%= error('id_recinto') %>">
           <label for="id_recinto">Recinto</label>
-          <select id="id_recinto" name="id_recinto" required aria-describedby="id_recinto-error recinto-ayuda" <%= dis('id_recinto') %> data-recinto>
+          <select autocomplete="off" id="id_recinto" name="id_recinto" required aria-describedby="id_recinto-error recinto-ayuda" <%= dis('id_recinto') %> data-recinto>
             <option value="">Elige…</option>
             <% recintos.forEach(function (r) { %>
               <option value="<%= r.id %>" data-modalidades="<%= r.modalidades.join(',') %>" <%= datos.idRecinto === r.id ? 'selected' : '' %>><%= r.nombre %><%= r.comuna ? ` (${r.comuna})` : '' %></option>
@@ -136,7 +136,7 @@
               <p class="dash-panel__nota" data-canchas-vacio><%= datos.idRecinto ? 'Ese recinto no tiene canchas activas de la modalidad.' : 'Elige el recinto para ver sus canchas.' %></p>
             <% } %>
             <% canchas.forEach(function (c) { %>
-              <label class="sm-casilla"><input type="checkbox" name="canchas" value="<%= c.id %>" <%= canchasElegidas.includes(c.id) ? 'checked' : '' %> <%= dis('canchas') %> /> <%= c.nombre %> <small>(<%= c.modalidad %>)</small></label>
+              <label class="sm-casilla"><input autocomplete="off" type="checkbox" name="canchas" value="<%= c.id %>" <%= canchasElegidas.includes(c.id) ? 'checked' : '' %> <%= dis('canchas') %> /> <%= c.nombre %> <small>(<%= c.modalidad %>)</small></label>
             <% }) %>
           </div>
           <% if (!fijo('id_recinto')) { %>
@@ -149,24 +149,24 @@
         <div class="formulario__fila">
           <div class="campo <%= error('fecha_inicio') %>">
             <label for="fecha_inicio">Fecha de inicio</label>
-            <input type="date" id="fecha_inicio" name="fecha_inicio" value="<%= datos.fechaInicio || '' %>" required <%= dis('fecha_inicio') %> aria-describedby="fecha_inicio-error" />
+            <input autocomplete="off" type="date" id="fecha_inicio" name="fecha_inicio" value="<%= datos.fechaInicio || '' %>" required <%= dis('fecha_inicio') %> aria-describedby="fecha_inicio-error" />
             <small class="campo__error" id="fecha_inicio-error"><%= erroresCampo.fecha_inicio || '' %></small>
           </div>
           <div class="campo <%= error('hora_inicio') %>">
             <label for="hora_inicio">Hora de inicio <span class="sm-opcional">(opcional)</span></label>
-            <input type="time" id="hora_inicio" name="hora_inicio" value="<%= datos.horaInicio || '' %>" <%= dis('hora_inicio') %> aria-describedby="hora_inicio-error" />
+            <input autocomplete="off" type="time" id="hora_inicio" name="hora_inicio" value="<%= datos.horaInicio || '' %>" <%= dis('hora_inicio') %> aria-describedby="hora_inicio-error" />
             <small class="campo__error" id="hora_inicio-error"><%= erroresCampo.hora_inicio || '' %></small>
           </div>
         </div>
         <div class="formulario__fila">
           <div class="campo <%= error('fecha_termino') %>">
             <label for="fecha_termino">Fecha de término</label>
-            <input type="date" id="fecha_termino" name="fecha_termino" value="<%= datos.fechaTermino || '' %>" required <%= dis('fecha_termino') %> aria-describedby="fecha_termino-error" />
+            <input autocomplete="off" type="date" id="fecha_termino" name="fecha_termino" value="<%= datos.fechaTermino || '' %>" required <%= dis('fecha_termino') %> aria-describedby="fecha_termino-error" />
             <small class="campo__error" id="fecha_termino-error"><%= erroresCampo.fecha_termino || '' %></small>
           </div>
           <div class="campo <%= error('fecha_limite_inscripcion') %>">
             <label for="fecha_limite_inscripcion">Fecha límite de inscripción</label>
-            <input type="date" id="fecha_limite_inscripcion" name="fecha_limite_inscripcion" value="<%= datos.fechaLimite || '' %>" required <%= dis('fecha_limite_inscripcion') %>
+            <input autocomplete="off" type="date" id="fecha_limite_inscripcion" name="fecha_limite_inscripcion" value="<%= datos.fechaLimite || '' %>" required <%= dis('fecha_limite_inscripcion') %>
                    <%- torneo && editables && !fijo('fecha_limite_inscripcion') ? `min="${torneo.fechaLimite}"` : '' %> aria-describedby="fecha_limite_inscripcion-error limite-ayuda" />
             <small class="campo__ayuda" id="limite-ayuda">Último día para inscribirse; no puede ser posterior al inicio.</small>
             <small class="campo__error" id="fecha_limite_inscripcion-error"><%= erroresCampo.fecha_limite_inscripcion || '' %></small>
@@ -177,13 +177,13 @@
         <div class="formulario__fila">
           <div class="campo <%= error('cupo_min') %>">
             <label for="cupo_min">Cupo mínimo de equipos</label>
-            <input type="number" id="cupo_min" name="cupo_min" min="<%= limites.cupoMin %>" max="<%= limites.cupoMax %>" step="1" inputmode="numeric"
+            <input autocomplete="off" type="number" id="cupo_min" name="cupo_min" min="<%= limites.cupoMin %>" max="<%= limites.cupoMax %>" step="1" inputmode="numeric"
                    value="<%= datos.cupoMin ?? '' %>" required <%= dis('cupo_min') %> aria-describedby="cupo_min-error" />
             <small class="campo__error" id="cupo_min-error"><%= erroresCampo.cupo_min || '' %></small>
           </div>
           <div class="campo <%= error('cupo_max') %>">
             <label for="cupo_max">Cupo máximo de equipos</label>
-            <input type="number" id="cupo_max" name="cupo_max" min="<%= torneo && editables && !fijo('cupo_max') ? torneo.cupoMax : limites.cupoMin %>" max="<%= limites.cupoMax %>" step="1" inputmode="numeric"
+            <input autocomplete="off" type="number" id="cupo_max" name="cupo_max" min="<%= torneo && editables && !fijo('cupo_max') ? torneo.cupoMax : limites.cupoMin %>" max="<%= limites.cupoMax %>" step="1" inputmode="numeric"
                    value="<%= datos.cupoMax ?? '' %>" required <%= dis('cupo_max') %> aria-describedby="cupo_max-error" />
             <small class="campo__error" id="cupo_max-error"><%= erroresCampo.cupo_max || '' %></small>
           </div>
@@ -191,20 +191,20 @@
         <div class="formulario__fila" data-solo-grupos>
           <div class="campo <%= error('cantidad_grupos') %>">
             <label for="cantidad_grupos">Cantidad de grupos <span class="sm-opcional">(fase de grupos)</span></label>
-            <input type="number" id="cantidad_grupos" name="cantidad_grupos" min="<%= limites.grupos.min %>" max="<%= limites.grupos.max %>" step="1" inputmode="numeric"
+            <input autocomplete="off" type="number" id="cantidad_grupos" name="cantidad_grupos" min="<%= limites.grupos.min %>" max="<%= limites.grupos.max %>" step="1" inputmode="numeric"
                    value="<%= datos.cantidadGrupos ?? '' %>" <%= dis('cantidad_grupos') %> aria-describedby="cantidad_grupos-error" />
             <small class="campo__error" id="cantidad_grupos-error"><%= erroresCampo.cantidad_grupos || '' %></small>
           </div>
           <div class="campo <%= error('clasifican_por_grupo') %>">
             <label for="clasifican_por_grupo">Clasifican por grupo <span class="sm-opcional">(fase de grupos)</span></label>
-            <input type="number" id="clasifican_por_grupo" name="clasifican_por_grupo" min="<%= limites.clasifican.min %>" max="<%= limites.clasifican.max %>" step="1" inputmode="numeric"
+            <input autocomplete="off" type="number" id="clasifican_por_grupo" name="clasifican_por_grupo" min="<%= limites.clasifican.min %>" max="<%= limites.clasifican.max %>" step="1" inputmode="numeric"
                    value="<%= datos.clasificanPorGrupo ?? '' %>" <%= dis('clasifican_por_grupo') %> aria-describedby="clasifican_por_grupo-error" />
             <small class="campo__error" id="clasifican_por_grupo-error"><%= erroresCampo.clasifican_por_grupo || '' %></small>
           </div>
         </div>
         <div class="campo <%= error('min_jugadores') %>">
           <label for="min_jugadores">Mínimo de jugadores por plantel</label>
-          <input type="number" id="min_jugadores" name="min_jugadores" min="<%= limites.jugadores.min %>" max="<%= limites.jugadores.max %>" step="1" inputmode="numeric"
+          <input autocomplete="off" type="number" id="min_jugadores" name="min_jugadores" min="<%= limites.jugadores.min %>" max="<%= limites.jugadores.max %>" step="1" inputmode="numeric"
                  value="<%= datos.minJugadores ?? '' %>" required <%= dis('min_jugadores') %> aria-describedby="min_jugadores-error" />
           <small class="campo__error" id="min_jugadores-error"><%= erroresCampo.min_jugadores || '' %></small>
         </div>
@@ -212,7 +212,7 @@
         <h2 class="sm-subtitulo">Inscripción y pago</h2>
         <div class="campo <%= error('precio') %>">
           <label for="precio">Precio de inscripción por equipo (CLP)</label>
-          <input type="text" id="precio" name="precio" inputmode="numeric" value="<%= datos.precioIngresado ?? '' %>" required <%= dis('precio') %>
+          <input autocomplete="off" type="text" id="precio" name="precio" inputmode="numeric" value="<%= datos.precioIngresado ?? '' %>" required <%= dis('precio') %>
                  placeholder="Ej. 15000 (0 = gratuito)" aria-describedby="precio-error precio-ayuda" data-precio data-tipo-cambio="<%= tipoCambio || '' %>" />
           <small class="campo__ayuda" id="precio-ayuda">Pesos enteros, sin decimales. Con 0 el torneo es gratuito y las inscripciones se confirman sin pago.</small>
           <small class="campo__error" id="precio-error"><%= erroresCampo.precio || '' %></small>
@@ -221,7 +221,7 @@
           <legend>Medios de pago aceptados</legend>
           <% medios.forEach(function (m) { const elegido = elegidos.includes(m.clave); %>
             <label class="sm-casilla <%= m.habilitada ? '' : 'sm-casilla--deshabilitada' %>">
-              <input type="checkbox" name="medios_pago" value="<%= m.clave %>" <%= elegido ? 'checked' : '' %> <%= m.habilitada && !fijo('medios_pago') ? '' : 'disabled' %> <%- m.clave === 'paypal' ? 'data-paypal' : '' %> />
+              <input autocomplete="off" type="checkbox" name="medios_pago" value="<%= m.clave %>" <%= elegido ? 'checked' : '' %> <%= m.habilitada && !fijo('medios_pago') ? '' : 'disabled' %> <%- m.clave === 'paypal' ? 'data-paypal' : '' %> />
               <%= m.texto %>
               <% if (!m.habilitada) { %><small>(no disponible: sin credenciales probadas o desactivada)</small><% } else if (m.pruebas) { %><small>(modo de pruebas)</small><% } %>
             </label>
@@ -237,13 +237,13 @@
         <h2 class="sm-subtitulo">Premios y reglamento</h2>
         <div class="campo <%= error('premios') %>">
           <label for="premios">Premios <span class="sm-opcional">(opcional)</span></label>
-          <textarea id="premios" name="premios" rows="3" maxlength="500" <%= dis('premios') %>
+          <textarea autocomplete="off" id="premios" name="premios" rows="3" maxlength="500" <%= dis('premios') %>
                     placeholder="Ej. 1.º lugar: copa y $300.000 · 2.º lugar: medallas" aria-describedby="premios-error"><%= datos.premios || '' %></textarea>
           <small class="campo__error" id="premios-error"><%= erroresCampo.premios || '' %></small>
         </div>
         <div class="campo <%= error('reglamento') %>">
           <label for="reglamento">Reglamento</label>
-          <textarea id="reglamento" name="reglamento" rows="6" maxlength="<%= limites.reglamento %>" required <%= dis('reglamento') %>
+          <textarea autocomplete="off" id="reglamento" name="reglamento" rows="6" maxlength="<%= limites.reglamento %>" required <%= dis('reglamento') %>
                     placeholder="Reglas de juego, puntualidad, W.O., conducta, apelaciones…" aria-describedby="reglamento-error reglamento-ayuda"><%= datos.reglamento || '' %></textarea>
           <small class="campo__ayuda" id="reglamento-ayuda">Los capitanes deben aceptarlo al inscribir a su equipo.</small>
           <small class="campo__error" id="reglamento-error"><%= erroresCampo.reglamento || '' %></small>
@@ -253,7 +253,7 @@
         <h2 class="sm-subtitulo">Patrocinadores</h2>
         <div class="campo">
           <label for="tiene_patrocinadores">¿Tiene patrocinadores?</label>
-          <select id="tiene_patrocinadores" name="tiene_patrocinadores">
+          <select autocomplete="off" id="tiene_patrocinadores" name="tiene_patrocinadores">
             <option value="no" <%= datos.tienePatrocinadores ? '' : 'selected' %>>No</option>
             <option value="si" <%= datos.tienePatrocinadores ? 'selected' : '' %>>Sí</option>
           </select>
@@ -266,7 +266,7 @@
                 <li class="sm-patrocinador">
                   <img class="sm-patrocinador__logo" src="<%= p.logo %>" alt="" />
                   <span><%= p.nombre %></span>
-                  <label class="sm-opcional"><input type="checkbox" name="quitar_patrocinador_<%= p.id %>" value="si"
+                  <label class="sm-opcional"><input autocomplete="off" type="checkbox" name="quitar_patrocinador_<%= p.id %>" value="si"
                     <%= (datos.quitarPatrocinadores || []).includes(p.id) ? 'checked' : '' %> /> Quitar</label>
                 </li>
               <% }) %>
@@ -278,11 +278,11 @@
               <div class="formulario__fila">
                 <div class="campo">
                   <label for="patrocinador_nombre_<%= i %>">Nombre</label>
-                  <input type="text" id="patrocinador_nombre_<%= i %>" name="patrocinador_nombre_<%= i %>" maxlength="100" placeholder="Ej. Deportes El Gol" />
+                  <input autocomplete="off" type="text" id="patrocinador_nombre_<%= i %>" name="patrocinador_nombre_<%= i %>" maxlength="100" placeholder="Ej. Deportes El Gol" />
                 </div>
                 <div class="campo">
                   <label for="patrocinador_logo_<%= i %>">Logo</label>
-                  <input type="file" id="patrocinador_logo_<%= i %>" name="patrocinador_logo_<%= i %>" accept="image/jpeg,image/png,image/webp" />
+                  <input autocomplete="off" type="file" id="patrocinador_logo_<%= i %>" name="patrocinador_logo_<%= i %>" accept="image/jpeg,image/png,image/webp" />
                 </div>
               </div>
               <small class="campo__error"><%= erroresCampo[`patrocinador_${i}`] || '' %></small>

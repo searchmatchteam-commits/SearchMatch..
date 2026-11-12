@@ -21,10 +21,10 @@
         <div class="alerta alerta--error" role="alert">Revisa los campos marcados en rojo.</div>
       <% } %>
 
-      <form action="/cuenta" method="POST" class="formulario sm-form" novalidate data-sm-validar>
+      <form autocomplete="off" action="/cuenta" method="POST" class="formulario sm-form" novalidate data-sm-validar>
         <div class="campo <%= erroresCampo.correo ? 'campo--error' : '' %>">
           <label for="correo">Correo principal</label>
-          <input type="email" id="correo" name="correo" value="<%= datos.correo %>" maxlength="150" autocomplete="email"
+          <input type="email" id="correo" name="correo" value="<%= datos.correo %>" maxlength="150" autocomplete="off"
                  aria-describedby="correo-error correo-ayuda" required data-mensaje="El correo principal es obligatorio." />
           <small class="campo__error" id="correo-error"><%= erroresCampo.correo || '' %></small>
           <small class="campo__ayuda" id="correo-ayuda">Con este correo inicias sesión. Si lo cambias, te enviaremos un enlace para confirmarlo.</small>
@@ -42,14 +42,14 @@
         <div class="campo <%= erroresCampo.correo_secundario ? 'campo--error' : '' %>">
           <label for="correo_secundario">Correo secundario <span class="sm-opcional">(opcional)</span></label>
           <input type="email" id="correo_secundario" name="correo_secundario" value="<%= datos.correoSecundario %>" maxlength="150"
-                 autocomplete="email" aria-describedby="correo_secundario-error correo_secundario-ayuda" />
+                 autocomplete="off" aria-describedby="correo_secundario-error correo_secundario-ayuda" />
           <small class="campo__error" id="correo_secundario-error"><%= erroresCampo.correo_secundario || '' %></small>
           <small class="campo__ayuda" id="correo_secundario-ayuda">Sirve para recuperar tu cuenta. Debe ser distinto del principal.</small>
         </div>
 
         <div class="campo <%= erroresCampo.telefono ? 'campo--error' : '' %>">
           <label for="telefono">Teléfono (WhatsApp)</label>
-          <input type="tel" id="telefono" name="telefono" value="<%= datos.telefono %>" inputmode="tel" autocomplete="tel"
+          <input type="tel" id="telefono" name="telefono" value="<%= datos.telefono %>" inputmode="tel" autocomplete="off"
                  placeholder="+56 9 1234 5678" data-telefono-cl aria-describedby="telefono-error" required
                  data-mensaje="El teléfono es obligatorio." />
           <small class="campo__error" id="telefono-error"><%= erroresCampo.telefono || '' %></small>
@@ -58,7 +58,7 @@
         <div class="campo <%= erroresCampo.password_actual ? 'campo--error' : '' %>">
           <label for="password_actual">Contraseña actual</label>
           <div class="campo__control">
-            <input type="password" id="password_actual" name="password_actual" autocomplete="current-password"
+            <input type="password" id="password_actual" name="password_actual" autocomplete="off"
                    aria-describedby="password_actual-error" required data-mensaje="Escribe tu contraseña actual para guardar." />
             <%- include('../partials/sm-ojo', { campo: 'password_actual' }) %>
           </div>
@@ -74,7 +74,7 @@
 
     <% if (verificado === false) { %>
       <!-- Formulario aparte (no se puede anidar en el de datos): el botón de arriba lo envía con form="..." -->
-      <form id="form-reenviar-verificacion" action="/cuenta/verificacion" method="POST" hidden></form>
+      <form autocomplete="off" id="form-reenviar-verificacion" action="/cuenta/verificacion" method="POST" hidden></form>
     <% } %>
 
     <div class="dash-panel eq-panel revelar">

@@ -42,7 +42,7 @@
         <% }) %>
         <!-- Otro color: el selector libre del sistema (también funciona sin JavaScript) -->
         <label class="sm-paleta__otro <%= enPaleta ? '' : 'sm-paleta__otro--activo' %>" title="Otro color">
-          <input type="color" name="<%= campo %>" value="<%= valores[campo] %>" data-var="<%= variable %>" aria-label="<%= etiqueta %>: otro color" />
+          <input autocomplete="off" type="color" name="<%= campo %>" value="<%= valores[campo] %>" data-var="<%= variable %>" aria-label="<%= etiqueta %>: otro color" />
           <span aria-hidden="true">Otro</span>
         </label>
       </div>
@@ -51,8 +51,8 @@
 
   <div class="sm-colores__grilla">
     <% if (conCamisetas) { %>
-      <label class="sm-colores__campo"><input type="color" name="camiseta_local" value="<%= valores.camiseta_local %>" data-var="--cl" /> Camiseta de local</label>
-      <label class="sm-colores__campo"><input type="color" name="camiseta_visita" value="<%= valores.camiseta_visita %>" data-var="--cv" /> Camiseta de visita</label>
+      <label class="sm-colores__campo"><input autocomplete="off" type="color" name="camiseta_local" value="<%= valores.camiseta_local %>" data-var="--cl" /> Camiseta de local</label>
+      <label class="sm-colores__campo"><input autocomplete="off" type="color" name="camiseta_visita" value="<%= valores.camiseta_visita %>" data-var="--cv" /> Camiseta de visita</label>
     <% } %>
   </div>
 </fieldset>
