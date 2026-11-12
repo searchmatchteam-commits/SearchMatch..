@@ -16,6 +16,7 @@
 //   node scripts/simular-torneo-y-partidos.js --solo-torneo --aplicar              (solo el torneo)
 //   npm run datos-prueba                                                           (todo y guarda; sin --jugador)
 //   npm run partidos-prueba     (3 partidos más desde el día 6, sin torneo; jugador = JUGADOR_PRUEBA del .env)
+//   npm run equipos-prueba      (4 equipos nuevos con plantel, inscritos al torneo y 4 partidos entre ellos)
 //   Opcional: --torneo=ID si hay más de un torneo con inscripciones abiertas.
 
 const { pool } = require('../config/db');
@@ -24,6 +25,109 @@ const reglas = require('../config/torneos');
 const { DURACION_PARTIDO_MIN } = require('../config/partidos');
 
 const MARCA = '[Simulado] Partido de prueba para buscar jugadores.';
+
+// --equipos-nuevos: 4 equipos con capitán y plantel (cuentas sin acceso: no tienen usuario en Supabase Auth,
+// así que nadie puede iniciar sesión con ellas ni reciben correos de la plataforma).
+const EQUIPOS_NUEVOS = [
+  { nombre: 'Deportivo Los Leones', comuna: 'Ñuñoa', nivel: 'Intermedio', colores: ['#c8102e', '#ffffff'], plantel: [
+    ['Matías', 'Fuentes', 'Mati', 'matias.fuentes.r@gmail.com', 'delantero'],
+    ['Cristóbal', 'Muñoz', 'Cris', 'cristobal.munoz94@gmail.com', 'mediocampista'],
+    ['Felipe', 'Araya', 'Pipe', 'felipe.araya.c@gmail.com', 'defensa'],
+    ['Joaquín', 'Soto', 'Joaco', 'joaquin.soto.v@gmail.com', 'arquero'],
+    ['Benjamín', 'Reyes', 'Benja', 'benjareyes.92@gmail.com', 'mediocampista'],
+  ] },
+  { nombre: 'Real Maipú F.C', comuna: 'Maipú', nivel: 'Intermedio', colores: ['#003da5', '#ffd100'], plantel: [
+    ['Sebastián', 'Contreras', 'Seba', 'seba.contreras.m@gmail.com', 'mediocampista'],
+    ['Diego', 'Morales', 'Dieguito', 'diego.morales.p@gmail.com', 'delantero'],
+    ['Nicolás', 'Rojas', 'Nico', 'nicorojas.93@gmail.com', 'defensa'],
+    ['Tomás', 'Espinoza', 'Tomi', 'tomas.espinoza.f@gmail.com', 'arquero'],
+    ['Ignacio', 'Vargas', 'Nacho', 'ignacio.vargas.l@gmail.com', 'defensa'],
+  ] },
+  { nombre: 'Unión Providencia', comuna: 'Providencia', nivel: 'Intermedio', colores: ['#006341', '#ffffff'], plantel: [
+    ['Vicente', 'Castillo', 'Vicho', 'vicente.castillo.a@gmail.com', 'defensa'],
+    ['Agustín', 'Pérez', 'Agus', 'agustin.perez.s@gmail.com', 'mediocampista'],
+    ['Martín', 'Silva', 'Tincho', 'martin.silva.h@gmail.com', 'delantero'],
+    ['Lucas', 'Gutiérrez', 'Lucho', 'lucas.gutierrez95@gmail.com', 'arquero'],
+    ['Francisco', 'Torres', 'Pancho', 'pancho.torres.b@gmail.com', 'mediocampista'],
+  ] },
+  { nombre: 'Atlético San Joaquín', comuna: 'San Joaquín', nivel: 'Intermedio', colores: ['#000000', '#e30613'], plantel: [
+    ['Gonzalo', 'Herrera', 'Gonza', 'gonzalo.herrera.d@gmail.com', 'delantero'],
+    ['Maximiliano', 'Díaz', 'Maxi', 'maxi.diaz.o@gmail.com', 'mediocampista'],
+    ['Rodrigo', 'Navarro', 'Rorro', 'rodrigo.navarro.g@gmail.com', 'defensa'],
+    ['Javier', 'Sepúlveda', 'Javi', 'javier.sepulveda.t@gmail.com', 'arquero'],
+    ['Andrés', 'Carrasco', 'Andy', 'andres.carrasco.e@gmail.com', 'defensa'],
+  ] },
+];
+
+// Estadísticas de la carta: estables (salen del índice) entre 58 y 84
+const valorStat = (i, j) => 58 + ((i * 7 + j * 11) % 27);
+
+async function crearEquiposNuevos(c, idModalidadTorneo) {
+  const existentes = await c.query('SELECT nombre FROM equipo WHERE lower(nombre) = ANY($1::text[])',
+    [EQUIPOS_NUEVOS.map((e) => e.nombre.toLowerCase())]);
+  if (existentes.rowCount > 0) {
+    throw new Error(`Ya existen: ${existentes.rows.map((f) => f.nombre).join(', ')}. No se crean de nuevo.`);
+  }
+  const { rows: [rolJugador] } = await c.query("SELECT id FROM rol_aplicacion WHERE lower(nombre) = 'jugador'");
+  const { rows: rolesEquipo } = await c.query('SELECT id, lower(nombre) AS nombre FROM rol_equipo');
+  const rolCapitan = rolesEquipo.find((r) => r.nombre.startsWith('capit')).id;
+  const rolIntegrante = (rolesEquipo.find((r) => r.nombre === 'integrante') || rolesEquipo.find((r) => !r.nombre.startsWith('capit'))).id;
+  const { rows: posiciones } = await c.query('SELECT id, lower(nombre) AS nombre FROM posicion');
+  const idPosicion = (clave) => (posiciones.find((p) => (clave === 'arquero' ? ['arquero', 'portero'] : [clave]).includes(p.nombre)) || posiciones[0]).id;
+  const statsCampo = ['stat_ritmo', 'stat_tiro', 'stat_pase', 'stat_regate', 'stat_defensa', 'stat_fisico'];
+  const statsPortero = ['stat_estirada', 'stat_manejo', 'stat_saque', 'stat_reflejos', 'stat_velocidad', 'stat_colocacion'];
+
+  console.log('\n🆕 Equipos nuevos:');
+  const ids = [];
+  for (const [i, e] of EQUIPOS_NUEVOS.entries()) {
+    const { rows: [comuna] } = await c.query('SELECT id, nombre FROM comunas WHERE lower(nombre) = lower($1) LIMIT 1', [e.comuna]);
+    const { rows: [nivel] } = await c.query('SELECT id, puntaje_min FROM nivel WHERE lower(nombre) = lower($1)', [e.nivel]);
+    if (!comuna || !nivel) throw new Error(`Falta la comuna ${e.comuna} o el nivel ${e.nivel} en los catálogos.`);
+
+    const jugadores = [];
+    for (const [j, [nombre, apellido, apodo, correo, posicion]] of e.plantel.entries()) {
+      // usuario.auth_id apunta a auth.users: se crea el usuario de Supabase Auth SIN contraseña
+      // (nadie puede iniciar sesión con él) y con el correo sin confirmar (Supabase no le escribe).
+      const { rows: [auth] } = await c.query(
+        `INSERT INTO auth.users (id, instance_id, aud, role, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+         VALUES (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', $1,
+                 '{"provider": "email", "providers": ["email"]}'::jsonb, jsonb_build_object('datos_prueba', true), now(), now())
+         RETURNING id`,
+        [correo]
+      );
+      const { rows: [u] } = await c.query(
+        `INSERT INTO usuario (auth_id, correo, telefono, id_rol_aplicacion, activo) VALUES ($4, $1, $2, $3, TRUE) RETURNING id`,
+        [correo, `+5699${String(1000000 + i * 97531 + j * 12347).slice(-7)}`, rolJugador.id, auth.id]
+      );
+      const stats = posicion === 'arquero' ? statsPortero : statsCampo;
+      const { rows: [jug] } = await c.query(
+        `INSERT INTO jugador (nombre_apodo, apellido, apodo, fecha_nacimiento, altura, peso, id_usuario, perfil_completo, ${stats.join(', ')})
+         VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE, ${stats.map((_, k) => `$${k + 8}`).join(', ')}) RETURNING id`,
+        [nombre, apellido, apodo, `${1990 + ((i * 5 + j * 3) % 12)}-0${1 + ((i + j) % 9)}-1${(i + j) % 9}`,
+          170 + ((i * 3 + j * 4) % 18), 66 + ((i * 4 + j * 5) % 18), u.id, ...stats.map((_, k) => valorStat(i * 5 + j, k))]
+      );
+      await c.query('INSERT INTO jugador_posicion (id_jugador, id_posicion) VALUES ($1, $2)', [jug.id, idPosicion(posicion)]);
+      jugadores.push({ idUsuario: u.id, idJugador: jug.id, correo });
+    }
+
+    const capitan = jugadores[0];
+    const { rows: [eq] } = await c.query(
+      `INSERT INTO equipo (nombre, zona, correo_contacto, id_modalidad, id_nivel, id_usuario_creador, puntaje_nivel, id_comuna,
+                           color_primario, color_secundario, camiseta_local, camiseta_visita)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $9, $10) RETURNING id`,
+      [e.nombre, comuna.nombre, capitan.correo, idModalidadTorneo, nivel.id, capitan.idUsuario, nivel.puntaje_min + 40 * i, comuna.id,
+        e.colores[0], e.colores[1]]
+    );
+    await c.query('INSERT INTO equipo_modalidad (id_equipo, id_modalidad) VALUES ($1, $2) ON CONFLICT DO NOTHING', [eq.id, idModalidadTorneo]);
+    for (const [j, jug] of jugadores.entries()) {
+      await c.query('INSERT INTO equipo_jugador (id_jugador, id_equipo, id_rol_equipo) VALUES ($1, $2, $3)',
+        [jug.idJugador, eq.id, j === 0 ? rolCapitan : rolIntegrante]);
+    }
+    ids.push(eq.id);
+    console.log(`   ✅ ${e.nombre} (${comuna.nombre}) · capitán ${e.plantel[0][0]} ${e.plantel[0][1]} <${capitan.correo}> · ${jugadores.length} jugadores`);
+  }
+  return ids;
+}
 const HORAS = ['19:00', '20:00', '18:00', '21:00', '17:00'];
 
 const args = Object.fromEntries(process.argv.slice(2).map((a) => {
@@ -128,7 +232,7 @@ async function inscribirTodos(c) {
 }
 
 // ---------------------------------------------------------------- 2) Partidos que buscan jugadores
-async function crearPartidos(c) {
+async function crearPartidos(c, soloEquipos = null) {
   // Sin --jugador no se excluye a nadie (quien juegue en uno de los dos equipos no verá ese partido)
   let yo = { id_usuario: 0, id_jugador: 0 };
   if (args.jugador) {
@@ -156,8 +260,9 @@ async function crearPartidos(c) {
                              WHERE ca.id_modalidad = m.id AND ca.activo AND rd.activo)
               ORDER BY m.cantidad_de_jugadores LIMIT 1) AS id_modalidad
        FROM libres a JOIN libres b ON b.id > a.id AND b.id_usuario_creador <> a.id_usuario_creador
+      WHERE $3::int[] IS NULL OR (a.id = ANY($3::int[]) AND b.id = ANY($3::int[]))
       ORDER BY a.id, b.id`,
-    [yo.id_usuario, yo.id_jugador || 0]
+    [yo.id_usuario, yo.id_jugador || 0, soloEquipos]
   );
   const validos = pares.filter((p) => p.id_modalidad);
   // Primero pares que no repiten equipos; si no alcanzan, se repiten
@@ -168,7 +273,14 @@ async function crearPartidos(c) {
       elegidos.push(p); usados.add(p.id_a); usados.add(p.id_b);
     }
   }
-  for (const p of validos) if (elegidos.length < CANTIDAD_PARTIDOS && !elegidos.includes(p)) elegidos.push(p);
+  // Luego, los pares cuyos equipos llevan menos partidos (así se reparten entre todos)
+  const veces = (id) => elegidos.filter((e) => e.id_a === id || e.id_b === id).length;
+  while (elegidos.length < CANTIDAD_PARTIDOS) {
+    const resto = validos.filter((p) => !elegidos.includes(p));
+    if (resto.length === 0) break;
+    resto.sort((x, y) => (veces(x.id_a) + veces(x.id_b)) - (veces(y.id_a) + veces(y.id_b)));
+    elegidos.push(resto[0]);
+  }
   if (elegidos.length === 0) { console.log('\n⚠️  Partidos: no hay dos equipos (sin ti) con una modalidad y una cancha en común.'); return; }
 
   const { rows: posiciones } = await c.query('SELECT id, nombre FROM posicion ORDER BY id');
@@ -234,8 +346,10 @@ async function crearPartidos(c) {
           WHERE j.id <> $1 AND j.id_usuario <> $2
             AND NOT EXISTS (SELECT 1 FROM equipo_jugador ej WHERE ej.id_jugador = j.id AND ej.id_equipo IN ($3, $4))
             AND NOT EXISTS (SELECT 1 FROM equipo e WHERE e.id IN ($3, $4) AND e.id_usuario_creador = j.id_usuario)
-          ORDER BY j.id LIMIT 1`,
-        [yo.id_jugador || 0, yo.id_usuario, p.id_a, p.id_b]
+          -- Con equipos nuevos, el relleno sale de sus planteles (cuentas de prueba, no de personas reales)
+          ORDER BY ($5::int[] IS NOT NULL AND EXISTS (SELECT 1 FROM equipo_jugador ej WHERE ej.id_jugador = j.id AND ej.id_equipo = ANY($5::int[]))) DESC, j.id
+          LIMIT 1`,
+        [yo.id_jugador || 0, yo.id_usuario, p.id_a, p.id_b, soloEquipos]
       );
       if (relleno) {
         await c.query(
@@ -253,8 +367,17 @@ async function main() {
   const c = await pool.connect();
   try {
     await c.query('BEGIN');
+    let nuevos = null;
+    if (args['equipos-nuevos']) {
+      const { rows: [t] } = await c.query(
+        `SELECT id_modalidad FROM torneo WHERE estado = ANY($1::text[]) AND ($2::int IS NULL OR id = $2) ORDER BY id LIMIT 1`,
+        [reglas.CON_INSCRIPCIONES, args.torneo ? Number(args.torneo) : null]
+      );
+      if (!t) throw new Error('No hay un torneo con inscripciones abiertas para elegir la modalidad de los equipos.');
+      nuevos = await crearEquiposNuevos(c, t.id_modalidad);
+    }
     if (!args['solo-partidos']) await inscribirTodos(c);
-    if (!args['solo-torneo']) await crearPartidos(c);
+    if (!args['solo-torneo']) await crearPartidos(c, nuevos);
     if (APLICAR) {
       await c.query('COMMIT');
       console.log('\n💾 Guardado.');
