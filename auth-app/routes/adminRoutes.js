@@ -60,8 +60,8 @@ router.post('/canchas/:id/activar', recintos.activarCancha);
 router.post('/canchas/:id/disponibilidad', validarBloque, recintos.crearBloque);
 router.post('/disponibilidad/:id/eliminar', recintos.eliminarBloque);
 
-// Usuarios: el Administrador principal usa la lista con eliminación definitiva (/admin/super/jugadores).
-router.get('/cuentas', (req, res, next) => (req.usuario.esSuperAdmin ? res.redirect('/admin/super/jugadores') : next()), cuentas.listar);
+// Usuarios: todos los administradores usan la lista con eliminación definitiva (/admin/super/jugadores).
+router.get('/cuentas', (req, res) => res.redirect(`/admin/super/jugadores${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`));
 router.post('/cuentas/:id/desactivar', cuentas.desactivar);
 router.post('/cuentas/:id/activar', cuentas.activar);
 
@@ -111,11 +111,12 @@ router.post('/configuracion/pasarelas/:clave/desactivar', config.desactivar);
 
 router.get('/super', (req, res) => res.redirect('/admin'));
 router.get('/super/equipos', (req, res) => res.redirect(301, `/admin/equipos${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`));
-router.post('/super/equipos/:id/eliminar', requirePrincipal, superAdmin.eliminarEquipo);
-router.get('/super/jugadores', requirePrincipal, superAdmin.jugadores);
-router.post('/super/jugadores/:id/eliminar', requirePrincipal, superAdmin.eliminarJugador);
-router.post('/super/jugadores/:id/desactivar', requirePrincipal, superAdmin.desactivarJugador);
-router.post('/super/jugadores/:id/activar', requirePrincipal, superAdmin.activarJugador);
+// Eliminar equipos y jugadores: cualquier administrador del panel (las cuentas del panel siguen protegidas en el modelo)
+router.post('/super/equipos/:id/eliminar', superAdmin.eliminarEquipo);
+router.get('/super/jugadores', superAdmin.jugadores);
+router.post('/super/jugadores/:id/eliminar', superAdmin.eliminarJugador);
+router.post('/super/jugadores/:id/desactivar', superAdmin.desactivarJugador);
+router.post('/super/jugadores/:id/activar', superAdmin.activarJugador);
 
 // Las rutas antiguas de torneos redirigen a /admin/torneos (los formularios POST usan 307 para conservar el método).
 router.all(/^\/super\/torneos(\/.*)?$/, (req, res) => res.redirect(req.method === 'GET' ? 301 : 307, `/admin/torneos${req.url.slice('/super/torneos'.length)}`));

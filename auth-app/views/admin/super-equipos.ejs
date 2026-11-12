@@ -6,7 +6,7 @@
       <div class="eq-cabecera__texto">
         <span class="dash-chip"><span class="badge__punto" aria-hidden="true"></span>Panel</span>
         <h1 class="eq-cabecera__titulo">Equipos</h1>
-        <p class="eq-cabecera__stats">Todos los equipos de SearchMatch.<% if (usuario.esSuperAdmin) { %> Como Administrador principal también puedes eliminarlos de forma definitiva, junto con sus desafíos y partidos.<% } %></p>
+        <p class="eq-cabecera__stats">Todos los equipos de SearchMatch. Puedes eliminarlos de forma definitiva, junto con sus desafíos y partidos.</p>
       </div>
     </header>
 
@@ -38,7 +38,6 @@
               </span>
               <span class="sm-rol"><%= e.integrantes %> <%= e.integrantes === 1 ? 'integrante' : 'integrantes' %></span>
               <span class="sm-estado <%= e.activo ? 'sm-estado--activo' : 'sm-estado--inactivo' %>"><%= e.activo ? 'Activo' : 'Inactivo' %></span>
-              <% if (usuario.esSuperAdmin) { %>
               <span class="sm-fila__accion">
                 <%- include('../partials/admin-accion-motivo', {
                   accion: `/admin/super/equipos/${e.id}/eliminar`, boton: 'Eliminar', peligro: true, ocultos: [['texto', texto]],
@@ -46,7 +45,6 @@
                   texto: `Esta acción no se puede deshacer. Se avisará a sus ${e.integrantes} integrantes.${avisoDesafios}`,
                 }) %>
               </span>
-              <% } %>
             </li>
           <% }) %>
         </ul>
