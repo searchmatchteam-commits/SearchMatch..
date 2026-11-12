@@ -48,4 +48,41 @@ async function comprimirOConservar(datos, tipo, opciones) {
   return (await comprimirImagen(datos, opciones)) || { datos, tipo };
 }
 
-module.exports = { comprimirImagen, comprimirOConservar };
+/*
+ * Miniaturas para fotos que se ven chicas (cartas mini del plantel, avatares de listas): la foto guardada mide
+ * hasta 800 px y pesa ~75 KB, pero se muestra a 30-130 px. Se generan al pedirlas (?t=mini) y se guardan en una
+ * caché en memoria por instancia; el navegador además las guarda por un año (la URL lleva la versión de la foto).
+ */
+const LADO_MINIATURA = 192; // 2x para pantallas retina a ~96 px
+const MAX_MINIATURAS = 300;
+const miniaturas = new Map();
+
+/**
+ * @param {string} clave - Identifica la foto y su versión (ej. 'jugador:12:1712345678').
+ * @param {Buffer} datos
+ * @param {boolean} webp - El navegador acepta WebP (casi todos): pesa menos que el JPEG.
+ * @returns {Promise<{datos: Buffer, tipo: string}|null>} null si la imagen no se puede leer.
+ */
+async function miniatura(clave, datos, webp) {
+  const k = `${clave}:${webp ? 'webp' : 'jpeg'}`;
+  if (miniaturas.has(k)) {
+    const guardada = miniaturas.get(k);
+    miniaturas.delete(k); // al final: la más usada recientemente
+    miniaturas.set(k, guardada);
+    return guardada;
+  }
+  try {
+    const base = sharp(datos, { limitInputPixels: LIMITE_PIXELES })
+      .resize({ width: LADO_MINIATURA, height: LADO_MINIATURA, fit: 'inside', withoutEnlargement: true });
+    const salida = webp
+      ? { datos: await base.webp({ quality: 78 }).toBuffer(), tipo: 'image/webp' }
+      : { datos: await base.flatten({ background: '#ffffff' }).jpeg({ quality: 80, mozjpeg: true }).toBuffer(), tipo: 'image/jpeg' };
+    miniaturas.set(k, salida);
+    if (miniaturas.size > MAX_MINIATURAS) miniaturas.delete(miniaturas.keys().next().value);
+    return salida;
+  } catch {
+    return null;
+  }
+}
+
+module.exports = { comprimirImagen, comprimirOConservar, miniatura };

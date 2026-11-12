@@ -452,6 +452,14 @@
   from { opacity: 0; transform: translateX(28px); }
 }
 
+/* Celular: entran desde abajo. Corridos 28px a la derecha, la página se podía arrastrar de lado hasta que terminaban */
+@media (max-width: 899px) {
+  .pp-panel { animation-name: pp-panel-entra-abajo; }
+}
+@keyframes pp-panel-entra-abajo {
+  from { opacity: 0; transform: translateY(18px); }
+}
+
 /* Filo neón de 1px arriba: se enciende al centro y se apaga hacia los lados */
 .pp-panel::before {
   content: "";

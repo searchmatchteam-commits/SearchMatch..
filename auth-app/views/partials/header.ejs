@@ -86,12 +86,12 @@
   <% } %>
   <% if (locals.pagina === 'auth') { %>
     <!-- Mientras el usuario escribe, el navegador baja Three.js en segundo plano: al entrar al dashboard el
-         balón 3D ya está en caché. Con red lenta no (son ~250 KB y el balón 3D no se usa). -->
+         balón 3D ya está en caché. Con red lenta no (son ~160 KB y el balón 3D no se usa). -->
     <script>
       if (!document.documentElement.classList.contains('red-lenta')) {
         var precarga = document.createElement('link');
         precarga.rel = 'prefetch';
-        precarga.href = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+        precarga.href = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js';
         precarga.crossOrigin = 'anonymous';
         document.head.appendChild(precarga);
       }

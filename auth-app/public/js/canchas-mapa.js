@@ -23,7 +23,7 @@ function desempacar(datos) {
   });
 }
 
-function iniciarMapa() {
+async function iniciarMapa() {
   const contenedor = document.getElementById('mapa-canchas');
   const datos = document.getElementById('datos-mapa');
   if (!contenedor || !datos || typeof L === 'undefined') return;
@@ -48,7 +48,17 @@ function iniciarMapa() {
     return;
   }
 
-  const recintos = desempacar(JSON.parse(datos.textContent));
+  // Sin filtros los recintos llegan aparte (cacheados por el navegador); con filtros, dentro de la página.
+  let crudos;
+  try {
+    crudos = datos.dataset.src
+      ? await fetch(datos.dataset.src, { credentials: 'same-origin' }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      : JSON.parse(datos.textContent);
+  } catch {
+    contenedor.replaceChildren(crear('p', 'sm-mapa__nota', 'No pudimos cargar el mapa. Recarga la página o usa la vista de lista.'));
+    return;
+  }
+  const recintos = desempacar(crudos);
   const pesos = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
 
   const mapa = L.map(contenedor).setView(CENTRO_SANTIAGO, ZOOM_INICIAL);

@@ -69,11 +69,10 @@ async function listar(req, res, next) {
       const { filas } = await torneoModel.listarAdmin(estado, { todo: true });
       return enviarCSV(res, 'torneos', COLUMNAS_CSV, filas);
     }
-    const [{ filas, total }, cat, recintos] = await Promise.all([
-      torneoModel.listarAdmin(estado), torneoModel.catalogos(), torneoModel.recintosParaTorneo(),
-    ]);
-    // El filtro de recinto ofrece los que tienen torneos y los activos.
-    const opcionesRecinto = new Map([...cat.recintosConTorneos, ...recintos].map((r) => [String(r.id), r.nombre]));
+    const [{ filas, total }, cat] = await Promise.all([torneoModel.listarAdmin(estado), torneoModel.catalogos()]);
+    // El filtro de recinto ofrece solo los que tienen torneos: los demás darían siempre una lista vacía
+    // (antes listaba los ~2.500 recintos activos del país y la página pesaba 250 KB).
+    const opcionesRecinto = new Map(cat.recintosConTorneos.map((r) => [String(r.id), r.nombre]));
     const aOpciones = (lista) => lista.map((x) => ({ valor: String(x.id), texto: x.nombre }));
     return res.render('admin/torneos', {
       titulo: 'Torneos',

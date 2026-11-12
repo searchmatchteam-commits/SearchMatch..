@@ -336,7 +336,8 @@ const decidir = accionPartido(async (req, idPartido) => {
 /** Partidos que buscan jugadores (para inscribirse). */
 async function buscanJugadores(req, res, next) {
   try {
-    const partidos = await convocatoriaModel.listarAbiertos(req.usuario.idAuth, 50);
+    // Sin las tablas de sql/partido_asistencia.sql todavía no hay partidos publicados
+    const partidos = await convocatoriaModel.listarAbiertos(req.usuario.idAuth, 50).catch((err) => { if (err.code === '42P01') return []; throw err; });
     return res.render('partidos/buscan-jugadores', { titulo: 'Partidos que buscan jugadores', pagina: 'equipo', partidos });
   } catch (err) {
     return next(err);

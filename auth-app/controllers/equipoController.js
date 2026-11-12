@@ -159,7 +159,7 @@ function cartaDeJugador(jugador) {
     media: carta.media,
     posicion: { sigla: carta.posicion.sigla },
     estadisticas: carta.estadisticas,
-    foto: jugador.fotoVersion ? `/jugadores/${jugador.id}/foto?v=${jugador.fotoVersion}` : null,
+    foto: jugador.fotoVersion ? `/jugadores/${jugador.id}/foto?v=${jugador.fotoVersion}&t=mini` : null,
   };
 }
 
@@ -230,7 +230,7 @@ function jugadorInvitable(jugador) {
     mediaAlta: media !== null && media > MEDIA_ALTA,
     tieneStats: Boolean(jugador.stats),
     estadisticas: carta.estadisticas.map(({ sigla, valor, destacada }) => ({ sigla, valor: Number(valor) || 0, destacada })),
-    foto: jugador.fotoVersion ? `/jugadores/${jugador.id}/foto?v=${jugador.fotoVersion}` : null,
+    foto: jugador.fotoVersion ? `/jugadores/${jugador.id}/foto?v=${jugador.fotoVersion}&t=mini` : null,
     etiqueta: equipos.length === 0 ? 'Agente Libre' : equipos.length === 1 ? `Juega en ${equipos[0]}` : 'Multi-equipo',
     libre: equipos.length === 0,
     equipos,

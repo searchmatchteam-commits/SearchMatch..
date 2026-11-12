@@ -66,8 +66,13 @@
           <div class="sm-mapa" id="mapa-canchas" role="region" aria-label="Mapa de recintos con canchas"></div>
           <noscript><p class="dash-panel__nota">El mapa necesita JavaScript. Usa la vista de lista.</p></noscript>
         </div>
-        <%# Formato compacto (canchasController.mapaCompacto); ya viene escapado %>
-        <script type="application/json" id="datos-mapa"><%- mapa.json %></script>
+        <% if (mapa.version) { %>
+          <%# Sin filtros: los datos van aparte y quedan en caché (canchasController.mapaJson) %>
+          <script type="application/json" id="datos-mapa" data-src="/canchas/mapa.json?v=<%= mapa.version %>"></script>
+        <% } else { %>
+          <%# Con filtros: formato compacto (canchasController.mapaCompacto); ya viene escapado %>
+          <script type="application/json" id="datos-mapa"><%- mapa.json %></script>
+        <% } %>
       <% } %>
 
       <% if (!hayFiltrosActivos) { %>

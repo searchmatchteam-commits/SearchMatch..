@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const canchaModel = require('../models/canchaModel');
 const disponibilidadModel = require('../models/disponibilidadModel');
 const ubicacionModel = require('../models/ubicacionModel');
@@ -75,10 +76,24 @@ function mapaCompacto(recintos) {
 }
 
 // El mapa sin filtros (todo Chile) se arma y serializa una vez por plazo, no en cada visita.
+// Va aparte de la página (GET /canchas/mapa.json?v=<versión>): son ~300 KB que el navegador guarda en caché
+// mientras los datos no cambien, en vez de bajarlos dentro del HTML en cada visita.
 const leerMapaSinFiltros = cacheBreve(PLAZO_CATALOGO_MS, async () => {
   const recintos = recintosParaMapa(await leerCanchasSinFiltros());
-  return { total: recintos.length, json: mapaCompacto(recintos) };
+  const json = mapaCompacto(recintos);
+  return { total: recintos.length, json, version: crypto.createHash('sha1').update(json).digest('hex').slice(0, 12) };
 });
+
+/** GET /canchas/mapa.json · Recintos del mapa sin filtros. Con ?v= de la versión vigente, caché larga. */
+async function mapaJson(req, res, next) {
+  try {
+    const mapa = await leerMapaSinFiltros();
+    res.set('Cache-Control', req.query.v === mapa.version ? 'private, max-age=604800, immutable' : 'private, no-cache');
+    return res.type('application/json').send(mapa.json);
+  } catch (err) {
+    return next(err);
+  }
+}
 
 async function listar(req, res, next) {
   const filtros = leerFiltros(req.query);
@@ -212,4 +227,4 @@ async function ficha(req, res, next) {
   }
 }
 
-module.exports = { listar, ficha, recintosParaMapa, mapaCompacto, proximosDias, minutoActualChile };
+module.exports = { listar, ficha, mapaJson, recintosParaMapa, mapaCompacto, proximosDias, minutoActualChile };

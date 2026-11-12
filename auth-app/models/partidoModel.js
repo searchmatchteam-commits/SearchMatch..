@@ -204,27 +204,33 @@ const SQL_MIS_EQUIPOS = `
 const SQL_SOY_EXTERNO = `EXISTS (SELECT 1 FROM partido_postulacion pp JOIN jugador j ON j.id = pp.id_jugador JOIN usuario u ON u.id = j.id_usuario
                                  WHERE pp.id_partido = p.id AND pp.estado = 'aceptada' AND u.auth_id = $1)`;
 
+/**
+ * Consulta de la agenda incluyendo los partidos donde entró como jugador de afuera. Si la tabla partido_postulacion
+ * aún no existe (falta ejecutar sql/partido_asistencia.sql), repite la consulta sin esa parte: la agenda nunca se cae.
+ * @param {(externo: string) => string} armar - Arma el SQL con la condición de "jugador de afuera".
+ */
+async function consultaConExternos(armar, params) {
+  try {
+    return (await pool.query(armar(SQL_SOY_EXTERNO), params)).rows;
+  } catch (err) {
+    if (err.code !== '42P01') throw err; // 42P01: la tabla no existe
+    return (await pool.query(armar('FALSE'), params)).rows;
+  }
+}
+
 async function listarDeCuentaEntre(authId, desde, hasta) {
-  const { rows } = await pool.query(
-    `${SQL_PARTIDO}
-      WHERE (d.id_equipo_desafiante IN (${SQL_MIS_EQUIPOS}) OR d.id_equipo_desafiado IN (${SQL_MIS_EQUIPOS}) OR ${SQL_SOY_EXTERNO})
+  return consultaConExternos((externo) => `${SQL_PARTIDO}
+      WHERE (d.id_equipo_desafiante IN (${SQL_MIS_EQUIPOS}) OR d.id_equipo_desafiado IN (${SQL_MIS_EQUIPOS}) OR ${externo})
         AND p.fecha BETWEEN $2::date AND $3::date
-      ORDER BY p.fecha, p.hora`,
-    [authId, desde, hasta]
-  );
-  return rows;
+      ORDER BY p.fecha, p.hora`, [authId, desde, hasta]);
 }
 
 async function listarDeCuenta(authId, proximos) {
-  const { rows } = await pool.query(
-    `${SQL_PARTIDO}
-      WHERE (d.id_equipo_desafiante IN (${SQL_MIS_EQUIPOS}) OR d.id_equipo_desafiado IN (${SQL_MIS_EQUIPOS}) OR ${SQL_SOY_EXTERNO})
+  return consultaConExternos((externo) => `${SQL_PARTIDO}
+      WHERE (d.id_equipo_desafiante IN (${SQL_MIS_EQUIPOS}) OR d.id_equipo_desafiado IN (${SQL_MIS_EQUIPOS}) OR ${externo})
         AND ${proximos ? `NOT p.cancelado AND (p.fecha + p.hora) > ${SQL_AHORA}` : `(p.fecha + p.hora) <= ${SQL_AHORA}`}
       ORDER BY p.fecha ${proximos ? 'ASC' : 'DESC'}, p.hora ${proximos ? 'ASC' : 'DESC'}
-      LIMIT 30`,
-    [authId]
-  );
-  return rows;
+      LIMIT 30`, [authId]);
 }
 
 async function proximoDeEquipo(idEquipo) {

@@ -1,4 +1,4 @@
-const THREE_CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const THREE_CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js';
 let THREE;
 
 const LIVIANO = document.documentElement.classList.contains('modo-liviano');

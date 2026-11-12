@@ -10,6 +10,7 @@
 // La validación está en middlewares/validators.js (validarPerfilJugador, validarEdicionPerfil) y
 // el acceso a datos en models/jugadorModel.js.
 
+const { miniatura } = require('../config/imagenes');
 const jugadorModel = require('../models/jugadorModel');
 const equipoModel = require('../models/equipoModel');
 const ubicacionModel = require('../models/ubicacionModel');
@@ -428,12 +429,19 @@ async function servirFotoJugador(req, res, next) {
     const foto = Number.isInteger(idJugador) && idJugador > 0 ? await jugadorModel.obtenerFotoPorId(idJugador) : null;
     if (!foto) return next();
 
+    // ?t=mini → miniatura (las cartas mini del plantel y los avatares la muestran a 30-130 px)
+    let salida = foto;
+    if (req.query.t === 'mini') {
+      const webp = /image\/webp/.test(req.get('accept') || '');
+      salida = (await miniatura(`jugador:${idJugador}:${req.query.v || ''}`, foto.datos, webp)) || foto;
+      res.set('Vary', 'Accept');
+    }
     res.set({
-      'Content-Type': foto.tipo,
+      'Content-Type': salida.tipo,
       'Cache-Control': 'private, max-age=31536000',
       'X-Content-Type-Options': 'nosniff',
     });
-    return res.send(foto.datos);
+    return res.send(salida.datos);
   } catch (err) {
     return next(err);
   }
