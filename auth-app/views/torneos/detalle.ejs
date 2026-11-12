@@ -10,7 +10,12 @@
   const conPago = torneo.precio > 0;
   const esLlave = torneo.formato === 'relampago';
   const porcentaje = Math.round(100 * torneo.inscritos / torneo.cantidadEquipos);
+  // faltan: cupos libres para inscribirse (las reservas de pago vigentes ya ocupan su cupo).
+  // faltanInicio: equipos por confirmar, igual que el contador "inscritos/cupos"; las reservas se muestran aparte.
   const faltan = torneo.cuposLibres;
+  const faltanInicio = Math.max(0, torneo.cantidadEquipos - torneo.inscritos);
+  const reservados = torneo.reservados || 0;
+  const textoReservados = reservados === 1 ? '1 equipo pagando su inscripción' : `${reservados} equipos pagando su inscripción`;
   // Inscripción: con un equipo que juega la modalidad se abre el modal; si ninguno la juega, el botón
   // queda deshabilitado y cada equipo trae "Habilitar <modalidad>" (un clic, sin salir del torneo).
   // Con precio solo se puede si el pago en línea (Webpay) está disponible para este torneo.
@@ -59,10 +64,12 @@
             <p class="trn-energia__texto">
               <% if (!enInscripcion) { %>
                 <%= torneo.conInscripciones ? 'Inscripciones cerradas' : torneo.estadoTexto %>
-              <% } else if (faltan === 0) { %>
+              <% } else if (faltanInicio === 0) { %>
                 ¡Cupos completos! El torneo está por comenzar
+              <% } else if (faltan === 0) { %>
+                Cupos llenos: <span class="trn-num"><%= textoReservados %></span>
               <% } else { %>
-                <span class="trn-num"><%= faltan === 1 ? 'Falta 1 equipo' : `Faltan ${faltan} equipos` %></span> para el inicio
+                <span class="trn-num"><%= faltanInicio === 1 ? 'Falta 1 equipo' : `Faltan ${faltanInicio} equipos` %></span> para el inicio<% if (reservados > 0) { %> · <%= textoReservados %><% } %>
               <% } %>
             </p>
           <% } %>

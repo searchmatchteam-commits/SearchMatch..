@@ -68,7 +68,7 @@
   </section>
 
   <% if (c.lado.capitan && c.abierto) { %>
-    <section class="dash-panel eq-panel sm-form sm-cupos" aria-labelledby="cupos-titulo">
+    <section class="dash-panel eq-panel sm-form sm-convocatoria" aria-labelledby="cupos-titulo">
       <h2 class="dash-panel__titulo" id="cupos-titulo">Buscar jugadores de afuera</h2>
       <p class="dash-panel__nota">
         <% if (eq.cuposPublicados) { %>Tu partido está publicado: otros jugadores pueden inscribirse en estas posiciones.
@@ -76,10 +76,10 @@
         <% } else { %>¿Te faltan jugadores? Indica cuántos necesitas por posición y publica el partido para que otros se inscriban.
           Si hay un solo interesado por cupo entra directo; si hay más, tú eliges.<% } %>
       </p>
-      <form action="/partidos/<%= partido.id %>/cupos" method="POST" class="sm-cupos__form">
-        <div class="sm-cupos__posiciones">
+      <form action="/partidos/<%= partido.id %>/cupos" method="POST" class="sm-convocatoria__form">
+        <div class="sm-convocatoria__posiciones">
           <% posiciones.forEach(function (p) { const actual = eq.cupos.find((x) => x.idPosicion === p.id); %>
-            <div class="campo sm-cupos__campo">
+            <div class="campo sm-convocatoria__campo">
               <label for="cupo_<%= p.id %>"><%= p.nombre %></label>
               <input type="number" id="cupo_<%= p.id %>" name="cupo_<%= p.id %>" min="<%= actual ? actual.aceptados.length : 0 %>" max="11" step="1"
                      inputmode="numeric" value="<%= actual ? actual.cupos : 0 %>" />
@@ -99,8 +99,8 @@
       <% } %>
 
       <% eq.cupos.forEach(function (cupo) { %>
-        <div class="sm-cupos__grupo">
-          <h3 class="sm-cupos__titulo"><%= cupo.posicion %> · <%= cupo.aceptados.length %> de <%= cupo.cupos %><%= cupo.pendientes.length ? ` · ${cupo.pendientes.length} esperando` : '' %></h3>
+        <div class="sm-convocatoria__grupo">
+          <h3 class="sm-convocatoria__titulo"><%= cupo.posicion %> · <%= cupo.aceptados.length %> de <%= cupo.cupos %><%= cupo.pendientes.length ? ` · ${cupo.pendientes.length} esperando` : '' %></h3>
           <% if (!cupo.aceptados.length && !cupo.pendientes.length) { %><p class="dash-panel__nota">Aún nadie se inscribe.</p><% } %>
           <ul class="sm-filas">
             <% cupo.aceptados.forEach(function (j) { %>
@@ -163,7 +163,7 @@
       <% } else { %>
         <p class="dash-panel__nota">Elige una posición. Si eres el único interesado entras directo; si hay más, el capitán elige.</p>
         <% c.cuposPublicos.forEach(function (e) { %>
-          <h3 class="sm-cupos__titulo"><%= nombreEquipo(e.idEquipo) %></h3>
+          <h3 class="sm-convocatoria__titulo"><%= nombreEquipo(e.idEquipo) %></h3>
           <ul class="sm-filas">
             <% e.cupos.forEach(function (cupo) { %>
               <li class="sm-fila">

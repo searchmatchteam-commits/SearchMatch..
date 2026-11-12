@@ -571,7 +571,7 @@ html[data-theme="light"] .sm-tema__luna { display: block; }
 .sm-torneo-tarjeta__enlace:hover .sm-torneo-tarjeta__titulo { color: var(--verde); }
 
 .sm-cupos { height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; margin: 6px 0 10px; }
-.sm-cupos__relleno { display: block; height: 100%; background: var(--verde); border-radius: inherit; }
+.sm-convocatoria__relleno { display: block; height: 100%; background: var(--verde); border-radius: inherit; }
 .sm-inscripcion { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 10px 0; }
 .sm-equipos-torneo { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 8px; }
 .sm-equipos-torneo li { display: flex; align-items: center; gap: 8px; }
@@ -1390,9 +1390,9 @@ body .vic__caja { max-height: calc(100dvh - 32px); }
 .sm-conteo__item--si strong { color: var(--verde); }
 .sm-asistencia__respuesta { display: grid; gap: 10px; padding: 14px 0; border-top: 1px solid var(--borde); border-bottom: 1px solid var(--borde); }
 .sm-asistencia__pregunta { font-weight: 700; }
-.sm-cupos__posiciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
-.sm-cupos__campo { margin: 0; }
-.sm-cupos__grupo { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--borde); }
-.sm-cupos__titulo { font-size: 0.95rem; font-weight: 800; }
+.sm-convocatoria__posiciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+.sm-convocatoria__campo { margin: 0; }
+.sm-convocatoria__grupo { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--borde); }
+.sm-convocatoria__titulo { font-size: 0.95rem; font-weight: 800; }
 .sm-fila__accion.sm-form__acciones { gap: 8px; }
 .sm-fila small { color: var(--texto-suave); }
