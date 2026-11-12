@@ -10,6 +10,7 @@
     "dev": "node --watch app.js",
     "build": "node scripts/minificar.js",
     "datos-prueba": "node scripts/simular-torneo-y-partidos.js --aplicar",
+    "partidos-prueba": "node scripts/simular-torneo-y-partidos.js --aplicar --solo-partidos --cantidad=3 --desde-dia=6",
     "test": "node --test \"test/*.test.js\""
   },
   "keywords": [

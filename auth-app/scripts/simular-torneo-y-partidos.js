@@ -15,6 +15,7 @@
 //   node scripts/simular-torneo-y-partidos.js --jugador=tu@correo.cl --aplicar       (guarda)
 //   node scripts/simular-torneo-y-partidos.js --solo-torneo --aplicar              (solo el torneo)
 //   npm run datos-prueba                                                           (todo y guarda; sin --jugador)
+//   npm run partidos-prueba     (3 partidos más desde el día 6, sin torneo; jugador = JUGADOR_PRUEBA del .env)
 //   Opcional: --torneo=ID si hay más de un torneo con inscripciones abiertas.
 
 const { pool } = require('../config/db');
@@ -23,7 +24,6 @@ const reglas = require('../config/torneos');
 const { DURACION_PARTIDO_MIN } = require('../config/partidos');
 
 const MARCA = '[Simulado] Partido de prueba para buscar jugadores.';
-const CANTIDAD_PARTIDOS = 4;
 const HORAS = ['19:00', '20:00', '18:00', '21:00', '17:00'];
 
 const args = Object.fromEntries(process.argv.slice(2).map((a) => {
@@ -31,6 +31,10 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
   return [k, v.length ? v.join('=') : true];
 }));
 const APLICAR = args.aplicar === true;
+// Cuenta del jugador que va a postular: --jugador o JUGADOR_PRUEBA en .env (no se versiona)
+if (!args.jugador && process.env.JUGADOR_PRUEBA) args.jugador = process.env.JUGADOR_PRUEBA;
+const DESDE_DIA = Number(args['desde-dia']) || 2;
+const CANTIDAD_PARTIDOS = Number(args.cantidad) || 4;
 
 const SQL_PARTICIPA = `ARRAY[${reglas.INSCRIPCION_PARTICIPA.map((e) => `'${e}'`).join(', ')}]::text[]`;
 const SQL_OCUPA = `(te.estado = ANY(${SQL_PARTICIPA}) OR (te.estado = 'pendiente_pago' AND te.reservada_hasta > now()))`;
@@ -187,7 +191,7 @@ async function crearPartidos(c) {
 
     // Primer día y hora con cancha libre (un partido por día para no cruzar equipos)
     let creado = null;
-    for (let dia = 2 + i; dia < 30 && !creado; dia += CANTIDAD_PARTIDOS) {
+    for (let dia = DESDE_DIA + i; dia < 30 && !creado; dia += CANTIDAD_PARTIDOS) {
       const fecha = fechaEnDias(dia);
       for (const hora of HORAS) {
         if (creado) break;
@@ -249,7 +253,7 @@ async function main() {
   const c = await pool.connect();
   try {
     await c.query('BEGIN');
-    await inscribirTodos(c);
+    if (!args['solo-partidos']) await inscribirTodos(c);
     if (!args['solo-torneo']) await crearPartidos(c);
     if (APLICAR) {
       await c.query('COMMIT');
