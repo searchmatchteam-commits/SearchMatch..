@@ -8,6 +8,7 @@ const { pool } = require('../config/db');
 const userModel = require('./userModel');
 const { notificarUsuario } = require('./notificacionModel');
 const actividad = require('./actividadModel');
+const reglasTorneo = require('../config/torneos');
 
 const ES_ADMIN = /^administrador$/i;
 const ES_SUPER = /^superadministrador$/i;
@@ -103,12 +104,31 @@ async function eliminarEquipo(idEquipo, admin, motivo) {
     await cliente.query('DELETE FROM participacion WHERE id_equipo = $1', [idEquipo]);
     await cliente.query('DELETE FROM desafio WHERE $1 IN (id_equipo_desafiado, id_equipo_desafiante)', [idEquipo]);
     await cliente.query('DELETE FROM solicitud_union_equipo WHERE id_equipo = $1', [idEquipo]);
+    // Inscripciones a torneos: torneo_pago no tiene CASCADE hacia torneo_equipo y bloqueaba el borrado (500).
+    // Los pagos quedan copiados en el registro de actividad y los torneos con inscripciones recuperan el cupo.
+    const { rows: pagos } = await cliente.query(
+      `DELETE FROM torneo_pago WHERE id_inscripcion IN (SELECT id FROM torneo_equipo WHERE id_equipo = $1)
+       RETURNING id, pasarela, entorno, estado, monto, orden_compra, numero_comprobante, comprobante`,
+      [idEquipo]
+    );
+    const { rows: torneos } = await cliente.query('DELETE FROM torneo_equipo WHERE id_equipo = $1 RETURNING id_torneo', [idEquipo]);
     // equipo_jugador, equipo_modalidad, alineacion_puesto, invitaciones, comentarios...: CASCADE
     await cliente.query('DELETE FROM equipo WHERE id = $1', [idEquipo]);
+    const idsTorneos = [...new Set(torneos.map((f) => f.id_torneo))];
+    if (idsTorneos.length > 0) {
+      // Un torneo "completo" que pierde un cupo vuelve a "abierto" (misma regla que reglas.estadoPorCupos)
+      await cliente.query(
+        `UPDATE torneo t SET estado = 'abierto'
+          WHERE t.id = ANY($1::int[]) AND t.estado = 'completo'
+            AND (SELECT count(*) FROM torneo_equipo te WHERE te.id_torneo = t.id
+                   AND (te.estado = ANY($2::text[]) OR (te.estado = 'pendiente_pago' AND te.reservada_hasta > now()))) < t.cupo_max`,
+        [idsTorneos, reglasTorneo.INSCRIPCION_PARTICIPA]
+      );
+    }
     await actividad.registrar(cliente, {
       admin, seccion: 'equipos', accion: 'Eliminar equipo definitivamente', elementoTipo: 'equipo', elementoId: idEquipo,
       elemento: nombre, motivo,
-      anterior: { nombre, activo: equipo.rows[0].activo, capitan: equipo.rows[0].capitan, integrantes: integrantes.length },
+      anterior: { nombre, activo: equipo.rows[0].activo, capitan: equipo.rows[0].capitan, integrantes: integrantes.length, torneos: idsTorneos, pagos },
       nuevo: { eliminado: true },
     });
     await cliente.query('COMMIT');
