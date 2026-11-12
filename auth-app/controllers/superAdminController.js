@@ -4,6 +4,8 @@ const { idValido, leerMotivo, MSG_MOTIVO } = require('../middlewares/validadores
 
 const AVISOS = {
   eliminado: 'Eliminado definitivamente.',
+  renombrado: 'Nombre del equipo cambiado. Se avisó a su plantel.',
+  nombre: 'Escribe un nombre nuevo de 2 a 100 caracteres.',
   desactivada: 'Cuenta desactivada: su sesión se cerró y ya no puede entrar.',
   activada: 'Cuenta reactivada: ya puede volver a iniciar sesión.',
   protegida: 'Las cuentas del panel se gestionan en Administradores.',
@@ -47,6 +49,25 @@ async function eliminarEquipo(req, res, next) {
     const idEquipo = idValido(req.params.id);
     const motivo = leerMotivo(req.body.motivo);
     const resultado = !motivo ? 'motivo' : idEquipo ? await superAdminModel.eliminarEquipo(idEquipo, adminDe(req), motivo) : 'sin-cambio';
+    return res.redirect(`/admin/equipos?aviso=${resultado}&texto=${encodeURIComponent(String(req.body.texto || ''))}`);
+  } catch (err) {
+    return next(err);
+  }
+}
+
+// Nombre nuevo del equipo: espacios repetidos cuentan como uno; de 2 a 100 caracteres (como al crearlo)
+function leerNombreEquipo(valor) {
+  const nombre = String(valor || '').replace(/\s+/g, ' ').trim();
+  return nombre.length >= 2 && nombre.length <= 100 ? nombre : null;
+}
+
+async function renombrarEquipo(req, res, next) {
+  try {
+    const idEquipo = idValido(req.params.id);
+    const nombre = leerNombreEquipo(req.body.nombre);
+    const motivo = leerMotivo(req.body.motivo);
+    const resultado = !nombre ? 'nombre' : !motivo ? 'motivo'
+      : idEquipo ? await superAdminModel.renombrarEquipo(idEquipo, nombre, adminDe(req), motivo) : 'sin-cambio';
     return res.redirect(`/admin/equipos?aviso=${resultado}&texto=${encodeURIComponent(String(req.body.texto || ''))}`);
   } catch (err) {
     return next(err);
@@ -105,6 +126,6 @@ function cambiarEstado(activo) {
 }
 
 module.exports = {
-  equipos, eliminarEquipo, jugadores, eliminarJugador,
+  equipos, eliminarEquipo, renombrarEquipo, jugadores, eliminarJugador,
   desactivarJugador: cambiarEstado(false), activarJugador: cambiarEstado(true),
 };

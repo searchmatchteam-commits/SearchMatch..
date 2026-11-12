@@ -113,6 +113,7 @@ router.get('/super', (req, res) => res.redirect('/admin'));
 router.get('/super/equipos', (req, res) => res.redirect(301, `/admin/equipos${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`));
 // Eliminar equipos y jugadores: cualquier administrador del panel (las cuentas del panel siguen protegidas en el modelo)
 router.post('/super/equipos/:id/eliminar', superAdmin.eliminarEquipo);
+router.post('/super/equipos/:id/renombrar', superAdmin.renombrarEquipo);
 router.get('/super/jugadores', superAdmin.jugadores);
 router.post('/super/jugadores/:id/eliminar', superAdmin.eliminarJugador);
 router.post('/super/jugadores/:id/desactivar', superAdmin.desactivarJugador);

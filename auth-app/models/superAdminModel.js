@@ -144,6 +144,48 @@ async function eliminarEquipo(idEquipo, admin, motivo) {
   return 'eliminado';
 }
 
+/**
+ * Cambia el nombre de un equipo (inapropiado o a criterio de la administración). Queda en el registro
+ * de actividad y se avisa a todo el plantel con el motivo.
+ * @returns {Promise<'renombrado'|'sin-cambio'>}
+ */
+async function renombrarEquipo(idEquipo, nuevoNombre, admin, motivo) {
+  const cliente = await pool.connect();
+  let anterior;
+  let integrantes = [];
+  try {
+    await cliente.query('BEGIN');
+    const { rows } = await cliente.query('SELECT nombre FROM equipo WHERE id = $1 FOR UPDATE', [idEquipo]);
+    if (!rows[0] || rows[0].nombre === nuevoNombre) {
+      await cliente.query('ROLLBACK');
+      return 'sin-cambio';
+    }
+    anterior = rows[0].nombre;
+    await cliente.query('UPDATE equipo SET nombre = $2 WHERE id = $1', [idEquipo, nuevoNombre]);
+    const miembros = await cliente.query(
+      `SELECT DISTINCT j.id_usuario FROM equipo_jugador ej JOIN jugador j ON j.id = ej.id_jugador WHERE ej.id_equipo = $1
+       UNION SELECT id_usuario_creador FROM equipo WHERE id = $1`,
+      [idEquipo]
+    );
+    integrantes = miembros.rows.map((f) => f.id_usuario);
+    await actividad.registrar(cliente, {
+      admin, seccion: 'equipos', accion: 'Cambiar nombre del equipo', elementoTipo: 'equipo', elementoId: idEquipo,
+      elemento: nuevoNombre, motivo, anterior: { nombre: anterior }, nuevo: { nombre: nuevoNombre },
+    });
+    await cliente.query('COMMIT');
+  } catch (err) {
+    await cliente.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    cliente.release();
+  }
+
+  await Promise.all(integrantes.map((idUsuario) => notificarUsuario(idUsuario, 'moderacion',
+    `La administración de SearchMatch cambió el nombre de tu equipo "${anterior}" a "${nuevoNombre}". Motivo: ${motivo}`,
+    `/equipos/${idEquipo}`).catch((err) => console.error('⚠️  No se pudo notificar:', err.message))));
+  return 'renombrado';
+}
+
 // ---------- Jugadores ----------
 
 const FILTROS_JUGADOR = {
@@ -250,4 +292,4 @@ async function eliminarJugador(idUsuario, admin, motivo) {
   }
 }
 
-module.exports = { resumen, buscarEquipos, eliminarEquipo, buscarJugadores, eliminarJugador, FILTROS_JUGADOR };
+module.exports = { resumen, buscarEquipos, eliminarEquipo, renombrarEquipo, buscarJugadores, eliminarJugador, FILTROS_JUGADOR };
