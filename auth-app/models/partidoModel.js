@@ -200,10 +200,14 @@ const SQL_MIS_EQUIPOS = `
    WHERE e.id_usuario_creador = u.id
       OR EXISTS (SELECT 1 FROM equipo_jugador ej JOIN jugador j ON j.id = ej.id_jugador WHERE ej.id_equipo = e.id AND j.id_usuario = u.id)`;
 
+// Partidos donde la cuenta entró como jugador de afuera (cupo publicado por un capitán)
+const SQL_SOY_EXTERNO = `EXISTS (SELECT 1 FROM partido_postulacion pp JOIN jugador j ON j.id = pp.id_jugador JOIN usuario u ON u.id = j.id_usuario
+                                 WHERE pp.id_partido = p.id AND pp.estado = 'aceptada' AND u.auth_id = $1)`;
+
 async function listarDeCuentaEntre(authId, desde, hasta) {
   const { rows } = await pool.query(
     `${SQL_PARTIDO}
-      WHERE (d.id_equipo_desafiante IN (${SQL_MIS_EQUIPOS}) OR d.id_equipo_desafiado IN (${SQL_MIS_EQUIPOS}))
+      WHERE (d.id_equipo_desafiante IN (${SQL_MIS_EQUIPOS}) OR d.id_equipo_desafiado IN (${SQL_MIS_EQUIPOS}) OR ${SQL_SOY_EXTERNO})
         AND p.fecha BETWEEN $2::date AND $3::date
       ORDER BY p.fecha, p.hora`,
     [authId, desde, hasta]
@@ -214,7 +218,7 @@ async function listarDeCuentaEntre(authId, desde, hasta) {
 async function listarDeCuenta(authId, proximos) {
   const { rows } = await pool.query(
     `${SQL_PARTIDO}
-      WHERE (d.id_equipo_desafiante IN (${SQL_MIS_EQUIPOS}) OR d.id_equipo_desafiado IN (${SQL_MIS_EQUIPOS}))
+      WHERE (d.id_equipo_desafiante IN (${SQL_MIS_EQUIPOS}) OR d.id_equipo_desafiado IN (${SQL_MIS_EQUIPOS}) OR ${SQL_SOY_EXTERNO})
         AND ${proximos ? `NOT p.cancelado AND (p.fecha + p.hora) > ${SQL_AHORA}` : `(p.fecha + p.hora) <= ${SQL_AHORA}`}
       ORDER BY p.fecha ${proximos ? 'ASC' : 'DESC'}, p.hora ${proximos ? 'ASC' : 'DESC'}
       LIMIT 30`,

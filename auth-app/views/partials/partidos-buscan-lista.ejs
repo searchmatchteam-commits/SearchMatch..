@@ -1,0 +1,21 @@
+<%
+  // Lista de partidos con cupos libres (convocatoriaModel.listarAbiertos). Uso: include('partials/partidos-buscan-lista', { partidos })
+  const formatoDiaBuscan = new Intl.DateTimeFormat('es-CL', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const ESTADO_MIO = { aceptada: ['Estás dentro', 'sm-estado--aceptado'], pendiente: ['Esperando', 'sm-estado--pendiente'], rechazada: ['No quedaste', 'sm-estado--rechazado'] };
+%>
+<ul class="sm-tarjetas">
+  <% partidos.forEach(function (p) { const mio = ESTADO_MIO[p.mi_estado]; %>
+    <li class="dash-panel sm-tarjeta">
+      <header class="sm-tarjeta__cabecera">
+        <div>
+          <h3 class="sm-tarjeta__titulo"><a href="/partidos/<%= p.id %>#asistencia"><%= p.equipo %> busca jugadores</a></h3>
+          <p class="sm-tarjeta__meta">vs <%= p.rival %> · <%= p.modalidad %></p>
+        </div>
+        <span class="sm-estado <%= mio ? mio[1] : 'sm-estado--activo' %>"><%= mio ? mio[0] : `${p.total_libres} cupo${p.total_libres === 1 ? '' : 's'}` %></span>
+      </header>
+      <p class="sm-tarjeta__linea"><%= formatoDiaBuscan.format(new Date(p.fecha + 'T00:00:00Z')) %> · <%= p.hora %> h · <%= p.cancha %>, <%= p.comuna %></p>
+      <p class="sm-tarjeta__linea">Busca: <%= p.posiciones.map((x) => `${x.libres} ${x.posicion}`).join(' · ') %></p>
+      <a class="sm-tarjeta__enlace" href="/partidos/<%= p.id %>#asistencia"><%= mio ? 'Ver partido →' : 'Inscribirme →' %></a>
+    </li>
+  <% }) %>
+</ul>

@@ -1,5 +1,6 @@
 const jugadorModel = require('../models/jugadorModel');
 const equipoModel = require('../models/equipoModel');
+const convocatoriaModel = require('../models/convocatoriaModel');
 const { cartasDe, nombreEnCarta } = require('../config/perfilJugador');
 const { AVISOS_RESPUESTA_INVITACION, AVISOS_SALIDA } = require('./equipoController');
 const agendaController = require('./agendaController');
@@ -62,13 +63,21 @@ function resumenCarta(perfil) {
   };
 }
 
+async function leerPartidosBuscan(usuario) {
+  return convocatoriaModel.listarAbiertos(usuario.idAuth, 3).catch((err) => {
+    console.error('⚠️  No se pudieron leer los partidos que buscan jugadores:', err.message);
+    return [];
+  });
+}
+
 async function dashboard(req, res, next) {
   try {
-    const [perfil, miEquipo, equipos, invitaciones] = await Promise.all([
+    const [perfil, miEquipo, equipos, invitaciones, partidosBuscan] = await Promise.all([
       leerPerfilJugador(req.usuario),
       leerMiEquipo(req.usuario),
       leerMisEquipos(req.usuario),
       leerInvitaciones(req.usuario),
+      leerPartidosBuscan(req.usuario),
     ]);
     if (perfil && !perfil.perfilCompleto) return res.redirect('/perfil-jugador');
     const [misEquipos, inicio] = await Promise.all([leerPlanteles(equipos), agendaController.datosEquipoInicio(req, equipos)]);
@@ -85,6 +94,7 @@ async function dashboard(req, res, next) {
       misEquipos,
       invitaciones,
       equipoInicio,
+      partidosBuscan,
       aviso: AVISOS_RESPUESTA_INVITACION[req.query.invitacion] || AVISOS_SALIDA[req.query.salida] || null,
     });
   } catch (err) {

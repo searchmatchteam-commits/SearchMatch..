@@ -49,6 +49,8 @@
       <% if (esperandoResultado && !puedeRegistrar) { %><p class="dash-panel__nota">Esperando que un capitán registre el resultado.</p><% } %>
     </div>
 
+    <%- include('../partials/partido-asistencia', { partido, convocatoria, posiciones }) %>
+
     <% if (puedeRegistrar) { %>
       <form class="dash-panel eq-panel sm-form" action="/partidos/<%= partido.id %>/resultado" method="POST" novalidate data-sm-validar
             data-confirmar="El resultado no se podrá modificar después y avisaremos al capitán rival." data-confirmar-titulo="¿Registrar este resultado?" data-confirmar-boton="Registrar">

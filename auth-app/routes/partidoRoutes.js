@@ -16,7 +16,15 @@ router.post('/reservas/:id/cancelar', conSesion, reservas.cancelar);
 
 router.get('/partidos/programar/:idDesafio', conSesion, partidos.formularioProgramar);
 router.post('/partidos/programar/:idDesafio', conSesion, validarProgramacion, partidos.programar);
+router.get('/partidos/buscan-jugadores', conSesion, partidos.buscanJugadores);
 router.get('/partidos/:id', conSesion, partidos.detalle);
+// Asistencia de los integrantes, cupos que publica el capitán e inscripción de jugadores de afuera
+router.post('/partidos/:id/asistencia', conSesion, partidos.responderAsistencia);
+router.post('/partidos/:id/cupos', conSesion, partidos.publicarCupos);
+router.post('/partidos/:id/cupos/cerrar', conSesion, partidos.cerrarCupos);
+router.post('/partidos/:id/postular', conSesion, partidos.postular);
+router.post('/partidos/:id/retirarme', conSesion, partidos.retirarse);
+router.post('/partidos/:id/postulaciones/:idPostulacion/:accion', conSesion, partidos.decidir);
 router.post('/partidos/:id/resultado', conSesion, validarResultado, partidos.registrarResultado);
 router.post('/partidos/:id/cancelar', conSesion, partidos.cancelar);
 

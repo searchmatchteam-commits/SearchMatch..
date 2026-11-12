@@ -1378,3 +1378,21 @@ body .vic__caja { max-height: calc(100dvh - 32px); }
 
 /* "Volver" en su propia fila, arriba a la izquierda (ficha de equipo) */
 .sm-volver-fila { display: flex; justify-content: flex-start; margin: 0 0 14px; }
+
+/* ---------- Asistencia y cupos de un partido (partials/partido-asistencia.ejs) ---------- */
+.sm-conteo { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+.sm-conteo__item {
+  padding: 6px 12px; border-radius: 999px; font-size: 0.85rem; color: var(--texto-suave);
+  border: 1px solid var(--borde-fuerte); background: rgba(255, 255, 255, 0.04);
+}
+.sm-conteo__item strong { color: var(--texto); font-size: 1rem; }
+.sm-conteo__item--si { border-color: var(--verde-borde); background: var(--verde-tenue); }
+.sm-conteo__item--si strong { color: var(--verde); }
+.sm-asistencia__respuesta { display: grid; gap: 10px; padding: 14px 0; border-top: 1px solid var(--borde); border-bottom: 1px solid var(--borde); }
+.sm-asistencia__pregunta { font-weight: 700; }
+.sm-cupos__posiciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+.sm-cupos__campo { margin: 0; }
+.sm-cupos__grupo { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--borde); }
+.sm-cupos__titulo { font-size: 0.95rem; font-weight: 800; }
+.sm-fila__accion.sm-form__acciones { gap: 8px; }
+.sm-fila small { color: var(--texto-suave); }

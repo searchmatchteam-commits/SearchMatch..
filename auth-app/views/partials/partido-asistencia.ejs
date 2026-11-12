@@ -1,0 +1,185 @@
+<%
+  // Asistencia y cupos de un partido (controllers/partidoController.js → convocatoriaModel.contexto).
+  // Uso: include('../partials/partido-asistencia', { partido, convocatoria, posiciones })
+  //  - Integrantes: confirmar o "no podré asistir" y el estado del plantel.
+  //  - Capitán: conteo, publicar cupos por posición y elegir entre los inscritos de afuera.
+  //  - Jugadores de afuera: inscribirse en una posición publicada o retirarse.
+  const c = convocatoria;
+  const nombreEquipo = (id) => (id === partido.id_equipo_desafiante ? partido.desafiante : partido.desafiado);
+  const ESTADO_ASISTENCIA = {
+    confirmado: { texto: 'Va', clase: 'sm-estado--aceptado' },
+    no_asiste: { texto: 'No va', clase: 'sm-estado--rechazado' },
+  };
+%>
+<% if (c && c.lado && c.equipo) { const eq = c.equipo; %>
+  <section class="dash-panel eq-panel sm-asistencia" id="asistencia" aria-labelledby="asistencia-titulo">
+    <h2 class="dash-panel__titulo" id="asistencia-titulo">Asistencia de <%= nombreEquipo(c.lado.idEquipo) %></h2>
+
+    <ul class="sm-conteo" aria-label="Resumen de asistencia">
+      <li class="sm-conteo__item sm-conteo__item--si"><strong><%= eq.confirmados + eq.externos %></strong> de <%= c.jugadoresPorEquipo %> confirmados</li>
+      <li class="sm-conteo__item"><strong><%= eq.noAsisten %></strong> no van</li>
+      <li class="sm-conteo__item"><strong><%= eq.sinResponder %></strong> sin responder</li>
+      <% if (eq.externos) { %><li class="sm-conteo__item"><strong><%= eq.externos %></strong> de afuera</li><% } %>
+    </ul>
+    <% if (c.abierto && eq.faltan > 0) { %>
+      <p class="dash-panel__nota">Faltan <strong><%= eq.faltan %></strong> jugador<%= eq.faltan === 1 ? '' : 'es' %> confirmado<%= eq.faltan === 1 ? '' : 's' %> para completar el equipo.</p>
+    <% } else if (c.abierto) { %>
+      <p class="dash-panel__nota">¡Equipo completo!</p>
+    <% } %>
+
+    <% if (c.soyDelPlantel && c.abierto) { %>
+      <div class="sm-asistencia__respuesta">
+        <p class="sm-asistencia__pregunta">
+          <% if (c.miAsistencia === 'confirmado') { %>Confirmaste que vas. ¿Cambió algo?
+          <% } else if (c.miAsistencia === 'no_asiste') { %>Avisaste que no vas. ¿Al final puedes?
+          <% } else { %>¿Vas a este partido?<% } %>
+        </p>
+        <div class="sm-form__acciones">
+          <% if (c.miAsistencia !== 'confirmado') { %>
+            <form action="/partidos/<%= partido.id %>/asistencia" method="POST">
+              <input type="hidden" name="estado" value="confirmado" />
+              <button type="submit" class="btn btn--verde">Confirmar asistencia</button>
+            </form>
+          <% } %>
+          <% if (c.miAsistencia !== 'no_asiste') { %>
+            <form action="/partidos/<%= partido.id %>/asistencia" method="POST">
+              <input type="hidden" name="estado" value="no_asiste" />
+              <button type="submit" class="btn btn--contorno">No podré asistir esta vez</button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+
+    <ul class="sm-filas" aria-label="Plantel">
+      <% eq.plantel.forEach(function (j) { const e = ESTADO_ASISTENCIA[j.estado]; %>
+        <li class="sm-fila">
+          <span class="sm-fila__principal"><%= j.nombre %></span>
+          <span class="sm-estado <%= e ? e.clase : 'sm-estado--pendiente' %>"><%= e ? e.texto : 'Sin responder' %></span>
+        </li>
+      <% }) %>
+      <% eq.cupos.forEach(function (cupo) { cupo.aceptados.forEach(function (j) { %>
+        <li class="sm-fila">
+          <span class="sm-fila__principal"><%= j.nombre %> <small>De afuera · <%= cupo.posicion %></small></span>
+          <span class="sm-estado sm-estado--aceptado">Va</span>
+        </li>
+      <% }) }) %>
+    </ul>
+  </section>
+
+  <% if (c.lado.capitan && c.abierto) { %>
+    <section class="dash-panel eq-panel sm-form sm-cupos" aria-labelledby="cupos-titulo">
+      <h2 class="dash-panel__titulo" id="cupos-titulo">Buscar jugadores de afuera</h2>
+      <p class="dash-panel__nota">
+        <% if (eq.cuposPublicados) { %>Tu partido está publicado: otros jugadores pueden inscribirse en estas posiciones.
+          Si hay un solo interesado por cupo entra directo; si hay más, tú eliges.
+        <% } else { %>¿Te faltan jugadores? Indica cuántos necesitas por posición y publica el partido para que otros se inscriban.
+          Si hay un solo interesado por cupo entra directo; si hay más, tú eliges.<% } %>
+      </p>
+      <form action="/partidos/<%= partido.id %>/cupos" method="POST" class="sm-cupos__form">
+        <div class="sm-cupos__posiciones">
+          <% posiciones.forEach(function (p) { const actual = eq.cupos.find((x) => x.idPosicion === p.id); %>
+            <div class="campo sm-cupos__campo">
+              <label for="cupo_<%= p.id %>"><%= p.nombre %></label>
+              <input type="number" id="cupo_<%= p.id %>" name="cupo_<%= p.id %>" min="<%= actual ? actual.aceptados.length : 0 %>" max="11" step="1"
+                     inputmode="numeric" value="<%= actual ? actual.cupos : 0 %>" />
+            </div>
+          <% }) %>
+        </div>
+        <div class="sm-form__acciones">
+          <button type="submit" class="btn btn--verde"><%= eq.cuposPublicados ? 'Actualizar cupos' : 'Publicar partido' %></button>
+        </div>
+      </form>
+      <% if (eq.cuposPublicados) { %>
+        <form action="/partidos/<%= partido.id %>/cupos/cerrar" method="POST"
+              data-confirmar="Nadie más podrá inscribirse. Los jugadores que ya entraron siguen inscritos y los que esperaban quedan rechazados."
+              data-confirmar-titulo="¿Dejar de buscar jugadores?" data-confirmar-boton="Dejar de buscar">
+          <button type="submit" class="btn btn--contorno btn--chico">Dejar de buscar</button>
+        </form>
+      <% } %>
+
+      <% eq.cupos.forEach(function (cupo) { %>
+        <div class="sm-cupos__grupo">
+          <h3 class="sm-cupos__titulo"><%= cupo.posicion %> · <%= cupo.aceptados.length %> de <%= cupo.cupos %><%= cupo.pendientes.length ? ` · ${cupo.pendientes.length} esperando` : '' %></h3>
+          <% if (!cupo.aceptados.length && !cupo.pendientes.length) { %><p class="dash-panel__nota">Aún nadie se inscribe.</p><% } %>
+          <ul class="sm-filas">
+            <% cupo.aceptados.forEach(function (j) { %>
+              <li class="sm-fila">
+                <a href="/jugadores/<%= j.idJugador %>"><%= j.nombre %></a>
+                <span class="sm-estado sm-estado--aceptado">Dentro</span>
+                <form class="sm-fila__accion" action="/partidos/<%= partido.id %>/postulaciones/<%= j.id %>/quitar" method="POST"
+                      data-confirmar="Su cupo quedará libre para que elijas a otro." data-confirmar-titulo="¿Quitar a <%= j.nombre %>?" data-confirmar-boton="Quitar">
+                  <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Quitar</button>
+                </form>
+              </li>
+            <% }) %>
+            <% cupo.pendientes.forEach(function (j) { %>
+              <li class="sm-fila">
+                <a href="/jugadores/<%= j.idJugador %>"><%= j.nombre %></a>
+                <span class="sm-estado sm-estado--pendiente">Esperando</span>
+                <span class="sm-fila__accion sm-form__acciones">
+                  <% if (cupo.libres > 0) { %>
+                    <form action="/partidos/<%= partido.id %>/postulaciones/<%= j.id %>/aceptar" method="POST">
+                      <button type="submit" class="btn btn--verde btn--chico">Elegir</button>
+                    </form>
+                  <% } %>
+                  <form action="/partidos/<%= partido.id %>/postulaciones/<%= j.id %>/rechazar" method="POST">
+                    <button type="submit" class="btn btn--contorno btn--chico">Rechazar</button>
+                  </form>
+                </span>
+              </li>
+            <% }) %>
+          </ul>
+          <% if (cupo.pendientes.length && cupo.libres === 0) { %>
+            <p class="dash-panel__nota">La posición está llena. Para elegir a otro, quita primero a quien está dentro.</p>
+          <% } %>
+        </div>
+      <% }) %>
+    </section>
+  <% } %>
+<% } else if (c && !c.lado) { %>
+  <% if (c.miPostulacion) { const mp = c.miPostulacion; %>
+    <section class="dash-panel eq-panel" id="asistencia">
+      <h2 class="dash-panel__titulo">Tu inscripción</h2>
+      <p>
+        <%= mp.posicion %> en <strong><%= nombreEquipo(mp.id_equipo) %></strong> ·
+        <span class="sm-estado <%= mp.estado === 'aceptada' ? 'sm-estado--aceptado' : mp.estado === 'pendiente' ? 'sm-estado--pendiente' : 'sm-estado--rechazado' %>">
+          <%= mp.estado === 'aceptada' ? 'Estás dentro' : mp.estado === 'pendiente' ? 'El capitán está eligiendo' : 'No quedaste' %>
+        </span>
+      </p>
+      <% if (c.abierto && mp.estado !== 'rechazada') { %>
+        <form action="/partidos/<%= partido.id %>/retirarme" method="POST"
+              data-confirmar="Tu cupo quedará libre y avisaremos al capitán." data-confirmar-titulo="¿Retirarte del partido?" data-confirmar-boton="Retirarme">
+          <button type="submit" class="btn btn--contorno btn--chico sm-btn-peligro">Retirarme</button>
+        </form>
+      <% } %>
+    </section>
+  <% } else if (c.abierto && c.cuposPublicos && c.cuposPublicos.length) { %>
+    <section class="dash-panel eq-panel" id="asistencia">
+      <h2 class="dash-panel__titulo">Este partido busca jugadores</h2>
+      <% if (!c.tieneJugador) { %>
+        <p class="dash-panel__nota">Para inscribirte primero crea tu carta de jugador.</p>
+        <a class="btn btn--verde" href="/perfil-jugador">Crear mi carta</a>
+      <% } else { %>
+        <p class="dash-panel__nota">Elige una posición. Si eres el único interesado entras directo; si hay más, el capitán elige.</p>
+        <% c.cuposPublicos.forEach(function (e) { %>
+          <h3 class="sm-cupos__titulo"><%= nombreEquipo(e.idEquipo) %></h3>
+          <ul class="sm-filas">
+            <% e.cupos.forEach(function (cupo) { %>
+              <li class="sm-fila">
+                <span class="sm-fila__principal"><%= cupo.posicion %>
+                  <small><%= cupo.libres ? `${cupo.libres} cupo${cupo.libres === 1 ? '' : 's'} libre${cupo.libres === 1 ? '' : 's'}` : 'Lleno: el capitán puede elegirte igual' %><%= cupo.pendientes.length ? ` · ${cupo.pendientes.length} esperando` : '' %></small>
+                </span>
+                <form class="sm-fila__accion" action="/partidos/<%= partido.id %>/postular" method="POST">
+                  <input type="hidden" name="id_equipo" value="<%= e.idEquipo %>" />
+                  <input type="hidden" name="id_posicion" value="<%= cupo.idPosicion %>" />
+                  <button type="submit" class="btn btn--verde btn--chico">Inscribirme</button>
+                </form>
+              </li>
+            <% }) %>
+          </ul>
+        <% }) %>
+      <% } %>
+    </section>
+  <% } %>
+<% } %>

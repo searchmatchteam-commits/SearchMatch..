@@ -1,0 +1,28 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/cursor-luz') %>
+
+<section class="eq">
+  <div class="contenedor sm-angosto">
+    <header class="eq-cabecera revelar">
+      <div class="eq-cabecera__texto">
+        <%- include('../partials/boton-volver', { fallbackUrl: '/dashboard' }) %>
+        <h1 class="eq-cabecera__titulo">Partidos que buscan jugadores</h1>
+        <p class="eq-cabecera__stats">Equipos a los que les falta gente. Inscríbete en una posición y juega.</p>
+      </div>
+    </header>
+
+    <% if (partidos.length === 0) { %>
+      <div class="dash-panel eq-panel sm-vacio">
+        <p class="sm-vacio__titulo">Por ahora ningún equipo busca jugadores</p>
+        <p class="dash-panel__nota">Cuando un capitán publique su partido aparecerá aquí.</p>
+      </div>
+    <% } else { %>
+      <%- include('../partials/partidos-buscan-lista', { partidos }) %>
+    <% } %>
+  </div>
+</section>
+
+<%- include('../partials/dock', { activo: 'inicio' }) %>
+
+<%- include('../partials/footer') %>
