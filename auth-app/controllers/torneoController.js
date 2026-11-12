@@ -8,6 +8,7 @@ const equipoModel = require('../models/equipoModel');
 const { idValido } = require('../middlewares/validadoresAdmin');
 const { partirPremio, MINUTOS_RESERVA_PAGO, formatoCLP } = require('../config/torneos');
 const pasarelaModel = require('../models/pasarelaModel');
+const cifrado = require('../config/cifrado');
 const { webpayCrear, webpayConfirmar } = require('../models/pasarelasApi');
 const { urlApp, origenPropio } = require('../config/urlApp');
 
@@ -76,7 +77,7 @@ async function detalle(req, res, next) {
       misEquipos,
       victoria,
       // Con precio: se paga con Webpay si el torneo lo acepta y la pasarela está activa.
-      pagoDisponible: torneo.precio > 0 && torneo.mediosPago.includes('webpay') && Boolean(habilitadas.webpay),
+      pagoDisponible: torneo.precio > 0 && torneo.mediosPago.includes('webpay') && Boolean(habilitadas.webpay) && cifrado.disponible(),
       minutosReserva: MINUTOS_RESERVA_PAGO,
       aviso: AVISOS[req.query.aviso] || null,
     });
@@ -102,12 +103,25 @@ async function inscribir(req, res, next) {
 
 // ---------- Inscripción con pago: Webpay Plus ----------
 
+/**
+ * Credenciales de Webpay descifradas, o null si no se pueden leer. Fallan si en el servidor falta PASARELAS_CLAVE
+ * o no es la misma con la que se guardaron en el panel: eso no debe terminar en un error 500 al pagar.
+ */
+async function credencialesWebpay() {
+  try {
+    return await pasarelaModel.credenciales('webpay');
+  } catch (err) {
+    console.error('⚠️  No se pudieron descifrar las credenciales de Webpay (revisa PASARELAS_CLAVE en el servidor):', err.message);
+    return null;
+  }
+}
+
 /** Reserva el cupo, crea la transacción en Webpay y manda al capitán a pagar (formulario que se envía solo). */
 async function pagarConWebpay(req, res, idTorneo, idEquipo) {
   const volver = (aviso) => res.redirect(`/torneos/${idTorneo}?aviso=${aviso}#inscripcion`);
   if (req.body.medio_pago && req.body.medio_pago !== 'webpay') return volver('sin-medio');
   const webpay = (await pasarelaModel.habilitadas()).webpay;
-  const credenciales = webpay ? await pasarelaModel.credenciales('webpay') : null;
+  const credenciales = webpay ? await credencialesWebpay() : null;
   if (!credenciales) return volver('sin-medio');
 
   const reserva = await torneoModel.reservarParaPago(req.usuario.idAuth, idTorneo, idEquipo, 'webpay', webpay.entorno);
@@ -154,7 +168,7 @@ async function retornoWebpay(req, res, next) {
         // Recarga o intento reemplazado: no se vuelve a confirmar (un intento viejo nunca se cobra).
         return irA(pago, { aprobado: 'pagado', en_verificacion: 'pago-verificacion' }[pago.estado] || 'pago-anulado');
       }
-      const credenciales = await pasarelaModel.credenciales('webpay');
+      const credenciales = await credencialesWebpay();
       let r;
       try {
         r = credenciales ? await webpayConfirmar(credenciales, pago.entorno, tokenWs) : { ok: false, error: 'sin credenciales' };
