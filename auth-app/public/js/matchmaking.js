@@ -212,6 +212,12 @@ const DURACION_FLASH_MS = 700;
         body: new URLSearchParams(),
       });
       const datos = await respuesta.json().catch(() => null);
+      // Ese equipo ya no es rival (se desactivó, es tuyo o juegas en él): no se muestra, se busca otro
+      if (datos && datos.resultado === 'inexistente') {
+        desafiados.add(rivalActual.id);
+        buscar(DURACION_OTRO_MS);
+        return;
+      }
       if (!respuesta.ok || !datos || !datos.resultado) throw new Error(motivoFallo(respuesta, datos));
 
       if (datos.resultado === 'enviado' || datos.resultado === 'pendiente') {
@@ -234,6 +240,11 @@ const DURACION_FLASH_MS = 700;
   });
 
   botonOtro.addEventListener('click', () => buscar(DURACION_OTRO_MS));
+
+  // Al volver con "Atrás" el navegador puede mostrar la página guardada con una lista vieja: se recarga
+  window.addEventListener('pageshow', (evento) => {
+    if (evento.persisted) window.location.reload();
+  });
 
   document.addEventListener('keydown', (evento) => {
     if (evento.key === 'Escape') window.location.href = raiz.querySelector('.mm__cerrar').href;

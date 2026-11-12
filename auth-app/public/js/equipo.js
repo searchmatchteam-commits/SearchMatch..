@@ -264,6 +264,14 @@ document.addEventListener('DOMContentLoaded', () => {
           body: new URLSearchParams(new FormData(formModal)),
         });
         datos = await respuesta.json().catch(() => null);
+        // Ese equipo ya no es rival (se desactivó, es tuyo o juegas en él): se quita de la lista
+        if (datos && datos.resultado === 'inexistente') {
+          const tarjeta = formularioRival.closest('li') || formularioRival.closest('.eq-rival');
+          cerrarModal();
+          if (tarjeta) tarjeta.remove();
+          mostrarAviso('Ese equipo ya no está disponible como rival.');
+          return;
+        }
         if (!respuesta.ok || !datos || !datos.resultado) throw new Error(motivoFallo(respuesta, datos));
 
         // Enviado (o ya había uno pendiente): el botón queda gris y deshabilitado
